@@ -75,6 +75,7 @@ use App\Http\Controllers\Api\Marketplace\CategoryController;
 
 // Report & Notification Controllers
 use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Report\SalesReportController;
 use App\Http\Controllers\Api\Notification\NotificationController;
 
 /*
@@ -251,6 +252,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Sales Reports
         Route::get('/dashboard/sales-reports', [FarmerDashboardController::class, 'salesReports']);
+        Route::get('/dashboard/sales-reports', [SalesReportController::class, 'index']);
+        Route::get('/dashboard/performance-metrics', [SalesReportController::class, 'performanceMetrics']);
+        Route::get('/dashboard/export-report', [SalesReportController::class, 'export']);
+        Route::get('/reports/top-products', [SalesReportController::class, 'topProducts']);
+        Route::get('/reports/revenue-by-category', [SalesReportController::class, 'revenueByCategory']);
     });
 
     /*

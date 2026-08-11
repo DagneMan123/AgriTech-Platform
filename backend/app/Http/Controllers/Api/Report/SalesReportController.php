@@ -27,17 +27,21 @@ class SalesReportController extends Controller
 
         $endDate = $validated['date_to'] ?? now();
 
+        // Get authenticated farmer ID
+        $farmerId = auth()->id();
+
+        // Get farmer's orders
         $report = [
             'period' => [
                 'from' => $startDate,
                 'to' => $endDate,
             ],
-            'summary' => $this->getSalesSummary($startDate, $endDate),
-            'by_product' => $this->getSalesByProduct($startDate, $endDate),
-            'by_farmer' => $this->getSalesByFarmer($startDate, $endDate),
-            'by_buyer' => $this->getSalesByBuyer($startDate, $endDate),
-            'by_day' => $this->getSalesByDay($startDate, $endDate),
-            'trends' => $this->getSalesTrends($startDate, $endDate),
+            'summary' => $this->getSalesSummary($startDate, $endDate, $farmerId),
+            'by_product' => $this->getSalesByProduct($startDate, $endDate, $farmerId),
+            'by_farmer' => $this->getSalesByFarmer($startDate, $endDate, $farmerId),
+            'by_buyer' => $this->getSalesByBuyer($startDate, $endDate, $farmerId),
+            'by_day' => $this->getSalesByDay($startDate, $endDate, $farmerId),
+            'trends' => $this->getSalesTrends($startDate, $endDate, $farmerId),
         ];
 
         return response()->json([
@@ -49,11 +53,16 @@ class SalesReportController extends Controller
     /**
      * Get sales summary
      */
-    private function getSalesSummary($startDate, $endDate)
+    private function getSalesSummary($startDate, $endDate, $farmerId = null)
     {
-        $orders = Order::where('status', 'delivered')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->get();
+        $query = Order::where('status', 'delivered')
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        $orders = $query->get();
 
         return [
             'total_sales' => $orders->sum('total_amount'),
@@ -67,33 +76,45 @@ class SalesReportController extends Controller
     /**
      * Get sales by product
      */
-    private function getSalesByProduct($startDate, $endDate)
+    private function getSalesByProduct($startDate, $endDate, $farmerId = null)
     {
-        return OrderItem::whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('product_id')
+        $query = OrderItem::whereBetween('order_items.created_at', [$startDate, $endDate])
+            ->selectRaw('order_items.product_id')
             ->selectRaw('products.name as product_name')
-            ->selectRaw('SUM(quantity) as total_quantity')
-            ->selectRaw('SUM(subtotal) as total_sales')
-            ->selectRaw('COUNT(DISTINCT order_id) as order_count')
-            ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->groupBy('product_id', 'product_name')
-            ->orderBy('total_sales', 'desc')
+            ->selectRaw('SUM(order_items.quantity) as total_quantity')
+            ->selectRaw('SUM(order_items.subtotal) as total_sales')
+            ->selectRaw('COUNT(DISTINCT order_items.order_id) as order_count')
+            ->join('products', 'order_items.product_id', '=', 'products.id');
+
+        if ($farmerId) {
+            $query->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.farmer_id', $farmerId)
+                ->where('orders.status', 'delivered');
+        }
+
+        return $query->groupBy('order_items.product_id', 'products.name')
+            ->orderByRaw('SUM(order_items.subtotal) DESC')
             ->get();
     }
 
     /**
      * Get sales by farmer
      */
-    private function getSalesByFarmer($startDate, $endDate)
+    private function getSalesByFarmer($startDate, $endDate, $farmerId = null)
     {
-        return Order::where('status', 'delivered')
+        $query = Order::where('status', 'delivered')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('farmer_id')
             ->selectRaw('users.name as farmer_name')
             ->selectRaw('COUNT(*) as order_count')
             ->selectRaw('SUM(total_amount) as total_sales')
-            ->join('users', 'orders.farmer_id', '=', 'users.id')
-            ->groupBy('farmer_id', 'farmer_name')
+            ->join('users', 'orders.farmer_id', '=', 'users.id');
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        return $query->groupBy('farmer_id', 'farmer_name')
             ->orderBy('total_sales', 'desc')
             ->get();
     }
@@ -101,16 +122,21 @@ class SalesReportController extends Controller
     /**
      * Get sales by buyer
      */
-    private function getSalesByBuyer($startDate, $endDate)
+    private function getSalesByBuyer($startDate, $endDate, $farmerId = null)
     {
-        return Order::where('status', 'delivered')
+        $query = Order::where('status', 'delivered')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('buyer_id')
             ->selectRaw('users.name as buyer_name')
             ->selectRaw('COUNT(*) as order_count')
             ->selectRaw('SUM(total_amount) as total_spending')
-            ->join('users', 'orders.buyer_id', '=', 'users.id')
-            ->groupBy('buyer_id', 'buyer_name')
+            ->join('users', 'orders.buyer_id', '=', 'users.id');
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        return $query->groupBy('buyer_id', 'buyer_name')
             ->orderBy('total_spending', 'desc')
             ->get();
     }
@@ -118,15 +144,20 @@ class SalesReportController extends Controller
     /**
      * Get sales by day
      */
-    private function getSalesByDay($startDate, $endDate)
+    private function getSalesByDay($startDate, $endDate, $farmerId = null)
     {
-        return Order::where('status', 'delivered')
+        $query = Order::where('status', 'delivered')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->selectRaw('COUNT(*) as orders')
             ->selectRaw('SUM(total_amount) as total_sales')
-            ->selectRaw('AVG(total_amount) as avg_order_value')
-            ->groupBy('date')
+            ->selectRaw('AVG(total_amount) as avg_order_value');
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        return $query->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
     }
@@ -134,19 +165,19 @@ class SalesReportController extends Controller
     /**
      * Get sales trends
      */
-    private function getSalesTrends($startDate, $endDate)
+    private function getSalesTrends($startDate, $endDate, $farmerId = null)
     {
-        $week = $endDate->diffInDays($startDate) <= 7;
-        $interval = $week ? 'DAY' : 'WEEK';
-
-        return Order::where('status', 'delivered')
+        $query = Order::where('status', 'delivered')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw($week 
-                ? 'DATE(created_at) as period' 
-                : 'DATE_TRUNC(\'week\', created_at) as period')
+            ->selectRaw('DATE(created_at) as period')
             ->selectRaw('COUNT(*) as order_count')
-            ->selectRaw('SUM(total_amount) as total_sales')
-            ->groupBy('period')
+            ->selectRaw('SUM(total_amount) as total_sales');
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        return $query->groupBy('period')
             ->orderBy('period', 'asc')
             ->get();
     }
@@ -219,8 +250,10 @@ class SalesReportController extends Controller
         ]);
 
         $startDate = $this->getStartDate($validated['period'] ?? 'month');
+        $farmerId = auth()->id();
 
         $orders = Order::where('status', 'delivered')
+            ->where('farmer_id', $farmerId)
             ->where('created_at', '>=', $startDate)
             ->get();
 
@@ -228,9 +261,9 @@ class SalesReportController extends Controller
             'total_sales' => $orders->sum('total_amount'),
             'total_orders' => $orders->count(),
             'avg_order_value' => $orders->count() > 0 ? $orders->avg('total_amount') : 0,
-            'order_fulfillment_rate' => ($orders->count() / max(Order::where('created_at', '>=', $startDate)->count(), 1)) * 100,
-            'repeat_customer_rate' => $this->calculateRepeatCustomerRate($startDate),
-            'conversion_rate' => $this->calculateConversionRate($startDate),
+            'order_fulfillment_rate' => ($orders->count() / max(Order::where('farmer_id', $farmerId)->where('created_at', '>=', $startDate)->count(), 1)) * 100,
+            'repeat_customer_rate' => $this->calculateRepeatCustomerRate($startDate, $farmerId),
+            'conversion_rate' => $this->calculateConversionRate($startDate, $farmerId),
         ];
 
         return response()->json([
@@ -256,16 +289,25 @@ class SalesReportController extends Controller
     /**
      * Calculate repeat customer rate
      */
-    private function calculateRepeatCustomerRate($startDate)
+    private function calculateRepeatCustomerRate($startDate, $farmerId = null)
     {
-        $repeatCustomers = Order::where('created_at', '>=', $startDate)
-            ->groupBy('buyer_id')
+        $query = Order::where('created_at', '>=', $startDate);
+
+        if ($farmerId) {
+            $query->where('farmer_id', $farmerId);
+        }
+
+        $repeatCustomers = $query->groupBy('buyer_id')
             ->havingRaw('COUNT(*) > 1')
             ->count();
 
-        $totalCustomers = Order::where('created_at', '>=', $startDate)
-            ->distinct('buyer_id')
-            ->count();
+        $totalCustomers = Order::where('created_at', '>=', $startDate);
+
+        if ($farmerId) {
+            $totalCustomers->where('farmer_id', $farmerId);
+        }
+
+        $totalCustomers = $totalCustomers->distinct('buyer_id')->count();
 
         return $totalCustomers > 0 ? ($repeatCustomers / $totalCustomers) * 100 : 0;
     }
@@ -273,13 +315,24 @@ class SalesReportController extends Controller
     /**
      * Calculate conversion rate
      */
-    private function calculateConversionRate($startDate)
+    private function calculateConversionRate($startDate, $farmerId = null)
     {
-        $deliveredOrders = Order::where('status', 'delivered')
-            ->where('created_at', '>=', $startDate)
-            ->count();
+        $deliveredQuery = Order::where('status', 'delivered')
+            ->where('created_at', '>=', $startDate);
 
-        $totalOrders = Order::where('created_at', '>=', $startDate)->count();
+        if ($farmerId) {
+            $deliveredQuery->where('farmer_id', $farmerId);
+        }
+
+        $deliveredOrders = $deliveredQuery->count();
+
+        $totalQuery = Order::where('created_at', '>=', $startDate);
+
+        if ($farmerId) {
+            $totalQuery->where('farmer_id', $farmerId);
+        }
+
+        $totalOrders = $totalQuery->count();
 
         return $totalOrders > 0 ? ($deliveredOrders / $totalOrders) * 100 : 0;
     }

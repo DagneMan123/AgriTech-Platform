@@ -65,7 +65,7 @@
         <i class="fas fa-user-circle"></i>
         <span>Profile</span>
       </router-link>
-      <button class="menu-item logout-btn" @click="emit('logout')">
+      <button class="menu-item logout-btn" @click="handleLogout">
         <i class="fas fa-sign-out-alt"></i>
         <span>Logout</span>
       </button>
@@ -74,7 +74,16 @@
 </template>
 
 <script setup>
-const emit = defineEmits(['logout'])
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+
+const router = useRouter()
+const auth = useAuthStore()
+
+const handleLogout = async () => {
+  await auth.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
