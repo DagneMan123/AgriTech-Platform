@@ -1,0 +1,45 @@
+SIMPLE FIX FOR: ERR_CONNECTION_REFUSED
+================================================================================
+
+THE PROBLEM:
+Backend is not running or crashed
+
+THE SOLUTION:
+
+1. Open Command Prompt
+2. Copy and paste this (all one block):
+
+cd C:\Users\Hena\Desktop\AgriTech_Platform\backend
+php artisan cache:clear
+php artisan config:cache
+del database\database.sqlite
+type nul > database\database.sqlite
+php artisan migrate
+php artisan serve
+
+3. Wait for this message:
+"Laravel development server started: http://127.0.0.1:8000"
+
+4. Then refresh frontend (Ctrl+Shift+R) and try login
+
+================================================================================
+
+WHAT CHANGED:
+- .env: Changed from PostgreSQL to SQLite (no external database needed)
+- SESSION_DRIVER: Changed from database to file
+- QUEUE_CONNECTION: Changed from database to sync
+
+These changes make the app work without external database services.
+
+================================================================================
+
+EXPECTED OUTPUT:
+laravel development server started: http://127.0.0.1:8000
+[date/time] GET http://127.0.0.1:8000/api/auth/login 200
+
+NOT SEEING THIS?
+The server crashed. Check for error messages in the terminal.
+
+================================================================================
+
+THAT'S IT. RUN THOSE COMMANDS NOW.
