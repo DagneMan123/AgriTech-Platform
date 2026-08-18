@@ -1,5 +1,4 @@
 <?php
-// app/Models/FarmImage.php
 
 namespace App\Models;
 
@@ -10,22 +9,10 @@ class FarmImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'farm_id',
-        'image_path',
-        'caption',
-        'is_primary'
-    ];
-
-    protected $casts = ['is_primary' => 'boolean'];
+    protected $fillable = ['farm_id', 'image_path', 'description'];
 
     public function farm()
     {
         return $this->belongsTo(Farm::class);
-    }
-
-    public function getImageUrlAttribute()
-    {
-        return asset('storage/' . $this->image_path);
     }
 }

@@ -18,15 +18,15 @@ import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
 // Admin views
-import AdminDashboardView from '@/views/Admin/AdminDashboard.vue'
-import AdminUsersView from '@/views/Admin/UsersView.vue'
-import AdminRolesView from '@/views/Admin/RolesView.vue'
-import AdminActivityLogsView from '@/views/Admin/ActivityLogsView.vue'
-import AdminSettingsView from '@/views/Admin/SettingsView.vue'
-import AdminReportsView from '@/views/Admin/ReportsView.vue'
+import AdminDashboardView from '@/views/admin/AdminDashboard.vue'
+import AdminUsersView from '@/views/admin/UsersView.vue'
+import AdminRolesView from '@/views/admin/RolesView.vue'
+import AdminActivityLogsView from '@/views/admin/ActivityLogsView.vue'
+import AdminSettingsView from '@/views/admin/SettingsView.vue'
+import AdminReportsView from '@/views/admin/ReportsView.vue'
 
 // Farmer views
-import FarmerDashboardView from '@/views/Farmer/FarmerDashboard.vue'
+import FarmerDashboardView from '@/views/farmer/FarmerDashboard.vue'
 import FarmerFarmsView from '@/views/farmer/FarmsView.vue'
 import FarmerCropsView from '@/views/farmer/CropsView.vue'
 import FarmerHarvestsView from '@/views/farmer/HarvestsView.vue'
@@ -42,47 +42,45 @@ import FarmerReportsView from '@/views/farmer/ReportsView.vue'
 import FarmerProfileView from '@/views/farmer/ProfileView.vue'
 
 // Buyer views
-import BuyerDashboardView from '@/views/Buyer/BuyerDashboard.vue'
+import BuyerDashboardView from '@/views/buyer/BuyerDashboard.vue'
 import BuyerMarketplaceView from '@/views/buyer/MarketplaceView.vue'
 import BuyerProductDetailView from '@/views/buyer/ProductDetailView.vue'
 import BuyerCartView from '@/views/buyer/CartView.vue'
 import BuyerOrdersView from '@/views/buyer/OrdersView.vue'
 import BuyerWishlistView from '@/views/buyer/WishlistView.vue'
+import BuyerCategoriesView from '@/views/buyer/CategoriesView.vue'
+import BuyerPaymentsView from '@/views/buyer/PaymentsView.vue'
+import BuyerReviewsView from '@/views/buyer/ReviewsView.vue'
+import BuyerProfileView from '@/views/buyer/ProfileView.vue'
 
 // Supplier views
-import SupplierDashboardView from '@/views/Supplier/SupplierDashboard.vue'
+import SupplierDashboardView from '@/views/supplier/SupplierDashboard.vue'
 import SupplierProductsView from '@/views/supplier/ProductsView.vue'
 import SupplierInventoryView from '@/views/supplier/InventoryView.vue'
 import SupplierOrdersView from '@/views/supplier/OrdersView.vue'
 import SupplierLicenseApplicationView from '@/views/supplier/LicenseApplicationView.vue'
 
 // Transport views
-import TransportDashboardView from '@/views/Transport/TransportDashboard.vue'
+import TransportDashboardView from '@/views/transport/TransportDashboard.vue'
 import TransportDeliveriesView from '@/views/transport/DeliveriesView.vue'
 import TransportVehiclesView from '@/views/transport/VehiclesView.vue'
 
 // Expert views
-import ExpertDashboardView from '@/views/Expert/ExpertDashboard.vue'
+import ExpertDashboardView from '@/views/expert/ExpertDashboard.vue'
 import ExpertConsultationsView from '@/views/expert/ConsultationsView.vue'
 import ExpertArticlesView from '@/views/expert/ArticlesView.vue'
 import ExpertTrainingView from '@/views/expert/TrainingView.vue'
 
 // Financial views
-import FinancialDashboardView from '@/views/Financial/FinancialDashboard.vue'
+import FinancialDashboardView from '@/views/financial/FinancialDashboard.vue'
 import FinancialLoansView from '@/views/financial/LoansView.vue'
 import FinancialInsuranceView from '@/views/financial/InsuranceView.vue'
 
 // Cooperative views
-import CooperativeDashboardView from '@/views/Cooperative/CooperativeDashboard.vue'
+import CooperativeDashboardView from '@/views/cooperative/CooperativeDashboard.vue'
 import CooperativeMembersView from '@/views/cooperative/MembersView.vue'
 import CooperativeSalesView from '@/views/cooperative/SalesView.vue'
 import CooperativeReportsView from '@/views/cooperative/ReportsView.vue'
-
-// Marketplace views
-import MarketplaceCategoriesView from '@/views/marketplace/CategoriesView.vue'
-import MarketplaceProductsView from '@/views/marketplace/ProductsView.vue'
-import MarketplaceSearchView from '@/views/marketplace/SearchView.vue'
-import MarketplaceProductDetailsView from '@/views/marketplace/ProductDetailsView.vue'
 
 const routes: RouteRecordRaw[] = [
   // Home - Public
@@ -125,37 +123,6 @@ const routes: RouteRecordRaw[] = [
     ]
   },
 
-  // Marketplace - Public
-  {
-    path: '/marketplace',
-    component: MainLayout,
-    children: [
-      {
-        path: 'categories',
-        name: 'marketplace-categories',
-        component: MarketplaceCategoriesView,
-        meta: { requiresAuth: false, title: 'Browse Categories' }
-      },
-      {
-        path: 'products',
-        name: 'marketplace-products',
-        component: MarketplaceProductsView,
-        meta: { requiresAuth: false, title: 'All Products' }
-      },
-      {
-        path: 'search',
-        name: 'marketplace-search',
-        component: MarketplaceSearchView,
-        meta: { requiresAuth: false, title: 'Search Products' }
-      },
-      {
-        path: 'product/:id',
-        name: 'marketplace-product-detail',
-        component: MarketplaceProductDetailsView,
-        meta: { requiresAuth: false, title: 'Product Details' }
-      }
-    ]
-  },
 
   // Admin Routes
   {
@@ -333,6 +300,30 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-wishlist',
         component: BuyerWishlistView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Wishlist' }
+      },
+      {
+        path: 'categories',
+        name: 'buyer-categories',
+        component: BuyerCategoriesView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Categories' }
+      },
+      {
+        path: 'payments',
+        name: 'buyer-payments',
+        component: BuyerPaymentsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Payment Methods' }
+      },
+      {
+        path: 'reviews',
+        name: 'buyer-reviews',
+        component: BuyerReviewsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'My Reviews' }
+      },
+      {
+        path: 'profile',
+        name: 'buyer-profile',
+        component: BuyerProfileView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'My Profile' }
       }
     ]
   },

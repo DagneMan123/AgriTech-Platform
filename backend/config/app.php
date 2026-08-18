@@ -123,4 +123,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'models' => [
+        'transport' => \App\Models\Transport::class,
+        'financial' => \App\Models\Financial::class,
+    ],
+
 ];

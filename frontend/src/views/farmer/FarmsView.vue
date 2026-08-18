@@ -13,15 +13,24 @@
           <button class="btn-primary" @click="openAddFarmDialog">+ Add New Farm</button>
         </div>
 
+        <div v-if="error" class="error-alert">
+          <p>{{ error }}</p>
+          <button @click="fetchFarms" class="btn-small btn-primary">Retry</button>
+        </div>
+
+        <div v-if="formSubmitError" class="error-alert error-large">
+          <p><strong>Submission Error:</strong> {{ formSubmitError }}</p>
+        </div>
+
         <div v-if="loading" class="loading-message">
           <p>Loading farms...</p>
         </div>
 
-        <div v-else-if="farms.length === 0" class="empty-state">
+        <div v-else-if="farms.length === 0 && !error" class="empty-state">
           <p>No farms yet. Click "Add New Farm" to create your first farm.</p>
         </div>
 
-        <div v-else class="farms-grid">
+        <div v-else-if="farms.length > 0" class="farms-grid">
           <div class="farm-card" v-for="farm in farms" :key="farm.id">
             <div class="farm-header">
               <h3>{{ farm.name }}</h3>
@@ -215,6 +224,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import apiClient from '@/api/config'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -222,12 +232,14 @@ const auth = useAuthStore()
 // State management
 const farms = ref([])
 const loading = ref(true)
+const error = ref(null)
 const showAddFarmModal = ref(false)
 const submitting = ref(false)
 const isEditingFarm = ref(false)
 const editingFarmId = ref(null)
 
 const formErrors = ref({})
+const formSubmitError = ref(null)
 
 const farmForm = ref({
   name: '',
@@ -252,21 +264,21 @@ onMounted(async () => {
 const fetchFarms = async () => {
   try {
     loading.value = true
-    const response = await fetch('/api/farmer/farms', {
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch farms')
+    error.value = null
+    const response = await apiClient.get('/farmer/farms')
+    const data = response.data
+    // Backend now returns data directly as array, not nested
+    farms.value = Array.isArray(data.data) ? data.data : []
+  } catch (err) {
+    console.error('Error fetching farms:', err)
+    if (err.response?.status === 401) {
+      error.value = 'Session expired. Please log in again.'
+    } else if (err.response?.status === 403) {
+      error.value = 'You do not have permission to view farms.'
+    } else {
+      error.value = err.response?.data?.message || err.message || 'Failed to load farms. Please try again.'
     }
-
-    const data = await response.json()
-    farms.value = data.data.data || data.data || []
-  } catch (error) {
-    console.error('Error fetching farms:', error)
+    farms.value = []
   } finally {
     loading.value = false
   }
@@ -322,6 +334,7 @@ const resetForm = () => {
     longitude: '',
   }
   formErrors.value = {}
+  formSubmitError.value = null
 }
 
 // Submit farm form
@@ -329,39 +342,34 @@ const submitFarmForm = async () => {
   try {
     submitting.value = true
     formErrors.value = {}
+    formSubmitError.value = null
 
     const payload = {
-      ...farmForm.value,
+      name: farmForm.value.name,
+      description: farmForm.value.description || null,
+      address: farmForm.value.address,
+      region: farmForm.value.region,
+      zone: farmForm.value.zone,
+      woreda: farmForm.value.woreda,
+      kebele: farmForm.value.kebele || null,
       size_hectares: parseFloat(farmForm.value.size_hectares),
+      farm_type: farmForm.value.farm_type,
       latitude: farmForm.value.latitude ? parseFloat(farmForm.value.latitude) : null,
       longitude: farmForm.value.longitude ? parseFloat(farmForm.value.longitude) : null,
     }
 
+    console.log('Submitting payload:', JSON.stringify(payload, null, 2))
+
     const url = isEditingFarm.value
-      ? `/api/farmer/farms/${editingFarmId.value}`
-      : '/api/farmer/farms'
+      ? `/farmer/farms/${editingFarmId.value}`
+      : '/farmer/farms'
 
-    const method = isEditingFarm.value ? 'PUT' : 'POST'
+    const method = isEditingFarm.value ? 'put' : 'post'
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    const response = await apiClient[method](url, payload)
+    const data = response.data
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      if (data.errors) {
-        formErrors.value = data.errors
-      } else {
-        formErrors.value = { general: data.message || 'An error occurred' }
-      }
-      return
-    }
+    console.log('Farm submission successful:', data)
 
     // Success
     showAddFarmModal.value = false
@@ -372,8 +380,39 @@ const submitFarmForm = async () => {
     const message = isEditingFarm.value ? 'Farm updated successfully!' : 'Farm created successfully!'
     console.log(message)
   } catch (error) {
-    console.error('Error submitting farm form:', error)
-    formErrors.value = { general: 'An error occurred while saving the farm' }
+    console.error('Error submitting farm form - Full error object:', error)
+    console.error('Error response data:', error.response?.data)
+    console.error('Error response status:', error.response?.status)
+    console.error('Error message:', error.message)
+    
+    const responseData = error.response?.data
+    const statusCode = error.response?.status
+
+    console.log('=== Detailed Error Response ===')
+    console.log('Status code:', statusCode)
+    console.log('Response data:', JSON.stringify(responseData, null, 2))
+
+    // Handle validation errors (422)
+    if (statusCode === 422) {
+      // Extract field-specific errors if present
+      if (responseData?.errors && typeof responseData.errors === 'object') {
+        // Convert array errors to first error message per field
+        const fieldErrors = {}
+        for (const [field, messages] of Object.entries(responseData.errors)) {
+          fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages
+        }
+        formErrors.value = fieldErrors
+        console.log('Extracted field errors:', fieldErrors)
+      }
+      
+      // Set general error message
+      formSubmitError.value = responseData?.message || 'Please check the form for errors and try again'
+      console.log('Form error message:', formSubmitError.value)
+    } else {
+      // Handle other HTTP errors
+      formSubmitError.value = responseData?.message || error.message || 'An error occurred while saving the farm. Please try again.'
+      console.log('Non-422 error:', formSubmitError.value)
+    }
   } finally {
     submitting.value = false
   }
@@ -481,6 +520,27 @@ const handleLogout = async () => {
   text-align: center;
   padding: 40px 20px;
   color: #666;
+}
+
+.error-alert {
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-alert p {
+  margin: 0;
+  flex: 1;
+}
+
+.error-alert.error-large {
+  display: block;
 }
 
 .farms-grid {

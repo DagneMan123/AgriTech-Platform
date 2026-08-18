@@ -10,22 +10,31 @@ class Supplier extends Model
 {
     use HasFactory;
 
-    protected $table = 'supplier_profiles';
+    protected $table = 'suppliers';
 
     protected $fillable = [
         'user_id',
         'company_name',
-        'business_license',
-        'address',
-        'website',
+        'company_registration',
         'tax_id',
-        'bank_account',
-        'bank_name',
-        'description',
-        'is_verified'
+        'license_number',
+        'company_address',
+        'company_phone',
+        'company_website',
+        'company_bio',
+        'contact_person',
+        'supply_type',
+        'total_sales',
+        'completed_orders',
+        'average_rating',
+        'verification_status',
+        'rejection_reason'
     ];
 
-    protected $casts = ['is_verified' => 'boolean'];
+    protected $casts = [
+        'total_sales' => 'decimal:2',
+        'average_rating' => 'decimal:2'
+    ];
 
     public function user()
     {

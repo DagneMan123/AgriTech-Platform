@@ -10,19 +10,28 @@ class Farmer extends Model
 {
     use HasFactory;
 
-    protected $table = 'farmer_profiles';
+    protected $table = 'farmers';
 
     protected $fillable = [
         'user_id',
+        'farmer_registration_number',
         'farm_name',
-        'farm_description',
+        'region',
+        'zone',
+        'woreda',
+        'kebele',
         'farm_size',
-        'address',
-        'latitude',
-        'longitude',
-        'is_verified',
-        'profile_image',
-        'farm_type'
+        'farm_type',
+        'years_of_experience',
+        'bio',
+        'bank_account',
+        'bank_name',
+        'cooperative_name',
+        'total_earnings',
+        'completed_orders',
+        'average_rating',
+        'verification_status',
+        'rejection_reason',
     ];
 
     protected $casts = [

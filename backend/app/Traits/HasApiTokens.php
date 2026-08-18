@@ -49,6 +49,6 @@ trait HasApiTokens
      */
     public function currentAccessToken()
     {
-        return auth('token')->user() ? auth('token')->user()->currentToken : null;
+        return $this->tokens()->latest()->first();
     }
 }

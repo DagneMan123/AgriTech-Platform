@@ -4,173 +4,119 @@
     <div class="farmer-page">
       <div class="page-header">
         <h1>My Profile</h1>
-        <p>Manage your account information</p>
+        <p>Manage your farmer profile and account settings</p>
       </div>
 
-      <!-- Profile Header Section -->
-      <div class="profile-header">
-        <div class="profile-avatar">
-          <img v-if="profileData?.avatar" :src="profileData.avatar" :alt="profileData.name">
-          <div v-else class="avatar-placeholder">
-            <i class="fas fa-user"></i>
+      <div class="profile-container">
+        <div class="profile-card">
+          <div class="profile-header">
+            <img :src="profile.profile_image || defaultAvatar" :alt="profile.name" class="profile-image" />
+            <div class="profile-info">
+              <h2>{{ profile.name }}</h2>
+              <p class="role-badge">Farmer</p>
+              <p class="email">{{ profile.email }}</p>
+              <button class="btn-edit-photo" @click="triggerImageUpload">Change Photo</button>
+              <input
+                ref="imageInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="uploadProfileImage"
+              />
+            </div>
           </div>
         </div>
-        <div class="profile-info">
-          <h2>{{ profileData?.name || 'Farmer Name' }}</h2>
-          <p class="role">{{ profileData?.role || 'Farmer' }}</p>
-          <p class="email">{{ profileData?.email || 'email@example.com' }}</p>
-          <button class="btn-primary" @click="editMode = !editMode">
-            {{ editMode ? 'Cancel' : 'Edit Profile' }}
+
+        <div class="two-column-layout">
+          <!-- Personal Information -->
+          <div class="info-section">
+            <h3>Personal Information</h3>
+            <div class="info-group">
+              <label>Full Name</label>
+              <input v-model="editForm.name" type="text" placeholder="Full Name" />
+            </div>
+            <div class="info-group">
+              <label>Email</label>
+              <input v-model="editForm.email" type="email" placeholder="Email" disabled />
+            </div>
+            <div class="info-group">
+              <label>Phone</label>
+              <input v-model="editForm.phone" type="tel" placeholder="Phone Number" />
+            </div>
+            <div class="info-group">
+              <label>Location</label>
+              <input v-model="editForm.location" type="text" placeholder="City/Town" />
+            </div>
+          </div>
+
+          <!-- Farm Location -->
+          <div class="info-section">
+            <h3>Farm Location</h3>
+            <div class="info-group">
+              <label>Region</label>
+              <input v-model="editForm.region" type="text" placeholder="Region" />
+            </div>
+            <div class="info-group">
+              <label>Zone</label>
+              <input v-model="editForm.zone" type="text" placeholder="Zone" />
+            </div>
+            <div class="info-group">
+              <label>Woreda</label>
+              <input v-model="editForm.woreda" type="text" placeholder="Woreda/District" />
+            </div>
+            <div class="info-group">
+              <label>Address</label>
+              <textarea v-model="editForm.address" placeholder="Full Address" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h4>Total Farms</h4>
+            <p class="stat-value">{{ stats.total_farms }}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Active Crops</h4>
+            <p class="stat-value">{{ stats.active_crops }}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Total Harvests</h4>
+            <p class="stat-value">{{ stats.total_harvests }}</p>
+          </div>
+          <div class="stat-card">
+            <h4>Total Area (ha)</h4>
+            <p class="stat-value">{{ stats.total_area }}</p>
+          </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="settings-section">
+          <h3>Account Settings</h3>
+          <div class="setting-item">
+            <span>Member Since</span>
+            <span>{{ formatDate(profile.created_at) }}</span>
+          </div>
+          <div class="setting-item">
+            <span>Last Login</span>
+            <span>{{ profile.last_login_at ? formatDate(profile.last_login_at) : 'N/A' }}</span>
+          </div>
+          <div class="setting-item">
+            <span>Account Status</span>
+            <span :class="profile.is_active ? 'status-active' : 'status-inactive'">
+              {{ profile.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="btn-primary" @click="saveProfile" :disabled="saving">
+            {{ saving ? 'Saving...' : 'Save Changes' }}
           </button>
-        </div>
-      </div>
-
-      <!-- Personal Information Section -->
-      <div class="content-section">
-        <h2>Personal Information</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input v-if="editMode" v-model="formData.name" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.name }}</p>
-          </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input v-if="editMode" v-model="formData.email" type="email" class="form-input">
-            <p v-else class="form-value">{{ profileData?.email }}</p>
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input v-if="editMode" v-model="formData.phone" type="tel" class="form-input">
-            <p v-else class="form-value">{{ profileData?.phone || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Date of Birth</label>
-            <input v-if="editMode" v-model="formData.dob" type="date" class="form-input">
-            <p v-else class="form-value">{{ profileData?.dob || 'Not provided' }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Farm Information Section -->
-      <div class="content-section">
-        <h2>Farm Information</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Farm Name</label>
-            <input v-if="editMode" v-model="formData.farmName" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.farmName || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Location/Region</label>
-            <input v-if="editMode" v-model="formData.location" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.location || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Farm Size (hectares)</label>
-            <input v-if="editMode" v-model="formData.farmSize" type="number" class="form-input">
-            <p v-else class="form-value">{{ profileData?.farmSize || '0' }} ha</p>
-          </div>
-          <div class="form-group">
-            <label>Primary Crops</label>
-            <input v-if="editMode" v-model="formData.crops" type="text" class="form-input" placeholder="e.g., Maize, Wheat, Tomatoes">
-            <p v-else class="form-value">{{ profileData?.crops || 'Not provided' }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Contact Information Section -->
-      <div class="content-section">
-        <h2>Contact Information</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Address</label>
-            <input v-if="editMode" v-model="formData.address" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.address || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>City</label>
-            <input v-if="editMode" v-model="formData.city" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.city || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>State/Province</label>
-            <input v-if="editMode" v-model="formData.state" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.state || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Postal Code</label>
-            <input v-if="editMode" v-model="formData.postalCode" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.postalCode || 'Not provided' }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bank Information Section -->
-      <div class="content-section">
-        <h2>Bank Information</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Bank Name</label>
-            <input v-if="editMode" v-model="formData.bankName" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.bankName || 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Account Number</label>
-            <input v-if="editMode" v-model="formData.accountNumber" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.accountNumber ? '****' + profileData.accountNumber.slice(-4) : 'Not provided' }}</p>
-          </div>
-          <div class="form-group">
-            <label>Account Holder Name</label>
-            <input v-if="editMode" v-model="formData.accountHolder" type="text" class="form-input">
-            <p v-else class="form-value">{{ profileData?.accountHolder || 'Not provided' }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div v-if="editMode" class="action-buttons">
-        <button class="btn-primary" @click="saveProfile">Save Changes</button>
-        <button class="btn-secondary" @click="editMode = false">Cancel</button>
-      </div>
-
-      <!-- Additional Sections -->
-      <div class="content-section">
-        <h2>Account Settings</h2>
-        <div class="settings-list">
-          <div class="setting-item">
-            <div class="setting-info">
-              <h4>Change Password</h4>
-              <p>Update your account password</p>
-            </div>
-            <button class="btn-small">Change</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-info">
-              <h4>Two-Factor Authentication</h4>
-              <p>Enable 2FA for added security</p>
-            </div>
-            <button class="btn-small">Enable</button>
-          </div>
-          <div class="setting-item">
-            <div class="setting-info">
-              <h4>Privacy Settings</h4>
-              <p>Control who can see your profile</p>
-            </div>
-            <button class="btn-small">Configure</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Danger Zone -->
-      <div class="content-section danger-zone">
-        <h2>Danger Zone</h2>
-        <div class="danger-action">
-          <div class="danger-info">
-            <h4>Delete Account</h4>
-            <p>Permanently delete your account and all associated data</p>
-          </div>
-          <button class="btn-danger">Delete Account</button>
+          <button class="btn-secondary" @click="changePassword">Change Password</button>
+          <button class="btn-danger" @click="deleteAccount">Delete Account</button>
         </div>
       </div>
     </div>
@@ -178,86 +124,124 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import apiClient from '@/api/config'
 
 const router = useRouter()
 const auth = useAuthStore()
-const editMode = ref(false)
+const imageInput = ref(null)
 
-const profileData = ref({
-  name: 'John Farmer',
-  email: 'john@farm.com',
-  phone: '+1 234 567 8900',
-  dob: '1985-06-15',
-  farmName: 'Green Valley Farm',
-  location: 'Midwest Region',
-  farmSize: 150,
-  crops: 'Maize, Wheat, Soybeans',
-  address: '123 Farm Road',
-  city: 'Springfield',
-  state: 'Illinois',
-  postalCode: '62701',
-  bankName: 'Farmers Bank',
-  accountNumber: '1234567890',
-  accountHolder: 'John Farmer',
-  role: 'Farmer',
-  avatar: null
+const profile = ref({
+  name: '',
+  email: '',
+  phone: '',
+  location: '',
+  region: '',
+  zone: '',
+  woreda: '',
+  address: '',
+  profile_image: null,
+  created_at: '',
+  last_login_at: '',
+  is_active: true
 })
 
-const formData = reactive({
-  name: profileData.value.name,
-  email: profileData.value.email,
-  phone: profileData.value.phone,
-  dob: profileData.value.dob,
-  farmName: profileData.value.farmName,
-  location: profileData.value.location,
-  farmSize: profileData.value.farmSize,
-  crops: profileData.value.crops,
-  address: profileData.value.address,
-  city: profileData.value.city,
-  state: profileData.value.state,
-  postalCode: profileData.value.postalCode,
-  bankName: profileData.value.bankName,
-  accountNumber: profileData.value.accountNumber,
-  accountHolder: profileData.value.accountHolder
+const editForm = ref({...profile.value})
+
+const stats = ref({
+  total_farms: 0,
+  active_crops: 0,
+  total_harvests: 0,
+  total_area: 0
 })
 
-onMounted(() => {
-  fetchProfileData()
+const saving = ref(false)
+const defaultAvatar = 'https://ui-avatars.com/api/?name=Farmer&background=10b981&color=fff'
+
+onMounted(async () => {
+  await loadProfile()
+  await loadStats()
 })
 
-const fetchProfileData = async () => {
+const loadProfile = async () => {
   try {
-    // In a real app, fetch from API
-    // const res = await fetch('/api/farmer/profile', {
-    //   headers: { 'Authorization': `Bearer ${auth.token}` }
-    // })
-    // profileData.value = await res.json()
-    console.log('Profile data loaded')
+    const response = await apiClient.get('/auth/me')
+    profile.value = response.data.data
+    editForm.value = {...profile.value}
   } catch (error) {
-    console.error('Error fetching profile:', error)
+    console.error('Error loading profile:', error)
+  }
+}
+
+const loadStats = async () => {
+  try {
+    const response = await apiClient.get('/farmer/farms')
+    const farmsData = response.data.data
+    stats.value.total_farms = farmsData.total || 0
+    stats.value.total_area = farmsData.data.reduce((sum, farm) => sum + (farm.size_hectares || 0), 0)
+  } catch (error) {
+    console.error('Error loading stats:', error)
+  }
+}
+
+const triggerImageUpload = () => {
+  imageInput.value.click()
+}
+
+const uploadProfileImage = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('profile_image', file)
+
+  try {
+    const response = await apiClient.post('/auth/update-profile-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    profile.value.profile_image = response.data.data.profile_image
+    editForm.value.profile_image = profile.value.profile_image
+  } catch (error) {
+    console.error('Error uploading image:', error)
   }
 }
 
 const saveProfile = async () => {
   try {
-    // In a real app, save to API
-    // const res = await fetch('/api/farmer/profile', {
-    //   method: 'PUT',
-    //   headers: { 'Authorization': `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(formData)
-    // })
-    
-    // Update local data
-    Object.assign(profileData.value, formData)
-    editMode.value = false
-    console.log('Profile saved successfully')
+    saving.value = true
+    const response = await apiClient.put('/auth/update-profile', editForm.value)
+    profile.value = response.data.data
+    editForm.value = {...profile.value}
+    alert('Profile updated successfully!')
   } catch (error) {
     console.error('Error saving profile:', error)
+    alert('Error saving profile')
+  } finally {
+    saving.value = false
   }
+}
+
+const changePassword = () => {
+  router.push('/app/change-password')
+}
+
+const deleteAccount = () => {
+  if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+    apiClient.delete('/auth/delete-account')
+      .then(() => {
+        auth.logout()
+        router.push('/')
+      })
+      .catch(error => console.error('Error deleting account:', error))
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString()
 }
 
 const handleLogout = async () => {
@@ -267,62 +251,285 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.farmer-layout { display: flex; height: 100vh; }
-.farmer-page { margin-left: 260px; flex: 1; overflow-y: auto; background-color: #f5f5f5; padding: 20px; }
-.page-header { margin-bottom: 30px; }
-.page-header h1 { font-size: 28px; font-weight: bold; color: #333; margin-bottom: 5px; }
-.page-header p { color: #666; }
+.farmer-layout {
+  display: flex;
+  height: 100vh;
+}
 
-/* Profile Header */
-.profile-header { background: white; border-radius: 8px; padding: 30px; display: flex; align-items: center; gap: 30px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.profile-avatar { width: 150px; height: 150px; border-radius: 50%; overflow: hidden; background: #f3f4f6; display: flex; align-items: center; justify-content: center; }
-.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-placeholder { font-size: 60px; color: #d1d5db; }
-.profile-info { flex: 1; }
-.profile-info h2 { margin: 0 0 10px 0; color: #333; font-size: 24px; }
-.profile-info .role { margin: 5px 0; color: #10b981; font-weight: 600; }
-.profile-info .email { margin: 5px 0; color: #666; }
-.btn-primary { background-color: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-.btn-primary:hover { background-color: #059669; }
+.farmer-page {
+  margin-left: 260px;
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
 
-/* Content Section */
-.content-section { background: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.content-section h2 { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 20px; }
+.page-header {
+  margin-bottom: 30px;
+}
 
-/* Form Grid */
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-.form-group { display: flex; flex-direction: column; }
-.form-group label { font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px; }
-.form-input { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 14px; }
-.form-input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
-.form-value { margin: 0; color: #666; font-size: 14px; }
+.page-header h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
 
-/* Action Buttons */
-.action-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-.btn-secondary { background-color: #e5e7eb; color: #333; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-.btn-secondary:hover { background-color: #d1d5db; }
+.page-header p {
+  color: #666;
+}
 
-/* Settings List */
-.settings-list { display: flex; flex-direction: column; gap: 15px; }
-.setting-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
-.setting-info h4 { margin: 0 0 5px 0; color: #333; font-size: 14px; }
-.setting-info p { margin: 0; color: #666; font-size: 12px; }
-.btn-small { padding: 8px 16px; background-color: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
-.btn-small:hover { background-color: #059669; }
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-/* Danger Zone */
-.danger-zone { border-left: 4px solid #ef4444; }
-.danger-zone h2 { color: #ef4444; }
-.danger-action { display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: #fee2e2; border-radius: 8px; }
-.danger-info h4 { margin: 0 0 5px 0; color: #991b1b; font-size: 14px; }
-.danger-info p { margin: 0; color: #7f1d1d; font-size: 12px; }
-.btn-danger { padding: 10px 20px; background-color: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-.btn-danger:hover { background-color: #dc2626; }
+.profile-card {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-header {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #10b981;
+}
+
+.profile-info h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.role-badge {
+  display: inline-block;
+  background-color: #10b981;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.email {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.btn-edit-photo {
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-edit-photo:hover {
+  background-color: #2563eb;
+}
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.info-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.info-group {
+  margin-bottom: 15px;
+}
+
+.info-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.info-group input,
+.info-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.info-group input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-card h4 {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 32px;
+  font-weight: bold;
+  color: #10b981;
+}
+
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.status-active {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.status-inactive {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background-color: #10b981;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #6b7280;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
 
 @media (max-width: 768px) {
-  .farmer-page { margin-left: 0; }
-  .profile-header { flex-direction: column; text-align: center; }
-  .form-grid { grid-template-columns: 1fr; }
-  .danger-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .farmer-page {
+    margin-left: 0;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .two-column-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
 }
 </style>

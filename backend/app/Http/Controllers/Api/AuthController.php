@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Models\Farmer;
+use App\Models\Buyer;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -19,59 +24,167 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         try {
-            $validated = $request->validated();
+            return DB::transaction(function () use ($request) {
+                $validated = $request->validated();
+                $role = strtolower($validated['role']);
 
-            // Create user using mass assignment
-            $user = User::create([
-                'name' => $validated['full_name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'password' => Hash::make($validated['password']),
-                'role' => $validated['role'],
-                'location' => $validated['address'],
-                'region' => $validated['region'] ?? null,
-                'is_active' => true,
+                // 1. Prepare user data with all required fields
+                $userData = [
+                    'name' => $validated['full_name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => $role,
+                    'address' => $validated['address'] ?? null,
+                    'location' => $validated['address'] ?? null,
+                    'region' => $validated['region'] ?? null,
+                    'is_active' => true,
+                ];
+
+                // 2. Create user
+                $user = User::create($userData);
+
+                // 3. Automatically create the respective role profile
+                try {
+                    $this->createRoleProfile($user, $role);
+                } catch (\Exception $profileError) {
+                    Log::error('Error creating role profile: ' . $profileError->getMessage(), [
+                        'user_id' => $user->id,
+                        'role' => $role,
+                    ]);
+                    // Don't fail registration if profile creation fails - it can be created later
+                }
+
+                // 4. Generate API token
+                $token = $user->createToken('api-token')->plainTextToken;
+
+                return response()->json([
+                    'message' => 'User registered successfully',
+                    'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region', 'address']),
+                    'token' => $token,
+                ], 201);
+            });
+        } catch (QueryException $e) {
+            $errorMessage = $e->getMessage();
+            $message = 'A database error occurred during registration';
+
+            // Check for specific constraint violations
+            if (strpos($errorMessage, 'duplicate') !== false || strpos($errorMessage, 'Duplicate') !== false) {
+                if (strpos($errorMessage, 'users_email_unique') !== false || strpos($errorMessage, 'email') !== false) {
+                    $message = 'Email address is already registered';
+                } elseif (strpos($errorMessage, 'users_phone_unique') !== false || strpos($errorMessage, 'phone') !== false) {
+                    $message = 'Phone number is already registered';
+                }
+            } elseif (strpos($errorMessage, '23503') !== false) {
+                // Foreign key constraint violation
+                $message = 'Database constraint error. Please contact support if this persists.';
+            } elseif (strpos($errorMessage, '23502') !== false) {
+                // NOT NULL constraint violation
+                $message = 'Missing required field. Please provide all required information.';
+            }
+
+            Log::error('Registration database error: ' . $errorMessage, [
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+                'exception' => $e->getCode(),
             ]);
 
-            // Generate API token
-            $token = $user->createToken('api-token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'User registered successfully',
-                'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region']),
-                'token' => $token,
-            ], 201);
-
-        } catch (QueryException $e) {
-            // Handle database-specific errors
-            $message = 'A database error occurred during registration';
-            $errorMessage = $e->getMessage();
-            
-            if (strpos($errorMessage, 'Duplicate') !== false || 
-                strpos($errorMessage, 'duplicate') !== false) {
-                if (strpos($errorMessage, 'email') !== false) {
-                    $message = 'Email address is already registered';
-                } elseif (strpos($errorMessage, 'phone') !== false) {
-                    $message = 'Phone number is already registered';
-                } else {
-                    $message = 'Email or phone number already registered';
-                }
-            } elseif (strpos($errorMessage, 'Undefined column') !== false ||
-                      strpos($errorMessage, 'undefined column') !== false) {
-                $message = 'Database configuration error. Please contact support.';
-            }
-            
-            \Log::error('Registration database error: ' . $e->getMessage());
             return response()->json([
                 'message' => $message,
                 'errors' => ['registration' => [$message]]
             ], 422);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Registration validation error: ', $e->errors());
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
-            \Log::error('Registration error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            Log::error('Registration error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'message' => 'An error occurred during registration. Please try again later.',
                 'errors' => ['registration' => ['An unexpected error occurred']]
             ], 500);
+        }
+    }
+
+    /**
+     * Create role-specific profile for the user safely
+     */
+    private function createRoleProfile(User $user, string $role)
+    {
+        $timestamp = time();
+
+        try {
+            match ($role) {
+                'farmer' => Farmer::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'farmer_registration_number' => 'FRM-' . $user->id . '-' . $timestamp,
+                        'farm_name' => $user->name . ' Farm',
+                        'region' => $user->region ?? 'Not Specified',
+                        'zone' => 'Not Specified',
+                        'woreda' => 'Not Specified',
+                    ]
+                ),
+                'buyer' => Buyer::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'buyer_type' => 'individual',
+                        'business_name' => $user->name,
+                        'business_address' => $user->address ?? 'Not specified',
+                    ]
+                ),
+                'supplier' => Supplier::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'company_name' => $user->name,
+                        'company_address' => $user->address ?? 'Not specified',
+                        'contact_person' => $user->name,
+                    ]
+                ),
+                'transport' => \App\Models\Transport::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'company_name' => $user->name,
+                        'contact_person' => $user->name,
+                        'emergency_contact' => $user->phone,
+                    ]
+                ),
+                'expert' => \App\Models\Expert::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'specialization' => 'General Agriculture',
+                    ]
+                ),
+                'financial' => \App\Models\Financial::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'institution_name' => $user->name,
+                    ]
+                ),
+                'cooperative' => \App\Models\Cooperative::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'cooperative_name' => $user->name,
+                        'region' => $user->region ?? 'Not specified',
+                        'location' => $user->location ?? 'Not specified',
+                    ]
+                ),
+                'admin' => null,
+                default => null,
+            };
+        } catch (QueryException $e) {
+            Log::warning('Failed to create role profile for user: ' . $user->id, [
+                'role' => $role,
+                'error' => $e->getMessage(),
+            ]);
+            // Silently fail - profile can be created later
         }
     }
 
@@ -108,7 +221,6 @@ class AuthController extends Controller
 
             $user->update(['last_login_at' => now()]);
 
-            // Generate API token
             $token = $user->createToken('api-token')->plainTextToken;
 
             return response()->json([
@@ -116,39 +228,29 @@ class AuthController extends Controller
                 'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region', 'is_active']),
                 'token' => $token,
             ], 200);
-
         } catch (QueryException $e) {
-            \Log::error('Login database error: ' . $e->getMessage());
+            Log::error('Login database error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'An error occurred during login. Please try again later.',
             ], 500);
         } catch (\Exception $e) {
-            \Log::error('Login error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            Log::error('Login error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'An error occurred during login. Please try again later.',
             ], 500);
         }
     }
 
-    /**
-     * Get current authenticated user
-     */
     public function me(Request $request)
     {
         return response()->json($request->user());
     }
 
-    /**
-     * Get user profile
-     */
     public function profile(Request $request)
     {
         return response()->json($request->user());
     }
 
-    /**
-     * Update user profile
-     */
     public function updateProfile(Request $request)
     {
         $request->validate([
@@ -175,9 +277,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout user
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -185,9 +284,6 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully']);
     }
 
-    /**
-     * Change password
-     */
     public function changePassword(Request $request)
     {
         $request->validate([
@@ -210,25 +306,17 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password changed successfully']);
     }
 
-    /**
-     * Forgot password
-     */
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
         return $status === Password::RESET_LINK_SENT
             ? response()->json(['message' => 'Reset link sent to email'])
             : response()->json(['message' => 'Unable to send reset link'], 400);
     }
 
-    /**
-     * Reset password
-     */
     public function resetPassword(Request $request)
     {
         $request->validate([

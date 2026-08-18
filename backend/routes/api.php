@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Admin\SettingController;
 // Farmer Controllers
 use App\Http\Controllers\Api\Farmer\FarmController;
 use App\Http\Controllers\Api\Farmer\CropController;
+use App\Http\Controllers\Api\Farmer\CropDebugController;
 use App\Http\Controllers\Api\Farmer\HarvestController;
 use App\Http\Controllers\Api\Farmer\ProductController as FarmerProductController;
 use App\Http\Controllers\Api\Farmer\OrderController as FarmerOrderController;
@@ -77,6 +78,7 @@ use App\Http\Controllers\Api\Marketplace\CategoryController;
 use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Report\SalesReportController;
 use App\Http\Controllers\Api\Notification\NotificationController;
+use App\Http\Controllers\Api\RepairController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +93,40 @@ Route::get('/health', function () {
 
 Route::get('/test', function () {
     return response()->json(['message' => 'Test endpoint working', 'time' => now()]);
+});
+
+// Diagnostic endpoints (for debugging)
+Route::get('/diagnostic/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'app' => config('app.name'),
+        'environment' => config('app.env'),
+        'debug' => config('app.debug'),
+        'time' => now(),
+    ]);
+});
+
+Route::get('/diagnostic/routes', function () {
+    $routes = collect(Route::getRoutes())->filter(function ($route) {
+        return strpos($route->uri(), 'farmer/dashboard') !== false;
+    })->map(function ($route) {
+        return [
+            'method' => implode('|', $route->methods),
+            'path' => $route->uri(),
+            'action' => $route->action['controller'] ?? 'Closure',
+        ];
+    })->values();
+
+    return response()->json([
+        'farmer_dashboard_routes' => $routes,
+        'message' => 'Farmer dashboard routes registered'
+    ]);
+});
+
+Route::middleware(['auth:token'])->group(function () {
+    Route::get('/diagnostic/auth', [\App\Http\Controllers\Api\DiagnosticController::class, 'auth']);
+    Route::get('/diagnostic/farms-count', [\App\Http\Controllers\Api\DiagnosticController::class, 'farmsCount']);
+    Route::get('/diagnostic/dashboard-summary', [\App\Http\Controllers\Api\DiagnosticController::class, 'dashboardSummary']);
 });
 
 // Authentication Routes
@@ -114,13 +150,16 @@ Route::get('/experts', [ExpertController::class, 'index']);
 // Location - Public
 Route::get('/locations', [MapController::class, 'index']);
 
+// Database Repair Routes (Development)
+Route::get('/repair/crops-table', [RepairController::class, 'fixCropsTable']);
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (Authentication Required)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:token'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
@@ -139,7 +178,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | ADMIN ROUTES (Admin Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:admin')->prefix('admin')->group(function () {
+    Route::middleware(['auth:token', 'role:admin'])->prefix('admin')->group(function () {
         // Dashboard Overview
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
         
@@ -195,9 +234,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | FARMER ROUTES (Farmer Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:farmer')->prefix('farmer')->group(function () {
+    Route::middleware(['auth:token', 'role:farmer'])->prefix('farmer')->group(function () {
         // Dashboard Overview
         Route::get('/dashboard', [FarmerDashboardController::class, 'index']);
+        
+        // Debug routes (remove in production)
+        Route::post('/crops-debug', [CropDebugController::class, 'debugCreate']);
+        Route::get('/farms-debug', [CropDebugController::class, 'debugFarms']);
         
         // Farm Management
         Route::get('/dashboard/farm-management', [FarmerDashboardController::class, 'farmManagement']);
@@ -264,7 +307,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | BUYER ROUTES (Buyer Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:buyer')->prefix('buyer')->group(function () {
+    Route::middleware(['auth:token', 'role:buyer'])->prefix('buyer')->group(function () {
         // Dashboard
         Route::get('/dashboard', [BuyerDashboardController::class, 'index']);
         Route::get('/dashboard/order-history', [BuyerDashboardController::class, 'orderHistory']);
@@ -306,7 +349,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | SUPPLIER ROUTES (Supplier Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:supplier')->prefix('supplier')->group(function () {
+    Route::middleware(['auth:token', 'role:supplier'])->prefix('supplier')->group(function () {
         // Dashboard
         Route::get('/dashboard', [SupplierDashboardController::class, 'index']);
         Route::get('/dashboard/inventory', [SupplierDashboardController::class, 'inventory']);
@@ -339,7 +382,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | TRANSPORT ROUTES (Transport Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:transport')->prefix('transport')->group(function () {
+    Route::middleware(['auth:token', 'role:transport'])->prefix('transport')->group(function () {
         // Dashboard
         Route::get('/dashboard', [TransportDashboardController::class, 'index']);
         Route::get('/dashboard/delivery-requests', [TransportDashboardController::class, 'deliveryRequests']);
@@ -366,7 +409,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | EXPERT ROUTES (Expert Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:expert')->prefix('expert')->group(function () {
+    Route::middleware(['auth:token', 'role:expert'])->prefix('expert')->group(function () {
         // Dashboard
         Route::get('/dashboard', [ExpertDashboardController::class, 'index']);
         Route::get('/dashboard/consultations', [ExpertDashboardController::class, 'consultations']);
@@ -398,7 +441,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | FINANCIAL ROUTES (Financial Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:financial')->prefix('financial')->group(function () {
+    Route::middleware(['auth:token', 'role:financial'])->prefix('financial')->group(function () {
         // Dashboard
         Route::get('/dashboard', [FinancialDashboardController::class, 'index']);
         Route::get('/dashboard/pending-applications', [FinancialDashboardController::class, 'pendingApplications']);
@@ -432,7 +475,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | COOPERATIVE ROUTES (Cooperative Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:cooperative')->prefix('cooperative')->group(function () {
+    Route::middleware(['auth:token', 'role:cooperative'])->prefix('cooperative')->group(function () {
         // Dashboard
         Route::get('/dashboard', [CooperativeDashboardController::class, 'index']);
         Route::get('/dashboard/members', [CooperativeDashboardController::class, 'members']);
@@ -472,5 +515,3 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/locations/search', [MapController::class, 'search']);
 
 });
-
-

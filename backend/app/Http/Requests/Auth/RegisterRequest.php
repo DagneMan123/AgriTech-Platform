@@ -38,17 +38,29 @@ class RegisterRequest extends FormRequest
     {
         return [
             'full_name.required' => 'Full name is required.',
+            'full_name.string' => 'Full name must be a string.',
+            'full_name.max' => 'Full name cannot exceed 255 characters.',
             'email.required' => 'Email address is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email address is already registered.',
             'phone.required' => 'Phone number is required.',
+            'phone.string' => 'Phone number must be a string.',
+            'phone.max' => 'Phone number cannot exceed 20 characters.',
+            'phone.unique' => 'This phone number is already registered.',
             'password.required' => 'Password is required.',
+            'password.string' => 'Password must be a string.',
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Passwords do not match.',
+            'password_confirmation.required' => 'Password confirmation is required.',
             'address.required' => 'Address is required.',
+            'address.string' => 'Address must be a string.',
+            'address.max' => 'Address cannot exceed 255 characters.',
             'region.required' => 'Region is required.',
+            'region.string' => 'Region must be a string.',
+            'region.max' => 'Region cannot exceed 255 characters.',
             'role.required' => 'Role is required.',
-            'role.in' => 'Selected role is invalid.',
+            'role.string' => 'Role must be a string.',
+            'role.in' => 'Selected role is invalid. Valid roles are: farmer, buyer, supplier, expert, cooperative, financial, transport, admin.',
         ];
     }
 
@@ -59,6 +71,7 @@ class RegisterRequest extends FormRequest
     {
         $this->merge([
             'full_name' => $this->full_name ?? $this->name,
+            'address' => $this->address ?? $this->location,
         ]);
     }
 }

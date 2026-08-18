@@ -14,7 +14,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        \App\Models\Crop::class => \App\Policies\CropPolicy::class,
     ];
 
     /**
@@ -22,8 +22,12 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register the custom token guard driver
         Auth::extend('token', function ($app, $name, array $config) {
-            return new TokenGuard(Auth::createUserProvider($config['provider']), $app['request']);
+            return new TokenGuard(
+                Auth::createUserProvider($config['provider']), 
+                $app['request']
+            );
         });
     }
 }

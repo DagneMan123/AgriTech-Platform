@@ -12,7 +12,7 @@ class FarmPolicy
      */
     public function view(User $user, Farm $farm): bool
     {
-        return $user->farmer->id === $farm->farmer_id || $user->role === 'admin';
+        return $user->id === $farm->farmer_id || $user->role === 'admin';
     }
 
     /**
@@ -28,7 +28,7 @@ class FarmPolicy
      */
     public function update(User $user, Farm $farm): bool
     {
-        return $user->farmer->id === $farm->farmer_id || $user->role === 'admin';
+        return $user->id === $farm->farmer_id || $user->role === 'admin';
     }
 
     /**
@@ -36,6 +36,6 @@ class FarmPolicy
      */
     public function delete(User $user, Farm $farm): bool
     {
-        return $user->farmer->id === $farm->farmer_id || $user->role === 'admin';
+        return $user->id === $farm->farmer_id || $user->role === 'admin';
     }
 }

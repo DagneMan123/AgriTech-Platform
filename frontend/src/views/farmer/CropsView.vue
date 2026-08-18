@@ -419,7 +419,11 @@ const readyToHarvestCount = computed(() => {
 })
 
 const totalArea = computed(() => {
-  return crops.value.reduce((sum, crop) => sum + crop.area_hectares, 0).toFixed(1)
+  const total = crops.value.reduce((sum, crop) => {
+    const area = parseFloat(crop.area_hectares) || 0
+    return sum + area
+  }, 0)
+  return total.toFixed(1)
 })
 
 // Lifecycle

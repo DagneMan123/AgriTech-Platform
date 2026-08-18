@@ -7,12 +7,20 @@ use Illuminate\Http\Request;
 
 class Authenticate extends Middleware
 {
+    /**
+     * Get the path the user should be redirected to when they are not authenticated.
+     */
     protected function redirectTo(Request $request): ?string
     {
-        if (! $request->expectsJson()) {
-            return route('login');
-        }
-
+        // Always return null for API requests to trigger 401 JSON response
         return null;
+    }
+
+    /**
+     * Get the guards to check for authentication.
+     */
+    protected function guards(): array
+    {
+        return ['token'];
     }
 }

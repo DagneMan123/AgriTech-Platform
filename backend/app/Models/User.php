@@ -32,7 +32,11 @@ class User extends Authenticatable
 
     public function farmer()
     {
-        return $this->hasOne(Farmer::class);
+        return $this->hasOne(Farmer::class, 'user_id');
+    }
+    public function farms()
+    {
+        return $this->hasMany(Farm::class, 'farmer_id');
     }
     public function buyer()
     {

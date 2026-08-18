@@ -10,18 +10,29 @@ class Buyer extends Model
 {
     use HasFactory;
 
-    protected $table = 'buyer_profiles';
+    protected $table = 'buyers';
 
     protected $fillable = [
         'user_id',
-        'company_name',
-        'business_type',
-        'address',
-        'preferred_payment_method',
-        'is_verified'
+        'buyer_type',
+        'business_name',
+        'business_registration',
+        'tax_id',
+        'business_address',
+        'business_phone',
+        'bio',
+        'total_spent',
+        'total_orders',
+        'average_rating',
+        'verification_status',
+        'is_premium'
     ];
 
-    protected $casts = ['is_verified' => 'boolean'];
+    protected $casts = [
+        'is_premium' => 'boolean',
+        'total_spent' => 'decimal:2',
+        'average_rating' => 'decimal:2'
+    ];
 
     public function user()
     {

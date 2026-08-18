@@ -10,24 +10,30 @@ class Expert extends Model
 {
     use HasFactory;
 
-    protected $table = 'expert_profiles';
+    protected $table = 'experts';
 
     protected $fillable = [
         'user_id',
+        'expert_registration_number',
         'specialization',
-        'qualifications',
-        'years_experience',
-        'expertise_area',
+        'qualification',
+        'institution',
+        'years_of_experience',
         'bio',
-        'is_verified',
-        'is_available',
-        'consultation_fee'
+        'office_address',
+        'office_phone',
+        'expertise_areas',
+        'consultation_fee',
+        'total_consultations',
+        'average_rating',
+        'verification_status',
+        'available_for_consultation'
     ];
 
     protected $casts = [
-        'is_verified' => 'boolean',
-        'is_available' => 'boolean',
-        'consultation_fee' => 'decimal:2'
+        'available_for_consultation' => 'boolean',
+        'consultation_fee' => 'decimal:2',
+        'average_rating' => 'decimal:2'
     ];
 
     public function user()

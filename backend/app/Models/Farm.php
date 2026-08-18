@@ -14,12 +14,13 @@ class Farm extends Model
         'farmer_id',
         'name',
         'description',
-        'location',
+        'address',
         'region',
         'zone',
         'woreda',
-        'size',
-        'size_unit',
+        'kebele',
+        'size_hectares',
+        'land_type',
         'soil_type',
         'status',
         'images',
@@ -27,20 +28,25 @@ class Farm extends Model
         'longitude',
         'altitude',
         'irrigation_type',
-        'water_source'
+        'water_source',
+        'activities',
+        'farm_type',
     ];
 
     protected $casts = [
-        'size' => 'decimal:2',
+        'size_hectares' => 'float',
         'images' => 'array',
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
-        'altitude' => 'decimal:2'
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'altitude' => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
-    public function farmer()
+    public function user()
     {
-        return $this->belongsTo(Farmer::class);
+        return $this->belongsTo(User::class, 'farmer_id');
     }
     public function crops()
     {

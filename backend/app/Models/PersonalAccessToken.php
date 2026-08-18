@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class PersonalAccessToken extends Model
 {
-    protected $fillable = ['name', 'token', 'abilities'];
+    protected $table = 'personal_access_tokens';
+    
+    protected $fillable = ['name', 'token', 'abilities', 'tokenable_type', 'tokenable_id'];
 
     /**
      * Get the tokenable model that the token belongs to.
