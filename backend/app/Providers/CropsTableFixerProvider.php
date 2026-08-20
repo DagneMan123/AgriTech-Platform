@@ -10,8 +10,8 @@ class CropsTableFixerProvider extends ServiceProvider
 {
     public function boot()
     {
-        // Only attempt fix if we're in an API request and not in migration
-        if (app()->runningInConsole() && in_array(app()->make('artisan')->getName() ?? 'artisan', ['migrate', 'migrate:fresh'])) {
+        // Only attempt fix if we're not running artisan commands
+        if (app()->runningInConsole()) {
             return;
         }
 

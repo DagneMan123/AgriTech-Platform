@@ -21,6 +21,6 @@ class Authenticate extends Middleware
      */
     protected function guards(): array
     {
-        return ['token'];
+        return ['api'];
     }
 }

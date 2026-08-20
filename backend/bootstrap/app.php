@@ -13,15 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Auto-fix database constraints on first API request
-        $middleware->append(\App\Http\Middleware\AutoFixConstraints::class);
-        
-        // Auto-fix crops table
-        $middleware->append(\App\Http\Middleware\AutoFixCropsTable::class);
-        
-        // Apply CORS middleware globally
-        $middleware->append(\App\Http\Middleware\CorsMiddleware::class);
-
         // Register middleware aliases for route middleware groups
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
@@ -33,6 +24,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api([
             'throttle:60,1',
         ]);
+
+        // Auto-fix database constraints on first API request
+        $middleware->append(\App\Http\Middleware\AutoFixConstraints::class);
+        
+        // Auto-fix crops table
+        $middleware->append(\App\Http\Middleware\AutoFixCropsTable::class);
+        
+        // Apply CORS middleware globally
+        $middleware->append(\App\Http\Middleware\CorsMiddleware::class);
     })
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,
@@ -45,4 +45,3 @@ return Application::configure(basePath: dirname(__DIR__))
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();
-

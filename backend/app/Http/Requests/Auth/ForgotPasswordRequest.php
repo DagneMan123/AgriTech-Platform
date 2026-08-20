@@ -16,16 +16,18 @@ class ForgotPasswordRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:users|max:255',
+            'email' => ['required', 'email', 'exists:users,email'],
         ];
     }
 
     /**
-     * Get custom messages for validator errors.
+     * Get custom error messages for validation rules.
      */
     public function messages(): array
     {

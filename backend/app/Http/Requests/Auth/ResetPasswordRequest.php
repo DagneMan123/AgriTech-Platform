@@ -16,19 +16,26 @@ class ResetPasswordRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
      */
     public function rules(): array
     {
         return [
-            'token' => 'required|string',
-            'email' => 'required|email|exists:users|max:255',
-            'password' => 'required|string|min:8|confirmed',
-            'password_confirmation' => 'required|string|min:8',
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email', 'exists:users,email'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+            ],
         ];
     }
 
     /**
-     * Get custom messages for validator errors.
+     * Get custom error messages for validation rules.
      */
     public function messages(): array
     {
@@ -38,8 +45,9 @@ class ResetPasswordRequest extends FormRequest
             'email.email' => 'Please enter a valid email address.',
             'email.exists' => 'No account found with this email address.',
             'password.required' => 'Password is required.',
-            'password.min' => 'Password must be at least 8 characters.',
+            'password.min' => 'Password must be at least 8 characters long.',
             'password.confirmed' => 'Passwords do not match.',
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&).',
         ];
     }
 }
