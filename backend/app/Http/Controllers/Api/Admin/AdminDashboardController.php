@@ -21,85 +21,110 @@ class AdminDashboardController extends Controller
      */
     public function index(Request $request)
     {
-        // Platform activity monitoring
-        $totalUsers = User::count();
-        $totalOrders = Order::count();
-        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
-        $activeDeliveries = Delivery::where('status', 'in_transit')->count();
-        $totalProducts = Product::count();
-        $totalPayments = Payment::count();
+        try {
+            // Platform activity monitoring
+            $totalUsers = User::count();
+            $totalOrders = Order::count();
+            $totalRevenue = Payment::where('status', 'completed')->sum('amount');
+            $activeDeliveries = Delivery::where('status', 'in_transit')->count();
+            $totalProducts = Product::count();
+            $totalPayments = Payment::count();
 
-        // User and role statistics
-        $usersByRole = User::groupBy('role')
-            ->selectRaw('role, count(*) as count')
-            ->get();
+            // User and role statistics
+            $usersByRole = User::groupBy('role')
+                ->selectRaw('role, count(*) as count')
+                ->get();
 
-        // Marketplace monitoring
-        $ordersByStatus = Order::groupBy('status')
-            ->selectRaw('status, count(*) as count')
-            ->get();
+            // Marketplace monitoring
+            $ordersByStatus = Order::groupBy('status')
+                ->selectRaw('status, count(*) as count')
+                ->get();
 
-        $deliveriesByStatus = Delivery::groupBy('status')
-            ->selectRaw('status, count(*) as count')
-            ->get();
+            $deliveriesByStatus = Delivery::groupBy('status')
+                ->selectRaw('status, count(*) as count')
+                ->get();
 
-        // Payment monitoring
-        $paymentsByStatus = Payment::groupBy('status')
-            ->selectRaw('status, count(*) as count')
-            ->get();
+            // Payment monitoring
+            $paymentsByStatus = Payment::groupBy('status')
+                ->selectRaw('status, count(*) as count')
+                ->get();
 
-        // Recent activity
-        $recentOrders = Order::with(['buyer', 'items'])
-            ->latest()
-            ->limit(10)
-            ->get();
+            // Recent activity
+            $recentOrders = Order::with(['buyer', 'items'])
+                ->latest()
+                ->limit(10)
+                ->get();
 
-        $recentDeliveries = Delivery::with(['order', 'transporter'])
-            ->latest()
-            ->limit(5)
-            ->get();
+            $recentDeliveries = Delivery::with(['order', 'transporter'])
+                ->latest()
+                ->limit(5)
+                ->get();
 
-        $recentPayments = Payment::with('order')
-            ->latest()
-            ->limit(5)
-            ->get();
+            $recentPayments = Payment::with('order')
+                ->latest()
+                ->limit(5)
+                ->get();
 
-        // Unread notifications count
-        $unreadNotifications = Notification::whereNull('read_at')->count();
+            // Unread notifications count - handle missing table gracefully
+            $unreadNotifications = 0;
+            try {
+                $unreadNotifications = \App\Models\Notification::whereNull('read_at')->count();
+            } catch (\Exception $e) {
+                // Table might not exist yet, log and continue
+                \Illuminate\Support\Facades\Log::warning('Notifications table check failed: ' . $e->getMessage());
+            }
 
-        // Pending actions
-        $pendingLoans = \App\Models\Loan::where('status', 'pending')->count();
-        $suspendedUsers = User::where('is_active', false)->count();
+            // Pending actions
+            $pendingLoans = \App\Models\Loan::where('status', 'pending')->count();
+            $suspendedUsers = User::where('is_active', false)->count();
 
-        // Monthly trends
-        $revenueByMonth = Payment::where('status', 'completed')
-            ->whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, SUM(amount) as revenue, COUNT(*) as transactions')
-            ->orderBy('month')
-            ->get();
+            // Monthly trends (database-agnostic)
+            $revenueByMonth = Payment::where('status', 'completed')
+                ->whereDate('created_at', '>=', now()->subMonths(6))
+                ->get()
+                ->groupBy(function($date) {
+                    return $date->created_at->format('Y-m');
+                })
+                ->map(function($group) {
+                    return [
+                        'month' => $group->first()->created_at->format('Y-m'),
+                        'revenue' => $group->sum('amount'),
+                        'transactions' => $group->count(),
+                    ];
+                })
+                ->values();
 
-        return response()->json([
-            'summary' => [
-                'total_users' => $totalUsers,
-                'total_orders' => $totalOrders,
-                'total_products' => $totalProducts,
-                'total_revenue' => $totalRevenue,
-                'active_deliveries' => $activeDeliveries,
-                'total_payments' => $totalPayments,
-                'suspended_users' => $suspendedUsers,
-                'pending_loans' => $pendingLoans,
-                'unread_notifications' => $unreadNotifications,
-            ],
-            'users_by_role' => $usersByRole,
-            'orders_by_status' => $ordersByStatus,
-            'deliveries_by_status' => $deliveriesByStatus,
-            'payments_by_status' => $paymentsByStatus,
-            'recent_orders' => $recentOrders,
-            'recent_deliveries' => $recentDeliveries,
-            'recent_payments' => $recentPayments,
-            'revenue_by_month' => $revenueByMonth,
-        ]);
+            return response()->json([
+                'summary' => [
+                    'total_users' => $totalUsers,
+                    'total_orders' => $totalOrders,
+                    'total_products' => $totalProducts,
+                    'total_revenue' => $totalRevenue,
+                    'active_deliveries' => $activeDeliveries,
+                    'total_payments' => $totalPayments,
+                    'suspended_users' => $suspendedUsers,
+                    'pending_loans' => $pendingLoans,
+                    'unread_notifications' => $unreadNotifications,
+                ],
+                'users_by_role' => $usersByRole,
+                'orders_by_status' => $ordersByStatus,
+                'deliveries_by_status' => $deliveriesByStatus,
+                'payments_by_status' => $paymentsByStatus,
+                'recent_orders' => $recentOrders,
+                'recent_deliveries' => $recentDeliveries,
+                'recent_payments' => $recentPayments,
+                'revenue_by_month' => $revenueByMonth,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Admin dashboard error: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            
+            return response()->json([
+                'message' => 'Failed to load dashboard data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -304,10 +329,17 @@ class AdminDashboardController extends Controller
         $totalDeliveries = Delivery::whereDate('created_at', '>=', now()->subDays($period))->count();
 
         $userGrowth = User::whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, COUNT(*) as count')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($date) {
+                return $date->created_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->created_at->format('Y-m'),
+                    'count' => $group->count(),
+                ];
+            })
+            ->values();
 
         return response()->json([
             'period_days' => $period,

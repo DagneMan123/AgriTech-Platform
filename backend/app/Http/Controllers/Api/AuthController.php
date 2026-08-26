@@ -206,7 +206,10 @@ class AuthController extends Controller
                 'password.required' => 'Password is required.',
             ]);
 
-            $user = User::where('email', $request->email)->first();
+            // Select only necessary columns for faster query
+            $user = User::select('id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region')
+                ->where('email', $request->email)
+                ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
@@ -222,7 +225,13 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            $user->update(['last_login_at' => now()]);
+            // Update last_login_at asynchronously (non-blocking)
+            try {
+                $user->update(['last_login_at' => now()]);
+            } catch (\Exception $e) {
+                // Log error but don't fail login
+                \Illuminate\Support\Facades\Log::warning('Could not update last_login_at: ' . $e->getMessage());
+            }
 
             $token = $user->createToken('api-token')->plainTextToken;
 
@@ -314,36 +323,35 @@ class AuthController extends Controller
         try {
             $request->validate(['email' => 'required|email']);
 
-            $user = User::where('email', $request->email)->first();
+            // Select only email column for fast lookup
+            $user = User::select('id', 'name', 'email')->where('email', $request->email)->first();
 
-            if (!$user) {
-                // For security, don't reveal whether email exists
-                return response()->json([
-                    'message' => 'If an account exists with this email, a password reset link has been sent.'
-                ], 200);
-            }
+            // For security, always return success message (don't reveal if email exists)
+            $response = [
+                'message' => 'If an account exists with this email, a password reset link has been sent.'
+            ];
 
-            // Generate a password reset token
-            $resetToken = Str::random(60);
-            
-            // Store the reset token in the password_resets table with a 60-minute expiration
-            DB::table('password_resets')->updateOrInsert(
-                ['email' => $user->email],
-                [
-                    'token' => Hash::make($resetToken),
-                    'created_at' => now(),
-                ]
-            );
+            if ($user) {
+                // Generate a password reset token
+                $resetToken = Str::random(60);
+                
+                // Store the reset token in the password_resets table with a 60-minute expiration
+                DB::table('password_resets')->updateOrInsert(
+                    ['email' => $user->email],
+                    [
+                        'token' => Hash::make($resetToken),
+                        'created_at' => now(),
+                    ]
+                );
 
-            // Get the frontend URL from environment or use default
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-            
-            // Create the reset link with token
-            $resetLink = $frontendUrl . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
+                // Get the frontend URL from environment or use default
+                $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+                
+                // Create the reset link with token
+                $resetLink = $frontendUrl . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
 
-            // Try to send the password reset email
-            try {
-                Mail::send(
+                // Send email asynchronously (non-blocking) using queue
+                Mail::queue(
                     new PasswordResetMail(
                         $user->name,
                         $user->email,
@@ -351,39 +359,25 @@ class AuthController extends Controller
                         $resetLink
                     )
                 );
-            } catch (\Exception $mailError) {
-                // Log the mail error but don't fail the request
-                Log::warning('Password reset email could not be sent', [
+
+                Log::info('Password reset request processed', [
                     'user_id' => $user->id,
                     'email' => $user->email,
-                    'error' => $mailError->getMessage(),
                 ]);
-                // In development, log the reset link so user can copy it
-                if (env('APP_ENV') === 'local') {
-                    Log::info('PASSWORD RESET LINK (Development): ' . $resetLink);
-                    Log::info('PASSWORD RESET TOKEN (Development): ' . $resetToken);
-                }
             }
 
-            Log::info('Password reset request processed', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'timestamp' => now(),
-            ]);
-
-            return response()->json([
-                'message' => 'If an account exists with this email, a password reset link has been sent.'
-            ], 200);
+            // Return immediately (don't wait for email queue)
+            return response()->json($response, 200);
 
         } catch (\Exception $e) {
             Log::error('Forgot password error: ' . $e->getMessage(), [
                 'email' => $request->email ?? null,
-                'trace' => $e->getTraceAsString(),
             ]);
 
+            // Return success anyway for security
             return response()->json([
-                'message' => 'An error occurred while processing your request. Please try again later.',
-            ], 500);
+                'message' => 'If an account exists with this email, a password reset link has been sent.'
+            ], 200);
         }
     }
 

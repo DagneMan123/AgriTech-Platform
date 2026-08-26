@@ -61,14 +61,22 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly revenue trend
+        // Monthly revenue trend (database-agnostic)
         $revenueByMonth = Delivery::where('transporter_id', $transporter->id)
             ->where('status', 'completed')
             ->whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, SUM(delivery_fee) as revenue, COUNT(*) as deliveries')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($delivery) {
+                return $delivery->created_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->created_at->format('Y-m'),
+                    'revenue' => $group->sum('delivery_fee'),
+                    'deliveries' => $group->count(),
+                ];
+            })
+            ->values();
 
         // Average delivery time
         $avgDeliveryTime = Delivery::where('transporter_id', $transporter->id)

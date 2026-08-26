@@ -71,13 +71,20 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly consultation trend
+        // Monthly consultation trend (database-agnostic)
         $consultationByMonth = Consultation::where('expert_id', $expert->id)
             ->whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, COUNT(*) as consultations')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($consultation) {
+                return $consultation->created_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->created_at->format('Y-m'),
+                    'consultations' => $group->count(),
+                ];
+            })
+            ->values();
 
         // Expert rating (if available)
         $averageRating = Consultation::where('expert_id', $expert->id)

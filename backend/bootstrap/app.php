@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle:60,1',
         ]);
 
+        // Ensure notifications table exists
+        $middleware->append(\App\Http\Middleware\EnsureNotificationsTableExists::class);
+
         // Auto-fix database constraints on first API request
         $middleware->append(\App\Http\Middleware\AutoFixConstraints::class);
         

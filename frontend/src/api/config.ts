@@ -9,6 +9,8 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  // Reduce timeout for faster failure detection
+  timeout: 10000,
 })
 
 // Add token to every request

@@ -1,242 +1,262 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full mx-auto">
-      <!-- Header -->
+  <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <!-- Logo Section -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">🌾 AgriTech</h1>
-        <p class="text-gray-600 mt-2">Reset Your Password</p>
+        <h1 class="text-4xl font-bold text-green-600 mb-2">🌾 AgriConnect</h1>
+        <p class="text-gray-600">Reset Your Password</p>
       </div>
 
-      <!-- Form Card -->
-      <form @submit.prevent="handleResetPassword" class="bg-white rounded-lg shadow-md p-8 space-y-6">
-        
-        <!-- Info Message -->
-        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p class="text-sm text-blue-800">
-            Please enter a strong password with at least 8 characters including uppercase, lowercase, numbers, and special characters.
-          </p>
+      <!-- Success Message -->
+      <div v-if="resetSuccess" class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+        <div class="text-center">
+          <div class="text-4xl mb-3">✓</div>
+          <h3 class="text-green-800 font-semibold mb-2">Password Reset Successfully!</h3>
+          <p class="text-green-700 text-sm mb-4">Your password has been reset. You can now log in with your new password.</p>
+          <router-link
+            to="/auth/login"
+            class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition"
+          >
+            Go to Login
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Reset Form -->
+      <form v-if="!resetSuccess" @submit.prevent="handleResetPassword" class="bg-white rounded-lg shadow-lg p-8">
+        <!-- Error Message -->
+        <div v-if="errorMessage" class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          {{ errorMessage }}
         </div>
 
-        <!-- Email Field (Pre-filled from URL) -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-          <input 
-            v-model="form.email" 
-            type="email" 
-            required 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            :readonly="emailFromUrl"
-          />
-          <p v-if="!emailFromUrl" class="text-xs text-gray-500 mt-1">
-            Email from reset link will be auto-filled
-          </p>
+        <!-- Success Alert -->
+        <div v-if="successMessage" class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+          {{ successMessage }}
         </div>
 
-        <!-- Token Field (Hidden but required) -->
-        <input 
-          v-model="form.token" 
-          type="hidden"
-        />
+        <!-- Email Display (Read-only) -->
+        <div class="mb-6 p-4 bg-gray-50 border border-gray-300 rounded-lg">
+          <label class="block text-gray-700 font-semibold mb-2">📧 Email Address</label>
+          <p class="text-gray-800 font-medium text-lg">{{ formData.email || 'No email provided' }}</p>
+          <p class="text-xs text-gray-500 mt-2">This email will be used to reset your password (read-only)</p>
+        </div>
 
-        <!-- New Password Field -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+        <!-- Password Field -->
+        <div class="mb-4">
+          <label for="password" class="block text-gray-700 font-semibold mb-2">New Password</label>
           <div class="relative">
-            <input 
-              v-model="form.password" 
-              :type="showPassword ? 'text' : 'password'" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              id="password"
+              v-model="formData.password"
               placeholder="Enter your new password"
-              @input="validatePassword"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <button 
-              type="button" 
-              class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+            <button
+              type="button"
               @click="showPassword = !showPassword"
+              class="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
             >
-              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+              <span v-if="showPassword">👁️</span>
+              <span v-else>👁️‍🗨️</span>
             </button>
           </div>
-          
-          <!-- Password Strength Indicator -->
-          <div class="mt-3 space-y-2">
-            <div class="space-y-1">
-              <p class="text-xs font-medium text-gray-600">Password Requirements:</p>
-              <ul class="text-xs space-y-1">
-                <li :class="passwordRequirements.minLength ? 'text-green-600' : 'text-gray-400'">
-                  ✓ At least 8 characters
-                </li>
-                <li :class="passwordRequirements.hasUppercase ? 'text-green-600' : 'text-gray-400'">
-                  ✓ At least one uppercase letter (A-Z)
-                </li>
-                <li :class="passwordRequirements.hasLowercase ? 'text-green-600' : 'text-gray-400'">
-                  ✓ At least one lowercase letter (a-z)
-                </li>
-                <li :class="passwordRequirements.hasNumber ? 'text-green-600' : 'text-gray-400'">
-                  ✓ At least one number (0-9)
-                </li>
-                <li :class="passwordRequirements.hasSpecial ? 'text-green-600' : 'text-gray-400'">
-                  ✓ At least one special character (@$!%*?&)
-                </li>
-              </ul>
-            </div>
-          </div>
+          <p class="text-xs text-gray-500 mt-1">At least 8 characters</p>
         </div>
 
         <!-- Confirm Password Field -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+        <div class="mb-6">
+          <label for="password_confirmation" class="block text-gray-700 font-semibold mb-2">Confirm Password</label>
           <div class="relative">
-            <input 
-              v-model="form.password_confirmation" 
-              :type="showConfirmPassword ? 'text' : 'password'" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            <input
+              :type="showConfirmPassword ? 'text' : 'password'"
+              id="password_confirmation"
+              v-model="formData.password_confirmation"
               placeholder="Confirm your new password"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <button 
-              type="button" 
-              class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+            <button
+              type="button"
               @click="showConfirmPassword = !showConfirmPassword"
+              class="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
             >
-              {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+              <span v-if="showConfirmPassword">👁️</span>
+              <span v-else>👁️‍🗨️</span>
             </button>
           </div>
-          <p v-if="form.password && form.password_confirmation && form.password !== form.password_confirmation" 
-            class="text-xs text-red-600 mt-1">
-            Passwords do not match
-          </p>
         </div>
 
-        <!-- Error Message -->
-        <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p class="text-red-800 text-sm">{{ error }}</p>
-        </div>
-
-        <!-- Success Message -->
-        <div v-if="success" class="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p class="text-green-800 text-sm">{{ success }}</p>
-          <p class="text-green-700 text-xs mt-2">Redirecting to login...</p>
+        <!-- Password Requirements -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm font-semibold text-gray-700 mb-2">Password Requirements:</p>
+          <ul class="text-xs text-gray-600 space-y-1">
+            <li :class="{ 'text-green-600': formData.password.length >= 8 }">
+              ✓ At least 8 characters
+            </li>
+            <li :class="{ 'text-green-600': /[A-Z]/.test(formData.password) }">
+              ✓ Contains uppercase letter (A-Z)
+            </li>
+            <li :class="{ 'text-green-600': /[a-z]/.test(formData.password) }">
+              ✓ Contains lowercase letter (a-z)
+            </li>
+            <li :class="{ 'text-green-600': /[0-9]/.test(formData.password) }">
+              ✓ Contains number (0-9)
+            </li>
+          </ul>
         </div>
 
         <!-- Submit Button -->
-        <button 
-          type="submit" 
-          :disabled="loading || !isFormValid" 
-          class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+        <button
+          type="submit"
+          :disabled="isLoading || !formData.password || !formData.password_confirmation"
+          class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-full transition duration-200"
         >
-          {{ loading ? 'Resetting Password...' : 'Reset Password' }}
+          <span v-if="!isLoading">Reset Password</span>
+          <span v-else class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing...
+          </span>
         </button>
 
-        <!-- Back to Login Link -->
-        <router-link 
-          to="/auth/login" 
-          class="text-center block text-green-600 hover:text-green-700 text-sm"
-        >
-          Remember your password? Back to login
-        </router-link>
+        <!-- Back to Login -->
+        <div class="text-center mt-4">
+          <router-link
+            to="/auth/login"
+            class="text-green-600 hover:text-green-700 font-semibold text-sm"
+          >
+            Remember your password? Log in
+          </router-link>
+        </div>
       </form>
 
-      <!-- Footer -->
-      <p class="text-center text-xs text-gray-500 mt-8">
-        © 2026 AgriTech Platform. All rights reserved.
-      </p>
+      <!-- 404 Message -->
+      <div v-if="invalidToken" class="bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="text-6xl mb-4">404</div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Reset Link Expired</h3>
+        <p class="text-gray-600 mb-6">This password reset link has expired or is invalid. Please request a new one.</p>
+        <router-link
+          to="/auth/forgot-password"
+          class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition"
+        >
+          Request New Link
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { authAPI } from '@/api/auth'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 
-const form = ref({
-  token: (route.query.token as string) || '',
-  email: (route.query.email as string) || '',
+const formData = ref({
   password: '',
-  password_confirmation: ''
+  password_confirmation: '',
+  token: '',
+  email: ''
 })
 
+const isLoading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+const resetSuccess = ref(false)
+const invalidToken = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
-const loading = ref(false)
-const error = ref<string | null>(null)
-const success = ref<string | null>(null)
 
-const emailFromUrl = computed(() => {
-  return (route.query.email as string) || false
+// Validate password strength
+const isPasswordStrong = computed(() => {
+  const pwd = formData.value.password
+  return (
+    pwd.length >= 8 &&
+    /[A-Z]/.test(pwd) &&
+    /[a-z]/.test(pwd) &&
+    /[0-9]/.test(pwd)
+  )
 })
 
-const passwordRequirements = ref({
-  minLength: false,
-  hasUppercase: false,
-  hasLowercase: false,
-  hasNumber: false,
-  hasSpecial: false
+// Check passwords match
+const passwordsMatch = computed(() => {
+  return formData.value.password === formData.value.password_confirmation
 })
 
-const isFormValid = computed(() => {
-  return form.value.email && 
-         form.value.token &&
-         form.value.password &&
-         form.value.password_confirmation === form.value.password &&
-         Object.values(passwordRequirements.value).every(req => req)
+// Can submit
+const canSubmit = computed(() => {
+  return isPasswordStrong.value && passwordsMatch.value && !isLoading.value
 })
 
-const validatePassword = () => {
-  const pwd = form.value.password
-  
-  passwordRequirements.value = {
-    minLength: pwd.length >= 8,
-    hasUppercase: /[A-Z]/.test(pwd),
-    hasLowercase: /[a-z]/.test(pwd),
-    hasNumber: /\d/.test(pwd),
-    hasSpecial: /[@$!%*?&]/.test(pwd)
+onMounted(() => {
+  // Get token and email from URL query params
+  formData.value.token = (route.query.token as string) || ''
+  formData.value.email = (route.query.email as string) || ''
+
+  // Check if token is present
+  if (!formData.value.token || !formData.value.email) {
+    invalidToken.value = true
   }
-}
+})
 
 const handleResetPassword = async () => {
-  // Final validation
-  if (form.value.password !== form.value.password_confirmation) {
-    error.value = 'Passwords do not match'
+  if (!canSubmit.value) {
+    errorMessage.value = 'Please ensure passwords match and meet all requirements'
     return
   }
 
-  if (!form.value.token) {
-    error.value = 'Invalid reset link. Please request a new password reset.'
-    return
-  }
-
-  if (!isFormValid.value) {
-    error.value = 'Please ensure your password meets all requirements'
-    return
-  }
-
-  loading.value = true
-  error.value = null
+  isLoading.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
 
   try {
-    await authAPI.resetPassword({
-      token: form.value.token,
-      email: form.value.email,
-      password: form.value.password,
-      password_confirmation: form.value.password_confirmation
-    })
-    
-    success.value = 'Password has been reset successfully! Redirecting to login...'
-    
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/auth/reset-password`,
+      {
+        token: formData.value.token,
+        email: formData.value.email,
+        password: formData.value.password,
+        password_confirmation: formData.value.password_confirmation
+      }
+    )
+
+    successMessage.value = response.data.message
+    resetSuccess.value = true
+
+    // Redirect to login after 2 seconds
     setTimeout(() => {
       router.push('/auth/login')
     }, 2000)
-  } catch (err: any) {
-    error.value = err.response?.data?.message || err.response?.data?.errors?.token?.[0] || 'Failed to reset password. Please try again or request a new reset link.'
-    console.error('Reset password error:', err)
+  } catch (error: any) {
+    if (error.response?.data?.errors) {
+      const errors = error.response.data.errors
+      errorMessage.value = Object.values(errors).flat().join(', ')
+    } else if (error.response?.data?.message) {
+      errorMessage.value = error.response.data.message
+    } else {
+      errorMessage.value = 'An error occurred while resetting your password. Please try again.'
+    }
+
+    // If token invalid, show 404
+    if (error.response?.status === 422) {
+      invalidToken.value = true
+    }
   } finally {
-    loading.value = false
+    isLoading.value = false
   }
 }
 </script>
+
+<style scoped>
+input:focus {
+  border-color: #16a34a;
+}
+</style>

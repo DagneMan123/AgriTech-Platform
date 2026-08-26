@@ -33,17 +33,20 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authAPI.login(credentials)
       const { user: userData, token: newToken } = response.data
       
-      user.value = userData
+      // Store token immediately for faster redirect
       token.value = newToken
       localStorage.setItem('auth_token', newToken)
       localStorage.setItem('user_role', userData.role)
       
+      // Update user data
+      user.value = userData
+      loading.value = false
+      
       return userData
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Login failed'
-      throw err
-    } finally {
       loading.value = false
+      throw err
     }
   }
 
@@ -101,6 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
+    loading.value = true
     try {
       await authAPI.logout()
     } catch (err) {
@@ -110,6 +114,7 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_role')
+      loading.value = false
       router.push('/login')
     }
   }

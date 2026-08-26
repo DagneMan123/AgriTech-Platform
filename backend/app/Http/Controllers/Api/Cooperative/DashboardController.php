@@ -67,13 +67,21 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Sales by month
+        // Sales by month (database-agnostic)
         $salesByMonth = CooperativeSale::where('cooperative_id', $cooperative->id)
             ->whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, SUM(quantity) as quantity, SUM(total_amount) as revenue')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($sale) {
+                return $sale->created_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->created_at->format('Y-m'),
+                    'quantity' => $group->sum('quantity'),
+                    'revenue' => $group->sum('total_amount'),
+                ];
+            })
+            ->values();
 
         return response()->json([
             'cooperative' => $cooperative,
@@ -265,13 +273,20 @@ class DashboardController extends Controller
 
         $membersByStatus = $members->groupBy('status')->map->count();
 
-        // Members by joining date (last 6 months)
+        // Members by joining date (last 6 months) - database-agnostic
         $membersByMonth = CooperativeMember::where('cooperative_id', $cooperative->id)
             ->whereDate('joined_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', joined_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', joined_at) as month, count(*) as members')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($member) {
+                return $member->joined_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->joined_at->format('Y-m'),
+                    'members' => $group->count(),
+                ];
+            })
+            ->values();
 
         return response()->json([
             'total_members' => $members->count(),

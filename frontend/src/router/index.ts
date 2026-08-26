@@ -1,86 +1,80 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
-// Layout components
+// Layout components - loaded eagerly (small)
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 
-// Home & Common
+// Home & Common - loaded eagerly
 import HomeView from '@/views/HomeView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 
-// Auth views
+// Auth views - loaded eagerly (on auth path)
 import LoginView from '@/views/auth/LoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 
-// Admin views
-import AdminDashboardView from '@/views/admin/AdminDashboard.vue'
-import AdminUsersView from '@/views/admin/UsersView.vue'
-import AdminRolesView from '@/views/admin/RolesView.vue'
-import AdminActivityLogsView from '@/views/admin/ActivityLogsView.vue'
-import AdminSettingsView from '@/views/admin/SettingsView.vue'
-import AdminReportsView from '@/views/admin/ReportsView.vue'
+// Lazy load all dashboard and secondary views for faster initial load
+// Using dynamic imports directly (recommended by Vue Router)
+const AdminDashboardView = () => import('@/views/admin/AdminDashboard.vue')
+const AdminUsersView = () => import('@/views/admin/UsersView.vue')
+const AdminRolesView = () => import('@/views/admin/RolesView.vue')
+const AdminActivityLogsView = () => import('@/views/admin/ActivityLogsView.vue')
+const AdminSettingsView = () => import('@/views/admin/SettingsView.vue')
+const AdminReportsView = () => import('@/views/admin/ReportsView.vue')
 
-// Farmer views
-import FarmerDashboardView from '@/views/farmer/FarmerDashboard.vue'
-import FarmerFarmsView from '@/views/farmer/FarmsView.vue'
-import FarmerCropsView from '@/views/farmer/CropsView.vue'
-import FarmerHarvestsView from '@/views/farmer/HarvestsView.vue'
-import FarmerProductsView from '@/views/farmer/ProductsView.vue'
-import FarmerOrdersView from '@/views/farmer/OrdersView.vue'
-import FarmerBuyInputsView from '@/views/farmer/BuyInputsView.vue'
-import FarmerTransportView from '@/views/farmer/TransportView.vue'
-import FarmerWeatherView from '@/views/farmer/WeatherView.vue'
-import FarmerMarketPricesView from '@/views/farmer/MarketPricesView.vue'
-import FarmerConsultationsView from '@/views/farmer/ConsultationsView.vue'
-import FarmerLoansView from '@/views/farmer/LoansView.vue'
-import FarmerReportsView from '@/views/farmer/ReportsView.vue'
-import FarmerProfileView from '@/views/farmer/ProfileView.vue'
+const FarmerDashboardView = () => import('@/views/farmer/FarmerDashboard.vue')
+const FarmerFarmsView = () => import('@/views/farmer/FarmsView.vue')
+const FarmerCropsView = () => import('@/views/farmer/CropsView.vue')
+const FarmerHarvestsView = () => import('@/views/farmer/HarvestsView.vue')
+const FarmerProductsView = () => import('@/views/farmer/ProductsView.vue')
+const FarmerOrdersView = () => import('@/views/farmer/OrdersView.vue')
+const FarmerBuyInputsView = () => import('@/views/farmer/BuyInputsView.vue')
+const FarmerTransportView = () => import('@/views/farmer/TransportView.vue')
+const FarmerWeatherView = () => import('@/views/farmer/WeatherView.vue')
+const FarmerMarketPricesView = () => import('@/views/farmer/MarketPricesView.vue')
+const FarmerConsultationsView = () => import('@/views/farmer/ConsultationsView.vue')
+const FarmerLoansView = () => import('@/views/farmer/LoansView.vue')
+const FarmerReportsView = () => import('@/views/farmer/ReportsView.vue')
+const FarmerProfileView = () => import('@/views/farmer/ProfileView.vue')
 
-// Buyer views
-import BuyerDashboardView from '@/views/buyer/BuyerDashboard.vue'
-import BuyerMarketplaceView from '@/views/buyer/MarketplaceView.vue'
-import BuyerProductDetailView from '@/views/buyer/ProductDetailView.vue'
-import BuyerCartView from '@/views/buyer/CartView.vue'
-import BuyerOrdersView from '@/views/buyer/OrdersView.vue'
-import BuyerWishlistView from '@/views/buyer/WishlistView.vue'
-import BuyerCategoriesView from '@/views/buyer/CategoriesView.vue'
-import BuyerPaymentsView from '@/views/buyer/PaymentsView.vue'
-import BuyerReviewsView from '@/views/buyer/ReviewsView.vue'
-import BuyerProfileView from '@/views/buyer/ProfileView.vue'
+const BuyerDashboardView = () => import('@/views/buyer/BuyerDashboard.vue')
+const BuyerMarketplaceView = () => import('@/views/buyer/MarketplaceView.vue')
+const BuyerProductDetailView = () => import('@/views/buyer/ProductDetailView.vue')
+const BuyerCartView = () => import('@/views/buyer/CartView.vue')
+const BuyerOrdersView = () => import('@/views/buyer/OrdersView.vue')
+const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
+const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
+const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
+const BuyerReviewsView = () => import('@/views/buyer/ReviewsView.vue')
+const BuyerProfileView = () => import('@/views/buyer/ProfileView.vue')
 
-// Supplier views
-import SupplierDashboardView from '@/views/supplier/SupplierDashboard.vue'
-import SupplierProductsView from '@/views/supplier/ProductsView.vue'
-import SupplierInventoryView from '@/views/supplier/InventoryView.vue'
-import SupplierOrdersView from '@/views/supplier/OrdersView.vue'
-import SupplierLicenseApplicationView from '@/views/supplier/LicenseApplicationView.vue'
+const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
+const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
+const SupplierInventoryView = () => import('@/views/supplier/InventoryView.vue')
+const SupplierOrdersView = () => import('@/views/supplier/OrdersView.vue')
+const SupplierLicenseApplicationView = () => import('@/views/supplier/LicenseApplicationView.vue')
 
-// Transport views
-import TransportDashboardView from '@/views/transport/TransportDashboard.vue'
-import TransportDeliveriesView from '@/views/transport/DeliveriesView.vue'
-import TransportVehiclesView from '@/views/transport/VehiclesView.vue'
+const TransportDashboardView = () => import('@/views/transport/TransportDashboard.vue')
+const TransportDeliveriesView = () => import('@/views/transport/DeliveriesView.vue')
+const TransportVehiclesView = () => import('@/views/transport/VehiclesView.vue')
 
-// Expert views
-import ExpertDashboardView from '@/views/expert/ExpertDashboard.vue'
-import ExpertConsultationsView from '@/views/expert/ConsultationsView.vue'
-import ExpertArticlesView from '@/views/expert/ArticlesView.vue'
-import ExpertTrainingView from '@/views/expert/TrainingView.vue'
+const ExpertDashboardView = () => import('@/views/expert/ExpertDashboard.vue')
+const ExpertConsultationsView = () => import('@/views/expert/ConsultationsView.vue')
+const ExpertArticlesView = () => import('@/views/expert/ArticlesView.vue')
+const ExpertTrainingView = () => import('@/views/expert/TrainingView.vue')
 
-// Financial views
-import FinancialDashboardView from '@/views/financial/FinancialDashboard.vue'
-import FinancialLoansView from '@/views/financial/LoansView.vue'
-import FinancialInsuranceView from '@/views/financial/InsuranceView.vue'
+const FinancialDashboardView = () => import('@/views/financial/FinancialDashboard.vue')
+const FinancialLoansView = () => import('@/views/financial/LoansView.vue')
+const FinancialInsuranceView = () => import('@/views/financial/InsuranceView.vue')
 
-// Cooperative views
-import CooperativeDashboardView from '@/views/cooperative/CooperativeDashboard.vue'
-import CooperativeMembersView from '@/views/cooperative/MembersView.vue'
-import CooperativeSalesView from '@/views/cooperative/SalesView.vue'
-import CooperativeReportsView from '@/views/cooperative/ReportsView.vue'
+const CooperativeDashboardView = () => import('@/views/cooperative/CooperativeDashboard.vue')
+const CooperativeMembersView = () => import('@/views/cooperative/MembersView.vue')
+const CooperativeSalesView = () => import('@/views/cooperative/SalesView.vue')
+const CooperativeReportsView = () => import('@/views/cooperative/ReportsView.vue')
 
 const routes: RouteRecordRaw[] = [
   // Home - Public
@@ -89,6 +83,14 @@ const routes: RouteRecordRaw[] = [
     name: 'home',
     component: HomeView,
     meta: { requiresAuth: false, title: 'Home' }
+  },
+
+  // Reset Password - Public direct link (must be BEFORE auth routes)
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPasswordView,
+    meta: { requiresAuth: false, title: 'Reset Password' }
   },
 
   // Authentication
@@ -113,12 +115,6 @@ const routes: RouteRecordRaw[] = [
         name: 'forgot-password',
         component: ForgotPasswordView,
         meta: { requiresAuth: false, title: 'Forgot Password' }
-      },
-      {
-        path: 'reset-password/:token',
-        name: 'reset-password',
-        component: ResetPasswordView,
-        meta: { requiresAuth: false, title: 'Reset Password' }
       }
     ]
   },

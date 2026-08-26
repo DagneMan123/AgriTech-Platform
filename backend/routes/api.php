@@ -123,7 +123,7 @@ Route::get('/diagnostic/routes', function () {
     ]);
 });
 
-Route::middleware(['auth:token'])->group(function () {
+Route::middleware(['auth:api'])->group(function () {
     Route::get('/diagnostic/auth', [\App\Http\Controllers\Api\DiagnosticController::class, 'auth']);
     Route::get('/diagnostic/farms-count', [\App\Http\Controllers\Api\DiagnosticController::class, 'farmsCount']);
     Route::get('/diagnostic/dashboard-summary', [\App\Http\Controllers\Api\DiagnosticController::class, 'dashboardSummary']);
@@ -159,7 +159,7 @@ Route::get('/repair/crops-table', [RepairController::class, 'fixCropsTable']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:token'])->group(function () {
+Route::middleware(['auth:api'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
@@ -178,7 +178,7 @@ Route::middleware(['auth:token'])->group(function () {
     | ADMIN ROUTES (Admin Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:admin'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
         // Dashboard Overview
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
         
@@ -234,7 +234,7 @@ Route::middleware(['auth:token'])->group(function () {
     | FARMER ROUTES (Farmer Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:farmer'])->prefix('farmer')->group(function () {
+    Route::middleware(['auth:api', 'role:farmer'])->prefix('farmer')->group(function () {
         // Dashboard Overview
         Route::get('/dashboard', [FarmerDashboardController::class, 'index']);
         
@@ -307,7 +307,7 @@ Route::middleware(['auth:token'])->group(function () {
     | BUYER ROUTES (Buyer Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:buyer'])->prefix('buyer')->group(function () {
+    Route::middleware(['auth:api', 'role:buyer'])->prefix('buyer')->group(function () {
         // Dashboard
         Route::get('/dashboard', [BuyerDashboardController::class, 'index']);
         Route::get('/dashboard/order-history', [BuyerDashboardController::class, 'orderHistory']);
@@ -349,7 +349,7 @@ Route::middleware(['auth:token'])->group(function () {
     | SUPPLIER ROUTES (Supplier Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:supplier'])->prefix('supplier')->group(function () {
+    Route::middleware(['auth:api', 'role:supplier'])->prefix('supplier')->group(function () {
         // Dashboard
         Route::get('/dashboard', [SupplierDashboardController::class, 'index']);
         Route::get('/dashboard/inventory', [SupplierDashboardController::class, 'inventory']);
@@ -382,7 +382,7 @@ Route::middleware(['auth:token'])->group(function () {
     | TRANSPORT ROUTES (Transport Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:transport'])->prefix('transport')->group(function () {
+    Route::middleware(['auth:api', 'role:transport'])->prefix('transport')->group(function () {
         // Dashboard
         Route::get('/dashboard', [TransportDashboardController::class, 'index']);
         Route::get('/dashboard/delivery-requests', [TransportDashboardController::class, 'deliveryRequests']);
@@ -409,7 +409,7 @@ Route::middleware(['auth:token'])->group(function () {
     | EXPERT ROUTES (Expert Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:expert'])->prefix('expert')->group(function () {
+    Route::middleware(['auth:api', 'role:expert'])->prefix('expert')->group(function () {
         // Dashboard
         Route::get('/dashboard', [ExpertDashboardController::class, 'index']);
         Route::get('/dashboard/consultations', [ExpertDashboardController::class, 'consultations']);
@@ -441,7 +441,7 @@ Route::middleware(['auth:token'])->group(function () {
     | FINANCIAL ROUTES (Financial Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:financial'])->prefix('financial')->group(function () {
+    Route::middleware(['auth:api', 'role:financial'])->prefix('financial')->group(function () {
         // Dashboard
         Route::get('/dashboard', [FinancialDashboardController::class, 'index']);
         Route::get('/dashboard/pending-applications', [FinancialDashboardController::class, 'pendingApplications']);
@@ -475,7 +475,7 @@ Route::middleware(['auth:token'])->group(function () {
     | COOPERATIVE ROUTES (Cooperative Role Required)
     |----------------------------------------------------------------------
     */
-    Route::middleware(['auth:token', 'role:cooperative'])->prefix('cooperative')->group(function () {
+    Route::middleware(['auth:api', 'role:cooperative'])->prefix('cooperative')->group(function () {
         // Dashboard
         Route::get('/dashboard', [CooperativeDashboardController::class, 'index']);
         Route::get('/dashboard/members', [CooperativeDashboardController::class, 'members']);

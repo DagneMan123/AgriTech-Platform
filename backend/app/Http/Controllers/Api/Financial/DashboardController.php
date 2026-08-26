@@ -80,14 +80,22 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count, SUM(amount) as total_amount')
             ->get();
 
-        // Monthly loan disbursement trend
+        // Monthly loan disbursement trend (database-agnostic)
         $disbursementTrend = Loan::where('financial_id', $financial->id)
             ->where('status', 'disbursed')
             ->whereDate('disbursed_date', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', disbursed_date)'))
-            ->selectRaw('DATE_TRUNC(\'month\', disbursed_date) as month, COUNT(*) as loans, SUM(amount) as amount')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($loan) {
+                return $loan->disbursed_date->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->disbursed_date->format('Y-m'),
+                    'loans' => $group->count(),
+                    'amount' => $group->sum('amount'),
+                ];
+            })
+            ->values();
 
         // Portfolio risk assessment
         $riskAssessment = [

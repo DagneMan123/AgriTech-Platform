@@ -78,14 +78,22 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly spending trend
+        // Monthly spending trend (database-agnostic query)
         $spendingByMonth = Order::where('buyer_id', $buyer->id)
             ->where('status', 'completed')
             ->whereDate('created_at', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('DATE_TRUNC(\'month\', created_at)'))
-            ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, SUM(total_amount) as spent, COUNT(*) as orders')
-            ->orderBy('month')
-            ->get();
+            ->get()
+            ->groupBy(function($date) {
+                return $date->created_at->format('Y-m');
+            })
+            ->map(function($group) {
+                return [
+                    'month' => $group->first()->created_at->format('Y-m'),
+                    'spent' => $group->sum('total_amount'),
+                    'orders' => $group->count(),
+                ];
+            })
+            ->values();
 
         return response()->json([
             'summary' => [
