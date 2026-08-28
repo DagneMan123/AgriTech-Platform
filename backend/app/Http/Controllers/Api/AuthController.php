@@ -27,86 +27,100 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         try {
-            return DB::transaction(function () use ($request) {
-                $validated = $request->validated();
-                $role = strtolower($validated['role']);
+            $validated = $request->validated();
+            $role = strtolower($validated['role']);
 
-                // 1. Prepare user data with all required fields
-                $userData = [
-                    'name' => $validated['full_name'],
-                    'email' => $validated['email'],
-                    'phone' => $validated['phone'],
-                    'password' => Hash::make($validated['password']),
-                    'role' => $role,
-                    'address' => $validated['address'] ?? null,
-                    'location' => $validated['address'] ?? null,
-                    'region' => $validated['region'] ?? null,
-                    'is_active' => true,
-                ];
+            // 1. Determine user name based on role
+            $userName = match($role) {
+                'farmer' => $validated['full_name'],
+                'buyer' => $validated['business_name'],
+                'supplier' => $validated['business_name'],
+                'transport' => $validated['company_name'],
+                'expert' => $validated['full_name'],
+                'financial' => $validated['institution_name'],
+                'cooperative' => $validated['cooperative_name'],
+                default => $validated['full_name'] ?? 'User',
+            };
 
-                // 2. Create user
-                $user = User::create($userData);
+            // 2. Prepare user data
+            $userData = [
+                'name' => $userName,
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'],
+                'password' => Hash::make($validated['password']),
+                'role' => $role,
+                'address' => $validated['address'] ?? null,
+                'location' => $validated['address'] ?? null,
+                'region' => $validated['region'] ?? null,
+                'is_active' => false,
+            ];
 
-                // 3. Automatically create the respective role profile
-                try {
-                    $this->createRoleProfile($user, $role);
-                } catch (\Exception $profileError) {
-                    Log::error('Error creating role profile: ' . $profileError->getMessage(), [
-                        'user_id' => $user->id,
-                        'role' => $role,
-                    ]);
-                    // Don't fail registration if profile creation fails - it can be created later
-                }
-
-                // 4. Generate API token
-                $token = $user->createToken('api-token')->plainTextToken;
-
-                return response()->json([
-                    'message' => 'User registered successfully',
-                    'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region', 'address']),
-                    'token' => $token,
-                ], 201);
+            // 3. Create user (inside transaction for atomicity)
+            $user = DB::transaction(function () use ($userData) {
+                return User::create($userData);
             });
+            
+            Log::info('User created successfully', ['user_id' => $user->id, 'role' => $user->role]);
+
+            // 4. Handle document uploads (outside transaction)
+            try {
+                $this->handleDocumentUploads($request, $user, $role);
+            } catch (\Exception $docError) {
+                Log::warning('Document upload failed but continuing', ['user_id' => $user->id, 'error' => $docError->getMessage()]);
+            }
+
+            // 5. Create role profile (outside transaction - can fail silently)
+            try {
+                $this->createRoleProfile($user, $role);
+                Log::info('Role profile created successfully', ['user_id' => $user->id, 'role' => $role]);
+            } catch (\Throwable $profileError) {
+                Log::warning('Role profile creation failed', [
+                    'user_id' => $user->id,
+                    'role' => $role,
+                    'error' => $profileError->getMessage(),
+                ]);
+            }
+
+            // 6. Generate API token
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'User registered successfully. Please wait for document verification.',
+                'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region']),
+                'token' => $token,
+                'status' => 'pending_verification',
+            ], 201);
+            
         } catch (QueryException $e) {
             $errorMessage = $e->getMessage();
             $message = 'A database error occurred during registration';
 
-            // Check for specific constraint violations
             if (strpos($errorMessage, 'duplicate') !== false || strpos($errorMessage, 'Duplicate') !== false) {
-                if (strpos($errorMessage, 'users_email_unique') !== false || strpos($errorMessage, 'email') !== false) {
+                if (strpos($errorMessage, 'email') !== false) {
                     $message = 'Email address is already registered';
-                } elseif (strpos($errorMessage, 'users_phone_unique') !== false || strpos($errorMessage, 'phone') !== false) {
+                } elseif (strpos($errorMessage, 'phone') !== false) {
                     $message = 'Phone number is already registered';
                 }
-            } elseif (strpos($errorMessage, '23503') !== false) {
-                // Foreign key constraint violation
-                $message = 'Database constraint error. Please contact support if this persists.';
-            } elseif (strpos($errorMessage, '23502') !== false) {
-                // NOT NULL constraint violation
-                $message = 'Missing required field. Please provide all required information.';
+            } elseif (strpos($errorMessage, 'not null') !== false || strpos($errorMessage, 'NOT NULL') !== false) {
+                $message = 'Required field is missing. Please ensure all required fields are filled.';
             }
 
-            Log::error('Registration database error: ' . $errorMessage, [
-                'sql' => $e->getSql() ?? null,
-                'bindings' => $e->getBindings() ?? null,
-                'exception' => $e->getCode(),
+            Log::error('Registration database error', [
+                'message' => $errorMessage,
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? [],
+                'code' => $e->getCode(),
             ]);
 
             return response()->json([
                 'message' => $message,
                 'errors' => ['registration' => [$message]]
             ], 422);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Registration validation error: ', $e->errors());
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
-            Log::error('Registration error: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+            Log::error('Registration error', [
+                'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'class' => get_class($e),
             ]);
 
             return response()->json([
@@ -117,78 +131,138 @@ class AuthController extends Controller
     }
 
     /**
+     * Handle document uploads for different roles
+     */
+    private function handleDocumentUploads($request, $user, $role)
+    {
+        $documentFieldMap = [
+            'farmer' => ['kebele_id_document' => 'kebele_id'],
+            'buyer' => [
+                'trade_license_document' => 'trade_license',
+                'tin_document' => 'tin',
+            ],
+            'supplier' => [
+                'business_license_document' => 'business_license',
+                'sectoral_clearance_document' => 'sectoral_clearance',
+            ],
+            'transport' => [
+                'driving_license_document' => 'driving_license',
+                'vehicle_bluebook_document' => 'vehicle_bluebook',
+            ],
+            'expert' => ['degree_certificate_document' => 'degree_certificate'],
+            'financial' => ['nbe_license_document' => 'nbe_license'],
+            'cooperative' => ['registration_certificate_document' => 'registration_certificate'],
+        ];
+
+        if (!isset($documentFieldMap[$role])) {
+            return;
+        }
+
+        $documents = $documentFieldMap[$role];
+
+        foreach ($documents as $fieldName => $docType) {
+            if ($request->hasFile($fieldName)) {
+                try {
+                    $file = $request->file($fieldName);
+                    
+                    // Store file
+                    $storagePath = $file->store(
+                        "documents/{$role}/{$user->id}",
+                        'public'
+                    );
+
+                    // Try to create document record if model exists
+                    try {
+                        if (class_exists('App\Models\UserDocument')) {
+                            \App\Models\UserDocument::create([
+                                'user_id' => $user->id,
+                                'document_type' => $docType,
+                                'document_name' => $file->getClientOriginalName(),
+                                'file_path' => $storagePath,
+                                'file_type' => $file->getMimeType(),
+                                'file_size' => $file->getSize(),
+                                'verification_status' => 'pending',
+                            ]);
+                        }
+                    } catch (\Exception $docError) {
+                        Log::warning("Could not save document record: " . $docError->getMessage());
+                        // Continue anyway - file is stored
+                    }
+
+                    Log::info("Document uploaded for user {$user->id}: {$docType}");
+                } catch (\Exception $e) {
+                    Log::warning("Error uploading document: " . $e->getMessage());
+                    // Continue without failing registration
+                }
+            }
+        }
+    }
+
+    /**
      * Create role-specific profile for the user safely
      */
     private function createRoleProfile(User $user, string $role)
     {
         $timestamp = time();
 
-        try {
-            match ($role) {
-                'farmer' => Farmer::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'farmer_registration_number' => 'FRM-' . $user->id . '-' . $timestamp,
-                        'farm_name' => $user->name . ' Farm',
-                        'region' => $user->region ?? 'Not Specified',
-                        'zone' => 'Not Specified',
-                        'woreda' => 'Not Specified',
-                    ]
-                ),
-                'buyer' => Buyer::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'buyer_type' => 'individual',
-                        'business_name' => $user->name,
-                        'business_address' => $user->address ?? 'Not specified',
-                    ]
-                ),
-                'supplier' => Supplier::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'company_name' => $user->name,
-                        'company_address' => $user->address ?? 'Not specified',
-                        'contact_person' => $user->name,
-                    ]
-                ),
-                'transport' => \App\Models\Transport::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'company_name' => $user->name,
-                        'contact_person' => $user->name,
-                        'emergency_contact' => $user->phone,
-                    ]
-                ),
-                'expert' => \App\Models\Expert::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'specialization' => 'General Agriculture',
-                    ]
-                ),
-                'financial' => \App\Models\Financial::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'institution_name' => $user->name,
-                    ]
-                ),
-                'cooperative' => \App\Models\Cooperative::firstOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'cooperative_name' => $user->name,
-                        'region' => $user->region ?? 'Not specified',
-                        'location' => $user->location ?? 'Not specified',
-                    ]
-                ),
-                'admin' => null,
-                default => null,
-            };
-        } catch (QueryException $e) {
-            Log::warning('Failed to create role profile for user: ' . $user->id, [
-                'role' => $role,
-                'error' => $e->getMessage(),
-            ]);
-            // Silently fail - profile can be created later
-        }
+        match ($role) {
+            'farmer' => Farmer::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'farmer_registration_number' => 'FRM-' . $user->id . '-' . $timestamp,
+                    'farm_name' => $user->name . ' Farm',
+                    'region' => !empty($user->region) ? $user->region : 'Unspecified Region',
+                    'zone' => 'Unspecified Zone',
+                    'woreda' => 'Unspecified Woreda',
+                ]
+            ),
+            'buyer' => Buyer::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'buyer_type' => 'individual',
+                    'business_name' => $user->name,
+                    'business_address' => $user->address ?? 'Not specified',
+                ]
+            ),
+            'supplier' => Supplier::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'company_name' => $user->name,
+                    'company_address' => $user->address ?? 'Not specified',
+                    'contact_person' => $user->name,
+                ]
+            ),
+            'transport' => \App\Models\Transport::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'company_name' => $user->name,
+                    'contact_person' => $user->name,
+                    'emergency_contact' => $user->phone,
+                ]
+            ),
+            'expert' => \App\Models\Expert::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'specialization' => 'General Agriculture',
+                ]
+            ),
+            'financial' => \App\Models\Financial::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'institution_name' => $user->name,
+                ]
+            ),
+            'cooperative' => \App\Models\Cooperative::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'cooperative_name' => $user->name,
+                    'region' => !empty($user->region) ? $user->region : 'Unspecified Region',
+                    'location' => $user->location ?? 'Not specified',
+                ]
+            ),
+            'admin' => null,
+            default => null,
+        };
     }
 
     /**

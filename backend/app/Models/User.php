@@ -94,6 +94,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Notification::class);
     }
+
+    public function documents()
+    {
+        return $this->hasMany(UserDocument::class);
+    }
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);

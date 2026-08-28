@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\PermissionController;
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\ActivityLogController;
 use App\Http\Controllers\Api\Admin\SettingController;
+use App\Http\Controllers\Api\Admin\DocumentVerificationController;
 
 // Farmer Controllers
 use App\Http\Controllers\Api\Farmer\FarmController;
@@ -190,6 +191,13 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy']);
         Route::post('/users/{id}/status', [AdminDashboardController::class, 'updateUserStatus']);
         Route::get('/users-management', [AdminDashboardController::class, 'userManagement']);
+        
+        // Document Verification
+        Route::get('/documents/pending', [DocumentVerificationController::class, 'pending']);
+        Route::get('/documents/{id}', [DocumentVerificationController::class, 'show']);
+        Route::post('/documents/{id}/verify', [DocumentVerificationController::class, 'verify']);
+        Route::post('/documents/{id}/reject', [DocumentVerificationController::class, 'reject']);
+        Route::get('/users/{id}/documents', [DocumentVerificationController::class, 'userDocuments']);
         
         // Role & Permission Management
         Route::get('/role-permission-management', [AdminDashboardController::class, 'rolePermissionManagement']);
