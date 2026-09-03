@@ -45,13 +45,6 @@
     >
       {{ loading ? 'Logging in...' : 'Login' }}
     </button>
-
-    <p class="text-center text-gray-600">
-      Don't have an account?
-      <router-link to="/auth/register" class="link-primary">
-        Register here
-      </router-link>
-    </p>
   </form>
 </template>
 

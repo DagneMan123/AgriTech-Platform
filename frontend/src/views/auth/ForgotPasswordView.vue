@@ -61,14 +61,6 @@
         </router-link>
       </form>
     </div>
-
-    <!-- Help Text -->
-    <p class="text-center text-gray-600 mt-6 text-sm">
-      Don't have an account?
-      <router-link to="/auth/register" class="text-green-600 hover:text-green-700 font-medium">
-        Register here
-      </router-link>
-    </p>
   </div>
 </template>
 

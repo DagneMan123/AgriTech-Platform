@@ -14,7 +14,6 @@ import ProfileView from '@/views/ProfileView.vue'
 
 // Auth views - loaded eagerly (on auth path)
 import LoginView from '@/views/auth/LoginView.vue'
-import RegisterView from '@/views/auth/RegisterView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
 import VerificationPendingView from '@/views/auth/VerificationPendingView.vue'
@@ -115,12 +114,6 @@ const routes: RouteRecordRaw[] = [
         name: 'login',
         component: LoginView,
         meta: { requiresAuth: false, title: 'Login' }
-      },
-      {
-        path: 'register',
-        name: 'register',
-        component: RegisterView,
-        meta: { requiresAuth: false, title: 'Register' }
       },
       {
         path: 'forgot-password',
@@ -522,10 +515,7 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     redirect: '/auth/login'
   },
-  {
-    path: '/register',
-    redirect: '/auth/register'
-  },
+ 
   {
     path: '/dashboard',
     redirect: () => {
