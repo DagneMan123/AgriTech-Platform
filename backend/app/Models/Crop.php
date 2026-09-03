@@ -39,6 +39,11 @@ class Crop extends Model
         return $this->hasMany(CropGrowthRecord::class);
     }
 
+    public function cropActivities()
+    {
+        return $this->hasMany(CropActivity::class);
+    }
+
     public function harvests()
     {
         return $this->hasMany(Harvest::class);

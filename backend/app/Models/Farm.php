@@ -73,6 +73,11 @@ class Farm extends Model
         return $this->hasMany(FarmActivity::class);
     }
 
+    public function cropActivities()
+    {
+        return $this->hasMany(CropActivity::class);
+    }
+
     public function getStatusLabelAttribute()
     {
         $statuses = [

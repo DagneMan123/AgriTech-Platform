@@ -64,6 +64,11 @@ class Farmer extends Model
         return $this->hasMany(CooperativeMember::class);
     }
 
+    public function cropActivities()
+    {
+        return $this->hasMany(CropActivity::class);
+    }
+
     public function getAverageRatingAttribute()
     {
         return $this->reviews()->avg('rating') ?? 0;

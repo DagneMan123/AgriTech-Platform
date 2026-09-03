@@ -34,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Auto-fix crops table
         $middleware->append(\App\Http\Middleware\AutoFixCropsTable::class);
         
+        // Ensure crop activities table exists
+        $middleware->append(\App\Http\Middleware\EnsureCropActivitiesTableExists::class);
+        
         // Apply CORS middleware globally
         $middleware->append(\App\Http\Middleware\CorsMiddleware::class);
     })

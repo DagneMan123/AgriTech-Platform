@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\DocumentVerificationController;
 // Farmer Controllers
 use App\Http\Controllers\Api\Farmer\FarmController;
 use App\Http\Controllers\Api\Farmer\CropController;
+use App\Http\Controllers\Api\Farmer\CropActivityController;
 use App\Http\Controllers\Api\Farmer\CropDebugController;
 use App\Http\Controllers\Api\Farmer\HarvestController;
 use App\Http\Controllers\Api\Farmer\ProductController as FarmerProductController;
@@ -109,7 +110,7 @@ Route::get('/diagnostic/health', function () {
 
 Route::get('/diagnostic/routes', function () {
     $routes = collect(Route::getRoutes())->filter(function ($route) {
-        return strpos($route->uri(), 'farmer/dashboard') !== false;
+        return strpos($route->uri(), 'farmer/crop') !== false;
     })->map(function ($route) {
         return [
             'method' => implode('|', $route->methods),
@@ -119,8 +120,9 @@ Route::get('/diagnostic/routes', function () {
     })->values();
 
     return response()->json([
-        'farmer_dashboard_routes' => $routes,
-        'message' => 'Farmer dashboard routes registered'
+        'farmer_crop_routes' => $routes,
+        'message' => 'Farmer crop routes registered',
+        'total_routes' => $routes->count()
     ]);
 });
 
@@ -259,6 +261,9 @@ Route::middleware(['auth:api'])->group(function () {
         // Crop Management
         Route::get('/dashboard/crop-management', [FarmerDashboardController::class, 'cropManagement']);
         Route::apiResource('/crops', CropController::class);
+        
+        // Crop Activities
+        Route::apiResource('/crop-activities', CropActivityController::class);
         
         // Harvest Management
         Route::get('/dashboard/harvest-management', [FarmerDashboardController::class, 'harvestManagement']);

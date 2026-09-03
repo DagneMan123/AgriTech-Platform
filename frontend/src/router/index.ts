@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import FarmerLayout from '@/layouts/FarmerLayout.vue'
 
 // Home & Common - loaded eagerly
 import HomeView from '@/views/HomeView.vue'
@@ -29,7 +30,9 @@ const AdminReportsView = () => import('@/views/admin/ReportsView.vue')
 
 const FarmerDashboardView = () => import('@/views/farmer/FarmerDashboard.vue')
 const FarmerFarmsView = () => import('@/views/farmer/FarmsView.vue')
+const FarmerFarmMapView = () => import('@/views/farmer/FarmMapView.vue')
 const FarmerCropsView = () => import('@/views/farmer/CropsView.vue')
+const FarmerCropActivitiesView = () => import('@/views/farmer/CropActivitiesView.vue')
 const FarmerHarvestsView = () => import('@/views/farmer/HarvestsView.vue')
 const FarmerProductsView = () => import('@/views/farmer/ProductsView.vue')
 const FarmerOrdersView = () => import('@/views/farmer/OrdersView.vue')
@@ -191,10 +194,22 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'My Farms' }
       },
       {
+        path: 'farm-map',
+        name: 'farmer-farm-map',
+        component: FarmerFarmMapView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Farm Map' }
+      },
+      {
         path: 'crops',
         name: 'farmer-crops',
         component: FarmerCropsView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'My Crops' }
+      },
+      {
+        path: 'crop-activities',
+        name: 'farmer-crop-activities',
+        component: FarmerCropActivitiesView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Crop Activities' }
       },
       {
         path: 'harvests',
