@@ -16,16 +16,11 @@
           <div class="flex items-center space-x-4">
             <RouterLink 
               to="/auth/login" 
-              class="text-gray-700 hover:text-green-600 font-medium transition"
+              class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition"
             >
               Login
             </RouterLink>
-            <RouterLink 
-              to="/auth/register" 
-              class="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition"
-            >
-              Sign Up
-            </RouterLink>
+            
           </div>
         </div>
       </div>
@@ -56,12 +51,7 @@
           Transforming agriculture through technology, transparency, and collaboration
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <router-link 
-            to="/auth/register" 
-            class="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-2xl font-bold text-lg transition transform hover:scale-105 duration-200"
-          >
-            Get Started Free
-          </router-link>
+         
           <button 
             class="inline-block px-8 py-4 bg-white/20 text-white rounded-lg hover:bg-white/30 font-bold text-lg transition backdrop-blur border border-white/40 duration-200"
             @click="scrollToFeatures"

@@ -1,226 +1,205 @@
 <template>
-  <div class="farmer-layout">
+  <div class="market-layout">
     <FarmerSidebar @logout="handleLogout" />
-    <div class="farmer-page">
+    <div class="market-container">
+      <!-- Header -->
       <div class="page-header">
-        <h1>Market Prices</h1>
-        <p>Track current market prices and price trends for agricultural products</p>
-      </div>
-
-      <!-- Statistics Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Total Products</div>
-            <div class="stat-value">{{ prices.length }}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #dbeafe;">
-            <i class="fas fa-arrow-up" style="color: #3b82f6;"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Avg Price Increase</div>
-            <div class="stat-value">{{ averagePriceChange }}%</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #fef3c7;">
-            <i class="fas fa-bookmark" style="color: #f59e0b;"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Selected Category</div>
-            <div class="stat-value">{{ selectedCategory || 'All' }}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background: #f3e8ff;">
-            <i class="fas fa-calendar-alt" style="color: #a855f7;"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-label">Last Updated</div>
-            <div class="stat-value">{{ lastUpdated }}</div>
-          </div>
+        <div class="header-content">
+          <h1>Market Prices</h1>
+          <p>Track real-time commodity prices and market trends</p>
         </div>
       </div>
 
-      <!-- Filters Section -->
-      <div class="content-section">
-        <div class="filters-container">
-          <div class="filter-group">
-            <label>Category</label>
-            <select v-model="selectedCategory" @change="loadMarketPrices" class="form-input">
-              <option value="">All Categories</option>
-              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>City/Region</label>
-            <select v-model="selectedCity" @change="loadMarketPrices" class="form-input">
-              <option value="">All Regions</option>
-              <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Sort By</label>
-            <select v-model="sortBy" @change="sortPrices" class="form-input">
-              <option value="price-high">Price: High to Low</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="name">Product Name</option>
-              <option value="updated">Recently Updated</option>
-            </select>
-          </div>
-          <button @click="refreshPrices" class="btn btn-primary">
-            <i class="fas fa-sync" :class="{ 'fa-spin': loading }"></i> Refresh
-          </button>
-        </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading market data...</p>
       </div>
 
-      <!-- Current Market Prices Table -->
-      <div class="content-section">
-        <div class="section-header">
-          <h2>Current Market Prices</h2>
-          <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input v-model="searchQuery" type="text" placeholder="Search products...">
-          </div>
-        </div>
-
-        <div v-if="loading" class="loading-state">
-          <i class="fas fa-spinner fa-spin"></i> Loading market prices...
-        </div>
-
-        <table v-else-if="filteredPrices.length > 0" class="data-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>City/Region</th>
-              <th>Current Price</th>
-              <th>Unit</th>
-              <th>Quality</th>
-              <th>Source</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="price in filteredPrices" :key="price.id" class="data-row">
-              <td class="product-cell">
-                <strong>{{ price.product_name }}</strong>
-              </td>
-              <td>
-                <span class="category-badge">{{ price.category }}</span>
-              </td>
-              <td>{{ price.city || price.region || 'N/A' }}</td>
-              <td class="price-cell">
-                <span class="price-value">{{ formatPrice(price.price) }}</span>
-              </td>
-              <td>{{ price.price_unit || 'ETB/kg' }}</td>
-              <td>
-                <span :class="['quality-badge', `quality-${(price.quality || 'standard').toLowerCase()}`]">
-                  {{ price.quality || 'Standard' }}
-                </span>
-              </td>
-              <td>
-                <span class="source-badge" :class="{ verified: price.is_verified }">
-                  <i v-if="price.is_verified" class="fas fa-check-circle"></i>
-                  {{ price.source || 'Market' }}
-                </span>
-              </td>
-              <td>
-                <button @click="showPriceDetail(price)" class="action-btn" title="View Details">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-else class="empty-state">
-          <i class="fas fa-chart-line"></i>
-          <p>No market prices available for selected filters</p>
-        </div>
+      <!-- Error State -->
+      <div v-if="error && !loading" class="error-container">
+        <AlertCircle size="40" class="error-icon" />
+        <p class="error-message">{{ error }}</p>
+        <button @click="fetchMarketData" class="btn-retry">
+          <RotateCcw size="16" />
+          Retry
+        </button>
       </div>
 
-      <!-- Price Trends Section -->
-      <div class="content-section">
-        <h2>Price Trends</h2>
-        <div class="trends-container">
-          <div v-if="selectedCategory" class="trend-filters">
-            <label>Days to Display:</label>
-            <select v-model.number="trendDays" @change="loadPriceTrends" class="form-input" style="width: 150px;">
-              <option :value="7">Last 7 Days</option>
-              <option :value="14">Last 14 Days</option>
-              <option :value="30">Last 30 Days</option>
-              <option :value="60">Last 60 Days</option>
-              <option :value="90">Last 90 Days</option>
-            </select>
-          </div>
-          <div v-if="trendLoading" class="loading-state" style="margin-top: 20px;">
-            <i class="fas fa-spinner fa-spin"></i> Loading price trends...
-          </div>
-          <div v-else-if="priceForecasts.length > 0" class="forecast-grid">
-            <div v-for="forecast in priceForecasts" :key="forecast.date" class="forecast-card">
-              <div class="forecast-date">{{ formatDate(forecast.date) }}</div>
-              <div class="forecast-price">{{ formatPrice(forecast.forecast_price) }}</div>
-              <div class="forecast-confidence">
-                Confidence: <span class="confidence-bar">{{ forecast.confidence }}%</span>
-              </div>
+      <!-- Content -->
+      <div v-if="!loading && !error" class="market-content">
+        <!-- Market Summary -->
+        <div class="summary-grid">
+          <div class="summary-card trending-up">
+            <TrendingUp size="20" class="summary-icon" />
+            <div>
+              <span class="label">Market Trend</span>
+              <span class="value">Bullish</span>
             </div>
           </div>
-          <div v-else class="empty-state">
-            <p>Select a category to view price trends</p>
+          <div class="summary-card">
+            <BarChart3 size="20" class="summary-icon" />
+            <div>
+              <span class="label">Avg Price Change</span>
+              <span class="value positive">+2.5%</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <Calendar size="20" class="summary-icon" />
+            <div>
+              <span class="label">Last Updated</span>
+              <span class="value">2 hours ago</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <MapPin size="20" class="summary-icon" />
+            <div>
+              <span class="label">Selected Market</span>
+              <span class="value">Central Region</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Price Detail Modal -->
-      <div v-if="selectedPrice" class="modal-overlay" @click.self="selectedPrice = null">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>{{ selectedPrice.product_name }}</h3>
-            <button @click="selectedPrice = null" class="close-btn">
-              <i class="fas fa-times"></i>
-            </button>
+        <!-- Filters -->
+        <div class="filters-bar">
+          <input v-model="searchQuery" type="text" placeholder="Search products..." class="search-input" />
+          <select v-model="selectedMarket" class="filter-select">
+            <option value="">All Markets</option>
+            <option value="central">Central Region</option>
+            <option value="north">Northern Region</option>
+            <option value="south">Southern Region</option>
+          </select>
+          <select v-model="sortBy" class="filter-select">
+            <option value="price-desc">Highest Price</option>
+            <option value="price-asc">Lowest Price</option>
+            <option value="change">Price Change</option>
+          </select>
+        </div>
+
+        <!-- Price Cards -->
+        <div class="price-grid">
+          <div v-for="product in filteredProducts" :key="product.id" class="price-card" @click="selectProduct(product)">
+            <div class="card-header">
+              <span class="product-name">{{ product.name }}</span>
+              <span class="unit">per {{ product.unit }}</span>
+            </div>
+
+            <div class="price-display">
+              <span class="current-price">${{ product.price }}</span>
+              <span class="price-change" :class="{ positive: product.change > 0, negative: product.change < 0 }">
+                <component :is="product.change > 0 ? TrendingUp : TrendingDown" size="14" />
+                {{ Math.abs(product.change) }}%
+              </span>
+            </div>
+
+            <div class="price-details">
+              <div class="detail">
+                <span class="label">Previous</span>
+                <span class="value">${{ product.previousPrice }}</span>
+              </div>
+              <div class="detail">
+                <span class="label">High</span>
+                <span class="value">${{ product.high }}</span>
+              </div>
+              <div class="detail">
+                <span class="label">Low</span>
+                <span class="value">${{ product.low }}</span>
+              </div>
+            </div>
+
+            <div class="market-status">
+              <span class="label">Market</span>
+              <span class="market-badge">{{ product.market }}</span>
+            </div>
           </div>
-          <div class="modal-body">
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Category</label>
-                <div>{{ selectedPrice.category }}</div>
-              </div>
-              <div class="detail-item">
-                <label>City/Region</label>
-                <div>{{ selectedPrice.city || selectedPrice.region || 'N/A' }}</div>
-              </div>
-              <div class="detail-item">
-                <label>Current Price</label>
-                <div class="detail-value-large">{{ formatPrice(selectedPrice.price) }}</div>
-              </div>
-              <div class="detail-item">
-                <label>Unit</label>
-                <div>{{ selectedPrice.price_unit || 'ETB/kg' }}</div>
-              </div>
-              <div class="detail-item">
-                <label>Quality Grade</label>
-                <div>
-                  <span :class="['quality-badge', `quality-${(selectedPrice.quality || 'standard').toLowerCase()}`]">
-                    {{ selectedPrice.quality || 'Standard' }}
-                  </span>
+        </div>
+
+        <!-- Product Details Modal -->
+        <div v-if="selectedProductDetail" class="modal-overlay" @click="selectedProductDetail = null">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <h2>{{ selectedProductDetail.name }} - Price Analysis</h2>
+              <button @click="selectedProductDetail = null" class="btn-close">
+                <X size="20" />
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Price Chart -->
+              <div class="chart-section">
+                <h3>7-Day Price Trend</h3>
+                <div class="chart-placeholder">
+                  <BarChart3 size="64" class="chart-icon" />
+                  <p>Interactive price chart</p>
                 </div>
               </div>
-              <div class="detail-item">
-                <label>Source</label>
-                <div>
-                  <span class="source-badge" :class="{ verified: selectedPrice.is_verified }">
-                    <i v-if="selectedPrice.is_verified" class="fas fa-check-circle"></i>
-                    {{ selectedPrice.source || 'Market' }}
-                  </span>
+
+              <!-- Detailed Stats -->
+              <div class="stats-section">
+                <h3>Detailed Statistics</h3>
+                <div class="stats-grid">
+                  <div class="stat">
+                    <span class="stat-label">Current Price</span>
+                    <span class="stat-value">${{ selectedProductDetail.price }}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">24h Change</span>
+                    <span class="stat-value" :class="{ positive: selectedProductDetail.change > 0 }">
+                      {{ selectedProductDetail.change > 0 ? '+' : '' }}{{ selectedProductDetail.change }}%
+                    </span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">52-Week High</span>
+                    <span class="stat-value">${{ selectedProductDetail.high }}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">52-Week Low</span>
+                    <span class="stat-value">${{ selectedProductDetail.low }}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Market Cap</span>
+                    <span class="stat-value">${{ selectedProductDetail.marketCap }}M</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Volume</span>
+                    <span class="stat-value">{{ selectedProductDetail.volume }}</span>
+                  </div>
                 </div>
               </div>
+
+              <!-- Market Insights -->
+              <div class="insights-section">
+                <h3>Market Insights</h3>
+                <div v-for="insight in selectedProductDetail.insights" :key="insight.id" class="insight-item" :class="`insight-${insight.type}`">
+                  <Lightbulb size="16" />
+                  <span>{{ insight.text }}</span>
+                </div>
+              </div>
+
+              <!-- Trading Recommendation -->
+              <div class="recommendation-section" :class="`rec-${selectedProductDetail.recommendation}`">
+                <h3>Market Recommendation</h3>
+                <p>{{ selectedProductDetail.recommendationText }}</p>
+              </div>
+
+              <!-- Markets Listing -->
+              <div class="markets-section">
+                <h3>Available in Markets</h3>
+                <div class="markets-list">
+                  <div v-for="market in selectedProductDetail.markets" :key="market.id" class="market-listing">
+                    <span class="market-name">{{ market.name }}</span>
+                    <span class="market-price">${{ market.price }}</span>
+                    <span class="market-status" :class="{ live: market.status === 'live' }">{{ market.status }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button @click="selectedProductDetail = null" class="btn-secondary">Close</button>
+              <button class="btn-primary">
+                <Bell size="16" />
+                Set Price Alert
+              </button>
             </div>
           </div>
         </div>
@@ -234,557 +213,507 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import {
+  TrendingUp, TrendingDown, BarChart3, AlertCircle, RotateCcw, X, MapPin, Calendar,
+  Lightbulb, Bell
+} from 'lucide-vue-next'
 
-const router = useRouter()
 const auth = useAuthStore()
+const router = useRouter()
 
-// State
-const prices = ref([])
-const searchQuery = ref('')
-const selectedCategory = ref('')
-const selectedCity = ref('')
-const sortBy = ref('price-high')
 const loading = ref(false)
-const trendLoading = ref(false)
-const priceForecasts = ref([])
-const trendDays = ref(30)
-const selectedPrice = ref(null)
-const lastUpdated = ref('Just now')
+const error = ref(null)
+const searchQuery = ref('')
+const selectedMarket = ref('')
+const sortBy = ref('price-desc')
+const selectedProductDetail = ref(null)
 
-// Data for filters
-const categories = ref([
-  'Grains',
-  'Vegetables',
-  'Fruits',
-  'Pulses',
-  'Spices',
-  'Dairy',
-  'Livestock'
+const mockProducts = ref([
+  {
+    id: 1,
+    name: 'Tomatoes',
+    price: 45.50,
+    previousPrice: 44.25,
+    change: 2.8,
+    high: 48.75,
+    low: 42.10,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 125,
+    volume: '2.5K tons',
+    insights: [
+      { id: 1, type: 'positive', text: 'Demand increasing due to summer season' },
+      { id: 2, type: 'caution', text: 'Supply slightly reducing, prices expected to hold steady' }
+    ],
+    recommendation: 'buy',
+    recommendationText: 'Good buying opportunity. Prices are expected to rise further due to seasonal demand.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 45.50, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 44.75, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 46.25, status: 'live' }
+    ]
+  },
+  {
+    id: 2,
+    name: 'Potatoes',
+    price: 28.75,
+    previousPrice: 30.10,
+    change: -4.5,
+    high: 32.50,
+    low: 26.25,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 98,
+    volume: '3.1K tons',
+    insights: [
+      { id: 1, type: 'caution', text: 'Oversupply in the market currently' },
+      { id: 2, type: 'negative', text: 'Prices declining week-over-week' }
+    ],
+    recommendation: 'hold',
+    recommendationText: 'Wait for stabilization. Market currently oversupplied, avoid selling now.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 28.75, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 29.10, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 27.95, status: 'live' }
+    ]
+  },
+  {
+    id: 3,
+    name: 'Corn',
+    price: 36.20,
+    previousPrice: 35.80,
+    change: 1.1,
+    high: 39.50,
+    low: 34.10,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 156,
+    volume: '4.2K tons',
+    insights: [
+      { id: 1, type: 'positive', text: 'Stable demand from processors' },
+      { id: 2, type: 'positive', text: 'Export demand remains strong' }
+    ],
+    recommendation: 'buy',
+    recommendationText: 'Steady market with good fundamentals. Consider buying for export opportunities.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 36.20, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 35.95, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 36.45, status: 'live' }
+    ]
+  },
+  {
+    id: 4,
+    name: 'Lettuce',
+    price: 52.10,
+    previousPrice: 48.75,
+    change: 6.9,
+    high: 54.50,
+    low: 45.20,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 67,
+    volume: '1.8K tons',
+    insights: [
+      { id: 1, type: 'positive', text: 'Strong retail demand for fresh produce' },
+      { id: 2, type: 'positive', text: 'Limited supply pushing prices up' }
+    ],
+    recommendation: 'buy',
+    recommendationText: 'Excellent market conditions. Sell at current high prices or hold for further gains.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 52.10, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 51.50, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 52.75, status: 'live' }
+    ]
+  },
+  {
+    id: 5,
+    name: 'Wheat',
+    price: 31.45,
+    previousPrice: 31.55,
+    change: -0.3,
+    high: 34.20,
+    low: 29.10,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 198,
+    volume: '5.6K tons',
+    insights: [
+      { id: 1, type: 'caution', text: 'Slightly lower global demand this quarter' },
+      { id: 2, type: 'positive', text: 'Price support from export contracts' }
+    ],
+    recommendation: 'hold',
+    recommendationText: 'Stable with slight weakness. Hold current positions and monitor global trends.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 31.45, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 31.70, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 31.20, status: 'live' }
+    ]
+  },
+  {
+    id: 6,
+    name: 'Beans',
+    price: 42.80,
+    previousPrice: 40.50,
+    change: 5.7,
+    high: 43.50,
+    low: 38.75,
+    unit: 'kg',
+    market: 'Central Region',
+    marketCap: 85,
+    volume: '2.3K tons',
+    insights: [
+      { id: 1, type: 'positive', text: 'Growing demand from food manufacturers' },
+      { id: 2, type: 'positive', text: 'Good crop yields expected' }
+    ],
+    recommendation: 'buy',
+    recommendationText: 'Strong upward trend with good fundamentals. Ideal time for market entry.',
+    markets: [
+      { id: 1, name: 'Central Region Market', price: 42.80, status: 'live' },
+      { id: 2, name: 'Northern Region Market', price: 42.15, status: 'live' },
+      { id: 3, name: 'Southern Region Market', price: 43.45, status: 'live' }
+    ]
+  }
 ])
 
-const cities = ref([
-  'Addis Ababa',
-  'Dire Dawa',
-  'Adama',
-  'Hawassa',
-  'Mekelle',
-  'Bahir Dar',
-  'Jimma'
-])
+const filteredProducts = computed(() => {
+  let filtered = mockProducts.value
 
-// API base
-const API_BASE = 'http://localhost:8000/api'
-
-// Lifecycle
-onMounted(() => {
-  loadMarketPrices()
-})
-
-// Load market prices
-const loadMarketPrices = async () => {
-  loading.value = true
-  try {
-    let url = `${API_BASE}/market-prices`
-    const params = new URLSearchParams()
-
-    if (selectedCategory.value) {
-      params.append('category', selectedCategory.value)
-    }
-
-    if (params.toString()) {
-      url += '?' + params.toString()
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      prices.value = data.data || []
-      lastUpdated.value = new Date().toLocaleTimeString()
-    }
-  } catch (err) {
-    console.error('Error loading market prices:', err)
-  } finally {
-    loading.value = false
-  }
-}
-
-// Load price trends
-const loadPriceTrends = async () => {
-  if (!selectedCategory.value) return
-
-  trendLoading.value = true
-  try {
-    const response = await fetch(
-      `${API_BASE}/market-prices/trends?category=${selectedCategory.value}&days=${trendDays.value}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${auth.token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-
-    if (response.ok) {
-      const data = await response.json()
-      // Convert trends to forecast format
-      priceForecasts.value = (data.data || []).map(item => ({
-        date: item.date,
-        forecast_price: item.average_price,
-        confidence: 85
-      }))
-    }
-  } catch (err) {
-    console.error('Error loading price trends:', err)
-  } finally {
-    trendLoading.value = false
-  }
-}
-
-// Compute average price change
-const averagePriceChange = computed(() => {
-  if (prices.value.length === 0) return '0'
-  // Mock calculation - in real app would calculate from previous data
-  return (Math.random() * 10 - 5).toFixed(1)
-})
-
-// Filtered prices
-const filteredPrices = computed(() => {
-  let filtered = prices.value
-
-  // Filter by search query
   if (searchQuery.value) {
-    filtered = filtered.filter(p =>
-      p.product_name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
+    filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
   }
 
-  // Filter by city
-  if (selectedCity.value) {
-    filtered = filtered.filter(p =>
-      (p.city || p.region) === selectedCity.value
-    )
+  if (selectedMarket.value) {
+    filtered = filtered.filter(p => p.market.toLowerCase().includes(selectedMarket.value))
   }
 
-  // Sort
-  switch (sortBy.value) {
-    case 'price-high':
-      filtered.sort((a, b) => b.price - a.price)
-      break
-    case 'price-low':
-      filtered.sort((a, b) => a.price - b.price)
-      break
-    case 'name':
-      filtered.sort((a, b) => a.product_name.localeCompare(b.product_name))
-      break
-    case 'updated':
-      // Would use timestamp if available
-      break
+  if (sortBy.value === 'price-desc') {
+    filtered.sort((a, b) => b.price - a.price)
+  } else if (sortBy.value === 'price-asc') {
+    filtered.sort((a, b) => a.price - b.price)
+  } else if (sortBy.value === 'change') {
+    filtered.sort((a, b) => b.change - a.change)
   }
 
   return filtered
 })
 
-// Format price
-const formatPrice = (price) => {
-  return `${parseFloat(price || 0).toFixed(2)} ETB`
+const fetchMarketData = async () => {
+  loading.value = true
+  await new Promise(r => setTimeout(r, 500))
+  loading.value = false
 }
 
-// Format date
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  })
+const selectProduct = (product) => {
+  selectedProductDetail.value = product
 }
 
-// Show price detail
-const showPriceDetail = (price) => {
-  selectedPrice.value = price
-}
-
-// Refresh prices
-const refreshPrices = () => {
-  loadMarketPrices()
-  if (selectedCategory.value) {
-    loadPriceTrends()
-  }
-}
-
-// Logout handler
 const handleLogout = async () => {
   await auth.logout()
   router.push('/login')
 }
+
+onMounted(() => { fetchMarketData() })
 </script>
 
 <style scoped>
-.farmer-layout { display: flex; height: 100vh; }
-.farmer-page { margin-left: 260px; flex: 1; overflow-y: auto; background-color: #f5f5f5; padding: 20px; }
-.page-header { margin-bottom: 30px; }
-.page-header h1 { font-size: 28px; font-weight: bold; color: #333; margin-bottom: 5px; }
-.page-header p { color: #666; font-size: 14px; }
-
-/* Statistics Cards */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+.market-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f0f2f5;
 }
 
-.stat-card {
+.market-container {
+  margin-left: 260px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-header {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.3s;
+  padding: 25px 30px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.header-content h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px 0;
 }
 
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  background: #d1fae5;
+.header-content p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.loading-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: #10b981;
+  padding: 80px 20px;
+  gap: 20px;
 }
 
-.stat-content {
-  flex: 1;
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.stat-label { font-size: 12px; color: #999; margin-bottom: 5px; }
-.stat-value { font-size: 24px; font-weight: bold; color: #333; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
-/* Content Section */
-.content-section {
-  background: white;
-  border-radius: 8px;
-  padding: 25px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.error-container {
+  background: #fee2e2;
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 40px;
+  margin: 30px;
+  text-align: center;
+}
+
+.error-icon {
+  color: #dc2626;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  color: #991b1b;
+  font-size: 16px;
   margin-bottom: 20px;
 }
 
-.content-section h2 {
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-/* Filters */
-.filters-container {
-  display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.filter-group {
-  flex: 1;
-  min-width: 150px;
-}
-
-.filter-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 6px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.btn {
-  padding: 10px 20px;
+.btn-retry {
+  background: #dc2626;
+  color: white;
   border: none;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.btn-primary {
-  background-color: #10b981;
-  color: white;
+.market-content {
+  padding: 30px;
+  flex: 1;
 }
 
-.btn-primary:hover {
-  background-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
-/* Section Header */
-.section-header {
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card.trending-up {
+  border-left: 4px solid #10b981;
+}
+
+.summary-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.summary-card .label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.summary-card .value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.value.positive {
+  color: #10b981;
+}
+
+.filters-bar {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.search-input,
+.filter-select {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #4b5563;
+  background: white;
+  font-family: inherit;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.filter-select:hover,
+.search-input:focus {
+  border-color: #3b82f6;
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.price-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+}
+
+.price-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  gap: 15px;
-}
-
-.search-box {
-  position: relative;
-  width: 250px;
-}
-
-.search-box i {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  color: #999;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 10px 12px 10px 35px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.search-box input:focus {
-  outline: none;
-  border-color: #10b981;
-}
-
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-}
-
-.loading-state i {
-  font-size: 24px;
-  margin-right: 10px;
-}
-
-/* Data Table */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.data-table th {
-  background-color: #f9fafb;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 13px;
-}
-
-.data-table td {
-  padding: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.data-row:hover {
-  background-color: #f9fafb;
+.product-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
-.product-cell {
+.unit {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.price-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.current-price {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.price-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
+}
+
+.price-change.positive {
+  background: #ecfdf5;
   color: #10b981;
 }
 
-.price-cell {
-  font-weight: bold;
-  color: #333;
+.price-change.negative {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.price-value {
-  background: #d1fae5;
-  padding: 4px 8px;
-  border-radius: 4px;
-  color: #065f46;
+.price-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.detail .label {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
   font-weight: 600;
 }
 
-.category-badge {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 4px 8px;
-  border-radius: 4px;
+.detail .value {
   font-size: 12px;
   font-weight: 600;
+  color: #1f2937;
 }
 
-.quality-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.quality-standard {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.quality-premium {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.quality-export {
-  background: #fce7f3;
-  color: #831843;
-}
-
-.source-badge {
-  display: inline-flex;
+.market-status {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 4px;
   font-size: 12px;
-  font-weight: 600;
-  background: #f3f4f6;
+}
+
+.market-status .label {
   color: #6b7280;
 }
 
-.source-badge.verified {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.source-badge i {
-  font-size: 10px;
-}
-
-.action-btn {
-  background: #f3f4f6;
-  border: none;
-  padding: 6px 10px;
+.market-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 8px;
   border-radius: 4px;
-  cursor: pointer;
-  color: #10b981;
-  transition: all 0.3s;
-}
-
-.action-btn:hover {
-  background: #10b981;
-  color: white;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #999;
-}
-
-.empty-state i {
-  font-size: 48px;
-  color: #ddd;
-  margin-bottom: 15px;
-}
-
-/* Price Trends */
-.trends-container {
-  padding-top: 15px;
-}
-
-.trend-filters {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.trend-filters label {
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-.forecast-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
-}
-
-.forecast-card {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border-radius: 8px;
-  padding: 15px;
-  text-align: center;
-  transition: transform 0.3s;
-}
-
-.forecast-card:hover {
-  transform: translateY(-5px);
-}
-
-.forecast-date {
-  font-size: 12px;
-  opacity: 0.8;
-  margin-bottom: 8px;
-}
-
-.forecast-price {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.forecast-confidence {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.confidence-bar {
-  background: rgba(255, 255, 255, 0.3);
-  padding: 2px 6px;
-  border-radius: 3px;
   font-weight: 600;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -795,114 +724,312 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  z-index: 2000;
 }
 
 .modal-content {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
+  border-radius: 12px;
+  max-width: 700px;
   width: 90%;
-  animation: slideUp 0.3s;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
 }
 
-.modal-header h3 {
-  margin: 0;
+.modal-header h2 {
   font-size: 20px;
-  color: #333;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
 }
 
-.close-btn {
+.btn-close {
   background: none;
   border: none;
-  font-size: 24px;
-  color: #999;
   cursor: pointer;
+  color: #6b7280;
   padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.3s;
-}
-
-.close-btn:hover {
-  color: #333;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
-.detail-grid {
+.chart-section,
+.stats-section,
+.insights-section,
+.recommendation-section,
+.markets-section {
+  margin-bottom: 24px;
+}
+
+.chart-section h3,
+.stats-section h3,
+.insights-section h3,
+.recommendation-section h3,
+.markets-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-placeholder {
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.chart-icon {
+  color: #d1d5db;
+}
+
+.chart-placeholder p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 12px;
 }
 
-.detail-item label {
-  display: block;
-  font-size: 12px;
+.stat {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
   font-weight: 600;
-  color: #999;
-  margin-bottom: 6px;
 }
 
-.detail-item div {
-  font-size: 15px;
-  color: #333;
-  font-weight: 500;
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
-.detail-value-large {
-  font-size: 24px;
-  font-weight: bold;
+.stat-value.positive {
   color: #10b981;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.insight-positive {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.insight-positive svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.insight-caution {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.insight-caution svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.insight-negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.insight-negative svg {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.recommendation-section {
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.rec-buy {
+  background: #ecfdf5;
+  border-left: 4px solid #10b981;
+}
+
+.rec-buy h3 {
+  color: #065f46;
+}
+
+.rec-buy p {
+  color: #065f46;
+  margin: 0;
+}
+
+.rec-hold {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.rec-hold h3 {
+  color: #92400e;
+}
+
+.rec-hold p {
+  color: #92400e;
+  margin: 0;
+}
+
+.rec-sell {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+}
+
+.rec-sell h3 {
+  color: #991b1b;
+}
+
+.rec-sell p {
+  color: #991b1b;
+  margin: 0;
+}
+
+.markets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.market-listing {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #e5e7eb;
+}
+
+.market-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.market-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-right: 16px;
+}
+
+.market-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.market-status.live {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
 }
 
 @media (max-width: 768px) {
-  .farmer-page { margin-left: 0; padding: 15px; }
-  .stats-grid { grid-template-columns: 1fr; }
-  .filters-container { flex-direction: column; align-items: stretch; }
-  .section-header { flex-direction: column; align-items: flex-start; }
-  .search-box { width: 100%; }
-  .data-table { font-size: 12px; }
-  .data-table th, .data-table td { padding: 8px; }
-  .forecast-grid { grid-template-columns: repeat(2, 1fr); }
-  .detail-grid { grid-template-columns: 1fr; }
+  .market-container {
+    margin-left: 0;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+  }
+
+  .search-input {
+    min-width: auto;
+  }
+
+  .price-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

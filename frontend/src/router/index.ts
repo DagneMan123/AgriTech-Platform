@@ -4,8 +4,6 @@ import { useAuthStore } from '@/stores/authStore'
 // Layout components - loaded eagerly (small)
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
-import DashboardLayout from '@/layouts/DashboardLayout.vue'
-import FarmerLayout from '@/layouts/FarmerLayout.vue'
 
 // Home & Common - loaded eagerly
 import HomeView from '@/views/HomeView.vue'
@@ -34,13 +32,26 @@ const FarmerCropsView = () => import('@/views/farmer/CropsView.vue')
 const FarmerCropActivitiesView = () => import('@/views/farmer/CropActivitiesView.vue')
 const FarmerHarvestsView = () => import('@/views/farmer/HarvestsView.vue')
 const FarmerProductsView = () => import('@/views/farmer/ProductsView.vue')
+const FarmerSalesView = () => import('@/views/farmer/SalesView.vue')
+const FarmerCustomerOrdersView = () => import('@/views/farmer/CustomerOrdersView.vue')
 const FarmerOrdersView = () => import('@/views/farmer/OrdersView.vue')
-const FarmerBuyInputsView = () => import('@/views/farmer/BuyInputsView.vue')
-const FarmerTransportView = () => import('@/views/farmer/TransportView.vue')
+const FarmerSeedsView = () => import('@/views/farmer/SeedsView.vue')
+const FarmerFertilizersView = () => import('@/views/farmer/FertilizersView.vue')
+const FarmerPesticidesView = () => import('@/views/farmer/PesticidesView.vue')
+const FarmerMachineryView = () => import('@/views/farmer/MachineryView.vue')
+const FarmerInputOrdersView = () => import('@/views/farmer/InputOrdersView.vue')
+const FarmerSubsidyRequestsView = () => import('@/views/farmer/SubsidyRequestsView.vue')
+const FarmerTransportRequestsView = () => import('@/views/farmer/TransportRequestsView.vue')
+const FarmerActiveDeliveriesView = () => import('@/views/farmer/ActiveDeliveriesView.vue')
+const FarmerDeliveryTrackingView = () => import('@/views/farmer/DeliveryTrackingView.vue')
 const FarmerWeatherView = () => import('@/views/farmer/WeatherView.vue')
 const FarmerMarketPricesView = () => import('@/views/farmer/MarketPricesView.vue')
 const FarmerConsultationsView = () => import('@/views/farmer/ConsultationsView.vue')
+const FarmerTrainingView = () => import('@/views/farmer/TrainingView.vue')
 const FarmerLoansView = () => import('@/views/farmer/LoansView.vue')
+const FarmerInsuranceView = () => import('@/views/farmer/InsuranceView.vue')
+const FarmerPaymentsView = () => import('@/views/farmer/PaymentsView.vue')
+const FarmerFinancialHistoryView = () => import('@/views/farmer/FinancialHistoryView.vue')
 const FarmerReportsView = () => import('@/views/farmer/ReportsView.vue')
 const FarmerProfileView = () => import('@/views/farmer/ProfileView.vue')
 
@@ -217,22 +228,76 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'My Products' }
       },
       {
+        path: 'my-sales',
+        name: 'farmer-my-sales',
+        component: FarmerSalesView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'My Sales' }
+      },
+      {
+        path: 'customer-orders',
+        name: 'farmer-customer-orders',
+        component: FarmerCustomerOrdersView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Customer Orders' }
+      },
+      {
         path: 'orders',
         name: 'farmer-orders',
         component: FarmerOrdersView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Orders' }
       },
       {
-        path: 'buy-inputs',
-        name: 'farmer-buy-inputs',
-        component: FarmerBuyInputsView,
-        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Buy Farm Inputs' }
+        path: 'seeds',
+        name: 'farmer-seeds',
+        component: FarmerSeedsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Seeds' }
       },
       {
-        path: 'transport',
-        name: 'farmer-transport',
-        component: FarmerTransportView,
+        path: 'fertilizers',
+        name: 'farmer-fertilizers',
+        component: FarmerFertilizersView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Fertilizers' }
+      },
+      {
+        path: 'pesticides',
+        name: 'farmer-pesticides',
+        component: FarmerPesticidesView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Pesticides' }
+      },
+      {
+        path: 'machinery',
+        name: 'farmer-machinery',
+        component: FarmerMachineryView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Machinery & Equipment' }
+      },
+      {
+        path: 'input-orders',
+        name: 'farmer-input-orders',
+        component: FarmerInputOrdersView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'My Input Orders' }
+      },
+      {
+        path: 'subsidy-requests',
+        name: 'farmer-subsidy-requests',
+        component: FarmerSubsidyRequestsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Subsidy Requests' }
+      },
+      {
+        path: 'transport-requests',
+        name: 'farmer-transport-requests',
+        component: FarmerTransportRequestsView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Transport Requests' }
+      },
+      {
+        path: 'active-deliveries',
+        name: 'farmer-active-deliveries',
+        component: FarmerActiveDeliveriesView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Active Deliveries' }
+      },
+      {
+        path: 'delivery-tracking',
+        name: 'farmer-delivery-tracking',
+        component: FarmerDeliveryTrackingView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Delivery Tracking' }
       },
       {
         path: 'weather',
@@ -253,10 +318,46 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Consultations' }
       },
       {
+        path: 'training',
+        name: 'farmer-training',
+        component: FarmerTrainingView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Training Material' }
+      },
+      {
+        path: 'market-prices',
+        name: 'farmer-market-prices',
+        component: FarmerMarketPricesView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Market Prices' }
+      },
+      {
+        path: 'consultations',
+        name: 'farmer-consultations',
+        component: FarmerConsultationsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Consultations' }
+      },
+      {
         path: 'loans',
         name: 'farmer-loans',
         component: FarmerLoansView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Loans' }
+      },
+      {
+        path: 'insurance',
+        name: 'farmer-insurance',
+        component: FarmerInsuranceView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Crop Insurance' }
+      },
+      {
+        path: 'payments',
+        name: 'farmer-payments',
+        component: FarmerPaymentsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Payment Methods' }
+      },
+      {
+        path: 'financial-history',
+        name: 'farmer-financial-history',
+        component: FarmerFinancialHistoryView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Financial History' }
       },
       {
         path: 'reports',

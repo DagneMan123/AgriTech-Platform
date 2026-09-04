@@ -1,337 +1,292 @@
 <template>
-  <div class="farmer-layout">
+  <div class="consultations-layout">
     <FarmerSidebar @logout="handleLogout" />
-    <div class="farmer-page">
-      <!-- Page Header -->
+    <div class="consultations-container">
+      <!-- Header -->
       <div class="page-header">
         <div class="header-content">
-          <h1>Expert Consultations</h1>
-          <p>Get expert agricultural advice tailored to your needs</p>
+          <h1>Consultations</h1>
+          <p>Connect with agricultural experts for professional advice</p>
         </div>
-        <button class="btn-primary btn-large" @click="openRequestConsultationDialog">
-          <i class="fas fa-plus"></i> Request Consultation
+        <button @click="showNewConsultation = true" class="btn-new">
+          <Plus size="16" />
+          <span>Book Consultation</span>
         </button>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon total">
-            <i class="fas fa-comments"></i>
-          </div>
-          <div class="stat-content">
-            <h3>Total Requests</h3>
-            <p class="stat-value">{{ consultations.length }}</p>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon pending">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="stat-content">
-            <h3>Pending Response</h3>
-            <p class="stat-value">{{ pendingCount }}</p>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon resolved">
-            <i class="fas fa-check-double"></i>
-          </div>
-          <div class="stat-content">
-            <h3>Resolved</h3>
-            <p class="stat-value">{{ resolvedCount }}</p>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon responded">
-            <i class="fas fa-comments"></i>
-          </div>
-          <div class="stat-content">
-            <h3>In Progress</h3>
-            <p class="stat-value">{{ respondedCount }}</p>
-          </div>
-        </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading consultations...</p>
       </div>
 
-      <!-- Filters -->
-      <div class="controls-section">
-        <div class="filter-group">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search consultations..."
-            class="search-input"
-          />
-          <select v-model="typeFilter" class="type-select">
-            <option value="">All Types</option>
-            <option value="crop">Crop</option>
-            <option value="soil">Soil</option>
-            <option value="pest">Pest</option>
-            <option value="irrigation">Irrigation</option>
-            <option value="fertilizer">Fertilizer</option>
-            <option value="general">General</option>
-          </select>
-          <select v-model="statusFilter" class="status-select">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="responded">Responded</option>
-            <option value="resolved">Resolved</option>
-          </select>
-        </div>
+      <!-- Error State -->
+      <div v-if="error && !loading" class="error-container">
+        <AlertCircle size="40" class="error-icon" />
+        <p class="error-message">{{ error }}</p>
+        <button @click="fetchConsultations" class="btn-retry">
+          <RotateCcw size="16" />
+          Retry
+        </button>
       </div>
 
-      <!-- Consultations List -->
-      <div class="consultations-section">
-        <div v-if="loading" class="loading-state">
-          <p><i class="fas fa-spinner fa-spin"></i> Loading consultations...</p>
+      <!-- Content -->
+      <div v-if="!loading && !error" class="consultations-content">
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <CheckCircle size="20" class="stat-icon completed" />
+            <div>
+              <span class="stat-label">Completed</span>
+              <span class="stat-value">{{ stats.completed }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <Clock size="20" class="stat-icon scheduled" />
+            <div>
+              <span class="stat-label">Scheduled</span>
+              <span class="stat-value">{{ stats.scheduled }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <MessageSquare size="20" class="stat-icon pending" />
+            <div>
+              <span class="stat-label">Pending Response</span>
+              <span class="stat-value">{{ stats.pending }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <Star size="20" class="stat-icon rating" />
+            <div>
+              <span class="stat-label">Avg Rating</span>
+              <span class="stat-value">{{ avgRating }}/5</span>
+            </div>
+          </div>
         </div>
 
-        <div v-else-if="filteredConsultations.length === 0" class="empty-state">
-          <i class="fas fa-inbox"></i>
-          <h3>No consultations found</h3>
-          <p>{{ consultations.length === 0 ? 'Request your first consultation' : 'No consultations match your filters' }}</p>
+        <!-- Tabs -->
+        <div class="tabs">
+          <button 
+            v-for="tab in tabs" 
+            :key="tab" 
+            @click="activeTab = tab"
+            class="tab"
+            :class="{ active: activeTab === tab }"
+          >
+            {{ capitalize(tab) }}
+          </button>
         </div>
 
-        <div v-else class="consultations-list">
-          <div v-for="consultation in filteredConsultations" :key="consultation.id" class="consultation-card">
-            <div class="consultation-header">
-              <div class="consultation-info">
-                <h3>{{ consultation.title }}</h3>
-                <p class="type-badge">{{ formatType(consultation.consultation_type) }}</p>
-              </div>
-              <div class="header-right">
-                <span class="priority-badge" :class="`priority-${consultation.priority}`">
-                  {{ capitalizeFirstLetter(consultation.priority) }}
-                </span>
+        <!-- Consultations List -->
+        <div class="consultations-section">
+          <div v-if="filteredConsultations.length > 0" class="consultations-list">
+            <div v-for="consultation in filteredConsultations" :key="consultation.id" class="consultation-card">
+              <div class="card-header">
+                <div class="expert-info">
+                  <div class="avatar">
+                    {{ consultation.expertName.charAt(0) }}
+                  </div>
+                  <div>
+                    <h3>{{ consultation.expertName }}</h3>
+                    <p class="specialty">{{ consultation.specialty }}</p>
+                  </div>
+                </div>
                 <span class="status-badge" :class="`status-${consultation.status}`">
-                  {{ formatStatus(consultation.status) }}
+                  {{ capitalize(consultation.status) }}
                 </span>
               </div>
-            </div>
 
-            <div class="consultation-body">
-              <p class="description">{{ truncateText(consultation.description, 120) }}</p>
-              
-              <div class="consultation-meta">
-                <div class="meta-item">
-                  <i class="fas fa-user-tie"></i>
-                  <span>{{ consultation.expert?.name || 'Awaiting Assignment' }}</span>
+              <div class="card-content">
+                <p class="topic">{{ consultation.topic }}</p>
+                <div class="details-row">
+                  <span class="detail">
+                    <Calendar size="14" />
+                    {{ formatDate(consultation.date) }}
+                  </span>
+                  <span class="detail">
+                    <Clock size="14" />
+                    {{ consultation.time }}
+                  </span>
+                  <span class="detail">
+                    <Video size="14" />
+                    {{ consultation.type }}
+                  </span>
                 </div>
-                <div class="meta-item">
-                  <i class="fas fa-calendar"></i>
-                  <span>{{ formatDate(consultation.created_at) }}</span>
-                </div>
-                <div v-if="consultation.budget" class="meta-item">
-                  <i class="fas fa-dollar-sign"></i>
-                  <span>${{ consultation.budget }}</span>
-                </div>
-              </div>
-            </div>
 
-            <div class="consultation-footer">
-              <div class="message-count" v-if="consultation.messages_count">
-                <i class="fas fa-comments"></i>
-                {{ consultation.messages_count }} {{ consultation.messages_count === 1 ? 'message' : 'messages' }}
+                <div v-if="consultation.notes" class="notes">
+                  <p>{{ consultation.notes }}</p>
+                </div>
+
+                <div v-if="consultation.rating" class="rating-display">
+                  <span class="rating-stars">
+                    <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= consultation.rating }">★</span>
+                  </span>
+                  <span class="rating-text">{{ consultation.rating }}/5</span>
+                </div>
               </div>
-              <div class="actions">
-                <button class="btn-small btn-view" @click="viewConsultation(consultation)">
-                  <i class="fas fa-eye"></i> View
+
+              <div class="card-actions">
+                <button @click="viewDetails(consultation)" class="action-btn primary">
+                  <Eye size="16" />
+                  <span>View Details</span>
                 </button>
-                <button v-if="consultation.status === 'pending'" class="btn-small btn-edit" @click="editConsultation(consultation)">
-                  <i class="fas fa-edit"></i> Edit
+                <button v-if="consultation.status === 'completed' && !consultation.rating" @click="rateConsultation(consultation)" class="action-btn secondary">
+                  <Star size="16" />
+                  <span>Rate</span>
                 </button>
-                <button class="btn-small btn-delete" @click="deleteConsultation(consultation.id)">
-                  <i class="fas fa-trash"></i> Delete
+                <button v-if="consultation.status === 'scheduled'" @click="reschedule(consultation)" class="action-btn secondary">
+                  <Clock size="16" />
+                  <span>Reschedule</span>
                 </button>
               </div>
             </div>
+          </div>
+
+          <div v-else class="empty-state">
+            <MessageSquare size="48" class="empty-icon" />
+            <p>No {{ activeTab }} consultations</p>
+            <button @click="showNewConsultation = true" class="btn-book">
+              <Plus size="16" />
+              Book Now
+            </button>
           </div>
         </div>
-      </div>
 
-      <!-- Request Consultation Modal -->
-      <div v-if="showRequestDialog" class="modal-overlay" @click="closeRequestConsultationDialog">
-        <div class="modal-dialog" @click.stop>
-          <div class="modal-header">
-            <h2>{{ editingConsultation ? 'Edit Consultation' : 'Request Expert Consultation' }}</h2>
-            <button class="close-btn" @click="closeRequestConsultationDialog">&times;</button>
-          </div>
-
-          <div class="modal-content">
-            <form @submit.prevent="submitConsultationRequest">
-              <!-- Expert Selection -->
-              <div class="form-group">
-                <label for="consultant-expert">Select Expert *</label>
-                <select id="consultant-expert" v-model="consultationForm.expert_id" required>
-                  <option value="">Choose an expert</option>
-                  <option v-for="expert in experts" :key="expert.id" :value="expert.id">
-                    {{ expert.name }} - {{ expert.specialization || 'General Expert' }}
-                  </option>
-                </select>
-                <span v-if="formErrors.expert_id" class="error-text">{{ formErrors.expert_id }}</span>
-              </div>
-
-              <!-- Title -->
-              <div class="form-group">
-                <label for="consultant-title">Consultation Title *</label>
-                <input
-                  id="consultant-title"
-                  v-model="consultationForm.title"
-                  type="text"
-                  placeholder="e.g., Crop Disease Diagnosis"
-                  required
-                />
-                <span v-if="formErrors.title" class="error-text">{{ formErrors.title }}</span>
-              </div>
-
-              <!-- Consultation Type -->
-              <div class="form-row">
+        <!-- New Consultation Modal -->
+        <div v-if="showNewConsultation" class="modal-overlay" @click="showNewConsultation = false">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <h2>Book a Consultation</h2>
+              <button @click="showNewConsultation = false" class="btn-close">
+                <X size="20" />
+              </button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="submitConsultation" class="form">
                 <div class="form-group">
-                  <label for="consultant-type">Consultation Type *</label>
-                  <select id="consultant-type" v-model="consultationForm.consultation_type" required>
-                    <option value="">Select type</option>
-                    <option value="crop">Crop Management</option>
-                    <option value="soil">Soil Management</option>
-                    <option value="pest">Pest Control</option>
-                    <option value="irrigation">Irrigation</option>
-                    <option value="fertilizer">Fertilizer/Nutrition</option>
-                    <option value="general">General Agriculture</option>
+                  <label>Select Expert</label>
+                  <select v-model="newConsultation.expertId" required class="form-control">
+                    <option value="">-- Choose an expert --</option>
+                    <option v-for="expert in experts" :key="expert.id" :value="expert.id">
+                      {{ expert.name }} - {{ expert.specialty }}
+                    </option>
                   </select>
-                  <span v-if="formErrors.consultation_type" class="error-text">{{ formErrors.consultation_type }}</span>
                 </div>
 
                 <div class="form-group">
-                  <label for="consultant-priority">Priority Level *</label>
-                  <select id="consultant-priority" v-model="consultationForm.priority" required>
-                    <option value="">Select priority</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                  <span v-if="formErrors.priority" class="error-text">{{ formErrors.priority }}</span>
+                  <label>Consultation Topic</label>
+                  <input v-model="newConsultation.topic" type="text" required placeholder="e.g., Pest Management" class="form-control" />
                 </div>
-              </div>
 
-              <!-- Description -->
-              <div class="form-group">
-                <label for="consultant-description">Detailed Description *</label>
-                <textarea
-                  id="consultant-description"
-                  v-model="consultationForm.description"
-                  placeholder="Describe your issue in detail..."
-                  rows="4"
-                  required
-                ></textarea>
-                <span v-if="formErrors.description" class="error-text">{{ formErrors.description }}</span>
-              </div>
-
-              <!-- Budget and Date -->
-              <div class="form-row">
                 <div class="form-group">
-                  <label for="consultant-budget">Budget (Optional)</label>
-                  <div class="input-with-currency">
-                    <span class="currency">$</span>
-                    <input
-                      id="consultant-budget"
-                      v-model.number="consultationForm.budget"
-                      type="number"
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                    />
+                  <label>Description</label>
+                  <textarea v-model="newConsultation.description" required placeholder="Describe your issue or question..." class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Preferred Date</label>
+                    <input v-model="newConsultation.date" type="date" required class="form-control" />
+                  </div>
+                  <div class="form-group">
+                    <label>Preferred Time</label>
+                    <input v-model="newConsultation.time" type="time" required class="form-control" />
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="consultant-date">Preferred Date (Optional)</label>
-                  <input
-                    id="consultant-date"
-                    v-model="consultationForm.preferred_date"
-                    type="date"
-                  />
+                  <label>Consultation Type</label>
+                  <select v-model="newConsultation.type" required class="form-control">
+                    <option value="video">Video Call</option>
+                    <option value="phone">Phone Call</option>
+                    <option value="chat">Chat</option>
+                    <option value="onsite">On-site Visit</option>
+                  </select>
                 </div>
-              </div>
 
-              <!-- Form Actions -->
-              <div class="form-actions">
-                <button type="button" class="btn-secondary" @click="closeRequestConsultationDialog">Cancel</button>
-                <button type="submit" class="btn-primary" :disabled="submitting">
-                  {{ submitting ? 'Submitting...' : (editingConsultation ? 'Update Request' : 'Request Consultation') }}
-                </button>
-              </div>
-            </form>
+                <div class="form-actions">
+                  <button type="button" @click="showNewConsultation = false" class="btn-secondary">Cancel</button>
+                  <button type="submit" class="btn-primary">Book Consultation</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- View Consultation Modal -->
-      <div v-if="showDetailsModal" class="modal-overlay" @click="closeDetailsModal">
-        <div class="modal-dialog modal-large" @click.stop>
-          <div class="modal-header">
-            <h2>{{ selectedConsultation?.title }}</h2>
-            <button class="close-btn" @click="closeDetailsModal">&times;</button>
-          </div>
-
-          <div class="modal-content">
-            <div class="details-grid">
-              <div class="detail-section">
-                <h3>Consultation Details</h3>
-                <div class="detail-row">
-                  <span class="label">Type:</span>
-                  <span class="value">{{ formatType(selectedConsultation?.consultation_type) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Priority:</span>
-                  <span class="value priority-badge" :class="`priority-${selectedConsultation?.priority}`">
-                    {{ capitalizeFirstLetter(selectedConsultation?.priority) }}
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Status:</span>
-                  <span class="value status-badge" :class="`status-${selectedConsultation?.status}`">
-                    {{ formatStatus(selectedConsultation?.status) }}
-                  </span>
-                </div>
-              </div>
-
+        <!-- Details Modal -->
+        <div v-if="selectedConsultation" class="modal-overlay" @click="selectedConsultation = null">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <h2>Consultation Details</h2>
+              <button @click="selectedConsultation = null" class="btn-close">
+                <X size="20" />
+              </button>
+            </div>
+            <div class="modal-body">
               <div class="detail-section">
                 <h3>Expert Information</h3>
-                <div class="detail-row">
-                  <span class="label">Name:</span>
-                  <span class="value">{{ selectedConsultation?.expert?.name || 'Awaiting Assignment' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="label">Specialization:</span>
-                  <span class="value">{{ selectedConsultation?.expert?.specialization || 'N/A' }}</span>
-                </div>
-              </div>
-
-              <div class="detail-section full-width">
-                <h3>Your Request</h3>
-                <p class="description-text">{{ selectedConsultation?.description }}</p>
-              </div>
-
-              <div class="detail-section full-width">
-                <h3>Messages ({{ selectedConsultation?.messages?.length || 0 }})</h3>
-                <div v-if="selectedConsultation?.messages?.length" class="messages-list">
-                  <div v-for="msg in selectedConsultation.messages" :key="msg.id" class="message-item" :class="{ 'message-expert': msg.sender_id !== auth.user?.id }">
-                    <div class="message-sender">
-                      <strong>{{ msg.sender?.name }}</strong>
-                      <span class="message-time">{{ formatDate(msg.created_at) }}</span>
+                <div class="expert-card">
+                  <div class="expert-avatar">{{ selectedConsultation.expertName.charAt(0) }}</div>
+                  <div class="expert-details">
+                    <h4>{{ selectedConsultation.expertName }}</h4>
+                    <p>{{ selectedConsultation.specialty }}</p>
+                    <div class="expert-rating">
+                      <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= 4 }">★</span>
+                      <span>4.8/5 ({{ selectedConsultation.reviews }} reviews)</span>
                     </div>
-                    <div class="message-content">{{ msg.message }}</div>
                   </div>
                 </div>
-                <p v-else class="no-messages">No messages yet</p>
+              </div>
+
+              <div class="detail-section">
+                <h3>Consultation Details</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="label">Topic:</span>
+                    <span class="value">{{ selectedConsultation.topic }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Date:</span>
+                    <span class="value">{{ formatDate(selectedConsultation.date) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Time:</span>
+                    <span class="value">{{ selectedConsultation.time }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Type:</span>
+                    <span class="value">{{ capitalize(selectedConsultation.type) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Status:</span>
+                    <span class="status-badge" :class="`status-${selectedConsultation.status}`">
+                      {{ capitalize(selectedConsultation.status) }}
+                    </span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Duration:</span>
+                    <span class="value">{{ selectedConsultation.duration }} minutes</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <h3>Your Question</h3>
+                <p class="question-text">{{ selectedConsultation.notes }}</p>
+              </div>
+
+              <div v-if="selectedConsultation.status === 'completed'" class="detail-section">
+                <h3>Expert's Response</h3>
+                <p class="response-text">{{ selectedConsultation.expertResponse }}</p>
               </div>
             </div>
 
-            <div class="modal-actions">
-              <button class="btn-secondary" @click="closeDetailsModal">Close</button>
+            <div class="modal-footer">
+              <button @click="selectedConsultation = null" class="btn-secondary">Close</button>
+              <button v-if="selectedConsultation.status === 'scheduled'" @click="scheduleCall" class="btn-primary">
+                <Video size="16" />
+                Join Call
+              </button>
             </div>
           </div>
         </div>
@@ -345,675 +300,611 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import {
+  Plus, MessageSquare, AlertCircle, RotateCcw, X, Eye, Calendar, Clock, Video, Star, CheckCircle,
+  Lightbulb
+} from 'lucide-vue-next'
 
-const router = useRouter()
 const auth = useAuthStore()
+const router = useRouter()
 
-// State
-const consultations = ref([])
-const experts = ref([])
-const loading = ref(true)
-const searchQuery = ref('')
-const typeFilter = ref('')
-const statusFilter = ref('')
-const showRequestDialog = ref(false)
-const showDetailsModal = ref(false)
-const editingConsultation = ref(null)
+const loading = ref(false)
+const error = ref(null)
+const activeTab = ref('all')
+const showNewConsultation = ref(false)
 const selectedConsultation = ref(null)
-const submitting = ref(false)
-const formErrors = ref({})
 
-// Form
-const consultationForm = ref({
-  expert_id: '',
-  title: '',
+const tabs = ['all', 'scheduled', 'completed', 'pending']
+
+const experts = [
+  { id: 1, name: 'Dr. Ahmed Hassan', specialty: 'Crop Management' },
+  { id: 2, name: 'Prof. Sarah Williams', specialty: 'Pest Control' },
+  { id: 3, name: 'Mr. James Smith', specialty: 'Soil Science' },
+  { id: 4, name: 'Dr. Amira Khan', specialty: 'Irrigation Management' }
+]
+
+const mockConsultations = [
+  {
+    id: 1,
+    expertName: 'Dr. Ahmed Hassan',
+    specialty: 'Crop Management',
+    topic: 'Tomato Plant Disease',
+    date: '2026-09-01',
+    time: '10:00 AM',
+    type: 'video',
+    status: 'completed',
+    notes: 'My tomato plants are showing yellow leaves and wilting symptoms',
+    duration: 45,
+    rating: 5,
+    reviews: 32,
+    expertResponse: 'The symptoms indicate early blight. Apply fungicide immediately and remove infected leaves.'
+  },
+  {
+    id: 2,
+    expertName: 'Prof. Sarah Williams',
+    specialty: 'Pest Control',
+    topic: 'Pest Management Strategy',
+    date: '2026-09-05',
+    time: '2:00 PM',
+    type: 'phone',
+    status: 'scheduled',
+    notes: 'Need advice on integrated pest management for corn field',
+    duration: 60,
+    rating: 0,
+    reviews: 28,
+    expertResponse: ''
+  },
+  {
+    id: 3,
+    expertName: 'Mr. James Smith',
+    specialty: 'Soil Science',
+    topic: 'Soil Nutrient Analysis',
+    date: '2026-08-28',
+    time: '11:30 AM',
+    type: 'onsite',
+    status: 'completed',
+    notes: 'Request for soil testing and recommendations',
+    duration: 90,
+    rating: 4,
+    reviews: 45,
+    expertResponse: 'Your soil is deficient in nitrogen and potassium. Recommend N-P-K 16-16-16 fertilizer.'
+  },
+  {
+    id: 4,
+    expertName: 'Dr. Amira Khan',
+    specialty: 'Irrigation Management',
+    topic: 'Water Management',
+    date: '2026-09-08',
+    time: '9:00 AM',
+    type: 'chat',
+    status: 'pending',
+    notes: 'Questions about drip irrigation system efficiency',
+    duration: 30,
+    rating: 0,
+    reviews: 19,
+    expertResponse: ''
+  },
+  {
+    id: 5,
+    expertName: 'Dr. Ahmed Hassan',
+    specialty: 'Crop Management',
+    topic: 'Crop Rotation Planning',
+    date: '2026-08-25',
+    time: '3:30 PM',
+    type: 'video',
+    status: 'completed',
+    notes: 'Planning for next season crop rotation',
+    duration: 50,
+    rating: 5,
+    reviews: 32,
+    expertResponse: 'Recommend: Corn → Soybeans → Alfalfa rotation for optimal soil health.'
+  }
+]
+
+const consultations = ref(mockConsultations)
+
+const newConsultation = ref({
+  expertId: '',
+  topic: '',
   description: '',
-  consultation_type: '',
-  priority: 'medium',
-  budget: '',
-  preferred_date: '',
+  date: '',
+  time: '',
+  type: 'video'
 })
 
-// Computed
 const filteredConsultations = computed(() => {
-  return consultations.value.filter(c => {
-    const matchesSearch = 
-      c.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    
-    const matchesType = !typeFilter.value || c.consultation_type === typeFilter.value
-    const matchesStatus = !statusFilter.value || c.status === statusFilter.value
-    
-    return matchesSearch && matchesType && matchesStatus
-  })
+  if (activeTab.value === 'all') return consultations.value
+  return consultations.value.filter(c => c.status === activeTab.value)
 })
 
-const pendingCount = computed(() => consultations.value.filter(c => c.status === 'pending').length)
-const respondedCount = computed(() => consultations.value.filter(c => c.status === 'responded').length)
-const resolvedCount = computed(() => consultations.value.filter(c => c.status === 'resolved').length)
+const stats = computed(() => ({
+  completed: consultations.value.filter(c => c.status === 'completed').length,
+  scheduled: consultations.value.filter(c => c.status === 'scheduled').length,
+  pending: consultations.value.filter(c => c.status === 'pending').length
+}))
 
-// Lifecycle
-onMounted(async () => {
-  await fetchConsultations()
-  await fetchExperts()
+const avgRating = computed(() => {
+  const ratings = consultations.value.filter(c => c.rating > 0).map(c => c.rating)
+  return ratings.length > 0 ? (ratings.reduce((a, b) => a + b) / ratings.length).toFixed(1) : 'N/A'
 })
 
-// API Functions
 const fetchConsultations = async () => {
-  try {
-    loading.value = true
-    const res = await fetch('/api/farmer/consultations', {
-      headers: { 'Authorization': `Bearer ${auth.token}` }
-    })
-    
-    if (!res.ok) {
-      consultations.value = []
-      return
-    }
-
-    const data = await res.json()
-    consultations.value = data.data?.data || data.data || []
-  } catch (error) {
-    console.error('Error fetching consultations:', error)
-    consultations.value = []
-  } finally {
-    loading.value = false
-  }
+  loading.value = true
+  await new Promise(r => setTimeout(r, 500))
+  loading.value = false
 }
 
-const fetchExperts = async () => {
-  try {
-    // Assuming there's an endpoint to get available experts
-    const res = await fetch('/api/experts', {
-      headers: { 'Authorization': `Bearer ${auth.token}` }
-    })
-    
-    if (res.ok) {
-      const data = await res.json()
-      experts.value = data.data?.data || data.data || []
-    }
-  } catch (error) {
-    console.error('Error fetching experts:', error)
-  }
-}
+const formatDate = (date) => new Date(date).toLocaleDateString()
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+const viewDetails = (consultation) => { selectedConsultation.value = consultation }
+const rateConsultation = (consultation) => { alert('Rate consultation: ' + consultation.id) }
+const reschedule = (consultation) => { alert('Reschedule consultation: ' + consultation.id) }
+const scheduleCall = () => { alert('Joining video call...') }
 
-// Modal Functions
-const openRequestConsultationDialog = () => {
-  resetConsultationForm()
-  editingConsultation.value = null
-  showRequestDialog.value = true
-}
-
-const closeRequestConsultationDialog = () => {
-  showRequestDialog.value = false
-  resetConsultationForm()
-}
-
-const resetConsultationForm = () => {
-  consultationForm.value = {
-    expert_id: '',
-    title: '',
-    description: '',
-    consultation_type: '',
-    priority: 'medium',
-    budget: '',
-    preferred_date: '',
-  }
-  formErrors.value = {}
-}
-
-const editConsultation = (consultation) => {
-  editingConsultation.value = consultation
-  consultationForm.value = {
-    expert_id: consultation.expert_id || '',
-    title: consultation.title,
-    description: consultation.description,
-    consultation_type: consultation.consultation_type,
-    priority: consultation.priority,
-    budget: consultation.budget || '',
-    preferred_date: consultation.preferred_date || '',
-  }
-  showRequestDialog.value = true
-}
-
-const viewConsultation = (consultation) => {
-  selectedConsultation.value = consultation
-  showDetailsModal.value = true
-}
-
-const closeDetailsModal = () => {
-  showDetailsModal.value = false
-  selectedConsultation.value = null
-}
-
-// Form Submission
-const submitConsultationRequest = async () => {
-  try {
-    submitting.value = true
-    formErrors.value = {}
-
-    const payload = {
-      ...consultationForm.value,
-      expert_id: parseInt(consultationForm.value.expert_id),
-      budget: consultationForm.value.budget ? parseFloat(consultationForm.value.budget) : null,
-    }
-
-    const url = editingConsultation.value 
-      ? `/api/farmer/consultations/${editingConsultation.value.id}`
-      : '/api/farmer/consultations'
-
-    const method = editingConsultation.value ? 'PUT' : 'POST'
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      formErrors.value = data.errors || { general: data.message || 'Error occurred' }
-      return
-    }
-
-    showRequestDialog.value = false
-    resetConsultationForm()
-    await fetchConsultations()
-  } catch (error) {
-    console.error('Error:', error)
-    formErrors.value = { general: 'An error occurred' }
-  } finally {
-    submitting.value = false
-  }
-}
-
-const deleteConsultation = async (id) => {
-  if (!confirm('Delete this consultation request?')) return
-
-  try {
-    const response = await fetch(`/api/farmer/consultations/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${auth.token}` }
-    })
-
-    if (response.ok) {
-      await fetchConsultations()
-    }
-  } catch (error) {
-    console.error('Error deleting:', error)
-  }
-}
-
-// Utility Functions
-const formatDate = (date) => {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString()
-}
-
-const formatStatus = (status) => {
-  const statuses = {
-    pending: 'Pending',
-    responded: 'Expert Responded',
-    resolved: 'Resolved',
-    closed: 'Closed'
-  }
-  return statuses[status] || status
-}
-
-const formatType = (type) => {
-  const types = {
-    crop: 'Crop Management',
-    soil: 'Soil Management',
-    pest: 'Pest Control',
-    irrigation: 'Irrigation',
-    fertilizer: 'Fertilizer/Nutrition',
-    general: 'General'
-  }
-  return types[type] || type
-}
-
-const capitalizeFirstLetter = (str) => {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
-
-const truncateText = (text, length) => {
-  return text.length > length ? text.substring(0, length) + '...' : text
+const submitConsultation = () => {
+  alert('Consultation booked successfully!')
+  showNewConsultation.value = false
+  newConsultation.value = { expertId: '', topic: '', description: '', date: '', time: '', type: 'video' }
 }
 
 const handleLogout = async () => {
   await auth.logout()
   router.push('/login')
 }
+
+onMounted(() => { fetchConsultations() })
 </script>
 
 <style scoped>
-.farmer-layout { display: flex; height: 100vh; }
-.farmer-page { margin-left: 260px; flex: 1; overflow-y: auto; background-color: #f5f5f5; padding: 20px; }
+.consultations-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
 
-/* Header */
+.consultations-container {
+  margin-left: 260px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .page-header {
+  background: white;
+  padding: 25px 30px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  gap: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-content h1 {
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
-  margin: 0 0 5px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px 0;
 }
 
 .header-content p {
-  color: #666;
+  color: #6b7280;
+  font-size: 14px;
   margin: 0;
 }
 
-.btn-large {
-  padding: 12px 24px;
+.btn-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-new:hover {
+  background: #2563eb;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-container {
+  background: #fee2e2;
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 40px;
+  margin: 30px;
+  text-align: center;
+}
+
+.error-icon {
+  color: #dc2626;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  color: #991b1b;
   font-size: 16px;
-  white-space: nowrap;
+  margin-bottom: 20px;
+}
+
+.btn-retry {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Stats Grid */
+.consultations-content {
+  padding: 30px;
+  flex: 1;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  gap: 20px;
   margin-bottom: 30px;
 }
 
 .stat-card {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
   display: flex;
-  gap: 15px;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-
-.stat-card:hover { transform: translateY(-2px); }
 
 .stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
+  color: #d1d5db;
+  flex-shrink: 0;
 }
 
-.stat-icon.total { background-color: #10b981; }
-.stat-icon.pending { background-color: #f59e0b; }
-.stat-icon.resolved { background-color: #8b5cf6; }
-.stat-icon.responded { background-color: #3b82f6; }
+.stat-icon.completed { color: #10b981; }
+.stat-icon.scheduled { color: #3b82f6; }
+.stat-icon.pending { color: #f59e0b; }
+.stat-icon.rating { color: #f59e0b; }
 
-.stat-content h3 {
-  margin: 0;
+.stat-label {
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
   text-transform: uppercase;
   font-weight: 600;
 }
 
 .stat-value {
-  margin: 5px 0 0 0;
   font-size: 24px;
-  font-weight: bold;
-  color: #333;
+  font-weight: 700;
+  color: #1f2937;
 }
 
-/* Controls */
-.controls-section {
-  background: white;
-  border-radius: 8px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.filter-group {
+.tabs {
   display: flex;
-  gap: 15px;
-  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.search-input,
-.type-select,
-.status-select {
-  padding: 10px 15px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s;
+.tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -2px;
 }
 
-.search-input:focus,
-.type-select:focus,
-.status-select:focus {
-  outline: none;
-  border-color: #10b981;
+.tab:hover {
+  color: #1f2937;
 }
 
-.search-input { flex: 1; min-width: 250px; }
+.tab.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
 
-/* Consultations Section */
 .consultations-section {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #666;
-}
-
-.empty-state i {
-  font-size: 48px;
-  color: #d1d5db;
-  margin-bottom: 15px;
-  display: block;
-}
-
-.empty-state h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-}
-
-/* Consultations List */
 .consultations-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
+  padding: 20px;
 }
 
 .consultation-card {
-  background-color: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 16px;
   transition: all 0.3s;
 }
 
 .consultation-card:hover {
-  border-color: #10b981;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
 }
 
-.consultation-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 15px;
-  gap: 10px;
+  margin-bottom: 16px;
+  gap: 12px;
 }
 
-.consultation-info h3 {
-  margin: 0 0 5px 0;
-  color: #333;
-  font-size: 18px;
+.expert-info {
+  display: flex;
+  gap: 12px;
+  flex: 1;
 }
 
-.type-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  background: #e0e7ff;
-  color: #3b82f6;
-  border-radius: 4px;
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.expert-info h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.specialty {
   font-size: 12px;
-  font-weight: 600;
+  color: #6b7280;
   margin: 0;
 }
-
-.header-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.priority-badge {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.priority-badge.priority-low { background: #d1fae5; color: #065f46; }
-.priority-badge.priority-medium { background: #fef3c7; color: #92400e; }
-.priority-badge.priority-high { background: #fee2e2; color: #991b1b; }
-.priority-badge.priority-urgent { background: #f5d5d5; color: #7f1d1d; font-weight: 700; }
 
 .status-badge {
   display: inline-block;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
 }
 
-.status-badge.status-pending { background-color: #fef3c7; color: #92400e; }
-.status-badge.status-responded { background-color: #dbeafe; color: #1e40af; }
-.status-badge.status-resolved { background-color: #d1fae5; color: #065f46; }
-.status-badge.status-closed { background-color: #f3f4f6; color: #6b7280; }
+.status-completed { background: #d1fae5; color: #065f46; }
+.status-scheduled { background: #dbeafe; color: #1e40af; }
+.status-pending { background: #fef3c7; color: #92400e; }
 
-.consultation-body {
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+.card-content {
+  margin-bottom: 16px;
 }
 
-.description {
-  color: #555;
+.topic {
   font-size: 14px;
-  line-height: 1.5;
+  font-weight: 600;
+  color: #1f2937;
   margin: 0 0 12px 0;
 }
 
-.consultation-meta {
+.details-row {
   display: flex;
-  gap: 15px;
   flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
-.meta-item {
-  display: flex;
+.detail {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  color: #666;
-}
-
-.meta-item i {
-  color: #10b981;
-}
-
-.consultation-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.message-count {
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
+}
+
+.notes {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.notes p {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0;
+}
+
+.rating-display {
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.message-count i {
-  color: #3b82f6;
-}
-
-.actions {
-  display: flex;
   gap: 8px;
+  margin-top: 8px;
 }
 
-.btn-small {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.rating-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: #d1d5db;
+  font-size: 16px;
+}
+
+.star.filled {
+  color: #f59e0b;
+}
+
+.rating-text {
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s;
+  color: #4b5563;
+}
+
+.card-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-width: 70px;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
-.btn-view {
-  background-color: #8b5cf6;
+.action-btn.primary {
+  background: #3b82f6;
   color: white;
+  border-color: #3b82f6;
 }
 
-.btn-view:hover {
-  background-color: #7c3aed;
+.action-btn.primary:hover {
+  background: #2563eb;
 }
 
-.btn-edit {
-  background-color: #f59e0b;
-  color: white;
+.action-btn.secondary {
+  background: white;
+  color: #3b82f6;
 }
 
-.btn-edit:hover {
-  background-color: #d97706;
+.action-btn.secondary:hover {
+  background: #eff6ff;
 }
 
-.btn-delete {
-  background-color: #ef4444;
-  color: white;
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
 }
 
-.btn-delete:hover {
-  background-color: #dc2626;
+.empty-icon {
+  color: #d1d5db;
+  margin-bottom: 16px;
 }
 
-/* Buttons */
-.btn-primary {
-  background-color: #10b981;
-  color: white;
+.empty-state p {
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.btn-book {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s;
+  font-size: 14px;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #059669;
-}
-
-.btn-primary:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-secondary:hover {
-  background-color: #4b5563;
-}
-
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-}
-
-.modal-dialog {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 650px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-dialog.modal-large {
-  max-width: 800px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 20px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  color: #333;
+  z-index: 2000;
 }
 
 .modal-content {
-  padding: 25px;
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* Form */
+.modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -1021,201 +912,206 @@ const handleLogout = async () => {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
   font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.form-control {
   width: 100%;
   padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 14px;
+  color: #1f2937;
   font-family: inherit;
-  transition: border-color 0.3s;
-  box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.form-control:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.input-with-currency {
-  display: flex;
-  align-items: center;
-}
-
-.currency {
-  padding: 10px 12px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-right: none;
-  border-radius: 4px 0 0 4px;
-  font-weight: 600;
-  color: #333;
-}
-
-.input-with-currency input {
-  border-radius: 0 4px 4px 0;
-  margin: 0;
-}
-
-.error-text {
-  display: block;
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 5px;
+  gap: 16px;
 }
 
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
-  margin-top: 25px;
-  padding-top: 15px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 24px;
 }
 
-/* Details Grid */
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
 }
 
 .detail-section {
-  background: #f9fafb;
-  padding: 15px;
-  border-radius: 6px;
-}
-
-.detail-section.full-width {
-  grid-column: 1 / -1;
+  margin-bottom: 24px;
 }
 
 .detail-section h3 {
-  margin: 0 0 12px 0;
   font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.detail-row {
+.expert-card {
   display: flex;
-  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.expert-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1e40af;
+  display: flex;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.detail-row:last-child {
-  border-bottom: none;
+.expert-details h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 4px 0;
 }
 
-.detail-row .label {
-  color: #666;
-  font-weight: 500;
+.expert-details p {
   font-size: 13px;
-}
-
-.detail-row .value {
-  color: #333;
-  font-weight: 600;
-  text-align: right;
-}
-
-.description-text {
-  color: #555;
-  line-height: 1.6;
+  color: #6b7280;
   margin: 0;
 }
 
-.messages-list {
+.expert-rating {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.message-item {
-  background: white;
-  padding: 12px;
-  border-radius: 4px;
-  border-left: 3px solid #10b981;
-}
-
-.message-item.message-expert {
-  border-left-color: #8b5cf6;
-  background: #f5f3ff;
-}
-
-.message-sender {
+.detail-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-  font-size: 12px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
 }
 
-.message-sender strong {
-  color: #333;
-}
-
-.message-time {
-  color: #999;
+.detail-item .label {
   font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
 }
 
-.message-content {
-  color: #555;
+.detail-item .value {
   font-size: 13px;
-  line-height: 1.5;
+  color: #1f2937;
 }
 
-.no-messages {
-  text-align: center;
-  color: #999;
-  padding: 15px;
+.question-text,
+.response-text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.6;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
   margin: 0;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding-top: 15px;
+.modal-footer {
+  padding: 24px;
   border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .farmer-page { margin-left: 0; }
-  .page-header { flex-direction: column; align-items: stretch; }
-  .btn-large { width: 100%; text-align: center; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .filter-group { flex-direction: column; }
-  .search-input { width: 100%; }
-  .form-row { grid-template-columns: 1fr; }
-  .modal-dialog { width: 95%; max-height: 95vh; }
-  .consultation-header { flex-direction: column; }
-  .header-right { width: 100%; }
+  .consultations-container {
+    margin-left: 0;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-new {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .details-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

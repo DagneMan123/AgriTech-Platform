@@ -54,7 +54,6 @@
             <Package class="sub-icon" />
             <span>My Products</span>
           </router-link>
-          
           <router-link to="/farmer/my-sales" class="menu-item sub-item" active-class="active">
             <TrendingUp class="sub-icon" />
             <span>My Sales</span>
@@ -75,10 +74,6 @@
           <component :is="expandedSections.farmInputs ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.farmInputs" class="section-items">
-          <router-link to="/farmer/buy-inputs" class="menu-item sub-item" active-class="active">
-            <ShoppingBag class="sub-icon" />
-            <span>Buy Farm Inputs</span>
-          </router-link>
           <router-link to="/farmer/seeds" class="menu-item sub-item" active-class="active">
             <Flower2 class="sub-icon" />
             <span>Seeds</span>
@@ -195,17 +190,9 @@
           <component :is="expandedSections.reports ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.reports" class="section-items">
-          <router-link to="/farmer/farm-reports" class="menu-item sub-item" active-class="active">
+          <router-link to="/farmer/reports" class="menu-item sub-item" active-class="active">
             <FileSpreadsheet class="sub-icon" />
-            <span>Farm Reports</span>
-          </router-link>
-          <router-link to="/farmer/sales-reports" class="menu-item sub-item" active-class="active">
-            <BarChart2 class="sub-icon" />
-            <span>Sales Reports</span>
-          </router-link>
-          <router-link to="/farmer/production-reports" class="menu-item sub-item" active-class="active">
-            <Activity class="sub-icon" />
-            <span>Production Reports</span>
+            <span>Reports</span>
           </router-link>
         </div>
       </div>
@@ -221,19 +208,11 @@
           <component :is="expandedSections.account ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.account" class="section-items">
-          <router-link to="/farmer/notifications" class="menu-item sub-item" active-class="active">
-            <Bell class="sub-icon" />
-            <span>Notifications</span>
-          </router-link>
-          <router-link to="/farmer/messages" class="menu-item sub-item" active-class="active">
-            <Mail class="sub-icon" />
-            <span>Messages</span>
-          </router-link>
           <router-link to="/farmer/profile" class="menu-item sub-item" active-class="active">
             <User class="sub-icon" />
             <span>Profile</span>
           </router-link>
-          <button class="menu-item sub-item logout-btn" @click="handleLogout">
+          <button class="menu-item sub-item logout-btn" @click="emitLogout">
             <LogOut class="sub-icon" />
             <span>Logout</span>
           </button>
@@ -244,40 +223,108 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, onMounted, defineEmits } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { 
   ChevronRight, ChevronDown, Tractor, LayoutDashboard, Home, Map, Sprout, 
-  ClipboardList, Wheat, Store, Package, PlusCircle, TrendingUp, ShoppingCart, 
-  Leaf, ShoppingBag, Flower2, FlaskConical, ShieldAlert, Wrench, FileText, 
+  ClipboardList, Wheat, Store, Package, TrendingUp, ShoppingCart, 
+  Leaf, Flower2, FlaskConical, ShieldAlert, Wrench, FileText, 
   BadgeDollarSign, Truck, Send, MapPin, CloudSun, CloudSunRain, BarChart3, 
   MessageSquare, BookOpen, Landmark, HandCoins, ShieldCheck, Wallet, History, 
-  PieChart, FileSpreadsheet, BarChart2, Activity, UserCog, Bell, Mail, User, LogOut 
+  PieChart, FileSpreadsheet, UserCog, User, LogOut 
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
+const emit = defineEmits(['logout'])
 
 const expandedSections = ref({
   farmManagement: true,
-  marketplace: true,
-  farmInputs: true,
-  logistics: true,
-  services: true,
-  financial: true,
-  reports: true,
+  marketplace: false,
+  farmInputs: false,
+  logistics: false,
+  services: false,
+  financial: false,
+  reports: false,
   account: false
 })
+
+// Map routes to their sections for auto-expansion
+const routeSectionMap = {
+  'farmer-dashboard': 'farmManagement',
+  'farmer-farms': 'farmManagement',
+  'farmer-farm-map': 'farmManagement',
+  'farmer-crops': 'farmManagement',
+  'farmer-crop-activities': 'farmManagement',
+  'farmer-harvests': 'farmManagement',
+  
+  'farmer-products': 'marketplace',
+  'farmer-my-sales': 'marketplace',
+  'farmer-customer-orders': 'marketplace',
+  
+  'farmer-seeds': 'farmInputs',
+  'farmer-fertilizers': 'farmInputs',
+  'farmer-pesticides': 'farmInputs',
+  'farmer-machinery': 'farmInputs',
+  'farmer-input-orders': 'farmInputs',
+  'farmer-subsidy-requests': 'farmInputs',
+  
+  'farmer-transport-requests': 'logistics',
+  'farmer-active-deliveries': 'logistics',
+  'farmer-delivery-tracking': 'logistics',
+  
+  'farmer-weather': 'services',
+  'farmer-market-prices': 'services',
+  'farmer-consultations': 'services',
+  'farmer-training': 'services',
+  
+  'farmer-loans': 'financial',
+  'farmer-insurance': 'financial',
+  'farmer-payments': 'financial',
+  'farmer-financial-history': 'financial',
+  
+  'farmer-reports': 'reports',
+  'farmer-profile': 'account'
+}
 
 const toggleSection = (section) => {
   expandedSections.value[section] = !expandedSections.value[section]
 }
 
-const handleLogout = async () => {
-  await auth.logout()
-  router.push('/login')
+const autoExpandSection = () => {
+  const currentRouteName = route.name
+  const sectionToExpand = routeSectionMap[currentRouteName]
+  
+  if (sectionToExpand) {
+    // Expand the appropriate section
+    expandedSections.value[sectionToExpand] = true
+  }
 }
+
+// Watch for route changes and auto-expand sections
+watch(() => route.name, () => {
+  autoExpandSection()
+}, { immediate: true })
+
+const handleLogout = async () => {
+  try {
+    await auth.logout()
+    await router.push('/auth/login')
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+}
+
+const emitLogout = async () => {
+  await handleLogout()
+  emit('logout')
+}
+
+onMounted(() => {
+  autoExpandSection()
+})
 </script>
 
 <style scoped>

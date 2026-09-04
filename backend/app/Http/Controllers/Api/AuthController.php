@@ -21,17 +21,15 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    /**
-     * Register a new user
-     */
+
     public function register(RegisterRequest $request)
     {
         try {
             $validated = $request->validated();
             $role = strtolower($validated['role']);
 
-            // 1. Determine user name based on role
-            $userName = match($role) {
+
+            $userName = match ($role) {
                 'farmer' => $validated['full_name'],
                 'buyer' => $validated['business_name'],
                 'supplier' => $validated['business_name'],
@@ -42,7 +40,7 @@ class AuthController extends Controller
                 default => $validated['full_name'] ?? 'User',
             };
 
-            // 2. Prepare user data
+
             $userData = [
                 'name' => $userName,
                 'email' => $validated['email'] ?? null,
@@ -55,21 +53,21 @@ class AuthController extends Controller
                 'is_active' => false,
             ];
 
-            // 3. Create user (inside transaction for atomicity)
+
             $user = DB::transaction(function () use ($userData) {
                 return User::create($userData);
             });
-            
+
             Log::info('User created successfully', ['user_id' => $user->id, 'role' => $user->role]);
 
-            // 4. Handle document uploads (outside transaction)
+
             try {
                 $this->handleDocumentUploads($request, $user, $role);
             } catch (\Exception $docError) {
                 Log::warning('Document upload failed but continuing', ['user_id' => $user->id, 'error' => $docError->getMessage()]);
             }
 
-            // 5. Create role profile (outside transaction - can fail silently)
+
             try {
                 $this->createRoleProfile($user, $role);
                 Log::info('Role profile created successfully', ['user_id' => $user->id, 'role' => $role]);
@@ -81,7 +79,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            // 6. Generate API token
+
             $token = $user->createToken('api-token')->plainTextToken;
 
             return response()->json([
@@ -90,7 +88,6 @@ class AuthController extends Controller
                 'token' => $token,
                 'status' => 'pending_verification',
             ], 201);
-            
         } catch (QueryException $e) {
             $errorMessage = $e->getMessage();
             $message = 'A database error occurred during registration';
@@ -130,9 +127,7 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Handle document uploads for different roles
-     */
+
     private function handleDocumentUploads($request, $user, $role)
     {
         $documentFieldMap = [
@@ -164,14 +159,14 @@ class AuthController extends Controller
             if ($request->hasFile($fieldName)) {
                 try {
                     $file = $request->file($fieldName);
-                    
-                    // Store file
+
+
                     $storagePath = $file->store(
                         "documents/{$role}/{$user->id}",
                         'public'
                     );
 
-                    // Try to create document record if model exists
+
                     try {
                         if (class_exists('App\Models\UserDocument')) {
                             \App\Models\UserDocument::create([
@@ -186,21 +181,17 @@ class AuthController extends Controller
                         }
                     } catch (\Exception $docError) {
                         Log::warning("Could not save document record: " . $docError->getMessage());
-                        // Continue anyway - file is stored
                     }
 
                     Log::info("Document uploaded for user {$user->id}: {$docType}");
                 } catch (\Exception $e) {
                     Log::warning("Error uploading document: " . $e->getMessage());
-                    // Continue without failing registration
                 }
             }
         }
     }
 
-    /**
-     * Create role-specific profile for the user safely
-     */
+
     private function createRoleProfile(User $user, string $role)
     {
         $timestamp = time();
@@ -265,9 +256,7 @@ class AuthController extends Controller
         };
     }
 
-    /**
-     * Login user
-     */
+
     public function login(Request $request)
     {
         try {
@@ -280,7 +269,7 @@ class AuthController extends Controller
                 'password.required' => 'Password is required.',
             ]);
 
-            // Select only necessary columns for faster query
+
             $user = User::select('id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region')
                 ->where('email', $request->email)
                 ->first();
@@ -299,11 +288,10 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Update last_login_at asynchronously (non-blocking)
             try {
                 $user->update(['last_login_at' => now()]);
             } catch (\Exception $e) {
-                // Log error but don't fail login
+
                 \Illuminate\Support\Facades\Log::warning('Could not update last_login_at: ' . $e->getMessage());
             }
 
@@ -397,19 +385,19 @@ class AuthController extends Controller
         try {
             $request->validate(['email' => 'required|email']);
 
-            // Select only email column for fast lookup
+
             $user = User::select('id', 'name', 'email')->where('email', $request->email)->first();
 
-            // For security, always return success message (don't reveal if email exists)
+
             $response = [
                 'message' => 'If an account exists with this email, a password reset link has been sent.'
             ];
 
             if ($user) {
-                // Generate a password reset token
+
                 $resetToken = Str::random(60);
-                
-                // Store the reset token in the password_resets table with a 60-minute expiration
+
+
                 DB::table('password_resets')->updateOrInsert(
                     ['email' => $user->email],
                     [
@@ -418,13 +406,13 @@ class AuthController extends Controller
                     ]
                 );
 
-                // Get the frontend URL from environment or use default
+
                 $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-                
-                // Create the reset link with token
+
+
                 $resetLink = $frontendUrl . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
 
-                // Send email asynchronously (non-blocking) using queue
+
                 Mail::queue(
                     new PasswordResetMail(
                         $user->name,
@@ -440,15 +428,14 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Return immediately (don't wait for email queue)
-            return response()->json($response, 200);
 
+            return response()->json($response, 200);
         } catch (\Exception $e) {
             Log::error('Forgot password error: ' . $e->getMessage(), [
                 'email' => $request->email ?? null,
             ]);
 
-            // Return success anyway for security
+
             return response()->json([
                 'message' => 'If an account exists with this email, a password reset link has been sent.'
             ], 200);
@@ -473,7 +460,7 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Check if reset token exists and is valid (within 60 minutes)
+
             $passwordReset = DB::table('password_resets')
                 ->where('email', $request->email)
                 ->first();
@@ -485,7 +472,7 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Verify the token
+
             if (!Hash::check($request->token, $passwordReset->token)) {
                 return response()->json([
                     'message' => 'Invalid password reset token.',
@@ -493,22 +480,22 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Check if token has expired (60 minutes)
-            $tokenExpiredAt = strtotime($passwordReset->created_at) + (60 * 60); // 60 minutes
+
+            $tokenExpiredAt = strtotime($passwordReset->created_at) + (60 * 60);
             if (time() > $tokenExpiredAt) {
-                // Delete expired token
+
                 DB::table('password_resets')->where('email', $request->email)->delete();
-                
+
                 return response()->json([
                     'message' => 'Password reset token has expired.',
                     'errors' => ['token' => ['Password reset token has expired. Please request a new one.']]
                 ], 422);
             }
 
-            // Update password
+
             $user->update(['password' => Hash::make($request->password)]);
 
-            // Delete the used token
+
             DB::table('password_resets')->where('email', $request->email)->delete();
 
             Log::info('Password reset successful', [
@@ -520,7 +507,6 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Password has been reset successfully. You can now log in with your new password.'
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Password reset validation error', [
                 'email' => $request->email ?? null,
@@ -531,7 +517,6 @@ class AuthController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             Log::error('Password reset error: ' . $e->getMessage(), [
                 'email' => $request->email ?? null,
