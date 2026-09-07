@@ -52,7 +52,10 @@ const FarmerLoansView = () => import('@/views/farmer/LoansView.vue')
 const FarmerInsuranceView = () => import('@/views/farmer/InsuranceView.vue')
 const FarmerPaymentsView = () => import('@/views/farmer/PaymentsView.vue')
 const FarmerFinancialHistoryView = () => import('@/views/farmer/FinancialHistoryView.vue')
-const FarmerReportsView = () => import('@/views/farmer/ReportsView.vue')
+const FarmerFarmReportsView = () => import('@/views/farmer/FarmReportsView.vue')
+const FarmerSalesReportsView = () => import('@/views/farmer/SalesReportsView.vue')
+const FarmerProductionReportsView = () => import('@/views/farmer/ProductionReportsView.vue')
+
 const FarmerProfileView = () => import('@/views/farmer/ProfileView.vue')
 
 const BuyerDashboardView = () => import('@/views/buyer/BuyerDashboard.vue')
@@ -359,12 +362,26 @@ const routes: RouteRecordRaw[] = [
         component: FarmerFinancialHistoryView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Financial History' }
       },
+      
       {
-        path: 'reports',
-        name: 'farmer-reports',
-        component: FarmerReportsView,
-        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Reports' }
+        path: 'reports/farm',
+        name: 'farmer-reports-farm',
+        component: FarmerFarmReportsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Farm Reports' }
       },
+      {
+        path: 'reports/sales',
+        name: 'farmer-reports-sales',
+        component: FarmerSalesReportsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Sales Reports' }
+      },
+      {
+        path: 'reports/production',
+        name: 'farmer-reports-production',
+        component: FarmerProductionReportsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Production Reports' }
+      },
+      
       {
         path: 'profile',
         name: 'farmer-profile',

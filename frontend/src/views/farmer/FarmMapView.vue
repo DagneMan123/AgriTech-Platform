@@ -16,6 +16,7 @@
           :showCoordinates="showCoordinates"
           :mapType="mapType"
           :loading="loading"
+          :downloadingMap="downloadingMap"
           @update:selectedFarmId="selectedFarmId = $event"
           @update:showBoundaries="showBoundaries = $event; updateMapDisplay()"
           @update:showCropAreas="showCropAreas = $event; updateMapDisplay()"
@@ -31,6 +32,7 @@
           <div id="farm-map" class="map"></div>
           <div v-if="loading" class="map-loading">
             <p>Loading map...</p>
+            <p v-if="retryCount > 0" class="retry-info">Retry attempt {{ retryCount }}/{{ maxRetries }}</p>
           </div>
           <div v-if="error" class="map-error">
             <p>{{ error }}</p>
@@ -104,91 +106,158 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useMap } from '@/composables/useMap'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import MapControls from '@/components/Map/MapControls.vue'
 import apiClient from '@/api/config'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// State
-const farms = ref([])
-const selectedFarmId = ref('')
+const farms = ref<any[]>([])
+const selectedFarmId = ref<string | number>('')
 const loading = ref(true)
-const error = ref(null)
+const error = ref<string | null>(null)
 const showBoundaries = ref(true)
 const showCropAreas = ref(true)
 const showCoordinates = ref(true)
 const mapType = ref('street')
 const showDetailsModal = ref(false)
+const downloadingMap = ref(false)
+const retryCount = ref(0)
+const maxRetries = 3
 
-// Use map composable
-const {
-  mapInstance,
-  initializeMap,
-  addTileLayer,
-  addFarmMarkers,
-  addFarmBoundary,
-  addCoordinateLabels,
-  clearMarkers,
-  zoomToLocation,
-  destroyMap
-} = useMap({
-  mapContainer: 'farm-map',
-  center: [9.0320, 38.7469],
-  zoom: 6
-})
+// Use 'any' type to prevent TypeScript validation errors on mapInstance methods
+const mapInstance = ref<any>(null)
+let detailMap: any = null
 
-let detailMap = null
-
-// Computed properties
 const selectedFarm = computed(() => {
-  return farms.value.find(f => f.id === parseInt(selectedFarmId.value))
+  return farms.value.find(f => f.id === parseInt(String(selectedFarmId.value)))
 })
 
-// Fetch farms on mount
 onMounted(async () => {
+  await nextTick()
   await fetchFarms()
 })
 
-// Fetch all farms
+onUnmounted(() => {
+  if (mapInstance.value) {
+    mapInstance.value.remove()
+    mapInstance.value = null
+  }
+  if (detailMap) {
+    detailMap.remove()
+    detailMap = null
+  }
+})
+
 const fetchFarms = async () => {
   try {
     loading.value = true
     error.value = null
-    const response = await apiClient.get('/farmer/farms')
-    farms.value = Array.isArray(response.data.data) ? response.data.data : []
-    
-    // Initialize map after farms are loaded
-    setTimeout(() => {
-      initializeMap()
-      updateMapDisplay()
-    }, 500)
-  } catch (err) {
+    retryCount.value = 0
+
+    // Attempt to fetch with retry logic
+    await fetchFarmsWithRetry()
+
+    if (!mapInstance.value) {
+      initializeMainMap()
+    }
+    updateMapDisplay()
+  } catch (err: any) {
     console.error('Error fetching farms:', err)
-    error.value = err.response?.data?.message || 'Failed to load farms'
+    
+    // Provide specific error messages
+    if (err.code === 'ECONNABORTED') {
+      error.value = 'Request timed out. The server is taking too long to respond. Please check your connection and try again.'
+    } else if (err.response?.status === 401) {
+      error.value = 'Your session has expired. Please login again.'
+    } else if (err.response?.status === 403) {
+      error.value = 'You do not have permission to view farms.'
+    } else if (err.response?.status === 500) {
+      error.value = 'Server error. Please try again later.'
+    } else if (!err.response) {
+      error.value = 'Network error. Please check your connection and try again.'
+    } else {
+      error.value = err.response?.data?.message || 'Failed to load farms. Please try again.'
+    }
     farms.value = []
   } finally {
     loading.value = false
   }
 }
 
-// Update map display based on current settings
-const updateMapDisplay = () => {
-  if (!mapInstance) return
+const fetchFarmsWithRetry = async (): Promise<void> => {
+  const baseDelay = 1000 // Start with 1 second
+  
+  while (retryCount.value <= maxRetries) {
+    try {
+      const response = await apiClient.get('/farmer/farms', {
+        // Specific timeout for this request
+        timeout: 30000,
+      })
+      farms.value = Array.isArray(response.data.data) ? response.data.data : []
+      return
+    } catch (err: any) {
+      retryCount.value++
+      
+      // Check if error is retryable
+      const isTimeout = err.code === 'ECONNABORTED' || err.message === 'timeout of 30000ms exceeded'
+      const isNetworkError = !err.response && err.code !== 'ECONNABORTED'
+      const isRetryableStatus = [408, 429, 500, 502, 503, 504].includes(err.response?.status)
+      
+      const shouldRetry = (isTimeout || isNetworkError || isRetryableStatus) && retryCount.value <= maxRetries
+      
+      if (shouldRetry) {
+        const delay = baseDelay * Math.pow(2, retryCount.value - 1) // Exponential backoff
+        console.log(`Retry attempt ${retryCount.value}/${maxRetries} after ${delay}ms delay`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      } else {
+        throw err
+      }
+    }
+  }
+}
 
-  clearMarkers()
+const initializeMainMap = () => {
+  try {
+    const container = document.getElementById('farm-map')
+    if (!container) {
+      error.value = 'Map container not found'
+      return
+    }
+
+    mapInstance.value = L.map('farm-map').setView([9.0320, 38.7469], 6)
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(mapInstance.value)
+  } catch (err) {
+    console.error('Error initializing map:', err)
+    error.value = 'Failed to initialize map'
+  }
+}
+
+const updateMapDisplay = () => {
+  if (!mapInstance.value) return
+
+  mapInstance.value.eachLayer((layer: any) => {
+    if (layer instanceof L.CircleMarker || layer instanceof L.Circle || 
+        (layer instanceof L.Marker && !(layer instanceof L.TileLayer))) {
+      mapInstance.value.removeLayer(layer)
+    }
+  })
 
   const farmsToShow = selectedFarmId.value 
-    ? farms.value.filter(f => f.id === parseInt(selectedFarmId.value))
+    ? farms.value.filter(f => f.id === parseInt(String(selectedFarmId.value)))
     : farms.value
 
-  // Add farm markers
   farmsToShow.forEach((farm) => {
     if (farm.latitude && farm.longitude) {
       const marker = L.circleMarker([farm.latitude, farm.longitude], {
@@ -208,9 +277,8 @@ const updateMapDisplay = () => {
         </div>
       `)
       
-      marker.addTo(mapInstance)
+      marker.addTo(mapInstance.value)
       
-      // Add farm boundaries if enabled
       if (showBoundaries.value) {
         const radius = Math.sqrt(farm.size_hectares * 10000) / Math.PI
         L.circle([farm.latitude, farm.longitude], {
@@ -220,10 +288,9 @@ const updateMapDisplay = () => {
           opacity: 0.3,
           fillOpacity: 0.1,
           dashArray: '5, 5'
-        }).addTo(mapInstance)
+        }).addTo(mapInstance.value)
       }
       
-      // Add coordinates if enabled
       if (showCoordinates.value) {
         L.marker([farm.latitude, farm.longitude], {
           icon: L.divIcon({
@@ -231,53 +298,85 @@ const updateMapDisplay = () => {
             className: 'coordinate-label',
             iconSize: [80, 40]
           })
-        }).addTo(mapInstance)
+        }).addTo(mapInstance.value)
       }
     }
   })
 }
 
-// Update map type
 const updateMapType = () => {
-  if (!mapInstance) return
+  if (!mapInstance.value) return
 
-  // Remove existing layers
-  mapInstance.eachLayer((layer) => {
+  mapInstance.value.eachLayer((layer: any) => {
     if (layer instanceof L.TileLayer) {
-      mapInstance.removeLayer(layer)
+      mapInstance.value.removeLayer(layer)
     }
   })
 
-  // Add new tile layer based on mapType
+  let tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+  let attribution = '&copy; OpenStreetMap contributors'
+
   if (mapType.value === 'satellite') {
-    addTileLayer('satellite')
+    tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    attribution = 'Tiles &copy; Esri'
   } else if (mapType.value === 'terrain') {
-    addTileLayer('terrain')
-  } else {
-    addTileLayer('osm')
+    tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+    attribution = 'Tiles &copy; Esri'
   }
+
+  L.tileLayer(tileUrl, {
+    attribution,
+    maxZoom: 19,
+  }).addTo(mapInstance.value)
 }
 
-// Zoom to selected farm
 const zoomToSelectedFarm = () => {
-  if (!selectedFarm.value || !mapInstance) return
+  if (!selectedFarm.value) {
+    alert('Please select a farm first.')
+    return
+  }
   
   const farm = selectedFarm.value
-  if (farm.latitude && farm.longitude) {
-    zoomToLocation(farm.latitude, farm.longitude, 12)
+  if (!farm.latitude || !farm.longitude) {
+    alert('This farm does not have GPS coordinates.')
+    return
+  }
+  
+  if (!mapInstance.value) {
+    try {
+      initializeMainMap()
+      updateMapDisplay()
+    } catch (err) {
+      console.error('Error initializing map:', err)
+      alert('Unable to initialize map. Please refresh the page and try again.')
+      return
+    }
+  }
+
+  if (mapInstance.value) {
+    mapInstance.value.setView([farm.latitude, farm.longitude], 14)
+  } else {
+    alert('Map is not ready. Please try again.')
   }
 }
 
-// Show farm details modal
 const showFarmDetails = () => {
+  if (!selectedFarm.value) {
+    alert('Please select a farm first.')
+    return
+  }
   showDetailsModal.value = true
   
   setTimeout(() => {
-    initializeDetailMap()
-  }, 300)
+    try {
+      initializeDetailMap()
+    } catch (err) {
+      console.error('Error initializing detail map:', err)
+      alert('Could not load detail map. Please try again.')
+    }
+  }, 100)
 }
 
-// Close details modal
 const closeDetailsModal = () => {
   showDetailsModal.value = false
   if (detailMap) {
@@ -286,7 +385,6 @@ const closeDetailsModal = () => {
   }
 }
 
-// Initialize detail map
 const initializeDetailMap = () => {
   if (detailMap) {
     detailMap.remove()
@@ -325,30 +423,43 @@ const initializeDetailMap = () => {
   }
 }
 
-// Download map image
-const downloadMapImage = async () => {
+const downloadMapImage = () => {
   try {
-    alert('Map download feature will be available soon. You can use your browser\'s screenshot tool for now.')
+    if (!mapInstance.value) {
+      alert('Map is still loading. Please wait a moment and try again.')
+      return
+    }
+    
+    downloadingMap.value = true
+    setTimeout(() => {
+      alert('Map download feature:\n\n1. Right-click on the map and select "Save image as"\n2. Or use your browser screenshot tool (Print Screen or Cmd+Shift+4)\n3. Or press Ctrl+P to print and save as PDF')
+      downloadingMap.value = false
+    }, 100)
   } catch (err) {
     console.error('Error downloading map:', err)
-    alert('Failed to download map. Please try again.')
+    alert('Please use your browser\'s screenshot tool to capture the map.')
+    downloadingMap.value = false
   }
 }
 
-// Watch for selectedFarmId changes
 watch(selectedFarmId, () => {
   updateMapDisplay()
 })
 
-// Utility functions
-const capitalizeFirstLetter = (string) => {
+const capitalizeFirstLetter = (string: string) => {
   if (!string) return ''
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-// Logout handler
 const handleLogout = async () => {
-  destroyMap()
+  if (mapInstance.value) {
+    mapInstance.value.remove()
+    mapInstance.value = null
+  }
+  if (detailMap) {
+    detailMap.remove()
+    detailMap = null
+  }
   await auth.logout()
   router.push('/login')
 }
@@ -423,6 +534,12 @@ const handleLogout = async () => {
   text-align: center;
 }
 
+.retry-info {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+}
+
 .map-error {
   background: #fee2e2;
   border: 1px solid #fecaca;
@@ -433,7 +550,6 @@ const handleLogout = async () => {
   margin: 0 0 15px 0;
 }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -568,7 +684,6 @@ const handleLogout = async () => {
   line-height: 1.5;
 }
 
-/* Leaflet overrides */
 :deep(.leaflet-popup-content) {
   font-size: 12px;
   margin: 0;
@@ -589,7 +704,6 @@ const handleLogout = async () => {
   color: #555;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .map-container {
     flex-direction: column;

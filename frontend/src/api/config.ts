@@ -9,8 +9,8 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  // Reduce timeout for faster failure detection
-  timeout: 10000,
+  // Increased timeout to 30 seconds for data-heavy operations like farms
+  timeout: 30000,
 })
 
 // Add token to every request
@@ -19,6 +19,8 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Add compression headers
+  config.headers['Accept-Encoding'] = 'gzip, deflate'
   return config
 }, (error) => {
   return Promise.reject(error)

@@ -7,12 +7,20 @@ use Illuminate\Support\Facades\Log;
 
 class DatabaseConstraintFixer
 {
+    private static bool $constraintFixed = false;
+
     /**
      * Fix the farms foreign key constraint.
-     * This should be called once when the application starts.
+     * This should only be called once during application startup.
+     * Uses caching to prevent repeated expensive operations.
      */
     public static function fixFarmsConstraint(): void
     {
+        // Skip if already fixed in this request cycle
+        if (self::$constraintFixed) {
+            return;
+        }
+
         try {
             $connection = DB::connection()->getDriverName();
             
@@ -21,6 +29,8 @@ class DatabaseConstraintFixer
             } elseif ($connection === 'mysql') {
                 static::fixMysqlConstraint();
             }
+
+            self::$constraintFixed = true;
         } catch (\Exception $e) {
             Log::debug('Error fixing constraints: ' . $e->getMessage());
         }

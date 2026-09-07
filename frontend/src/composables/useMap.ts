@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
+import L from 'leaflet'
 
 interface MapOptions {
   center?: [number, number]
@@ -37,11 +38,6 @@ export function useMap(options: MapOptions = {}) {
    */
   const initializeMap = (containerId: string = defaultOptions.mapContainer) => {
     try {
-      if (!window.L) {
-        console.error('Leaflet library not loaded')
-        return null
-      }
-
       const container = document.getElementById(containerId)
       if (!container) {
         console.error(`Container ${containerId} not found`)
@@ -53,7 +49,7 @@ export function useMap(options: MapOptions = {}) {
         mapInstance.remove()
       }
 
-      mapInstance = window.L.map(containerId).setView(
+      mapInstance = L.map(containerId).setView(
         defaultOptions.center,
         defaultOptions.zoom
       )
@@ -74,8 +70,6 @@ export function useMap(options: MapOptions = {}) {
    */
   const addTileLayer = (type: 'osm' | 'satellite' | 'terrain' = 'osm') => {
     if (!mapInstance) return
-
-    const L = window.L
 
     const layers = {
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -107,10 +101,9 @@ export function useMap(options: MapOptions = {}) {
   const addMarker = (
     farm: FarmMarker,
     options: any = {}
-  ): L.Marker | null => {
+  ): L.CircleMarker | null => {
     if (!mapInstance || !farm.latitude || !farm.longitude) return null
 
-    const L = window.L
     const isSelected = options.selected || false
 
     const marker = L.circleMarker([farm.latitude, farm.longitude], {
@@ -132,7 +125,7 @@ export function useMap(options: MapOptions = {}) {
     `
 
     marker.bindPopup(popupContent).addTo(mapInstance)
-    markers.value.push(marker)
+    markers.value.push(marker as any)
 
     return marker
   }
@@ -162,7 +155,6 @@ export function useMap(options: MapOptions = {}) {
   ): L.Circle | null => {
     if (!mapInstance || !farm.latitude || !farm.longitude) return null
 
-    const L = window.L
     const defaultRadius = farm.size_hectares
       ? Math.sqrt(farm.size_hectares * 10000) / Math.PI
       : 500
@@ -186,8 +178,6 @@ export function useMap(options: MapOptions = {}) {
    */
   const addCoordinateLabels = (farms: FarmMarker[]) => {
     if (!mapInstance) return
-
-    const L = window.L
 
     farms.forEach((farm) => {
       if (farm.latitude && farm.longitude) {
@@ -215,7 +205,6 @@ export function useMap(options: MapOptions = {}) {
    * Clear all markers from the map
    */
   const clearMarkers = () => {
-    const L = window.L
     if (!mapInstance) return
 
     markers.value.forEach((marker) => {
@@ -244,7 +233,6 @@ export function useMap(options: MapOptions = {}) {
   const fitBounds = () => {
     if (!mapInstance || markers.value.length === 0) return
 
-    const L = window.L
     const group = new L.FeatureGroup(markers.value)
     mapInstance.fitBounds(group.getBounds(), { padding: [50, 50] })
   }
@@ -271,7 +259,6 @@ export function useMap(options: MapOptions = {}) {
   const addLayerControl = (baseLayers: Record<string, L.TileLayer>, overlayLayers?: Record<string, L.Layer>) => {
     if (!mapInstance) return
 
-    const L = window.L
     L.control.layers(baseLayers, overlayLayers).addTo(mapInstance)
   }
 
@@ -316,12 +303,5 @@ export function useMap(options: MapOptions = {}) {
     getZoom,
     addLayerControl,
     destroyMap
-  }
-}
-
-// Extend window interface for Leaflet
-declare global {
-  interface Window {
-    L: any
   }
 }

@@ -89,13 +89,6 @@ class CropController extends Controller
 
             $validated = $request->validated();
 
-            // Attempt constraint fix before operations
-            try {
-                \App\Services\DatabaseConstraintFixer::fixFarmsConstraint();
-            } catch (\Exception $e) {
-                Log::debug('Pre-crop creation constraint fix: ' . $e->getMessage());
-            }
-
             // Verify farm exists and belongs to this user
             $farm = Farm::where('id', $validated['farm_id'])
                 ->where('farmer_id', $user->id)

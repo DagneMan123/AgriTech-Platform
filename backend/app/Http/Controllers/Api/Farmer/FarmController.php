@@ -49,11 +49,43 @@ class FarmController extends Controller
                 ], 403);
             }
 
-            // Query farms by user ID (farmer_id references users.id)
+    // Query farms by user ID (farmer_id references users.id)
+            // Select only necessary columns for better performance
             $farms = Farm::where('farmer_id', $user->id)
                 ->where('deleted_at', null)
+                ->select([
+                    'id',
+                    'name',
+                    'description',
+                    'address',
+                    'region',
+                    'zone',
+                    'woreda',
+                    'kebele',
+                    'size_hectares',
+                    'farm_type',
+                    'latitude',
+                    'longitude',
+                ])
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($farm) {
+                    return [
+                        'id' => $farm->id,
+                        'name' => $farm->name,
+                        'description' => $farm->description,
+                        'address' => $farm->address,
+                        'region' => $farm->region,
+                        'zone' => $farm->zone,
+                        'woreda' => $farm->woreda,
+                        'kebele' => $farm->kebele,
+                        'size_hectares' => $farm->size_hectares,
+                        'farm_type' => $farm->farm_type,
+                        'latitude' => $farm->latitude,
+                        'longitude' => $farm->longitude,
+                        'crops_count' => 0,
+                    ];
+                });
 
             Log::info('Retrieved farms for farmer', [
                 'user_id' => $user->id,
@@ -104,13 +136,6 @@ class FarmController extends Controller
             $validated['status'] = $validated['status'] ?? 'active';
 
             Log::info('Creating farm with data:', $validated);
-
-            // Attempt constraint fix before creating farm
-            try {
-                \App\Services\DatabaseConstraintFixer::fixFarmsConstraint();
-            } catch (\Exception $e) {
-                Log::debug('Pre-creation constraint fix: ' . $e->getMessage());
-            }
 
             $farm = Farm::create($validated);
 

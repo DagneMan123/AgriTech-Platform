@@ -190,9 +190,17 @@
           <component :is="expandedSections.reports ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.reports" class="section-items">
-          <router-link to="/farmer/reports" class="menu-item sub-item" active-class="active">
+          <router-link to="/farmer/reports/farm" class="menu-item sub-item" active-class="active">
             <FileSpreadsheet class="sub-icon" />
-            <span>Reports</span>
+            <span>Farm Reports</span>
+          </router-link>
+          <router-link to="/farmer/reports/sales" class="menu-item sub-item" active-class="active">
+            <TrendingUp class="sub-icon" />
+            <span>Sales Reports</span>
+          </router-link>
+          <router-link to="/farmer/reports/production" class="menu-item sub-item" active-class="active">
+            <BarChart3 class="sub-icon" />
+            <span>Production Reports</span>
           </router-link>
         </div>
       </div>
@@ -285,7 +293,10 @@ const routeSectionMap = {
   'farmer-payments': 'financial',
   'farmer-financial-history': 'financial',
   
-  'farmer-reports': 'reports',
+  'farmer-reports-farm': 'reports',
+  'farmer-reports-sales': 'reports',
+  'farmer-reports-production': 'reports',
+  
   'farmer-profile': 'account'
 }
 
@@ -298,12 +309,10 @@ const autoExpandSection = () => {
   const sectionToExpand = routeSectionMap[currentRouteName]
   
   if (sectionToExpand) {
-    // Expand the appropriate section
     expandedSections.value[sectionToExpand] = true
   }
 }
 
-// Watch for route changes and auto-expand sections
 watch(() => route.name, () => {
   autoExpandSection()
 }, { immediate: true })

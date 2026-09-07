@@ -65,8 +65,9 @@
       <button 
         class="btn btn-info"
         @click="handleDownloadMap"
+        :disabled="props.downloadingMap"
       >
-        Download Map
+        {{ props.downloadingMap ? 'Downloading...' : 'Download Map' }}
       </button>
       <button 
         class="btn btn-secondary"
@@ -126,6 +127,7 @@ interface Props {
   showCoordinates?: boolean
   mapType?: string
   loading?: boolean
+  downloadingMap?: boolean
 }
 
 interface Emits {
@@ -147,7 +149,8 @@ const props = withDefaults(defineProps<Props>(), {
   showCropAreas: true,
   showCoordinates: true,
   mapType: 'street',
-  loading: false
+  loading: false,
+  downloadingMap: false
 })
 
 const emit = defineEmits<Emits>()
