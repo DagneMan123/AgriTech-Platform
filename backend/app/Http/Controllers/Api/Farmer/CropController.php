@@ -36,30 +36,48 @@ class CropController extends Controller
 
             // Get farms for this farmer (farmer_id references users.id)
             $farms = Farm::where('farmer_id', $user->id)
+                ->where('deleted_at', null)
                 ->pluck('id')
                 ->toArray();
 
-            // If no farms exist, return empty paginated result
+            // If no farms exist, return empty result
             if (empty($farms)) {
                 return response()->json([
                     'success' => true,
-                    'data' => [
-                        'data' => [],
-                        'current_page' => 1,
-                        'per_page' => $request->get('limit', 20),
-                        'total' => 0,
-                        'last_page' => 1,
-                    ],
+                    'data' => [],
+                    'total' => 0,
                 ]);
             }
 
             $crops = Crop::whereIn('farm_id', $farms)
+                ->where('deleted_at', null)
                 ->with('farm')
-                ->paginate($request->get('limit', 20));
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($crop) {
+                    return [
+                        'id' => $crop->id,
+                        'farm_id' => $crop->farm_id,
+                        'name' => $crop->crop_type,  // Use crop_type as the display name
+                        'crop_type' => $crop->crop_type,
+                        'variety' => $crop->variety,
+                        'planting_date' => $crop->planting_date,
+                        'expected_harvest_date' => $crop->expected_harvest_date,
+                        'area_hectares' => $crop->area_hectares,
+                        'expected_yield_kg' => $crop->expected_yield_kg,
+                        'status' => $crop->status,
+                        'notes' => $crop->notes,
+                        'farm' => $crop->farm ? [
+                            'id' => $crop->farm->id,
+                            'name' => $crop->farm->name,
+                        ] : null,
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
                 'data' => $crops,
+                'total' => $crops->count(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching crops: ' . $e->getMessage(), [

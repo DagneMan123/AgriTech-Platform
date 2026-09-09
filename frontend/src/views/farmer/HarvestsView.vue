@@ -155,11 +155,11 @@
             <form @submit.prevent="submitHarvestForm">
               <!-- Crop Selection -->
               <div class="form-group">
-                <label for="harvest-crop">Select Crop *</label>
+                <label for="harvest-crop">Select Crop</label>
                 <select id="harvest-crop" v-model="harvestForm.crop_id" required @change="onCropSelected">
                   <option value="">Choose a crop</option>
                   <option v-for="crop in readyCrops" :key="crop.id" :value="crop.id">
-                    {{ crop.crop_type }} - {{ crop.variety }} ({{ crop.farm?.name }})
+                    {{ crop.crop_type }} - {{ crop.variety }}
                   </option>
                 </select>
                 <span v-if="formErrors.crop_id" class="error-text">{{ formErrors.crop_id }}</span>
@@ -167,7 +167,7 @@
 
               <!-- Harvest Date -->
               <div class="form-group">
-                <label for="harvest-date">Harvest Date *</label>
+                <label for="harvest-date">Harvest Date</label>
                 <input
                   id="harvest-date"
                   v-model="harvestForm.harvest_date"
@@ -177,9 +177,9 @@
                 <span v-if="formErrors.harvest_date" class="error-text">{{ formErrors.harvest_date }}</span>
               </div>
 
-              <!-- Quantity -->
+              <!-- Quantity (Small) & Unit Dropdown (Wide) -->
               <div class="form-group">
-                <label for="harvest-quantity">Quantity *</label>
+                <label for="harvest-quantity">Quantity</label>
                 <div class="input-with-unit">
                   <input
                     id="harvest-quantity"
@@ -190,12 +190,15 @@
                     min="0"
                     required
                   />
-                  <select v-model="harvestForm.unit" class="unit-select">
-                    <option value="kg">kg</option>
-                    <option value="tonnes">tonnes</option>
-                    <option value="bags">bags</option>
-                    <option value="liters">liters</option>
-                  </select>
+                  <!-- Unit Dropdown -->
+                  <div class="select-wrapper">
+                    <select v-model="harvestForm.unit" class="unit-select">
+                      <option value="kg">kg</option>
+                      <option value="tonnes">tonnes</option>
+                      <option value="bags">bags</option>
+                      <option value="liters">liters</option>
+                    </select>
+                  </div>
                 </div>
                 <span v-if="formErrors.quantity" class="error-text">{{ formErrors.quantity }}</span>
               </div>
@@ -271,9 +274,9 @@ const harvestForm = ref({
 
 // Computed Properties
 const readyCrops = computed(() => {
-  return crops.value.filter(crop => 
-    crop.status === 'growing' || crop.status === 'ready_for_harvest' || crop.status === 'planted'
-  )
+  return crops.value.sort((a, b) => {
+    return (a.crop_type || '').localeCompare(b.crop_type || '')
+  })
 })
 
 const filteredHarvests = computed(() => {
@@ -283,7 +286,6 @@ const filteredHarvests = computed(() => {
       (harvest.crop?.variety || '').toLowerCase().includes(searchQuery.value.toLowerCase())
     
     const matchesQuality = !qualityFilter.value || harvest.quality_grade === qualityFilter.value
-    
     const matchesYear = !yearFilter.value || new Date(harvest.harvest_date).getFullYear() === parseInt(yearFilter.value)
     
     return matchesSearch && matchesQuality && matchesYear
@@ -314,8 +316,12 @@ const averageYield = computed(() => {
 
 // Lifecycle
 onMounted(async () => {
-  await fetchHarvests()
-  await fetchCrops()
+  try {
+    await fetchCrops()
+    await fetchHarvests()
+  } catch (error) {
+    console.error('Error during mount:', error)
+  }
 })
 
 // API Functions
@@ -346,9 +352,18 @@ const fetchCrops = async () => {
     if (!response.ok) throw new Error('Failed to fetch crops')
     
     const data = await response.json()
-    crops.value = data.data?.data || data.data || []
+    
+    if (Array.isArray(data.data)) {
+      crops.value = data.data
+    } else if (Array.isArray(data)) {
+      crops.value = data
+    } else {
+      crops.value = []
+    }
   } catch (error) {
     console.error('Error fetching crops:', error)
+    formErrors.value.general = 'Failed to load crops. Please try again.'
+    crops.value = []
   }
 }
 
@@ -389,9 +404,7 @@ const editHarvest = (harvest) => {
   showRecordDialog.value = true
 }
 
-const onCropSelected = () => {
-  // Can add crop-specific logic here if needed
-}
+const onCropSelected = () => {}
 
 // Form Submission
 const submitHarvestForm = async () => {
@@ -399,7 +412,6 @@ const submitHarvestForm = async () => {
     submittingHarvest.value = true
     formErrors.value = {}
 
-    // Validate required fields
     if (!harvestForm.value.crop_id) {
       formErrors.value.crop_id = 'Please select a crop'
       submittingHarvest.value = false
@@ -630,7 +642,7 @@ const handleLogout = async () => {
 .year-select {
   padding: 10px 15px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   transition: border-color 0.3s;
 }
@@ -774,7 +786,7 @@ const handleLogout = async () => {
 .btn-icon {
   width: 32px;
   height: 32px;
-  border-radius: 4px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   display: flex;
@@ -810,7 +822,7 @@ const handleLogout = async () => {
   color: white;
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
@@ -833,7 +845,7 @@ const handleLogout = async () => {
   color: white;
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s;
@@ -855,78 +867,102 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+  backdrop-filter: blur(4px);
 }
 
 .modal-dialog {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 600px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 550px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScale 0.25s ease-out;
+}
+
+@keyframes modalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 20px 24px;
   border-bottom: 1px solid #e5e7eb;
   background-color: #f9fafb;
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
-  font-size: 20px;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: #9ca3af;
   padding: 0;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
 .close-btn:hover {
-  color: #333;
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .modal-content {
-  padding: 25px;
+  padding: 24px;
+  overflow-y: auto;
 }
 
-/* Form */
+/* Form Styles */
 .form-group {
   margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 13px;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 10px;
+  padding: 10px 14px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  transition: border-color 0.3s;
+  color: #1f2937;
+  background-color: #ffffff;
+  transition: all 0.2s;
   box-sizing: border-box;
 }
 
@@ -935,39 +971,94 @@ const handleLogout = async () => {
 .form-group select:focus {
   outline: none;
   border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
 .form-group textarea {
   resize: vertical;
 }
 
+/* Quantity and Unit Dropdown Layout (Quantity small, Unit wide) */
 .input-with-unit {
   display: flex;
   gap: 10px;
+  width: 100%;
+  align-items: center;
 }
 
-.input-with-unit input {
+.input-with-unit input[type="number"] {
+  width: 140px;
+  flex-shrink: 0;
+  height: 42px;
+  padding: 10px 14px;
+  margin: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+}
+
+.input-with-unit input[type="number"]::-webkit-outer-spin-button,
+.input-with-unit input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-with-unit input[type="number"]:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.select-wrapper {
   flex: 1;
+  min-width: 0;
+  height: 42px;
+  position: relative;
 }
 
 .unit-select {
-  width: 100px;
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 32px 0 14px !important;
+  margin: 0 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  box-sizing: border-box;
+}
+
+.unit-select:focus {
+  outline: none;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
 }
 
 .error-text {
   display: block;
   color: #ef4444;
   font-size: 12px;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
-  margin-top: 25px;
-  padding-top: 15px;
+  margin-top: 24px;
+  padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -1001,18 +1092,8 @@ const handleLogout = async () => {
     width: 100%;
   }
 
-  .harvests-table-wrapper {
-    font-size: 12px;
-  }
-
-  .harvests-table th,
-  .harvests-table td {
-    padding: 8px;
-  }
-
   .modal-dialog {
     width: 95%;
-    max-height: 95vh;
   }
 }
 </style>

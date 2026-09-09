@@ -458,8 +458,7 @@ const routes: RouteRecordRaw[] = [
       }
     ]
   },
-
-  // Supplier Routes
+  
   {
     path: '/supplier',
     meta: { requiresAuth: true, requiredRole: 'supplier' },
@@ -662,15 +661,15 @@ const router = createRouter({
   }
 })
 
-// Navigation Guard
+
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
-  // Check if route requires authentication
+  
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth)
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Redirect to login with return URL
+    
     next({
       name: 'login',
       query: { redirect: to.fullPath }

@@ -1,5 +1,4 @@
 <?php
-// app/Models/Harvest.php
 
 namespace App\Models;
 
@@ -14,9 +13,17 @@ class Harvest extends Model
         'crop_id',
         'harvest_date',
         'quantity',
-        'quantity_unit',
+        'quantity_harvested',
+        'unit',
         'quality_grade',
-        'notes'
+        'notes',
+        'harvest_notes',
+        'number_of_workers',
+        'labor_cost',
+        'storage_method',
+        'post_harvest_treatment',
+        'market_price_per_unit',
+        'total_harvest_value'
     ];
 
     protected $casts = [

@@ -28,10 +28,13 @@ class CropActivityResource extends JsonResource
             'cost' => $this->cost,
             'weather' => $this->weather,
             'notes' => $this->notes,
+            'crop_display_name' => $this->crop_display_name,
             'crop' => [
                 'id' => $this->crop?->id,
                 'name' => $this->crop?->crop_type,
-                'variety' => $this->crop?->variety
+                'crop_type' => $this->crop?->crop_type,
+                'variety' => $this->crop?->variety,
+                'display_name' => $this->crop?->display_name
             ],
             'farm' => [
                 'id' => $this->farm?->id,

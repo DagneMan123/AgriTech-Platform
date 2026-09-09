@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('crop_id')->constrained('crops')->onDelete('cascade');
             $table->foreignId('farm_id')->constrained('farms')->onDelete('cascade');
-            $table->foreignId('farmer_id')->constrained('farmers')->onDelete('cascade');
+            $table->foreignId('farmer_id')->constrained('users')->onDelete('cascade');
             $table->enum('activity_type', [
                 'planting',
                 'watering',

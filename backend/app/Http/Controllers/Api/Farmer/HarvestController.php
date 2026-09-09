@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Api\Farmer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Harvest;
-use App\Models\Crop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HarvestController extends Controller
 {
@@ -15,18 +14,64 @@ class HarvestController extends Controller
      */
     public function index(Request $request)
     {
-        $farmerId = Auth::id();
+        try {
+            $farmerId = Auth::id();
 
-        $harvests = Harvest::whereHas('crop.farm', function ($q) use ($farmerId) {
-            $q->where('farmer_id', $farmerId);
-        })
-        ->with('crop.farm')
-        ->paginate($request->get('limit', 20));
+            $harvests = DB::table('harvests as h')
+                ->join('crops as c', 'h.crop_id', '=', 'c.id')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('f.farmer_id', $farmerId)
+                ->select(
+                    'h.id',
+                    'h.crop_id',
+                    'h.harvest_date',
+                    'h.quantity',
+                    'h.quantity_harvested',
+                    'h.unit',
+                    'h.quality_grade',
+                    'h.notes',
+                    'h.harvest_notes',
+                    'h.created_at',
+                    'h.updated_at',
+                    'c.id as crop_id_full',
+                    'c.crop_type',
+                    'c.variety',
+                    'f.id as farm_id',
+                    'f.name as farm_name'
+                )
+                ->orderBy('h.harvest_date', 'desc')
+                ->limit(20)
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $harvests,
-        ]);
+            $data = $harvests->map(function ($h) {
+                return [
+                    'id' => $h->id,
+                    'crop_id' => $h->crop_id,
+                    'harvest_date' => $h->harvest_date,
+                    'quantity' => (float) ($h->quantity ?? $h->quantity_harvested ?? 0),
+                    'unit' => $h->unit,
+                    'quality_grade' => $h->quality_grade,
+                    'notes' => $h->notes ?? $h->harvest_notes,
+                    'crop' => [
+                        'id' => $h->crop_id_full,
+                        'crop_type' => $h->crop_type,
+                        'variety' => $h->variety,
+                        'farm' => [
+                            'id' => $h->farm_id,
+                            'name' => $h->farm_name,
+                        ]
+                    ],
+                    'created_at' => $h->created_at,
+                    'updated_at' => $h->updated_at,
+                ];
+            });
+
+            return response()->json(['success' => true, 'data' => $data->toArray()]);
+
+        } catch (\Exception $e) {
+            \Log::error('Harvest index: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -34,81 +79,141 @@ class HarvestController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'crop_id' => 'required|exists:crops,id',
-            'harvest_date' => 'required|date',
-            'quantity' => 'required|numeric',
-            'unit' => 'required|string',
-            'quality_grade' => 'sometimes|in:excellent,good,fair,poor',
-            'notes' => 'sometimes|string',
-        ]);
+        try {
+            $farmerId = Auth::id();
 
-        // Verify crop ownership
-        $crop = Crop::findOrFail($validated['crop_id']);
-        $this->authorize('update', $crop);
+            // Validate that crop belongs to farmer
+            $crop = DB::table('crops as c')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('c.id', $request->input('crop_id'))
+                ->where('f.farmer_id', $farmerId)
+                ->first();
 
-        $harvest = Harvest::create($validated);
+            if (!$crop) {
+                return response()->json(['success' => false, 'message' => 'Invalid crop'], 400);
+            }
 
-        // Update crop status
-        $crop->update(['status' => 'harvested']);
+            // Insert harvest record directly
+            $harvestId = DB::table('harvests')->insertGetId([
+                'crop_id' => $request->input('crop_id'),
+                'harvest_date' => $request->input('harvest_date'),
+                'quantity_harvested' => $request->input('quantity', 0),
+                'unit' => $request->input('unit', 'kg'),
+                'quality_grade' => $request->input('quality_grade'),
+                'harvest_notes' => $request->input('notes'),
+                'number_of_workers' => 1, // Default value
+                'storage_method' => 'fresh',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Harvest record created successfully',
-            'data' => $harvest,
-        ], 201);
+            $harvest = DB::table('harvests')->where('id', $harvestId)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Harvest created successfully',
+                'data' => $harvest
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('Harvest store: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
      * Get harvest details
      */
-    public function show(Harvest $harvest)
+    public function show($id)
     {
-        $this->authorize('view', $harvest);
+        try {
+            $farmerId = Auth::id();
 
-        return response()->json([
-            'success' => true,
-            'data' => $harvest->load('crop'),
-        ]);
+            $harvest = DB::table('harvests as h')
+                ->join('crops as c', 'h.crop_id', '=', 'c.id')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('h.id', $id)
+                ->where('f.farmer_id', $farmerId)
+                ->first();
+
+            if (!$harvest) {
+                return response()->json(['success' => false, 'message' => 'Not found'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $harvest]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
      * Update harvest
      */
-    public function update(Request $request, Harvest $harvest)
+    public function update(Request $request, $id)
     {
-        $this->authorize('update', $harvest);
+        try {
+            $farmerId = Auth::id();
 
-        $validated = $request->validate([
-            'harvest_date' => 'sometimes|date',
-            'quantity' => 'sometimes|numeric',
-            'unit' => 'sometimes|string',
-            'quality_grade' => 'sometimes|in:excellent,good,fair,poor',
-            'notes' => 'sometimes|string',
-        ]);
+            $harvest = DB::table('harvests as h')
+                ->join('crops as c', 'h.crop_id', '=', 'c.id')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('h.id', $id)
+                ->where('f.farmer_id', $farmerId)
+                ->first();
 
-        $harvest->update($validated);
+            if (!$harvest) {
+                return response()->json(['success' => false, 'message' => 'Not found'], 404);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Harvest updated successfully',
-            'data' => $harvest,
-        ]);
+            $updates = [];
+            if ($request->has('harvest_date')) $updates['harvest_date'] = $request->input('harvest_date');
+            if ($request->has('quantity')) {
+                $updates['quantity'] = $request->input('quantity');
+                $updates['quantity_harvested'] = $request->input('quantity');
+            }
+            if ($request->has('unit')) $updates['unit'] = $request->input('unit');
+            if ($request->has('quality_grade')) $updates['quality_grade'] = $request->input('quality_grade');
+            if ($request->has('notes')) {
+                $updates['notes'] = $request->input('notes');
+                $updates['harvest_notes'] = $request->input('notes');
+            }
+            $updates['updated_at'] = now();
+
+            DB::table('harvests')->where('id', $id)->update($updates);
+
+            $updated = DB::table('harvests')->where('id', $id)->first();
+
+            return response()->json(['success' => true, 'message' => 'Updated', 'data' => $updated]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
      * Delete harvest
      */
-    public function destroy(Harvest $harvest)
+    public function destroy($id)
     {
-        $this->authorize('delete', $harvest);
+        try {
+            $farmerId = Auth::id();
 
-        $harvest->delete();
+            $harvest = DB::table('harvests as h')
+                ->join('crops as c', 'h.crop_id', '=', 'c.id')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('h.id', $id)
+                ->where('f.farmer_id', $farmerId)
+                ->first();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Harvest deleted successfully',
-        ]);
+            if (!$harvest) {
+                return response()->json(['success' => false, 'message' => 'Not found'], 404);
+            }
+
+            DB::table('harvests')->where('id', $id)->delete();
+
+            return response()->json(['success' => true, 'message' => 'Deleted']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -116,25 +221,23 @@ class HarvestController extends Controller
      */
     public function statistics(Request $request)
     {
-        $farmerId = Auth::id();
-        $year = $request->get('year', now()->year);
+        try {
+            $farmerId = Auth::id();
+            $year = $request->get('year', now()->year);
 
-        $harvests = Harvest::whereHas('crop.farm', function ($q) use ($farmerId) {
-            $q->where('farmer_id', $farmerId);
-        })
-        ->whereYear('harvest_date', $year)
-        ->get();
+            $stats = DB::table('harvests as h')
+                ->join('crops as c', 'h.crop_id', '=', 'c.id')
+                ->join('farms as f', 'c.farm_id', '=', 'f.id')
+                ->where('f.farmer_id', $farmerId)
+                ->whereYear('h.harvest_date', $year)
+                ->selectRaw('COUNT(*) as total_harvests')
+                ->selectRaw('SUM(h.quantity) as total_quantity')
+                ->selectRaw('AVG(h.quantity) as average_quantity')
+                ->first();
 
-        $stats = [
-            'total_harvests' => $harvests->count(),
-            'total_quantity' => $harvests->sum('quantity'),
-            'average_quantity' => $harvests->count() > 0 ? $harvests->sum('quantity') / $harvests->count() : 0,
-            'by_quality' => $harvests->groupBy('quality_grade')->map->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
+            return response()->json(['success' => true, 'data' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

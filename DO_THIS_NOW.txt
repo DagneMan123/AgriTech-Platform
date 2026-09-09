@@ -1,0 +1,79 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     FINAL SETUP - DO THIS NOW                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Create the Database Table
+─────────────────────────────────────────────────────────────────────────────
+
+Open PostgreSQL Client (pgAdmin or SQL Shell) and run this SQL:
+
+  DROP TABLE IF EXISTS crop_activities CASCADE;
+
+  CREATE TABLE crop_activities (
+      id BIGSERIAL PRIMARY KEY,
+      crop_id BIGINT NOT NULL REFERENCES crops(id) ON DELETE CASCADE,
+      farm_id BIGINT NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
+      farmer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      activity_type VARCHAR(50) NOT NULL,
+      activity_date DATE NOT NULL,
+      activity_time TIME,
+      description TEXT,
+      quantity NUMERIC(10,2),
+      unit VARCHAR(50),
+      cost NUMERIC(12,2),
+      weather VARCHAR(50),
+      notes TEXT,
+      deleted_at TIMESTAMP,
+      created_at TIMESTAMP,
+      updated_at TIMESTAMP
+  );
+
+  CREATE INDEX crop_activities_crop_id_activity_date_idx ON crop_activities(crop_id, activity_date);
+  CREATE INDEX crop_activities_farm_id_activity_date_idx ON crop_activities(farm_id, activity_date);
+  CREATE INDEX crop_activities_farmer_id_activity_date_idx ON crop_activities(farmer_id, activity_date);
+  CREATE INDEX crop_activities_activity_type_idx ON crop_activities(activity_type);
+
+
+STEP 2: Restart Laravel Server
+─────────────────────────────────────────────────────────────────────────────
+
+Stop the running server (Ctrl+C) and restart:
+
+  cd c:\Users\Hena\Desktop\AgriTech_Platform\backend
+  php artisan serve --port=8000
+
+
+STEP 3: Hard Refresh Browser
+─────────────────────────────────────────────────────────────────────────────
+
+Press: Ctrl+F5 (or Cmd+Shift+R on Mac)
+
+
+STEP 4: Test the Feature
+─────────────────────────────────────────────────────────────────────────────
+
+1. Login as a farmer
+2. Go to Crop Activities page
+3. Click "Add Activity"
+4. Fill in the form:
+   - Select a crop
+   - Select a farm
+   - Choose activity type (e.g., Planting)
+   - Enter date (e.g., 2026-09-08)
+   - Add optional details
+5. Click "Save Activity"
+6. Should see activity appear in the timeline
+
+
+THAT'S IT! ✅
+─────────────────────────────────────────────────────────────────────────────
+
+The Crop Activities feature is now fully functional.
+
+If you get any errors:
+- Check the browser console (F12)
+- Check Laravel logs in: backend/storage/logs/laravel.log
+- Make sure you're logged in as a farmer
+- Make sure farmer has crops and farms created
+
+See SETUP_COMPLETE.md for detailed troubleshooting.

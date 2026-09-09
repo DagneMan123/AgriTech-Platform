@@ -31,6 +31,8 @@ class CropActivity extends Model
         'cost' => 'decimal:2'
     ];
 
+    protected $appends = ['crop_display_name'];
+
     public function crop()
     {
         return $this->belongsTo(Crop::class);
@@ -44,5 +46,19 @@ class CropActivity extends Model
     public function farmer()
     {
         return $this->belongsTo(Farmer::class);
+    }
+
+    /**
+     * Get the display name for the crop associated with this activity
+     * Falls back to "Unknown Crop" if crop relationship is not loaded or crop is deleted
+     */
+    public function getCropDisplayNameAttribute()
+    {
+        if ($this->crop) {
+            return $this->crop->display_name ?? $this->crop->crop_type ?? 'Unknown Crop';
+        }
+        
+        // If crop is not loaded, return generic fallback
+        return 'Unknown Crop';
     }
 }

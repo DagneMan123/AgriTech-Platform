@@ -29,6 +29,8 @@ class Crop extends Model
         'expected_yield_kg' => 'decimal:2'
     ];
 
+    protected $appends = ['display_name'];
+
     public function farm()
     {
         return $this->belongsTo(Farm::class);
@@ -47,5 +49,20 @@ class Crop extends Model
     public function harvests()
     {
         return $this->hasMany(Harvest::class);
+    }
+
+    /**
+     * Get display name for the crop
+     * Shows "crop_type (variety)" or just "crop_type" if variety is not set
+     */
+    public function getDisplayNameAttribute()
+    {
+        $name = $this->crop_type ?? 'Unknown Crop';
+        
+        if ($this->variety) {
+            $name .= ' (' . $this->variety . ')';
+        }
+        
+        return $name;
     }
 }

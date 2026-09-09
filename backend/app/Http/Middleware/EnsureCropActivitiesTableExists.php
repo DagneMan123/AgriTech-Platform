@@ -20,7 +20,7 @@ class EnsureCropActivitiesTableExists
         // Only run once per request cycle
         static $checked = false;
         
-        if (!$checked && $this->shouldCheck()) {
+        if (!$checked) {
             try {
                 $this->ensureTableExists();
                 $checked = true;
@@ -33,52 +33,52 @@ class EnsureCropActivitiesTableExists
         return $next($request);
     }
 
-    private function shouldCheck(): bool
-    {
-        // Only attempt to check if we're accessing crop-activities routes
-        $path = request()->path();
-        return strpos($path, 'crop-activities') !== false;
-    }
-
     private function ensureTableExists(): void
     {
         if (!Schema::hasTable('crop_activities')) {
             Log::info('Creating crop_activities table...');
             
-            Schema::create('crop_activities', function ($table) {
-                $table->id();
-                $table->foreignId('crop_id')->constrained('crops')->onDelete('cascade');
-                $table->foreignId('farm_id')->constrained('farms')->onDelete('cascade');
-                $table->foreignId('farmer_id')->constrained('farmers')->onDelete('cascade');
-                $table->enum('activity_type', [
-                    'planting',
-                    'watering',
-                    'fertilizing',
-                    'weeding',
-                    'pesticide',
-                    'pruning',
-                    'harvesting',
-                    'other'
-                ]);
-                $table->date('activity_date');
-                $table->time('activity_time')->nullable();
-                $table->text('description')->nullable();
-                $table->decimal('quantity', 10, 2)->nullable();
-                $table->string('unit', 50)->nullable();
-                $table->decimal('cost', 12, 2)->nullable();
-                $table->string('weather', 50)->nullable();
-                $table->text('notes')->nullable();
-                $table->softDeletes();
-                $table->timestamps();
+            try {
+                Schema::create('crop_activities', function ($table) {
+                    $table->id();
+                    $table->foreignId('crop_id')->constrained('crops')->onDelete('cascade');
+                    $table->foreignId('farm_id')->constrained('farms')->onDelete('cascade');
+                    $table->foreignId('farmer_id')->constrained('users')->onDelete('cascade');
+                    $table->enum('activity_type', [
+                        'planting',
+                        'watering',
+                        'fertilizing',
+                        'weeding',
+                        'pesticide',
+                        'pruning',
+                        'harvesting',
+                        'other'
+                    ]);
+                    $table->date('activity_date');
+                    $table->time('activity_time')->nullable();
+                    $table->text('description')->nullable();
+                    $table->decimal('quantity', 10, 2)->nullable();
+                    $table->string('unit', 50)->nullable();
+                    $table->decimal('cost', 12, 2)->nullable();
+                    $table->string('weather', 50)->nullable();
+                    $table->text('notes')->nullable();
+                    $table->softDeletes();
+                    $table->timestamps();
 
-                // Indexes for better query performance
-                $table->index(['crop_id', 'activity_date']);
-                $table->index(['farm_id', 'activity_date']);
-                $table->index(['farmer_id', 'activity_date']);
-                $table->index('activity_type');
-            });
+                    // Indexes for better query performance
+                    $table->index(['crop_id', 'activity_date']);
+                    $table->index(['farm_id', 'activity_date']);
+                    $table->index(['farmer_id', 'activity_date']);
+                    $table->index('activity_type');
+                });
 
-            Log::info('crop_activities table created successfully');
+                Log::info('crop_activities table created successfully');
+            } catch (\Exception $e) {
+                Log::error('Error creating crop_activities table: ' . $e->getMessage());
+                throw $e;
+            }
+        } else {
+            Log::debug('crop_activities table already exists');
         }
     }
 }

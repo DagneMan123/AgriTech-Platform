@@ -93,6 +93,41 @@ Route::get('/test', function () {
     return response()->json(['message' => 'Test endpoint working', 'time' => now()]);
 });
 
+// Test harvest creation
+Route::post('/farmer/harvest-test', function (\Illuminate\Http\Request $request) {
+    try {
+        \Log::info('Harvest test received', $request->all());
+        
+        $data = [
+            'crop_id' => $request->input('crop_id', 1),
+            'harvest_date' => $request->input('harvest_date', '2026-09-08'),
+            'quantity' => $request->input('quantity', 100),
+            'quantity_harvested' => $request->input('quantity', 100),
+            'unit' => $request->input('unit', 'kg'),
+            'number_of_workers' => 0,
+            'storage_method' => 'fresh',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+        
+        $id = \DB::table('harvests')->insertGetId($data);
+        
+        return response()->json(['success' => true, 'id' => $id]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    }
+});
+
+// Add harvest diagnostic endpoint
+Route::get('/farmer/harvests/diagnostic', function () {
+    return response()->json([
+        'harvests_table_exists' => \Schema::hasTable('harvests'),
+        'crops_table_exists' => \Schema::hasTable('crops'),
+        'farms_table_exists' => \Schema::hasTable('farms'),
+        'harvest_columns' => \Schema::hasTable('harvests') ? \Schema::getColumns('harvests') : [],
+    ]);
+});
+
 
 Route::get('/diagnostic/health', function () {
     return response()->json([

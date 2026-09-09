@@ -393,6 +393,7 @@ const cropForm = ref({
   area_hectares: '',
   expected_yield_kg: '',
   notes: '',
+  status: 'growing',  // Default to 'growing' so it appears in harvest form
 })
 
 // Computed properties
@@ -488,6 +489,7 @@ const resetCropForm = () => {
     area_hectares: '',
     expected_yield_kg: '',
     notes: '',
+    status: 'growing',  // Default to 'growing'
   }
   formErrors.value = {}
 }
@@ -503,6 +505,7 @@ const editCrop = (crop) => {
     area_hectares: crop.area_hectares,
     expected_yield_kg: crop.expected_yield_kg || '',
     notes: crop.notes || '',
+    status: crop.status || 'growing',  // Include status when editing
   }
   showPlantCropDialog.value = true
 }

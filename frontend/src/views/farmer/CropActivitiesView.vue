@@ -21,7 +21,7 @@
             <select id="filter-crop" v-model="selectedCrop" class="filter-select">
               <option value="">All Crops</option>
               <option v-for="crop in crops" :key="crop.id" :value="crop.id">
-                {{ crop.name }}
+                {{ crop.display_name || crop.crop_type || 'Unknown' }}
               </option>
             </select>
           </div>
@@ -90,7 +90,7 @@
                     <span class="activity-badge" :class="`badge-${activity.activity_type}`">
                       {{ formatActivityType(activity.activity_type) }}
                     </span>
-                    <h3>{{ activity.crop?.name || 'Unknown Crop' }}</h3>
+                    <h3>{{ activity.crop_display_name || activity.crop?.display_name || activity.crop?.crop_type || 'Unknown Crop' }}</h3>
                   </div>
                   <span class="activity-date">{{ formatDate(activity.activity_date) }}</span>
                 </div>
@@ -144,17 +144,17 @@
         <div class="modal-body">
           <form @submit.prevent="submitActivityForm">
             <div class="form-row">
-              <div class="form-group">
-                <label for="crop-select">Crop *</label>
+              <div class="form-group" :class="{ 'has-error': formErrors.crop_id }">
+                <label for="crop-select">Crop <span style="color: #ef4444;"></span></label>
                 <select id="crop-select" v-model="activityForm.crop_id" required>
                   <option value="" disabled>Select a crop</option>
-                  <option v-for="crop in crops" :key="crop.id" :value="crop.id">{{ crop.name }}</option>
+                  <option v-for="crop in crops" :key="crop.id" :value="crop.id">{{ crop.display_name || crop.crop_type || 'Unknown' }}</option>
                 </select>
                 <span v-if="formErrors.crop_id" class="error-text">{{ formErrors.crop_id }}</span>
               </div>
 
-              <div class="form-group">
-                <label for="farm-select">Farm *</label>
+              <div class="form-group" :class="{ 'has-error': formErrors.farm_id }">
+                <label for="farm-select">Farm <span style="color: #ef4444;"></span></label>
                 <select id="farm-select" v-model="activityForm.farm_id" required>
                   <option value="" disabled>Select a farm</option>
                   <option v-for="farm in farms" :key="farm.id" :value="farm.id">{{ farm.name }}</option>
@@ -164,8 +164,8 @@
             </div>
 
             <div class="form-row">
-              <div class="form-group">
-                <label for="activity-type">Activity Type *</label>
+              <div class="form-group" :class="{ 'has-error': formErrors.activity_type }">
+                <label for="activity-type">Activity Type <span style="color: #ef4444;"></span></label>
                 <select id="activity-type" v-model="activityForm.activity_type" required>
                   <option value="" disabled>Select activity type</option>
                   <option value="planting">Planting</option>
@@ -180,8 +180,8 @@
                 <span v-if="formErrors.activity_type" class="error-text">{{ formErrors.activity_type }}</span>
               </div>
 
-              <div class="form-group">
-                <label for="activity-date">Date *</label>
+              <div class="form-group" :class="{ 'has-error': formErrors.activity_date }">
+                <label for="activity-date">Date <span style="color: #ef4444;"></span></label>
                 <input id="activity-date" v-model="activityForm.activity_date" type="date" required />
                 <span v-if="formErrors.activity_date" class="error-text">{{ formErrors.activity_date }}</span>
               </div>
@@ -331,7 +331,14 @@ const fetchActivities = async () => {
     error.value = null
     try {
       const response = await apiClient.get('/farmer/crop-activities')
-      activities.value = Array.isArray(response.data.data) ? response.data.data : []
+      // Handle both paginated and non-paginated responses
+      if (response.data.data && Array.isArray(response.data.data)) {
+        activities.value = response.data.data
+      } else if (Array.isArray(response.data)) {
+        activities.value = response.data
+      } else {
+        activities.value = []
+      }
     } catch (apiError) {
       // If 404, the table might not exist yet - show empty state
       if (apiError.response?.status === 404) {
@@ -344,7 +351,7 @@ const fetchActivities = async () => {
   } catch (err) {
     console.error('Error fetching activities:', err)
     if (err.response?.status !== 404) {
-      error.value = err.response?.data?.message || 'Failed to load activity logs.'
+      error.value = err.response?.data?.message || 'Failed to load activity logs. Please try again.'
     }
   } finally {
     loading.value = false
@@ -354,18 +361,38 @@ const fetchActivities = async () => {
 const fetchCrops = async () => {
   try {
     const response = await apiClient.get('/farmer/crops')
-    crops.value = Array.isArray(response.data.data) ? response.data.data : []
+    
+    if (response.data.data && Array.isArray(response.data.data)) {
+      crops.value = response.data.data
+    } else if (Array.isArray(response.data.data)) {
+      crops.value = response.data.data
+    } else if (Array.isArray(response.data)) {
+      crops.value = response.data
+    } else {
+      crops.value = []
+    }
   } catch (err) {
-    console.error('Error fetching crops:', err)
+    console.error('Error fetching crops:', err.response?.status, err.message)
+    crops.value = []
   }
 }
 
 const fetchFarms = async () => {
   try {
     const response = await apiClient.get('/farmer/farms')
-    farms.value = Array.isArray(response.data.data) ? response.data.data : []
+    
+    if (response.data.data && Array.isArray(response.data.data)) {
+      farms.value = response.data.data
+    } else if (Array.isArray(response.data.data)) {
+      farms.value = response.data.data
+    } else if (Array.isArray(response.data)) {
+      farms.value = response.data
+    } else {
+      farms.value = []
+    }
   } catch (err) {
-    console.error('Error fetching farms:', err)
+    console.error('Error fetching farms:', err.response?.status, err.message)
+    farms.value = []
   }
 }
 
@@ -424,6 +451,28 @@ const submitActivityForm = async () => {
     formErrors.value = {}
     formSubmitError.value = null
 
+    // Validate required fields
+    if (!activityForm.value.crop_id) {
+      formErrors.value.crop_id = 'Please select a crop'
+      submitting.value = false
+      return
+    }
+    if (!activityForm.value.farm_id) {
+      formErrors.value.farm_id = 'Please select a farm'
+      submitting.value = false
+      return
+    }
+    if (!activityForm.value.activity_type) {
+      formErrors.value.activity_type = 'Please select an activity type'
+      submitting.value = false
+      return
+    }
+    if (!activityForm.value.activity_date) {
+      formErrors.value.activity_date = 'Please select a date'
+      submitting.value = false
+      return
+    }
+
     const payload = {
       crop_id: parseInt(activityForm.value.crop_id),
       farm_id: parseInt(activityForm.value.farm_id),
@@ -443,11 +492,13 @@ const submitActivityForm = async () => {
       : '/farmer/crop-activities'
     const method = isEditingActivity.value ? 'put' : 'post'
 
-    await apiClient[method](url, payload)
+    const response = await apiClient[method](url, payload)
 
-    showActivityModal.value = false
-    resetForm()
-    await fetchActivities()
+    if (response.status === 201 || response.status === 200) {
+      showActivityModal.value = false
+      resetForm()
+      await fetchActivities()
+    }
   } catch (error) {
     console.error('Error submitting activity:', error)
     const responseData = error.response?.data
@@ -458,21 +509,31 @@ const submitActivityForm = async () => {
         fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages
       }
       formErrors.value = fieldErrors
+    } else if (error.response?.status === 403) {
+      formSubmitError.value = 'You do not have permission to perform this action on this crop or farm.'
+    } else {
+      formSubmitError.value = responseData?.message || 'An error occurred while saving the activity. Please try again.'
     }
-
-    formSubmitError.value = responseData?.message || 'An error occurred while saving the activity.'
   } finally {
     submitting.value = false
   }
 }
 
 const deleteActivity = async (id) => {
-  if (confirm('Are you sure you want to delete this activity record?')) {
+  if (confirm('Are you sure you want to delete this activity record? This action cannot be undone.')) {
     try {
-      await apiClient.delete(`/farmer/crop-activities/${id}`)
-      await fetchActivities()
+      const response = await apiClient.delete(`/farmer/crop-activities/${id}`)
+      if (response.status === 200) {
+        await fetchActivities()
+      }
     } catch (err) {
-      error.value = 'Failed to delete activity record.'
+      console.error('Error deleting activity:', err)
+      const errorMsg = err.response?.data?.message || 'Failed to delete activity record.'
+      error.value = errorMsg
+      // Auto-hide error after 5 seconds
+      setTimeout(() => {
+        error.value = null
+      }, 5000)
     }
   }
 }
@@ -1038,12 +1099,26 @@ const handleLogout = async () => {
   transition: all 0.2s;
 }
 
+.form-group.has-error input,
+.form-group.has-error textarea,
+.form-group.has-error select {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-group.has-error input:focus,
+.form-group.has-error textarea:focus,
+.form-group.has-error select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .form-group textarea {
