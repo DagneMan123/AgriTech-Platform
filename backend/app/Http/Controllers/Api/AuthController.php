@@ -385,19 +385,12 @@ class AuthController extends Controller
         try {
             $request->validate(['email' => 'required|email']);
 
-
             $user = User::select('id', 'name', 'email')->where('email', $request->email)->first();
 
-
-            $response = [
-                'message' => 'If an account exists with this email, a password reset link has been sent.'
-            ];
-
             if ($user) {
-
                 $resetToken = Str::random(60);
 
-
+                // Store reset token in database
                 DB::table('password_resets')->updateOrInsert(
                     ['email' => $user->email],
                     [
@@ -406,36 +399,37 @@ class AuthController extends Controller
                     ]
                 );
 
-
                 $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-
-
                 $resetLink = $frontendUrl . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
 
-
-                Mail::queue(
-                    new PasswordResetMail(
+                try {
+                    // Direct mail sending - simple and reliable
+                    Mail::send(new PasswordResetMail(
                         $user->name,
                         $user->email,
                         $resetToken,
                         $resetLink
-                    )
-                );
+                    ));
 
-                Log::info('Password reset request processed', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                ]);
+                    Log::info('✅ Password reset email SENT', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'link' => $resetLink,
+                    ]);
+                } catch (\Exception $mailException) {
+                    Log::error('❌ Email send FAILED: ' . $mailException->getMessage(), [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ]);
+                }
             }
 
+            return response()->json([
+                'message' => 'If an account exists with this email, a password reset link has been sent.'
+            ], 200);
 
-            return response()->json($response, 200);
         } catch (\Exception $e) {
-            Log::error('Forgot password error: ' . $e->getMessage(), [
-                'email' => $request->email ?? null,
-            ]);
-
-
+            Log::error('Forgot password error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'If an account exists with this email, a password reset link has been sent.'
             ], 200);

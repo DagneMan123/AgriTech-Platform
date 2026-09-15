@@ -17,11 +17,9 @@ const authStore = useAuthStore()
 const themeStore = useThemeStore()
 
 onMounted(() => {
-  // Initialize theme
+  // Initialize theme from localStorage
+  // The store already syncs to DOM via its watcher with immediate: true
   themeStore.initializeTheme()
-  
-  // Watch for system theme changes
-  themeStore.watchSystemTheme()
   
   // Check authentication token
   authStore.checkToken()
@@ -34,10 +32,11 @@ onMounted(() => {
   width: 100%;
   background-color: var(--bg-light);
   color: var(--text-light-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html.dark .app-container {
+:deep(html.dark) .app-container {
   background-color: var(--bg-dark);
   color: var(--text-dark-primary);
 }

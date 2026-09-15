@@ -978,7 +978,7 @@ const handleLogout = async () => {
   resize: vertical;
 }
 
-/* Quantity and Unit Dropdown Layout (Quantity small, Unit wide) */
+
 .input-with-unit {
   display: flex;
   gap: 10px;

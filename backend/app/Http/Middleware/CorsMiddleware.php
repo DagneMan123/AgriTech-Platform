@@ -4,15 +4,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CorsMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next): Response
     {
-        // Get origin
+        // Get the origin from the request
         $origin = $request->header('Origin');
         
-        // Allowed origins
+        // List of allowed origins
         $allowedOrigins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
@@ -22,26 +26,33 @@ class CorsMiddleware
             'http://127.0.0.1:8080',
         ];
         
-        $responseOrigin = (in_array($origin, $allowedOrigins)) ? $origin : 'http://localhost:5173';
+        // Check if origin is allowed
+        $originAllowed = in_array($origin, $allowedOrigins);
+        $responseOrigin = $originAllowed ? $origin : null;
 
-        // If it's a preflight request, return early with CORS headers
+        // CORS headers that will be added to every response
+        $corsHeaders = [
+            'Access-Control-Allow-Origin' => $responseOrigin ?? 'http://localhost:5173',
+            'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
+            'Access-Control-Max-Age' => '86400',
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Expose-Headers' => 'Content-Type, Authorization',
+        ];
+
+        // Handle preflight (OPTIONS) requests
         if ($request->isMethod('OPTIONS')) {
-            return response()
-                ->header('Access-Control-Allow-Origin', $responseOrigin)
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-                ->header('Access-Control-Max-Age', '86400')
-                ->header('Access-Control-Allow-Credentials', 'true');
+            return response('', 200)
+                ->withHeaders($corsHeaders);
         }
 
-        // For non-preflight requests, get the response and add CORS headers
+        // Process the request
         $response = $next($request);
 
-        $response->header('Access-Control-Allow-Origin', $responseOrigin)
-                 ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
-                 ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-                 ->header('Access-Control-Expose-Headers', 'Content-Type')
-                 ->header('Access-Control-Allow-Credentials', 'true');
+        // Add CORS headers to the response
+        foreach ($corsHeaders as $key => $value) {
+            $response->header($key, $value);
+        }
 
         return $response;
     }

@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Apply CORS middleware globally - MUST be first to handle preflight requests
+        $middleware->prepend(\App\Http\Middleware\CorsMiddleware::class);
+        
         // Register middleware aliases for route middleware groups
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
@@ -36,9 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Ensure crop activities table exists
         $middleware->append(\App\Http\Middleware\EnsureCropActivitiesTableExists::class);
-        
-        // Apply CORS middleware globally
-        $middleware->append(\App\Http\Middleware\CorsMiddleware::class);
     })
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,

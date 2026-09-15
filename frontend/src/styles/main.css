@@ -2,33 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light Mode - Default */
+:root {
+  --bg-light: #ffffff;
+  --bg-light-secondary: #f9fafb;
+  --bg-light-tertiary: #f3f4f6;
+  --text-light-primary: #111827;
+  --text-light-secondary: #6b7280;
+  --text-light-tertiary: #9ca3af;
+  --border-light: #e5e7eb;
+  --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px 0 rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --input-bg-light: #ffffff;
+  --input-border-light: #d1d5db;
+  --card-bg-light: #ffffff;
+}
+
+/* Dark Mode */
+html.dark {
+  --bg-light: #0f1419;
+  --bg-light-secondary: #1a1f2e;
+  --bg-light-tertiary: #252d3d;
+  --text-light-primary: #f1f5f9;
+  --text-light-secondary: #cbd5e1;
+  --text-light-tertiary: #94a3b8;
+  --border-light: #334155;
+  --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px 0 rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --input-bg-light: #1a1f2e;
+  --input-border-light: #334155;
+  --card-bg-light: #1a1f2e;
+}
+
+/* Additional dark mode variables */
+html.dark {
+  --bg-dark: #0f1419;
+  --bg-dark-secondary: #1a1f2e;
+  --bg-dark-tertiary: #252d3d;
+  --text-dark-primary: #f1f5f9;
+  --text-dark-secondary: #cbd5e1;
+  --shadow-dark-md: 0 4px 6px 0 rgba(0, 0, 0, 0.5);
+  --shadow-dark-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
 * {
   @apply box-border;
 }
 
 body {
-  @apply bg-gray-50;
+  background-color: var(--bg-light-secondary);
+  color: var(--text-light-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html {
   @apply scroll-smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   @apply w-2 h-2;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background: var(--bg-light-tertiary);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  background: #d1d5db;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  background: #9ca3af;
+}
+
+/* Custom scrollbar - Dark mode */
+html.dark ::-webkit-scrollbar-track {
+  background: var(--bg-dark-tertiary);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 /* Transitions */
@@ -79,4 +140,137 @@ html {
   .card-hover {
     @apply card hover:shadow-lg transition-shadow cursor-pointer;
   }
+}
+
+/* Dark mode support for components */
+
+/* Buttons - Dark mode */
+html.dark .btn-secondary {
+  @apply bg-gray-700 text-gray-100 hover:bg-gray-600;
+}
+
+/* Input fields - Dark mode */
+html.dark .input-field {
+  @apply bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+html.dark .input-field:focus {
+  @apply ring-green-500;
+}
+
+/* Cards - Dark mode */
+html.dark .card,
+html.dark .card-hover {
+  @apply bg-gray-800 text-gray-100;
+  box-shadow: var(--shadow-dark-md);
+}
+
+html.dark .card-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* General text colors */
+html.dark {
+  color: var(--text-dark-primary);
+}
+
+/* Tables dark mode */
+html.dark table {
+  border-color: var(--border-light);
+}
+
+html.dark thead {
+  background-color: var(--bg-dark-secondary);
+}
+
+html.dark tbody tr:hover {
+  background-color: var(--bg-dark-tertiary);
+}
+
+html.dark tbody {
+  border-color: var(--border-light);
+}
+
+/* Forms dark mode */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: var(--input-bg-light);
+  color: var(--text-light-primary);
+  border-color: var(--input-border-light);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--text-light-tertiary);
+}
+
+/* Borders dark mode */
+html.dark .border,
+html.dark [class*="border-"] {
+  border-color: var(--border-light);
+}
+
+/* Links - Dark mode */
+html.dark a {
+  color: #60a5fa;
+}
+
+html.dark a:hover {
+  color: #93c5fd;
+}
+
+/* Headings - Dark mode */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: var(--text-dark-primary);
+}
+
+/* Labels - Dark mode */
+html.dark label {
+  color: var(--text-dark-primary);
+}
+
+/* Focus states - Dark mode */
+html.dark :focus-visible {
+  outline-color: #60a5fa;
+}
+
+/* Disabled elements - Dark mode */
+html.dark :disabled {
+  opacity: 0.6;
+}
+
+/* Selection - Dark mode */
+html.dark ::selection {
+  background-color: #374151;
+  color: var(--text-dark-primary);
+}
+
+/* Modals & Overlays - Dark mode */
+html.dark .modal,
+html.dark .overlay,
+html.dark .popover {
+  background-color: var(--bg-dark);
+  border-color: var(--border-light);
+  color: var(--text-dark-primary);
+}
+
+/* Alerts - Dark mode */
+html.dark .alert {
+  background-color: var(--bg-dark-secondary);
+  border-color: var(--border-light);
+  color: var(--text-dark-primary);
+}
+
+/* Code blocks - Dark mode */
+html.dark code,
+html.dark pre {
+  background-color: var(--bg-dark-tertiary);
+  color: #e2e8f0;
+  border-color: var(--border-light);
 }

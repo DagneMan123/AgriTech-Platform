@@ -93,6 +93,14 @@ Route::get('/test', function () {
     return response()->json(['message' => 'Test endpoint working', 'time' => now()]);
 });
 
+// Email diagnostic endpoints (public for testing)
+Route::prefix('email')->group(function () {
+    Route::get('/health', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'health']);
+    Route::get('/test-config', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'testConfiguration']);
+    Route::post('/test-send', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'sendTestEmail']);
+    Route::get('/test-providers', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'testMultipleProviders']);
+});
+
 // Test harvest creation
 Route::post('/farmer/harvest-test', function (\Illuminate\Http\Request $request) {
     try {

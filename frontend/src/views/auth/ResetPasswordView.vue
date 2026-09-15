@@ -175,6 +175,11 @@ const invalidToken = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
+// Check if dark mode is active
+const isDarkMode = computed(() => {
+  return document.documentElement.classList.contains('dark')
+})
+
 // Validate password strength
 const isPasswordStrong = computed(() => {
   const pwd = formData.value.password
@@ -258,5 +263,13 @@ const handleResetPassword = async () => {
 <style scoped>
 input:focus {
   border-color: #16a34a;
+}
+
+.reset-subtitle {
+  font-size: 1rem;
+}
+
+html.dark .reset-subtitle {
+  color: var(--text-light-secondary);
 }
 </style>

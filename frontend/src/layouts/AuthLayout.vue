@@ -1,11 +1,27 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-      <div class="text-center">
-        <h1 class="text-4xl font-bold text-green-700 mb-2">🌾AgriConnect</h1>
-        <p class="text-gray-600">Smart Agriculture Platform</p>
-      </div>
-      <router-view />
-    </div>
+  <div class="auth-wrapper">
+    <router-view />
   </div>
 </template>
+
+<style scoped>
+.auth-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-light);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.dark .auth-wrapper {
+  background-color: var(--bg-dark);
+}
+</style>
+<script setup lang="ts">
+import ThemeToggle from '@/components/Theme/ThemeToggle.vue'
+</script>
+
+<style scoped>
+.auth-layout {
+  background-attachment: fixed;
+}
+</style>

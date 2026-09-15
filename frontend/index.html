@@ -9,16 +9,17 @@
     <!-- Theme Preload Script - Prevents Flash of Unstyled Content -->
     <script>
       (function() {
-        const stored = localStorage.getItem('theme-preference');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDark = stored === 'dark' || (!stored && prefersDark);
-        
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.setAttribute('data-theme', 'light');
+        try {
+          const stored = localStorage.getItem('theme-preference');
+          const isDark = stored === 'dark';
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          // Fail silently if localStorage is not available
         }
       })();
     </script>
