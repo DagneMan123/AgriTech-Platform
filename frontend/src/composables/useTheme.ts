@@ -1,23 +1,19 @@
-// /src/composables/useTheme.ts
-import { ref } from 'vue'
-
-// ከ localStorage በማንበብ እንጀምራለን
-const savedTheme = localStorage.getItem('theme_light') === 'true'
-const isLight = ref(savedTheme)
-
-// የመጀመሪያውን ጭነት በዚሁ እናስተካክላለን
-document.documentElement.classList.toggle('light', isLight.value)
+import { computed } from 'vue'
+import { useThemeStore } from '@/stores/themeStore'
 
 export function useTheme() {
-  const toggleTheme = () => {
-    isLight.value = !isLight.value
-    // ሲቀየር ቋሚ እንዲሆን በ localStorage እናስቀምጠዋለን
-    localStorage.setItem('theme_light', String(isLight.value))
-    document.documentElement.classList.toggle('light', isLight.value)
-  }
+  const themeStore = useThemeStore()
+
+  const isDark = computed(() => themeStore.isDark)
+  const isLight = computed(() => !themeStore.isDark)
 
   return {
+    isDark,
     isLight,
-    toggleTheme
+    toggleTheme: () => themeStore.toggleTheme(),
+    setTheme: (dark: boolean) => themeStore.setTheme(dark),
+    initializeTheme: () => themeStore.initializeTheme(),
+    watchSystemTheme: () => themeStore.watchSystemTheme()
   }
 }
+

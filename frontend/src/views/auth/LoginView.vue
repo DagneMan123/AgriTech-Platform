@@ -1,6 +1,6 @@
 <template>
   <div class="auth-container" :class="{ 'light': isLight, 'dark': !isLight }">
-    <!-- Left Side - Hero Section -->
+   
     <div class="hero-section">
       <div class="hero-image-overlay"></div>
       <div class="hero-content">
@@ -10,9 +10,9 @@
       </div>
     </div>
 
-    <!-- Right Side - Login Form -->
+    
     <div class="form-section">
-      <!-- Icon-only Theme Toggle Button -->
+     
       <div class="theme-toggle-corner">
         <button type="button" class="icon-theme-btn" @click="toggleTheme" :title="isLight ? 'Switch to Dark' : 'Switch to Light'">
           <span class="theme-icon">{{ isLight ? '☀️' : '🌙' }}</span>

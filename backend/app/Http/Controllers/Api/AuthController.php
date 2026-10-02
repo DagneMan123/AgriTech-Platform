@@ -28,7 +28,6 @@ class AuthController extends Controller
             $validated = $request->validated();
             $role = strtolower($validated['role']);
 
-
             $userName = match ($role) {
                 'farmer' => $validated['full_name'],
                 'buyer' => $validated['business_name'],
@@ -39,7 +38,6 @@ class AuthController extends Controller
                 'cooperative' => $validated['cooperative_name'],
                 default => $validated['full_name'] ?? 'User',
             };
-
 
             $userData = [
                 'name' => $userName,
@@ -53,20 +51,17 @@ class AuthController extends Controller
                 'is_active' => false,
             ];
 
-
             $user = DB::transaction(function () use ($userData) {
                 return User::create($userData);
             });
 
             Log::info('User created successfully', ['user_id' => $user->id, 'role' => $user->role]);
 
-
             try {
                 $this->handleDocumentUploads($request, $user, $role);
             } catch (\Exception $docError) {
                 Log::warning('Document upload failed but continuing', ['user_id' => $user->id, 'error' => $docError->getMessage()]);
             }
-
 
             try {
                 $this->createRoleProfile($user, $role);
@@ -78,7 +73,6 @@ class AuthController extends Controller
                     'error' => $profileError->getMessage(),
                 ]);
             }
-
 
             $token = $user->createToken('api-token')->plainTextToken;
 
@@ -127,7 +121,6 @@ class AuthController extends Controller
         }
     }
 
-
     private function handleDocumentUploads($request, $user, $role)
     {
         $documentFieldMap = [
@@ -160,12 +153,10 @@ class AuthController extends Controller
                 try {
                     $file = $request->file($fieldName);
 
-
                     $storagePath = $file->store(
                         "documents/{$role}/{$user->id}",
                         'public'
                     );
-
 
                     try {
                         if (class_exists('App\Models\UserDocument')) {
@@ -190,7 +181,6 @@ class AuthController extends Controller
             }
         }
     }
-
 
     private function createRoleProfile(User $user, string $role)
     {
@@ -256,7 +246,6 @@ class AuthController extends Controller
         };
     }
 
-
     public function login(Request $request)
     {
         try {
@@ -268,7 +257,6 @@ class AuthController extends Controller
                 'email.email' => 'Please enter a valid email address.',
                 'password.required' => 'Password is required.',
             ]);
-
 
             $user = User::select('id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region')
                 ->where('email', $request->email)
@@ -291,7 +279,6 @@ class AuthController extends Controller
             try {
                 $user->update(['last_login_at' => now()]);
             } catch (\Exception $e) {
-
                 \Illuminate\Support\Facades\Log::warning('Could not update last_login_at: ' . $e->getMessage());
             }
 
@@ -385,12 +372,11 @@ class AuthController extends Controller
         try {
             $request->validate(['email' => 'required|email']);
 
-            $user = User::select('id', 'name', 'email')->where('email', $request->email)->first();
+            $user = User::select('id', 'name', 'email', 'role')->where('email', $request->email)->first();
 
             if ($user) {
                 $resetToken = Str::random(60);
 
-                // Store reset token in database
                 DB::table('password_resets')->updateOrInsert(
                     ['email' => $user->email],
                     [
@@ -403,9 +389,10 @@ class AuthController extends Controller
                 $resetLink = $frontendUrl . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
 
                 try {
-                    // Direct mail sending - simple and reliable
+                    $displayName = $this->getDisplayName($user);
+
                     Mail::send(new PasswordResetMail(
-                        $user->name,
+                        $displayName,
                         $user->email,
                         $resetToken,
                         $resetLink
@@ -427,7 +414,6 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'If an account exists with this email, a password reset link has been sent.'
             ], 200);
-
         } catch (\Exception $e) {
             Log::error('Forgot password error: ' . $e->getMessage());
             return response()->json([
@@ -454,7 +440,6 @@ class AuthController extends Controller
                 ], 422);
             }
 
-
             $passwordReset = DB::table('password_resets')
                 ->where('email', $request->email)
                 ->first();
@@ -466,7 +451,6 @@ class AuthController extends Controller
                 ], 422);
             }
 
-
             if (!Hash::check($request->token, $passwordReset->token)) {
                 return response()->json([
                     'message' => 'Invalid password reset token.',
@@ -474,10 +458,8 @@ class AuthController extends Controller
                 ], 422);
             }
 
-
             $tokenExpiredAt = strtotime($passwordReset->created_at) + (60 * 60);
             if (time() > $tokenExpiredAt) {
-
                 DB::table('password_resets')->where('email', $request->email)->delete();
 
                 return response()->json([
@@ -486,9 +468,7 @@ class AuthController extends Controller
                 ], 422);
             }
 
-
             $user->update(['password' => Hash::make($request->password)]);
-
 
             DB::table('password_resets')->where('email', $request->email)->delete();
 
@@ -521,5 +501,32 @@ class AuthController extends Controller
                 'message' => 'An error occurred while resetting your password. Please try again later.',
             ], 500);
         }
+    }
+
+    /**
+     * Get the proper display name for the user
+     */
+    private function getDisplayName($user): string
+    {
+        if ($user->name && $user->name !== 'Admin User' && $user->name !== 'Admin') {
+            $name = trim($user->name);
+
+            // ክፍተት ከሌለበት
+            if (strpos($name, ' ') === false) {
+                $name = preg_replace('/([a-z])([A-Z])/', '$1 $2', $name);
+
+                if (strpos($name, ' ') === false && strlen($name) > 5) {
+                    $name = ucfirst(substr($name, 0, 5)) . ' ' . ucfirst(substr($name, 5));
+                }
+            }
+
+            return ucwords($name);
+        }
+
+        // ከኢሜል ፕሪፊክስ ስም ማውጣት
+        $emailPrefix = explode('@', $user->email)[0];
+        $displayName = str_replace(['.', '_', '-'], ' ', $emailPrefix);
+
+        return ucwords($displayName) ?: 'User';
     }
 }
