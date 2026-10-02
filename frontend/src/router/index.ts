@@ -14,7 +14,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue'
-import VerificationPendingView from '@/views/auth/VerificationPendingView.vue'
+
 
 // Lazy load all dashboard and secondary views for faster initial load
 // Using dynamic imports directly (recommended by Vue Router)
@@ -110,13 +110,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, title: 'Reset Password' }
   },
 
-  // Verification Pending - After registration
-  {
-    path: '/verification-pending',
-    name: 'verification-pending',
-    component: VerificationPendingView,
-    meta: { requiresAuth: true, title: 'Verification Pending' }
-  },
+  
 
   // Authentication
   {

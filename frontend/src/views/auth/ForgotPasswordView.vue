@@ -128,13 +128,13 @@ const handleForgotPassword = async () => {
   transition: all 0.3s ease;
 }
 
-/* Hero Section */
+
 .hero-section {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 4rem;
-  background-image: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1200&auto=format&fit=crop');
+  background-image: url('https://www.digi.com/getattachment/Blog/post/IoT-in-Agriculture/GettyImages-2167394255-1080x720.jpg?lang=en-US');
   background-size: cover;
   background-position: center;
   position: relative;

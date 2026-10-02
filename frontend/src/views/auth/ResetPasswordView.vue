@@ -1,341 +1,549 @@
 <template>
-  <div 
-    class="min-h-screen flex flex-col lg:flex-row overflow-hidden transition-colors duration-500"
-    :style="{ 
-      backgroundColor: isDarkMode ? '#0b0f19' : '#f8fafc',
-      color: isDarkMode ? '#f3f4f6' : '#1f2937'
-    }"
-  >
+  <div class="auth-container" :class="{ 'light': isLight, 'dark': !isLight }">
     
-    <!-- Left Side: Image & AgriTech Branding -->
-    <div class="lg:w-1/2 relative hidden lg:flex flex-col justify-between p-12 overflow-hidden bg-gray-900">
-      <!-- Background Image with Overlay -->
-      <div class="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1200&auto=format&fit=crop" 
-          alt="Agriculture Farming" 
-          class="w-full h-full object-cover opacity-60"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-black/40 to-transparent"></div>
-      </div>
-
-      <!-- Top Tag -->
-      <div class="z-10">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 border border-green-500/30 text-green-400 backdrop-blur-md">
-          🌾 Smart Farming Platform
-        </span>
-      </div>
-
-      <!-- Bottom Text -->
-      <div class="z-10 space-y-3">
-        <h1 class="text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-          Account <br />Recovery.
-        </h1>
-        <p class="text-sm text-gray-300 max-w-sm">
-          No worries! We'll help you get back to your AgriConnect dashboard safely.
-        </p>
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="hero-image-overlay"></div>
+      <div class="hero-content">
+        <span class="hero-badge">Smart Farming Platform</span>
+        <h2>Account<br />Recovery.</h2>
+        <p>No worries! We'll help you get back to your AgriConnect dashboard safely.</p>
       </div>
     </div>
 
-    <!-- Right Side: Reset Password Form with Theme Toggle -->
-    <div 
-      class="lg:w-1/2 flex items-center justify-center px-6 py-12 relative transition-colors duration-500"
-      :style="{ backgroundColor: isDarkMode ? '#0b0f19' : '#f8fafc' }"
-    >
+    <!-- Form Section -->
+    <div class="form-section">
       
-      <!-- Theme Toggle Button (Top Right Corner) -->
-      <div class="absolute top-6 right-6 z-25">
-        <button 
-          type="button" 
-          class="w-10 h-10 rounded-full transition-all duration-300 hover:scale-110 flex items-center justify-center shadow-md" 
-          @click="toggleTheme" 
-          :title="isDarkMode ? 'Switch to Light' : 'Switch to Dark'"
-          :style="{
-            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-            color: isDarkMode ? '#facc15' : '#4b5563',
-            border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb'
-          }"
-        >
-          <span class="text-lg">{{ isDarkMode ? '🌙' : '☀️' }}</span>
+      <!-- Theme Toggle Corner -->
+      <div class="theme-toggle-corner">
+        <button type="button" class="icon-theme-btn" @click="toggleTheme" :title="isLight ? 'Switch to Dark' : 'Switch to Light'">
+          <span class="theme-icon">{{ isLight ? '☀️' : '🌙' }}</span>
         </button>
       </div>
 
-      <div class="w-full max-w-md">
-        
-        <!-- Reset Form Card -->
-        <div 
-          v-if="!resetSuccess && !invalidToken" 
-          class="border-2 rounded-2xl shadow-2xl p-8 relative overflow-hidden transition-colors duration-500"
-          :style="{
-            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-            borderColor: isDarkMode ? '#374151' : '#cbd5e1'
-          }"
-        >
+      <div class="form-card">
+        <!-- Top Green Accent Bar -->
+        <div class="form-card-top-bar"></div>
+
+        <div class="form-container">
           
-          <!-- Top Green Accent Line -->
-          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 via-emerald-400 to-green-500"></div>
-
-          <!-- Logo / Header Section -->
-          <div class="text-center mb-8 pt-2">
-            <div 
-              class="inline-flex items-center space-x-2 px-4 py-2 border rounded-xl shadow-inner mb-4 transition-colors duration-500"
-              :style="{
-                backgroundColor: isDarkMode ? '#0b0f19' : '#f9fafb',
-                borderColor: isDarkMode ? '#1f2937' : '#e5e7eb'
-              }"
-            >
-              <span class="text-xl">🌾</span>
-              <span class="text-emerald-400 font-bold tracking-wide">AgriConnect</span>
+          <!-- Reset Form Card (When token & success are normal) -->
+          <template v-if="!resetSuccess && !invalidToken">
+            <div class="form-header">
+              <div class="logo-box">
+                <span class="logo-icon">🌾</span> AgriConnect
+              </div>
+              <h2 class="form-title">Reset Password?</h2>
+              <p class="form-subtitle">Enter your new password below to secure your account.</p>
             </div>
-            <h1 class="text-2xl font-bold mb-1" :style="{ color: isDarkMode ? '#ffffff' : '#111827' }">Reset Password?</h1>
-            <p class="text-xs" :style="{ color: isDarkMode ? '#9ca3af' : '#6b7280' }">Enter your new password below to secure your account.</p>
-          </div>
 
-          <!-- Error Message -->
-          <div v-if="errorMessage" class="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 rounded-lg text-xs">
-            {{ errorMessage }}
-          </div>
+            <!-- Error Message -->
+            <div v-if="error" class="error-box">
+              {{ error }}
+            </div>
 
-          <!-- Success Alert -->
-          <div v-if="successMessage" class="mb-4 p-3 bg-green-950/50 border border-green-900 text-green-400 rounded-lg text-xs">
-            {{ successMessage }}
-          </div>
+            <!-- Success Message -->
+            <div v-if="successMessage" class="success-box">
+              {{ successMessage }}
+            </div>
 
-          <form @submit.prevent="handleResetPassword" class="space-y-5">
-            
-            <!-- Email Display (Read-only) -->
-            <div>
-              <label class="block text-xs font-semibold mb-1" :style="{ color: isDarkMode ? '#9ca3af' : '#4b5563' }">Email Address</label>
-              <div 
-                class="flex items-center px-4 py-3 border rounded-xl text-sm transition-colors duration-500"
-                :style="{
-                  backgroundColor: isDarkMode ? '#0b0f19' : '#f9fafb',
-                  borderColor: isDarkMode ? '#1f2937' : '#e5e7eb',
-                  color: isDarkMode ? '#d1d5db' : '#374151'
-                }"
+            <form @submit.prevent="handleResetPassword" class="login-form">
+              
+              <!-- Email Display Field (Read-only) -->
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                  </svg>
+                  <input
+                    type="email"
+                    :value="form.email"
+                    disabled
+                    class="form-input opacity-75 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <!-- New Password -->
+              <div class="form-group">
+                <label for="password" class="form-label">New Password</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M12 1C6.48 1 2 5.48 2 11c0 1.54.36 3 .97 4.29C2.35 16.29 2 17.12 2 18v2c0 1.1.9 2 2 2h1v-2H4v-2c0-.55.45-1 1-1h16c1.1 0 2-.9 2-2v-6c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 7 15.5 7 14 7.67 14 8.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 7 8.5 7 7 7.67 7 8.5 7.67 10 8.5 10z"/>
+                  </svg>
+                  <input
+                    id="password"
+                    v-model="form.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    required
+                    minlength="8"
+                    class="form-input password-input"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    @click="showPassword = !showPassword"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                      <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Confirm Password -->
+              <div class="form-group">
+                <label for="password_confirmation" class="form-label">Confirm Password</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M12 1C6.48 1 2 5.48 2 11c0 1.54.36 3 .97 4.29C2.35 16.29 2 17.12 2 18v2c0 1.1.9 2 2 2h1v-2H4v-2c0-.55.45-1 1-1h16c1.1 0 2-.9 2-2v-6c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 7 15.5 7 14 7.67 14 8.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 7 8.5 7 7 7.67 7 8.5 7.67 10 8.5 10z"/>
+                  </svg>
+                  <input
+                    id="password_confirmation"
+                    v-model="form.password_confirmation"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    required
+                    minlength="8"
+                    class="form-input password-input"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    @click="showConfirmPassword = !showConfirmPassword"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                      <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                :disabled="loading"
+                class="btn-sign-in"
               >
-                <span class="mr-3 text-gray-500">📧</span>
-                <span class="truncate">{{ formData.email || 'you@example.com' }}</span>
-              </div>
-              <p class="text-[10px] text-gray-500 mt-1">We'll send the recovery link to this address</p>
+                <span v-if="!loading">Reset Password ↪</span>
+                <span v-else class="loading-spinner"></span>
+              </button>
+            </form>
+
+            <div class="text-center mt-4">
+              <router-link to="/auth/login" class="forgot-link">
+                ← Back to Login
+              </router-link>
             </div>
+          </template>
 
-            <!-- Password Field -->
-            <div>
-              <label for="password" class="block text-xs font-semibold mb-1" :style="{ color: isDarkMode ? '#9ca3af' : '#4b5563' }">New Password</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">🔒</span>
-                <input
-                  :type="showPassword ? 'text' : 'password'"
-                  id="password"
-                  v-model="formData.password"
-                  placeholder="••••••••"
-                  required
-                  minlength="8"
-                  class="w-full pl-11 pr-10 py-3 border rounded-xl text-sm !outline-none focus:!outline-none focus:!ring-0 border-slate-300 dark:border-slate-700 focus:!border-emerald-400 transition bg-white dark:bg-[#0b0f19] text-slate-900 dark:text-white"
-                />
-                <button
-                  type="button"
-                  @click="showPassword = !showPassword"
-                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-300 text-sm"
-                >
-                  <span v-if="showPassword">👁️</span>
-                  <span v-else>👁️‍🗨️</span>
-                </button>
-              </div>
+          <!-- Success State -->
+          <template v-else-if="resetSuccess">
+            <div class="form-header text-center">
+              <div class="text-4xl mb-3 text-emerald-500">✓</div>
+              <h2 class="form-title">Success!</h2>
+              <p class="form-subtitle">Your password has been successfully reset. You can now log in.</p>
+              <router-link to="/auth/login" class="btn-sign-in inline-block text-center mt-4 text-decoration-none">
+                Sign In Now
+              </router-link>
             </div>
+          </template>
 
-            <!-- Confirm Password Field -->
-            <div>
-              <label for="password_confirmation" class="block text-xs font-semibold mb-1" :style="{ color: isDarkMode ? '#9ca3af' : '#4b5563' }">Confirm Password</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">🔒</span>
-                <input
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  id="password_confirmation"
-                  v-model="formData.password_confirmation"
-                  placeholder="••••••••"
-                  required
-                  minlength="8"
-                  class="w-full pl-11 pr-10 py-3 border rounded-xl text-sm !outline-none focus:!outline-none focus:!ring-0 border-slate-300 dark:border-slate-700 focus:!border-emerald-400 transition bg-white dark:bg-[#0b0f19] text-slate-900 dark:text-white"
-                />
-                <button
-                  type="button"
-                  @click="showConfirmPassword = !showConfirmPassword"
-                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-300 text-sm"
-                >
-                  <span v-if="showConfirmPassword">👁️</span>
-                  <span v-else>👁️‍🗨️</span>
-                </button>
-              </div>
+          <!-- Invalid Token / 404 State -->
+          <template v-else>
+            <div class="form-header text-center">
+              <div class="text-3xl font-bold text-red-500 mb-2">404</div>
+              <h2 class="form-title">Link Expired</h2>
+              <p class="form-subtitle">This password reset link is invalid or has expired.</p>
+              <router-link to="/auth/forgot-password" class="btn-sign-in inline-block text-center mt-4 text-decoration-none">
+                Request New Link
+              </router-link>
             </div>
+          </template>
 
-            <!-- Submit Button -->
-            <button
-              type="submit"
-              :disabled="isLoading || !formData.password || !formData.password_confirmation"
-              class="w-full py-3.5 px-4 bg-[#2ee69d] hover:bg-[#25c483] disabled:opacity-50 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-[#2ee69d]/20 transition duration-200 text-base flex items-center justify-center space-x-2"
-            >
-              <span v-if="!isLoading">Reset Password &rarr;</span>
-              <span v-else>Processing...</span>
-            </button>
-          </form>
-
-          <!-- Back to Login Link (Green Color for both Light and Dark mode) -->
-          <div class="text-center mt-6">
-            <router-link
-              to="/auth/login"
-              class="text-xs text-emerald-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300 font-semibold transition"
-            >
-              &larr; Back to Login
-            </router-link>
-          </div>
         </div>
-
-        <!-- Success Card -->
-        <div 
-          v-if="resetSuccess" 
-          class="border-2 rounded-2xl shadow-2xl p-8 text-center relative overflow-hidden transition-colors duration-500"
-          :style="{
-            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-            borderColor: isDarkMode ? '#374151' : '#cbd5e1'
-          }"
-        >
-          <div class="absolute top-0 left-0 right-0 h-1 bg-[#2ee69d]"></div>
-          <div class="text-4xl mb-3 text-[#2ee69d]">✓</div>
-          <h3 class="font-bold text-xl mb-2" :style="{ color: isDarkMode ? '#ffffff' : '#111827' }">Password Reset Successful!</h3>
-          <p class="text-xs mb-6" :style="{ color: isDarkMode ? '#9ca3af' : '#6b7280' }">Your password has been changed successfully. You can now sign in with your new credentials.</p>
-          <router-link
-            to="/auth/login"
-            class="inline-block w-full py-3.5 bg-[#2ee69d] hover:bg-[#25c483] text-slate-950 font-extrabold text-center rounded-xl shadow-lg transition text-base"
-          >
-            Sign In Now
-          </router-link>
-        </div>
-
-        <!-- 404 / Invalid Token Card -->
-        <div 
-          v-if="invalidToken" 
-          class="border-2 rounded-2xl shadow-2xl p-8 text-center relative overflow-hidden transition-colors duration-500"
-          :style="{
-            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
-            borderColor: isDarkMode ? '#374151' : '#cbd5e1'
-          }"
-        >
-          <div class="absolute top-0 left-0 right-0 h-1 bg-red-500"></div>
-          <div class="text-4xl font-bold text-red-500 mb-2">404</div>
-          <h3 class="font-bold text-lg mb-2" :style="{ color: isDarkMode ? '#ffffff' : '#111827' }">Link Expired or Invalid</h3>
-          <p class="text-xs mb-6" :style="{ color: isDarkMode ? '#9ca3af' : '#6b7280' }">This password reset token is invalid or has expired.</p>
-          <router-link
-            to="/auth/forgot-password"
-            class="inline-block w-full py-3.5 bg-[#2ee69d] hover:bg-[#25c483] text-slate-950 font-extrabold text-center rounded-xl shadow-lg transition text-base"
-          >
-            Request New Link
-          </router-link>
-        </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useThemeStore } from '@/stores/themeStore'
+import { useTheme } from '@/composables/useTheme'
 import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
-const themeStore = useThemeStore()
+const { isLight, toggleTheme } = useTheme()
 
-const isDarkMode = computed(() => themeStore.isDark)
-
-const toggleTheme = () => {
-  themeStore.toggleTheme()
-}
-
-const formData = ref({
-  password: '',
-  password_confirmation: '',
+const form = ref({
   token: '',
-  email: ''
+  email: '',
+  password: '',
+  password_confirmation: ''
 })
 
-const isLoading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-const resetSuccess = ref(false)
-const invalidToken = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
-
-const isPasswordStrong = computed(() => {
-  const pwd = formData.value.password
-  return pwd.length >= 8 && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd)
-})
-
-const passwordsMatch = computed(() => {
-  return formData.value.password === formData.value.password_confirmation
-})
-
-const canSubmit = computed(() => {
-  return isPasswordStrong.value && passwordsMatch.value && !isLoading.value
-})
+const loading = ref(false)
+const error = ref<string | null>(null)
+const successMessage = ref<string | null>(null)
+const resetSuccess = ref(false)
+const invalidToken = ref(false)
 
 onMounted(() => {
-  themeStore.initializeTheme()
+  form.value.token = (route.query.token as string) || ''
+  form.value.email = (route.query.email as string) || ''
 
-  formData.value.token = (route.query.token as string) || ''
-  formData.value.email = (route.query.email as string) || ''
-
-  if (!formData.value.token || !formData.value.email) {
+  if (!form.value.token || !form.value.email) {
     invalidToken.value = true
   }
 })
 
 const handleResetPassword = async () => {
-  if (!canSubmit.value) {
-    errorMessage.value = 'Please ensure passwords match and meet all requirements.'
+  if (form.value.password !== form.value.password_confirmation) {
+    error.value = 'Passwords do not match.'
     return
   }
 
-  isLoading.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
+  loading.value = true
+  error.value = null
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/auth/reset-password`,
-      {
-        token: formData.value.token,
-        email: formData.value.email,
-        password: formData.value.password,
-        password_confirmation: formData.value.password_confirmation
-      }
-    )
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
+      token: form.value.token,
+      email: form.value.email,
+      password: form.value.password,
+      password_confirmation: form.value.password_confirmation
+    })
 
-    successMessage.value = response.data.message
+    successMessage.value = response.data.message || 'Password reset successful!'
     resetSuccess.value = true
 
     setTimeout(() => {
       router.push('/auth/login')
-    }, 2000)
-  } catch (error: any) {
-    if (error.response?.data?.errors) {
-      const errors = error.response.data.errors
-      errorMessage.value = Object.values(errors).flat().join(', ')
-    } else if (error.response?.data?.message) {
-      errorMessage.value = error.response.data.message
-    } else {
-      errorMessage.value = 'An error occurred while resetting your password.'
-    }
-
-    if (error.response?.status === 422) {
+    }, 2500)
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Failed to reset password. Please try again.'
+    if (err.response?.status === 422) {
       invalidToken.value = true
     }
   } finally {
-    isLoading.value = false
+    loading.value = false
   }
 }
 </script>
+
+<style scoped>
+/* ከላይ ያለው የ Sign In ፔጅዎ CSS ፍጹም በሆነ መልኩ እዚህም ተካቷል */
+.auth-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100vh;
+  background-color: #0b0f17;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4rem;
+  background-image: url('https://www.digi.com/getattachment/Blog/post/IoT-in-Agriculture/GettyImages-2167394255-1080x720.jpg?lang=en-US');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-image-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(11, 15, 23, 0.95), rgba(11, 15, 23, 0.4) 60%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+}
+
+.hero-badge {
+  display: inline-block;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.hero-content h2 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+
+.hero-content p {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #0b0f17;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.theme-toggle-corner {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+}
+
+.icon-theme-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #1f2937;
+  background-color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.icon-theme-btn:hover {
+  background-color: #1f2937;
+  border-color: #10b981;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 400px;
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+.form-card-top-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #059669);
+  width: 100%;
+}
+
+.form-container {
+  padding: 2rem;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #0b0f17;
+  color: #10b981;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  border: 1px solid #1f2937;
+  margin-bottom: 1.25rem;
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #fff;
+}
+
+.form-subtitle {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 1.5rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.9rem;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.7rem 2.6rem 0.7rem 2.5rem;
+  border: 1px solid #1f2937;
+  border-radius: 0.5rem;
+  background-color: #0b0f17;
+  color: #fff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle-btn:hover {
+  color: #10b981;
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: #10b981;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.error-box {
+  padding: 0.6rem;
+  background-color: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.success-box {
+  padding: 0.6rem;
+  background-color: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 0.5rem;
+  color: #6ee7b7;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.btn-sign-in {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #10b981;
+  color: #052e16;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.btn-sign-in:hover:not(:disabled) {
+  background-color: #059669;
+  color: #fff;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  border-top-color: #052e16;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark Mode Styles */
+.auth-container.dark {
+  background-color: #0b0f17;
+  color: #fff;
+}
+.auth-container.dark .form-section { background-color: #0b0f17; }
+.auth-container.dark .icon-theme-btn { background-color: #111827; border-color: #1f2937; }
+.auth-container.dark .form-card { background-color: #111827; border-color: #1f2937; }
+.auth-container.dark .logo-box { background-color: #0b0f17; border-color: #1f2937; color: #10b981; }
+.auth-container.dark .form-title { color: #fff; }
+.auth-container.dark .form-subtitle { color: #9ca3af; }
+.auth-container.dark .form-label { color: #d1d5db; }
+.auth-container.dark .form-input { background-color: #0b0f17; color: #fff; border-color: #1f2937; }
+
+/* Light Mode Styles */
+.auth-container.light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+.auth-container.light .form-section { background-color: #f8fafc; }
+.auth-container.light .icon-theme-btn { background-color: #ffffff; border-color: #cbd5e1; }
+.auth-container.light .form-card { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); }
+.auth-container.light .logo-box { background-color: #f1f5f9; border-color: #e2e8f0; }
+.auth-container.light .form-title { color: #0f172a; }
+.auth-container.light .form-subtitle { color: #64748b; }
+.auth-container.light .form-label { color: #334155; }
+.auth-container.light .form-input { background-color: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+
+@media (max-width: 768px) {
+  .auth-container {
+    grid-template-columns: 1fr;
+  }
+  .hero-section {
+    display: none;
+  }
+}
+</style>
