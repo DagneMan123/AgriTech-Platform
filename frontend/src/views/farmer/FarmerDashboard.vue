@@ -1,11 +1,21 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-dashboard">
-      <!-- Header -->
-      <div class="dashboard-header">
-        <h1>Farmer Dashboard</h1>
-        <p>Manage your farms, crops, and agricultural business</p>
+      <!-- Header with Theme Toggle -->
+      <div class="dashboard-header-wrapper">
+        <div class="dashboard-header">
+          <h1>Farmer Dashboard</h1>
+          <p>Manage your farms, crops, and agricultural business</p>
+        </div>
+        <button
+          @click="toggleTheme"
+          class="theme-toggle-btn"
+          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+        </button>
       </div>
 
       <!-- Loading State -->
@@ -136,12 +146,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import { farmerAPI } from '@/api/farmer'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight, toggleTheme } = useTheme()
 
 const dashboard = ref(null)
 const loading = ref(false)
@@ -155,7 +167,6 @@ const fetchDashboardData = async () => {
   loading.value = true
   error.value = null
   try {
-    // Debug: Check if token exists
     const token = localStorage.getItem('auth_token')
     if (!token) {
       error.value = 'No authentication token found. Please log in again.'
@@ -166,7 +177,6 @@ const fetchDashboardData = async () => {
     const res = await farmerAPI.getDashboard()
     dashboard.value = res.data
     
-    // Ensure we have the expected data structure
     if (!dashboard.value.summary) {
       dashboard.value.summary = {
         total_farms: 0,
@@ -186,8 +196,6 @@ const fetchDashboardData = async () => {
     }
   } catch (err) {
     console.error('Error fetching dashboard:', err)
-    
-    // Provide more detailed error messages
     if (err.response?.status === 401) {
       error.value = 'Your session has expired. Please log in again.'
     } else if (err.response?.status === 403) {
@@ -225,34 +233,174 @@ const handleLogout = async () => {
   height: 100vh;
 }
 
+/* Light Mode (Default) */
+.farmer-layout.light {
+  background-color: #f0f2f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
 .farmer-dashboard {
   margin-left: 260px;
   flex: 1;
   overflow-y: auto;
-  background-color: #f0f2f5;
   min-height: 100vh;
   padding: 30px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Light Mode Dashboard */
+.farmer-layout.light .farmer-dashboard {
+  background-color: #f0f2f5;
+  color: #1f2937;
+}
+
+/* Dark Mode Dashboard */
+.farmer-layout.dark .farmer-dashboard {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Header Wrapper */
+.dashboard-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  gap: 20px;
+}
+
+.dashboard-header {
+  flex: 1;
+}
+
+.dashboard-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .dashboard-header h1 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .dashboard-header h1 {
+  color: #ffffff;
+}
+
+.dashboard-header p {
+  font-size: 16px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .dashboard-header p {
+  color: #6b7280;
+}
+
+.farmer-layout.dark .dashboard-header p {
+  color: #9ca3af;
+}
+
+/* Theme Toggle Button ( ክብ ቅርጽ የተሰጠው ) */
+.theme-toggle-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.farmer-layout.light .theme-toggle-btn {
+  border-color: #d1d5db;
+  background-color: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.farmer-layout.light .theme-toggle-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
+}
+
+.farmer-layout.dark .theme-toggle-btn {
+  border-color: #1e293b;
+  background-color: #131b2e;
+  color: #f3f4f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.farmer-layout.dark .theme-toggle-btn:hover {
+  background-color: #1e293b;
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+.theme-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:active .theme-icon {
+  transform: rotate(20deg);
+}
+
+/* Loading State */
 .loading-container {
-  background: white;
   border-radius: 12px;
   padding: 60px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.light .loading-container {
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  color: #666;
+}
+
+.farmer-layout.dark .loading-container {
+  background-color: #131b2e;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  color: #d1d5db;
+  border: 1px solid #1e293b;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #10b981;
+  border: 4px solid;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+.farmer-layout.light .spinner {
+  border-color: #e5e7eb;
+  border-top-color: #10b981;
+}
+
+.farmer-layout.dark .spinner {
+  border-color: #1e293b;
+  border-top-color: #10b981;
 }
 
 @keyframes spin {
@@ -260,18 +408,28 @@ const handleLogout = async () => {
 }
 
 .loading-container p {
-  color: #666;
   font-size: 16px;
   font-weight: 500;
 }
 
+/* Error State */
 .error-container {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 2px solid #fca5a5;
   border-radius: 12px;
   padding: 40px;
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.farmer-layout.light .error-container {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #fca5a5;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+}
+
+.farmer-layout.dark .error-container {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.3) 0%, rgba(153, 27, 27, 0.3) 100%);
+  border: 2px solid rgba(220, 38, 38, 0.5);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 .error-icon {
@@ -282,10 +440,17 @@ const handleLogout = async () => {
 }
 
 .error-message {
-  color: #991b1b;
   margin-bottom: 20px;
   font-size: 16px;
   line-height: 1.5;
+}
+
+.farmer-layout.light .error-message {
+  color: #991b1b;
+}
+
+.farmer-layout.dark .error-message {
+  color: #fca5a5;
 }
 
 .btn-retry {
@@ -313,22 +478,6 @@ const handleLogout = async () => {
   height: 16px;
 }
 
-.dashboard-header {
-  margin-bottom: 40px;
-}
-
-.dashboard-header h1 {
-  font-size: 32px;
-  font-weight: 800;
-  color: #1f2937;
-  margin-bottom: 8px;
-}
-
-.dashboard-header p {
-  color: #6b7280;
-  font-size: 16px;
-}
-
 /* Stats Section */
 .stats-section {
   display: grid;
@@ -338,17 +487,34 @@ const handleLogout = async () => {
 }
 
 .stat-card {
-  background: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s;
+  border-left: 5px solid #10b981;
+}
+
+.farmer-layout.light .stat-card {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.farmer-layout.dark .stat-card {
+  background: #131b2e;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #1e293b;
   border-left: 5px solid #10b981;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.farmer-layout.dark .stat-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  border-color: #2e3a52;
 }
 
 .stat-card.stat-crops {
@@ -380,30 +546,61 @@ const handleLogout = async () => {
 
 .stat-header h3 {
   font-size: 12px;
-  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
   font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .stat-header h3 {
+  color: #6b7280;
+}
+
+.farmer-layout.dark .stat-header h3 {
+  color: #9ca3af;
 }
 
 .stat-header svg {
   width: 20px;
   height: 20px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .stat-header svg {
   color: #d1d5db;
+}
+
+.farmer-layout.dark .stat-header svg {
+  color: #64748b;
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1f2937;
   margin: 8px 0 4px 0;
+}
+
+.farmer-layout.light .stat-value {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #ffffff;
 }
 
 .stat-subtitle {
   font-size: 12px;
-  color: #9ca3af;
   margin: 0;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .stat-subtitle {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .stat-subtitle {
+  color: #94a3b8;
 }
 
 /* Recent Activity Section */
@@ -415,17 +612,37 @@ const handleLogout = async () => {
 }
 
 .recent-card {
-  background: white;
   border-radius: 12px;
   padding: 24px;
+  transition: all 0.3s;
+}
+
+.farmer-layout.light .recent-card {
+  background: white;
+  color: #1f2937;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.farmer-layout.dark .recent-card {
+  background: #131b2e;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #1e293b;
 }
 
 .recent-card h2 {
   font-size: 18px;
   margin-bottom: 20px;
-  color: #1f2937;
   font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .recent-card h2 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .recent-card h2 {
+  color: #ffffff;
 }
 
 .list-items {
@@ -439,15 +656,38 @@ const handleLogout = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  background-color: #f9fafb;
   border-radius: 8px;
   font-size: 14px;
   border-left: 3px solid #10b981;
+  transition: all 0.3s ease;
+}
+
+.farmer-layout.light .list-item {
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .list-item {
+  background-color: #1a2338;
+  color: #e2e8f0;
+  border: 1px solid #222f46;
+  border-left: 3px solid #10b981;
+}
+
+.list-item:hover {
+  transform: translateX(4px);
+}
+
+.farmer-layout.light .list-item:hover {
+  background-color: #f3f4f6;
+}
+
+.farmer-layout.dark .list-item:hover {
+  background-color: #202c44;
 }
 
 .item-name {
   font-weight: 600;
-  color: #1f2937;
   flex: 1;
 }
 
@@ -455,8 +695,20 @@ const handleLogout = async () => {
 .item-amount,
 .item-date {
   font-size: 13px;
-  color: #6b7280;
   margin: 0 12px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .item-quantity,
+.farmer-layout.light .item-amount,
+.farmer-layout.light .item-date {
+  color: #6b7280;
+}
+
+.farmer-layout.dark .item-quantity,
+.farmer-layout.dark .item-amount,
+.farmer-layout.dark .item-date {
+  color: #94a3b8;
 }
 
 .status-badge {
@@ -465,6 +717,7 @@ const handleLogout = async () => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .status-badge.status-pending {
@@ -472,14 +725,21 @@ const handleLogout = async () => {
   color: #92400e;
 }
 
-.status-badge.status-completed {
+.farmer-layout.dark .status-badge.status-pending {
+  background-color: rgba(217, 119, 6, 0.25);
+  color: #fcd34d;
+}
+
+.status-badge.status-completed,
+.status-badge.status-active {
   background-color: #d1fae5;
   color: #065f46;
 }
 
-.status-badge.status-active {
-  background-color: #d1fae5;
-  color: #065f46;
+.farmer-layout.dark .status-badge.status-completed,
+.farmer-layout.dark .status-badge.status-active {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
 }
 
 .status-badge.status-cancelled {
@@ -487,11 +747,24 @@ const handleLogout = async () => {
   color: #991b1b;
 }
 
+.farmer-layout.dark .status-badge.status-cancelled {
+  background-color: rgba(220, 38, 38, 0.25);
+  color: #fca5a5;
+}
+
 .empty-state {
   padding: 20px;
   text-align: center;
-  color: #9ca3af;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .empty-state {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .empty-state {
+  color: #64748b;
 }
 
 /* Responsive */
@@ -502,6 +775,11 @@ const handleLogout = async () => {
 
   .stats-section {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .dashboard-header-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -526,6 +804,17 @@ const handleLogout = async () => {
 
   .recent-section {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-header-wrapper {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
   }
 }
 </style>

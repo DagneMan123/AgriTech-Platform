@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'dark': isDark, 'light': isLight }">
     <div class="sidebar-header">
       <h2>Farmer Portal</h2>
     </div>
@@ -234,6 +234,7 @@
 import { ref, watch, onMounted, defineEmits } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, Tractor, LayoutDashboard, Home, Map, Sprout, 
   ClipboardList, Wheat, Store, Package, TrendingUp, ShoppingCart, 
@@ -246,6 +247,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 const emit = defineEmits(['logout'])
 
 const expandedSections = ref({
@@ -259,7 +261,6 @@ const expandedSections = ref({
   account: false
 })
 
-// Map routes to their sections for auto-expansion
 const routeSectionMap = {
   'farmer-dashboard': 'farmManagement',
   'farmer-farms': 'farmManagement',
@@ -337,6 +338,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Base Sidebar (Light Mode default) */
 .sidebar {
   width: 260px;
   background: white;
@@ -349,11 +351,13 @@ onMounted(() => {
   top: 0;
   overflow-y: auto;
   z-index: 1000;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .sidebar-header {
   padding: 20px;
   border-bottom: 1px solid #e5e7eb;
+  transition: border-color 0.3s ease;
 }
 
 .sidebar-header h2 {
@@ -361,6 +365,7 @@ onMounted(() => {
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 .sidebar-menu {
@@ -486,6 +491,7 @@ onMounted(() => {
 .sidebar-bottom {
   padding: 10px 0;
   border-top: 1px solid #e5e7eb;
+  transition: border-color 0.3s ease;
 }
 
 .logout-btn {
@@ -498,5 +504,76 @@ onMounted(() => {
 
 .logout-btn:hover {
   background: #fee2e2 !important;
+}
+
+/* ================= DARK MODE STYLES ================= */
+.sidebar.dark {
+  background: #131b2e !important;
+  border-right: 1px solid #1e293b !important;
+  color: #f3f4f6 !important;
+}
+
+.sidebar.dark .sidebar-header {
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.sidebar.dark .sidebar-header h2 {
+  color: #ffffff !important;
+}
+
+.sidebar.dark .section-toggle {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .section-toggle:hover {
+  color: #ffffff !important;
+  background: #1a2338 !important;
+}
+
+.sidebar.dark .section-icon,
+.sidebar.dark .toggle-icon {
+  color: #64748b !important;
+}
+
+.sidebar.dark .menu-item {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .sub-icon {
+  color: #64748b !important;
+}
+
+.sidebar.dark .menu-item:hover {
+  color: #ffffff !important;
+  background: #1a2338 !important;
+}
+
+.sidebar.dark .menu-item:hover .sub-icon {
+  color: #ffffff !important;
+}
+
+.sidebar.dark .menu-item.active {
+  color: #6ee7b7 !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.sidebar.dark .menu-item.active .sub-icon {
+  color: #6ee7b7 !important;
+}
+
+.sidebar.dark .sidebar-bottom {
+  border-top: 1px solid #1e293b !important;
+}
+
+.sidebar.dark .logout-btn {
+  color: #fca5a5 !important;
+}
+
+.sidebar.dark .logout-btn .sub-icon {
+  color: #fca5a5 !important;
+}
+
+.sidebar.dark .logout-btn:hover {
+  background: rgba(220, 38, 38, 0.2) !important;
 }
 </style>
