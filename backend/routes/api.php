@@ -174,10 +174,32 @@ Route::middleware(['auth:api'])->group(function () {
 });
 
 
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+// Auth endpoints - OPTIMIZED for fast login (no expensive middleware)
+// These routes should bypass the expensive table-checking middleware
+Route::post('/auth/login', [AuthController::class, 'login'])->withoutMiddleware([
+    \App\Http\Middleware\EnsureNotificationsTableExists::class,
+    \App\Http\Middleware\AutoFixConstraints::class,
+    \App\Http\Middleware\AutoFixCropsTable::class,
+    \App\Http\Middleware\EnsureCropActivitiesTableExists::class,
+]);
+Route::post('/auth/register', [AuthController::class, 'register'])->withoutMiddleware([
+    \App\Http\Middleware\EnsureNotificationsTableExists::class,
+    \App\Http\Middleware\AutoFixConstraints::class,
+    \App\Http\Middleware\AutoFixCropsTable::class,
+    \App\Http\Middleware\EnsureCropActivitiesTableExists::class,
+]);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->withoutMiddleware([
+    \App\Http\Middleware\EnsureNotificationsTableExists::class,
+    \App\Http\Middleware\AutoFixConstraints::class,
+    \App\Http\Middleware\AutoFixCropsTable::class,
+    \App\Http\Middleware\EnsureCropActivitiesTableExists::class,
+]);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->withoutMiddleware([
+    \App\Http\Middleware\EnsureNotificationsTableExists::class,
+    \App\Http\Middleware\AutoFixConstraints::class,
+    \App\Http\Middleware\AutoFixCropsTable::class,
+    \App\Http\Middleware\EnsureCropActivitiesTableExists::class,
+]);
 
 
 Route::get('/marketplace/products', [MarketplaceController::class, 'index']);

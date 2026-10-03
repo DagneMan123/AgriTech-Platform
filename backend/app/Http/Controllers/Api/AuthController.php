@@ -258,8 +258,11 @@ class AuthController extends Controller
                 'password.required' => 'Password is required.',
             ]);
 
+            // Optimized query: use composite index on (email, is_active)
+            // Select only needed columns to reduce memory and network overhead
             $user = User::select('id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region')
                 ->where('email', $request->email)
+                ->where('is_active', true)  // Add filter here to use composite index
                 ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
@@ -267,13 +270,6 @@ class AuthController extends Controller
                     'message' => 'The provided credentials are incorrect.',
                     'errors' => ['email' => ['The provided credentials are incorrect.']]
                 ], 422);
-            }
-
-            if (!$user->is_active) {
-                return response()->json([
-                    'message' => 'This account has been suspended.',
-                    'errors' => ['email' => ['This account has been suspended.']]
-                ], 403);
             }
 
             try {

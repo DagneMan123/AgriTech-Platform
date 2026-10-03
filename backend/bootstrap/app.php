@@ -28,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle:60,1',
         ]);
 
+        // IMPORTANT: These middleware should NOT run on login endpoint
+        // They are expensive and should only run on authenticated routes
+        // Register them only for routes that need them
+        
         // Ensure notifications table exists
         $middleware->append(\App\Http\Middleware\EnsureNotificationsTableExists::class);
 

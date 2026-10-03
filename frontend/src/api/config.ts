@@ -9,8 +9,11 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  
-  timeout: 30000,
+  // Reduced timeout from 30s to 15s to catch slow requests early
+  timeout: 15000,
+  // Enable HTTP keep-alive for better connection reuse
+  httpAgent: { keepAlive: true },
+  httpsAgent: { keepAlive: true },
 })
 
 

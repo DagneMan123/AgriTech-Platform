@@ -121,6 +121,8 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const handleLogin = async () => {
+  if (loading.value) return // Prevent duplicate requests
+  
   loading.value = true
   error.value = null
   try {
@@ -141,6 +143,7 @@ const handleLogin = async () => {
     }
     
     const redirectUrl = roleRoutes[user.role] || '/dashboard'
+    // Push route immediately - don't wait for page load
     router.push(redirectUrl)
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Login failed. Please try again.'
