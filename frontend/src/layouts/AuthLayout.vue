@@ -17,7 +17,7 @@ html.dark .auth-wrapper {
 }
 </style>
 <script setup lang="ts">
-import ThemeToggle from '@/components/Theme/ThemeToggle.vue'
+
 </script>
 
 <style scoped>

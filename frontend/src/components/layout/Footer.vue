@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         <div>
-          <h3 class="text-lg font-bold mb-4">AgriConnect</h3>
+          <h3 class="text-lg font-bold mb-4">AgriTech</h3>
           <p class="footer-text text-sm">Smart agriculture platform connecting stakeholders</p>
         </div>
         <div>
@@ -32,7 +32,7 @@
         </div>
       </div>
       <div class="footer-divider pt-8 text-center text-sm">
-        <p>&copy; 2026 AgriConnect. All rights reserved.</p>
+        <p>&copy; 2026 AgriTech. All rights reserved.</p>
       </div>
     </div>
   </footer>

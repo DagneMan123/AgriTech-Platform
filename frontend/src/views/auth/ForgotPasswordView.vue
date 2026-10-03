@@ -20,7 +20,7 @@
           <!-- Header -->
           <div class="form-header">
             <div class="logo-box">
-              <span class="logo-icon">🌾</span> AgriConnect
+              <span class="logo-icon">🌾</span> AgriTech
             </div>
             <h2 class="form-title">Forgot Password?</h2>
             <p class="form-subtitle">No problem. Enter your email address and we'll send you a link to reset your password.</p>

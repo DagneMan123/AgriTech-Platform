@@ -291,7 +291,7 @@
     <div class="container">
 
         <div class="header">
-            <h1>🌾 AgriConnect Platform</h1>
+            <h1>🌾 AgriTech Platform</h1>
             <p>Password Reset Request</p>
         </div>
 
@@ -339,14 +339,14 @@
         <!-- Footer -->
         <div class="footer">
             <div class="footer-links">
-                <a href="{{ env('FRONTEND_URL', 'https://agritech.com') }}">AgriConnect Platform</a>
+                <a href="{{ env('FRONTEND_URL', 'https://agritech.com') }}">AgriTech Platform</a>
                 <span class="footer-divider">•</span>
                 <a href="{{ env('FRONTEND_URL', 'https://agritech.com') }}/privacy">Privacy Policy</a>
                 <span class="footer-divider">•</span>
                 <a href="{{ env('FRONTEND_URL', 'https://agritech.com') }}/terms">Terms of Service</a>
             </div>
             <div class="copyright">
-                <p>© {{ date('Y') }} AgriConnect Platform. All rights reserved.</p>
+                <p>© {{ date('Y') }} AgriTech Platform. All rights reserved.</p>
             </div>
             <div class="automated-notice">
                 Questions? Contact our support team. This is an automated email, please do not reply directly.

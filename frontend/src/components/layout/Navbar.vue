@@ -2,7 +2,7 @@
   <nav class="navbar" style="background-color: var(--bg-light); border-bottom: 1px solid var(--border-light);">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center">
-        <h1 class="text-2xl font-bold text-green-600">AgriConnect</h1>
+        <h1 class="text-2xl font-bold text-green-600">AgriTech</h1>
       </div>
       <div class="flex items-center gap-4">
         <ThemeToggle />

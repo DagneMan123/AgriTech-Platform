@@ -1,17 +1,6 @@
 <?php
 
-/**
- * Diagnostic Routes - Add these to test and debug the API
- * 
- * Usage: 
- * 1. Uncomment the route group in routes/api.php:
- *    include 'diagnostic.php';
- * 
- * 2. Then access:
- *    GET /api/diagnostic/health
- *    GET /api/diagnostic/routes
- *    GET /api/diagnostic/auth (with Authorization header)
- */
+
 
 use Illuminate\Support\Facades\Route;
 
@@ -39,7 +28,7 @@ Route::get('/diagnostic/routes', function () {
     })->values();
 
     return response()->json([
-        'total_routes' => count(\Illuminate\Support\Facades\Route::getRoutes()),
+
         'farmer_routes' => $routes,
     ]);
 });

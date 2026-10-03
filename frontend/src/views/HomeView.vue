@@ -22,7 +22,7 @@
             <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
               <span class="text-white font-bold text-lg">A</span>
             </div>
-            <span class="text-xl font-bold" :style="{ color: colors.textHeading }">AgriConnect</span>
+            <span class="text-xl font-bold" :style="{ color: colors.textHeading }">AgriTech</span>
           </RouterLink>
 
           <!-- Auth & Theme Toggle Links -->

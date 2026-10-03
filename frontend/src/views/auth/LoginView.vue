@@ -27,7 +27,7 @@
           <!-- Header -->
           <div class="form-header">
             <div class="logo-box">
-              <span class="logo-icon">🌾</span> AgriConnect
+              <span class="logo-icon">🌾</span> AgriTech
             </div>
             <h2 class="form-title">Sign In</h2>
             <p class="form-subtitle">Access your AgriConnect dashboard.</p>

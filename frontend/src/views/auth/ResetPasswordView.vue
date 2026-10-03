@@ -31,7 +31,7 @@
           <template v-if="!resetSuccess && !invalidToken">
             <div class="form-header">
               <div class="logo-box">
-                <span class="logo-icon">🌾</span> AgriConnect
+                <span class="logo-icon">🌾</span> AgriTech
               </div>
               <h2 class="form-title">Reset Password?</h2>
               <p class="form-subtitle">Enter your new password below to secure your account.</p>
