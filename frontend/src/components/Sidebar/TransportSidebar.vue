@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'dark': isDark }">
     <div class="sidebar-header">
       <h2>Transport Portal</h2>
       <p>Delivery Management</p>

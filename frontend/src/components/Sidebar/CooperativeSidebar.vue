@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'dark': isDark }">
     <div class="sidebar-header">
       <h2>Cooperative Portal</h2>
       <p>Collective Agriculture</p>

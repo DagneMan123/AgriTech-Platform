@@ -11,6 +11,8 @@ const apiClient = axios.create({
   },
   // Reduced timeout from 30s to 15s to catch slow requests early
   timeout: 15000,
+  // Enable credentials in requests (cookies, authorization headers)
+  withCredentials: true,
   // Enable HTTP keep-alive for better connection reuse
   httpAgent: { keepAlive: true },
   httpsAgent: { keepAlive: true },

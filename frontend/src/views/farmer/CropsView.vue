@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <!-- Page Header -->
@@ -365,10 +365,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight, toggleTheme } = useTheme()
 
 // State
 const crops = ref([])
@@ -646,12 +648,34 @@ const handleLogout = async () => {
   height: 100vh;
 }
 
+/* Light Mode (Default) */
+.farmer-layout.light {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
 .farmer-page {
   margin-left: 260px;
   flex: 1;
   overflow-y: auto;
-  background-color: #f5f5f5;
   padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .farmer-page {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
 }
 
 /* Header */
@@ -666,13 +690,29 @@ const handleLogout = async () => {
 .header-content h1 {
   font-size: 32px;
   font-weight: bold;
-  color: #333;
   margin: 0 0 5px 0;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .header-content h1 {
+  color: #333;
+}
+
+.farmer-layout.dark .header-content h1 {
+  color: #ffffff;
 }
 
 .header-content p {
-  color: #666;
   margin: 0;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .header-content p {
+  color: #666;
+}
+
+.farmer-layout.dark .header-content p {
+  color: #9ca3af;
 }
 
 .btn-large {
@@ -690,18 +730,33 @@ const handleLogout = async () => {
 }
 
 .stat-card {
-  background: white;
   border-radius: 8px;
   padding: 20px;
   display: flex;
   gap: 15px;
   align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s ease;
+}
+
+.farmer-layout.light .stat-card {
+  background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+  color: #f3f4f6;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
+}
+
+.farmer-layout.dark .stat-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
 
 .stat-icon {
@@ -734,25 +789,51 @@ const handleLogout = async () => {
 .stat-content h3 {
   margin: 0;
   font-size: 12px;
-  color: #666;
   text-transform: uppercase;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .stat-content h3 {
+  color: #666;
+}
+
+.farmer-layout.dark .stat-content h3 {
+  color: #9ca3af;
 }
 
 .stat-value {
   margin: 5px 0 0 0;
   font-size: 24px;
   font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .stat-value {
   color: #333;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #ffffff;
 }
 
 /* Controls */
 .controls-section {
-  background: white;
   border-radius: 8px;
   padding: 15px 20px;
   margin-bottom: 20px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.farmer-layout.light .controls-section {
+  background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.farmer-layout.dark .controls-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
 }
 
 .filter-group {
@@ -764,10 +845,23 @@ const handleLogout = async () => {
 .search-input,
 .status-select {
   padding: 10px 15px;
-  border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 14px;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .search-input,
+.farmer-layout.light .status-select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.farmer-layout.dark .search-input,
+.farmer-layout.dark .status-select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border: 1px solid #2d3f52;
 }
 
 .search-input:focus,
@@ -783,30 +877,66 @@ const handleLogout = async () => {
 
 /* Crops Section */
 .crops-section {
-  background: white;
   border-radius: 8px;
   padding: 20px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.farmer-layout.light .crops-section {
+  background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.farmer-layout.dark .crops-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
 }
 
 .loading-state,
 .empty-state {
   text-align: center;
   padding: 60px 20px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .loading-state,
+.farmer-layout.light .empty-state {
   color: #666;
+}
+
+.farmer-layout.dark .loading-state,
+.farmer-layout.dark .empty-state {
+  color: #9ca3af;
 }
 
 .empty-state i {
   font-size: 48px;
-  color: #d1d5db;
   margin-bottom: 15px;
   display: block;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .empty-state i {
+  color: #d1d5db;
+}
+
+.farmer-layout.dark .empty-state i {
+  color: #475569;
 }
 
 .empty-state h3 {
   margin: 0;
-  color: #333;
   font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .empty-state h3 {
+  color: #333;
+}
+
+.farmer-layout.dark .empty-state h3 {
+  color: #ffffff;
 }
 
 /* Crops Grid */
@@ -817,16 +947,29 @@ const handleLogout = async () => {
 }
 
 .crop-card {
-  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 20px;
+  transition: all 0.3s, background-color 0.3s ease;
+  border: 1px solid;
+}
+
+.farmer-layout.light .crop-card {
   background: #f9fafb;
-  transition: all 0.3s;
+  border-color: #e5e7eb;
+}
+
+.farmer-layout.dark .crop-card {
+  background: #1a2338;
+  border-color: #2d3f52;
 }
 
 .crop-card:hover {
   border-color: #10b981;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.farmer-layout.dark .crop-card:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .crop-header {
@@ -840,14 +983,30 @@ const handleLogout = async () => {
 .crop-title h3 {
   margin: 0;
   font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .crop-title h3 {
   color: #333;
+}
+
+.farmer-layout.dark .crop-title h3 {
+  color: #ffffff;
 }
 
 .crop-variety {
   display: block;
   font-size: 12px;
-  color: #666;
   margin-top: 2px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .crop-variety {
+  color: #666;
+}
+
+.farmer-layout.dark .crop-variety {
+  color: #9ca3af;
 }
 
 .status-badge {
@@ -888,7 +1047,16 @@ const handleLogout = async () => {
 .crop-info {
   margin-bottom: 15px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid;
+  transition: border-color 0.3s ease;
+}
+
+.farmer-layout.light .crop-info {
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .crop-info {
+  border-bottom-color: #2d3f52;
 }
 
 .info-row {
@@ -900,8 +1068,16 @@ const handleLogout = async () => {
 }
 
 .info-label {
-  color: #666;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .info-label {
+  color: #666;
+}
+
+.farmer-layout.dark .info-label {
+  color: #9ca3af;
 }
 
 .info-label i {
@@ -910,18 +1086,35 @@ const handleLogout = async () => {
 }
 
 .info-value {
-  color: #333;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .info-value {
+  color: #333;
+}
+
+.farmer-layout.dark .info-value {
+  color: #e2e8f0;
 }
 
 .crop-notes {
-  background: white;
   padding: 12px;
   border-radius: 4px;
   margin-bottom: 15px;
   font-size: 13px;
-  color: #555;
   font-style: italic;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .crop-notes {
+  background: white;
+  color: #555;
+}
+
+.farmer-layout.dark .crop-notes {
+  background: #131b2e;
+  color: #cbd5e1;
 }
 
 .crop-notes p {
@@ -992,6 +1185,8 @@ const handleLogout = async () => {
 
 .btn-primary:hover:not(:disabled) {
   background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-primary:disabled {
@@ -1012,6 +1207,7 @@ const handleLogout = async () => {
 
 .btn-secondary:hover {
   background-color: #4b5563;
+  transform: translateY(-2px);
 }
 
 /* Modal Styles */
@@ -1021,21 +1217,30 @@ const handleLogout = async () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-dialog {
-  background-color: white;
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.light .modal-dialog {
+  background-color: white;
+}
+
+.farmer-layout.dark .modal-dialog {
+  background-color: #131b2e;
+  border: 1px solid #1e293b;
 }
 
 .modal-dialog.modal-large {
@@ -1047,14 +1252,32 @@ const handleLogout = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.farmer-layout.light .modal-header {
   background-color: #f9fafb;
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .modal-header {
+  background-color: #1a2338;
+  border-bottom-color: #2d3f52;
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
   font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .modal-header h2 {
+  color: #333;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #ffffff;
 }
 
 .close-btn {
@@ -1062,17 +1285,29 @@ const handleLogout = async () => {
   border: none;
   font-size: 28px;
   cursor: pointer;
-  color: #666;
   padding: 0;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.3s ease;
 }
 
-.close-btn:hover {
+.farmer-layout.light .close-btn {
+  color: #666;
+}
+
+.farmer-layout.dark .close-btn {
+  color: #9ca3af;
+}
+
+.farmer-layout.light .close-btn:hover {
   color: #333;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  color: #e2e8f0;
 }
 
 .modal-content {
@@ -1088,8 +1323,16 @@ const handleLogout = async () => {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .form-group label {
+  color: #333;
+}
+
+.farmer-layout.dark .form-group label {
+  color: #f3f4f6;
 }
 
 .form-group input,
@@ -1097,12 +1340,27 @@ const handleLogout = async () => {
 .form-group select {
   width: 100%;
   padding: 10px;
-  border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
   box-sizing: border-box;
+}
+
+.farmer-layout.light .form-group input,
+.farmer-layout.light .form-group textarea,
+.farmer-layout.light .form-group select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.farmer-layout.dark .form-group input,
+.farmer-layout.dark .form-group textarea,
+.farmer-layout.dark .form-group select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border: 1px solid #2d3f52;
 }
 
 .form-group input:focus,
@@ -1113,8 +1371,8 @@ const handleLogout = async () => {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.form-group textarea {
-  resize: vertical;
+.farmer-layout.dark .form-group select {
+  color-scheme: dark;
 }
 
 .error-text {
@@ -1130,7 +1388,16 @@ const handleLogout = async () => {
   justify-content: flex-end;
   margin-top: 25px;
   padding-top: 15px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid;
+  transition: border-color 0.3s ease;
+}
+
+.farmer-layout.light .form-actions {
+  border-top-color: #e5e7eb;
+}
+
+.farmer-layout.dark .form-actions {
+  border-top-color: #2d3f52;
 }
 
 /* Details Modal */
@@ -1142,9 +1409,18 @@ const handleLogout = async () => {
 }
 
 .detail-section {
-  background: #f9fafb;
   padding: 15px;
   border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.light .detail-section {
+  background: #f9fafb;
+}
+
+.farmer-layout.dark .detail-section {
+  background: #1a2338;
+  border: 1px solid #2d3f52;
 }
 
 .detail-section.full-width {
@@ -1155,8 +1431,16 @@ const handleLogout = async () => {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
   text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .detail-section h3 {
+  color: #333;
+}
+
+.farmer-layout.dark .detail-section h3 {
+  color: #f3f4f6;
 }
 
 .detail-row {
@@ -1164,7 +1448,16 @@ const handleLogout = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid;
+  transition: border-color 0.3s ease;
+}
+
+.farmer-layout.light .detail-row {
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .detail-row {
+  border-bottom-color: #2d3f52;
 }
 
 .detail-row:last-child {
@@ -1172,21 +1465,45 @@ const handleLogout = async () => {
 }
 
 .detail-label {
-  color: #666;
   font-weight: 500;
   font-size: 13px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .detail-label {
+  color: #666;
+}
+
+.farmer-layout.dark .detail-label {
+  color: #9ca3af;
 }
 
 .detail-value {
-  color: #333;
   font-weight: 600;
   text-align: right;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .detail-value {
+  color: #333;
+}
+
+.farmer-layout.dark .detail-value {
+  color: #e2e8f0;
 }
 
 .notes-text {
   margin: 0;
-  color: #555;
   line-height: 1.6;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .notes-text {
+  color: #555;
+}
+
+.farmer-layout.dark .notes-text {
+  color: #cbd5e1;
 }
 
 .modal-actions {
@@ -1194,7 +1511,16 @@ const handleLogout = async () => {
   gap: 10px;
   justify-content: flex-end;
   padding-top: 15px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid;
+  transition: border-color 0.3s ease;
+}
+
+.farmer-layout.light .modal-actions {
+  border-top-color: #e5e7eb;
+}
+
+.farmer-layout.dark .modal-actions {
+  border-top-color: #2d3f52;
 }
 
 /* Responsive */

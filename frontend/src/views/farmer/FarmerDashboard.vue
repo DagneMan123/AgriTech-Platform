@@ -2,7 +2,7 @@
   <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-dashboard">
-      <!-- Header with Theme Toggle -->
+      
       <div class="dashboard-header-wrapper">
         <div class="dashboard-header">
           <h1>Farmer Dashboard</h1>
@@ -18,7 +18,7 @@
         </button>
       </div>
 
-      <!-- Loading State -->
+     
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
         <p>Loading dashboard data...</p>
@@ -41,7 +41,7 @@
         </button>
       </div>
 
-      <!-- Summary Statistics -->
+     
       <div v-if="!loading && !error" class="stats-section">
         <div class="stat-card stat-farms">
           <div class="stat-header">

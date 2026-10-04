@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <div class="page-header">
@@ -223,11 +223,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import apiClient from '@/api/config'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 // State management
 const farms = ref([])

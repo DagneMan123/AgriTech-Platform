@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="{ 'dark': isDark }">
     <div class="sidebar-header">
       <h2>Admin Portal</h2>
       <p>Platform Control</p>
@@ -206,6 +206,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, PieChart, Activity, Users, 
   Contact, UserPlus, Shield, ShieldCheck, ClipboardCheck, Sprout, ShoppingCart, 
@@ -214,6 +215,7 @@ import {
   Sliders, MapPin, FileText, History, UserCog, Bell, Mail, User, LogOut 
 } from 'lucide-vue-next'
 
+const { isDark } = useTheme()
 const emit = defineEmits(['logout'])
 
 const expandedSections = ref({
@@ -382,5 +384,77 @@ const toggleSection = (section) => {
 
 .logout-sub-btn:hover {
   background: #fee2e2 !important;
+}
+
+/* ================= DARK MODE STYLES ================= */
+.sidebar.dark {
+  background: #131b2e !important;
+  border-right: 1px solid #1e293b !important;
+  color: #f3f4f6 !important;
+}
+
+.sidebar.dark .sidebar-header {
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.sidebar.dark .sidebar-header h2,
+.sidebar.dark .sidebar-header p {
+  color: #f1f5f9 !important;
+}
+
+.sidebar.dark .sidebar-header p {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .section-toggle {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .section-toggle:hover {
+  color: #ffffff !important;
+  background: #1a2338 !important;
+}
+
+.sidebar.dark .section-icon,
+.sidebar.dark .toggle-icon {
+  color: #64748b !important;
+}
+
+.sidebar.dark .menu-item {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .sub-icon {
+  color: #64748b !important;
+}
+
+.sidebar.dark .menu-item:hover {
+  color: #ffffff !important;
+  background: #1a2338 !important;
+}
+
+.sidebar.dark .menu-item:hover .sub-icon {
+  color: #ffffff !important;
+}
+
+.sidebar.dark .menu-item.active {
+  color: #60a5fa !important;
+  background: rgba(37, 99, 235, 0.15) !important;
+}
+
+.sidebar.dark .menu-item.active .sub-icon {
+  color: #60a5fa !important;
+}
+
+.sidebar.dark .logout-sub-btn {
+  color: #fca5a5 !important;
+}
+
+.sidebar.dark .logout-sub-btn .sub-icon {
+  color: #fca5a5 !important;
+}
+
+.sidebar.dark .logout-sub-btn:hover {
+  background: rgba(220, 38, 38, 0.2) !important;
 }
 </style>

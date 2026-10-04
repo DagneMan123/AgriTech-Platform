@@ -321,18 +321,6 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Training Material' }
       },
       {
-        path: 'market-prices',
-        name: 'farmer-market-prices',
-        component: FarmerMarketPricesView,
-        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Market Prices' }
-      },
-      {
-        path: 'consultations',
-        name: 'farmer-consultations',
-        component: FarmerConsultationsView,
-        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Consultations' }
-      },
-      {
         path: 'loans',
         name: 'farmer-loans',
         component: FarmerLoansView,

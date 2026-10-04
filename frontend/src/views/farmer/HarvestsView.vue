@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <!-- Page Header -->
@@ -245,10 +245,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 // State
 const harvests = ref([])
@@ -1096,4 +1098,123 @@ const handleLogout = async () => {
     width: 95%;
   }
 }
+
+/* Light Mode (Default) */
+.farmer-layout.light {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-page {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .farmer-page {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Text Colors */
+.farmer-layout.light h1, .farmer-layout.light h2, .farmer-layout.light h3, .farmer-layout.light h4, .farmer-layout.light h5, .farmer-layout.light h6 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark h1, .farmer-layout.dark h2, .farmer-layout.dark h3, .farmer-layout.dark h4, .farmer-layout.dark h5, .farmer-layout.dark h6 {
+  color: #ffffff;
+}
+
+.farmer-layout.light p {
+  color: #4b5563;
+}
+
+.farmer-layout.dark p {
+  color: #cbd5e1;
+}
+
+/* Cards and Containers */
+.farmer-layout.light .card, .farmer-layout.light .section, .farmer-layout.light [class*="card"], .farmer-layout.light [class*="container"] {
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .card, .farmer-layout.dark .section, .farmer-layout.dark [class*="card"], .farmer-layout.dark [class*="container"] {
+  background-color: #131b2e;
+  color: #f3f4f6;
+  border: 1px solid #1e293b;
+}
+
+/* Stat Cards */
+.farmer-layout.light .stat-card {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #1f2937;
+}
+
+.farmer-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+  color: #f3f4f6;
+}
+
+/* Form Elements */
+.farmer-layout.light input, .farmer-layout.light textarea, .farmer-layout.light select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.farmer-layout.dark input, .farmer-layout.dark textarea, .farmer-layout.dark select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border: 1px solid #2d3f52;
+}
+
+.farmer-layout.light input:focus, .farmer-layout.light textarea:focus, .farmer-layout.light select:focus {
+  border-color: #10b981;
+}
+
+.farmer-layout.dark input:focus, .farmer-layout.dark textarea:focus, .farmer-layout.dark select:focus {
+  border-color: #10b981;
+}
+
+/* Modals */
+.farmer-layout.light .modal-dialog, .farmer-layout.light .modal-content {
+  background-color: white;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .modal-dialog, .farmer-layout.dark .modal-content {
+  background-color: #131b2e;
+  color: #f3f4f6;
+  border: 1px solid #1e293b;
+}
+
+/* Tables */
+.farmer-layout.light table, .farmer-layout.light tr, .farmer-layout.light td, .farmer-layout.light th {
+  background-color: #ffffff;
+  color: #1f2937;
+  border-color: #e5e7eb;
+}
+
+.farmer-layout.dark table, .farmer-layout.dark tr, .farmer-layout.dark td, .farmer-layout.dark th {
+  background-color: #131b2e;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+/* Buttons stay consistent but ensure text contrast */
+.btn-primary { color: white; }
+.btn-secondary { color: white; }
 </style>

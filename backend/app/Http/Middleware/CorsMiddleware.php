@@ -16,15 +16,23 @@ class CorsMiddleware
         // Get the origin from the request
         $origin = $request->header('Origin');
         
-        // List of allowed origins
+        // List of allowed origins - includes common dev ports and FRONTEND_URL from .env
         $allowedOrigins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
+            'http://localhost:5174',
+            'http://127.0.0.1:5174',
             'http://localhost:3000',
             'http://127.0.0.1:3000',
             'http://localhost:8080',
             'http://127.0.0.1:8080',
         ];
+        
+        // Add FRONTEND_URL from .env if configured
+        $frontendUrl = config('app.frontend_url');
+        if ($frontendUrl && !in_array($frontendUrl, $allowedOrigins)) {
+            $allowedOrigins[] = $frontendUrl;
+        }
         
         // Check if origin is allowed
         $originAllowed = in_array($origin, $allowedOrigins);
@@ -32,7 +40,7 @@ class CorsMiddleware
 
         // CORS headers that will be added to every response
         $corsHeaders = [
-            'Access-Control-Allow-Origin' => $responseOrigin ?? 'http://localhost:5173',
+            'Access-Control-Allow-Origin' => $responseOrigin ?? config('app.frontend_url', 'http://localhost:5173'),
             'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
             'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
             'Access-Control-Max-Age' => '86400',
