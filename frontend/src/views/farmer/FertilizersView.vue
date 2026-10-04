@@ -1,5 +1,5 @@
 <template>
-  <div class="fertilizers-layout">
+  <div class="fertilizers-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="fertilizers-container">
       <!-- Header Section -->
@@ -270,6 +270,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Search, Filter, Grid3x3, List, AlertCircle, RotateCcw, X, Eye, ShoppingCart,
@@ -278,6 +279,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1401,5 +1403,404 @@ onMounted(() => {
   .filters-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Light Mode (Default) */
+.fertilizers-layout.light {
+  background-color: #f0f2f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.fertilizers-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.fertilizers-container {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.fertilizers-layout.light .fertilizers-container {
+  background-color: #f0f2f5;
+}
+
+.fertilizers-layout.dark .fertilizers-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.fertilizers-layout.light .page-header {
+  background: white;
+  border-bottom-color: #e5e7eb;
+}
+
+.fertilizers-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+}
+
+.fertilizers-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Search Box */
+.fertilizers-layout.light .search-box {
+  background: white;
+  border-color: #e5e7eb;
+  color: #4b5563;
+}
+
+.fertilizers-layout.dark .search-box {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .search-box input {
+  background: transparent;
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .search-box input::placeholder {
+  color: #94a3b8;
+}
+
+/* Buttons */
+.fertilizers-layout.dark .btn-filter,
+.fertilizers-layout.dark .btn-view {
+  background: #1a2338;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .btn-filter:hover,
+.fertilizers-layout.dark .btn-view:hover {
+  background: #1e293b;
+  border-color: #3d4f63;
+}
+
+/* Loading & Error */
+.fertilizers-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #4ade80;
+}
+
+.fertilizers-layout.dark .error-container {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+.fertilizers-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.fertilizers-layout.dark .error-message {
+  color: #fee2e2;
+}
+
+/* Filters Panel */
+.fertilizers-layout.light .filters-panel {
+  background: white;
+  border-color: #e5e7eb;
+}
+
+.fertilizers-layout.dark .filters-panel {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .btn-close {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.light .filter-select {
+  background: white;
+  color: #1f2937;
+  border-color: #e5e7eb;
+}
+
+.fertilizers-layout.dark .filter-select {
+  background: #131b2e;
+  color: #f1f5f9;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .filter-select:focus {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
+}
+
+.fertilizers-layout.dark .checkbox-label {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .price-input {
+  background: #131b2e;
+  color: #f1f5f9;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .btn-apply {
+  background: #10b981;
+}
+
+.fertilizers-layout.dark .btn-clear {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .btn-clear:hover {
+  background: #2d3f52;
+}
+
+/* Product Cards */
+.fertilizers-layout.light .product-card {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.fertilizers-layout.dark .product-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fertilizers-layout.dark .product-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.fertilizers-layout.light .product-image {
+  background: #f3f4f6;
+}
+
+.fertilizers-layout.dark .product-image {
+  background: #131b2e;
+}
+
+.fertilizers-layout.dark .product-name {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .npk-ratio {
+  color: #60a5fa;
+}
+
+.fertilizers-layout.dark .product-description {
+  color: #94a3b8;
+}
+
+.fertilizers-layout.dark .meta-item {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.light .coverage-info {
+  background: #f9fafb;
+}
+
+.fertilizers-layout.dark .coverage-info {
+  background: #131b2e;
+  border-top-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .coverage-label {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .coverage-value {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.light .product-footer {
+  border-top-color: #e5e7eb;
+}
+
+.fertilizers-layout.dark .product-footer {
+  border-top-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .original-price {
+  color: #94a3b8;
+}
+
+.fertilizers-layout.dark .current-price {
+  color: #4ade80;
+}
+
+.fertilizers-layout.dark .unit {
+  color: #94a3b8;
+}
+
+.fertilizers-layout.dark .btn-details {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .btn-details:hover {
+  border-color: #4ade80;
+  color: #4ade80;
+  background: #0f4c3a;
+}
+
+/* Empty State */
+.fertilizers-layout.dark .empty-state {
+  color: #94a3b8;
+}
+
+.fertilizers-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+.fertilizers-layout.light .pagination {
+  background: white;
+  border-top-color: #e5e7eb;
+}
+
+.fertilizers-layout.dark .pagination {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .pagination-btn {
+  background: #131b2e;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .pagination-btn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.fertilizers-layout.dark .pagination-info {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.fertilizers-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.fertilizers-layout.light .modal-content {
+  background: white;
+}
+
+.fertilizers-layout.dark .modal-content {
+  background: #1a2338;
+}
+
+.fertilizers-layout.dark .modal-header {
+  border-bottom-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .modal-body {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .detail-image {
+  background: #131b2e;
+}
+
+.fertilizers-layout.dark .detail-type {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .detail-description {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .detail-specs {
+  background: #131b2e;
+}
+
+.fertilizers-layout.dark .spec-item {
+  border-bottom-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .spec-label {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .spec-value {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .detail-price {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .detail-price .label {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .detail-price .original {
+  color: #94a3b8;
+}
+
+.fertilizers-layout.dark .detail-price .price {
+  color: #4ade80;
+}
+
+.fertilizers-layout.dark .usage-guide {
+  border-top-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .usage-guide h3 {
+  color: #f1f5f9;
+}
+
+.fertilizers-layout.dark .usage-guide h4 {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .usage-guide ul {
+  color: #cbd5e1;
+}
+
+.fertilizers-layout.dark .modal-footer {
+  border-top-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .btn-primary {
+  background: #10b981;
+}
+
+.fertilizers-layout.dark .btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.fertilizers-layout.dark .btn-secondary:hover {
+  background: #2d3f52;
 }
 </style>
