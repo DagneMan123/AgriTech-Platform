@@ -1,5 +1,5 @@
 <template>
-  <div class="seeds-layout">
+  <div class="seeds-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="seeds-container">
       <!-- Header Section -->
@@ -276,6 +276,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Search, Filter, Grid3x3, List, AlertCircle, RotateCcw, X, Eye, ShoppingCart,
@@ -284,6 +285,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1427,5 +1429,364 @@ onMounted(() => {
   .filters-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dark Mode Styles */
+
+.seeds-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.seeds-layout.dark .seeds-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header - Dark Mode */
+.seeds-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.seeds-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.seeds-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Search Box - Dark Mode */
+.seeds-layout.dark .search-box {
+  border-color: #2d3f52;
+  background: #1a2338;
+  color: #f3f4f6;
+}
+
+.seeds-layout.dark .search-box input {
+  background: #1a2338;
+  color: #f3f4f6;
+}
+
+.seeds-layout.dark .search-box input::placeholder {
+  color: #64748b;
+}
+
+/* Filter & View Buttons - Dark Mode */
+.seeds-layout.dark .btn-filter,
+.seeds-layout.dark .btn-view {
+  border-color: #2d3f52;
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .btn-filter:hover,
+.seeds-layout.dark .btn-view:hover {
+  background: #2d3f52;
+  border-color: #475569;
+}
+
+/* Loading State - Dark Mode */
+.seeds-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #10b981;
+}
+
+/* Error Container - Dark Mode */
+.seeds-layout.dark .error-container {
+  background: #7f1d1d;
+  border-color: #b91c1c;
+}
+
+.seeds-layout.dark .error-message {
+  color: #fca5a5;
+}
+
+.seeds-layout.dark .btn-retry {
+  background: #ef4444;
+}
+
+.seeds-layout.dark .btn-retry:hover {
+  background: #dc2626;
+}
+
+/* Filters Panel - Dark Mode */
+.seeds-layout.dark .filters-panel {
+  background: #131b2e;
+  border-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.seeds-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.seeds-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.seeds-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .btn-close:hover {
+  color: #cbd5e1;
+}
+
+/* Filter Inputs - Dark Mode */
+.seeds-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .filter-select,
+.seeds-layout.dark .price-input {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.seeds-layout.dark .filter-select:focus,
+.seeds-layout.dark .price-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Checkbox - Dark Mode */
+.seeds-layout.dark .checkbox-label {
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .checkbox-label input {
+  accent-color: #10b981;
+}
+
+/* Filter Buttons - Dark Mode */
+.seeds-layout.dark .btn-apply {
+  background: #10b981;
+}
+
+.seeds-layout.dark .btn-apply:hover {
+  background: #059669;
+}
+
+.seeds-layout.dark .btn-clear {
+  background: #2d3f52;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+.seeds-layout.dark .btn-clear:hover {
+  background: #475569;
+}
+
+/* Product Card - Dark Mode */
+.seeds-layout.dark .product-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.seeds-layout.dark .product-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.seeds-layout.dark .product-image {
+  background: #2d3f52;
+}
+
+.seeds-layout.dark .product-name {
+  color: #f1f5f9;
+}
+
+.seeds-layout.dark .product-variety {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .product-description {
+  color: #64748b;
+}
+
+.seeds-layout.dark .product-meta,
+.seeds-layout.dark .meta-item {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .rating-count {
+  color: #64748b;
+}
+
+.seeds-layout.dark .product-footer {
+  border-top-color: #2d3f52;
+}
+
+.seeds-layout.dark .original-price {
+  color: #64748b;
+}
+
+.seeds-layout.dark .current-price {
+  color: #4ade80;
+}
+
+.seeds-layout.dark .unit {
+  color: #64748b;
+}
+
+.seeds-layout.dark .btn-add-cart {
+  background: #10b981;
+}
+
+.seeds-layout.dark .btn-add-cart:hover {
+  background: #059669;
+}
+
+.seeds-layout.dark .btn-details {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .btn-details:hover {
+  border-color: #10b981;
+  color: #4ade80;
+  background: #0f3f2a;
+}
+
+/* Empty State - Dark Mode */
+.seeds-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.seeds-layout.dark .empty-icon {
+  color: #475569;
+}
+
+.seeds-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination - Dark Mode */
+.seeds-layout.dark .pagination {
+  border-top-color: #2d3f52;
+  background: #131b2e;
+}
+
+.seeds-layout.dark .pagination-btn {
+  border-color: #2d3f52;
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .pagination-btn:hover:not(:disabled) {
+  background: #2d3f52;
+  border-color: #10b981;
+  color: #4ade80;
+}
+
+.seeds-layout.dark .pagination-info {
+  color: #94a3b8;
+}
+
+/* Modal - Dark Mode */
+.seeds-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.seeds-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.seeds-layout.dark .modal-header {
+  border-bottom-color: #2d3f52;
+  background: #1a2338;
+}
+
+.seeds-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+/* Modal Body - Dark Mode */
+.seeds-layout.dark .detail-image {
+  background: #2d3f52;
+}
+
+.seeds-layout.dark .detail-variety {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .detail-description {
+  color: #cbd5e1;
+}
+
+.seeds-layout.dark .detail-specs {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.seeds-layout.dark .spec-label {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .spec-value {
+  color: #f1f5f9;
+}
+
+.seeds-layout.dark .detail-price .label {
+  color: #94a3b8;
+}
+
+.seeds-layout.dark .detail-price .original {
+  color: #64748b;
+}
+
+.seeds-layout.dark .detail-price .price {
+  color: #4ade80;
+}
+
+.seeds-layout.dark .detail-rating {
+  color: #cbd5e1;
+}
+
+/* Usage Tips - Dark Mode */
+.seeds-layout.dark .usage-tips {
+  border-top-color: #2d3f52;
+}
+
+.seeds-layout.dark .usage-tips h3 {
+  color: #f1f5f9;
+}
+
+.seeds-layout.dark .usage-tips li {
+  color: #cbd5e1;
+}
+
+/* Modal Footer - Dark Mode */
+.seeds-layout.dark .modal-footer {
+  border-top-color: #2d3f52;
+  background: #1a2338;
+}
+
+.seeds-layout.dark .btn-secondary {
+  background: #2d3f52;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+.seeds-layout.dark .btn-secondary:hover {
+  background: #475569;
+}
+
+/* Star Icons - Dark Mode */
+.seeds-layout.dark .stars :deep(svg) {
+  color: #475569;
+}
+
+.seeds-layout.dark .stars :deep(svg.filled) {
+  color: #fbbf24;
+  fill: #fbbf24;
 }
 </style>

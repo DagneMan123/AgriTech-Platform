@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <header class="page-header">
@@ -249,6 +249,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import { 
   PlusCircle, Droplets, Leaf, Bug, Scissors, Flame, Sprout, AlertCircle
@@ -257,6 +258,7 @@ import apiClient from '@/api/config'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 // State
 const activities = ref([])
@@ -1179,5 +1181,289 @@ const handleLogout = async () => {
     width: 32px;
     height: 32px;
   }
+}
+
+/* Dark Mode Styles */
+
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Page Header - Dark Mode */
+.farmer-layout.dark .page-header h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .page-header p {
+  color: #cbd5e1;
+}
+
+/* Content Section - Dark Mode */
+.farmer-layout.dark .content-section {
+  background: #131b2e;
+  border-color: #1e293b;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  color: #f3f4f6;
+}
+
+/* Filters Bar - Dark Mode */
+.farmer-layout.dark .filters-bar {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .filter-group label {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .filter-select,
+.farmer-layout.dark .filter-input {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .filter-select:focus,
+.farmer-layout.dark .filter-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.farmer-layout.dark .date-separator {
+  color: #94a3b8;
+}
+
+/* Buttons - Dark Mode */
+.farmer-layout.dark .btn-primary {
+  background-color: #10b981;
+}
+
+.farmer-layout.dark .btn-primary:hover {
+  background-color: #059669;
+}
+
+.farmer-layout.dark .btn-secondary {
+  background-color: #4b5563;
+}
+
+.farmer-layout.dark .btn-secondary:hover {
+  background-color: #5a6e82;
+}
+
+.farmer-layout.dark .btn-outline {
+  background-color: #1a2338;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .btn-outline:hover {
+  background-color: #2d3f52;
+  border-color: #475569;
+}
+
+/* Error Alert - Dark Mode */
+.farmer-layout.dark .error-alert {
+  background-color: #7f1d1d;
+  border-color: #b91c1c;
+  color: #fca5a5;
+}
+
+.farmer-layout.dark .icon-alert {
+  color: #f87171;
+}
+
+/* Loading & Empty States - Dark Mode */
+.farmer-layout.dark .loading-state,
+.farmer-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .empty-icon {
+  color: #475569;
+}
+
+.farmer-layout.dark .empty-state h3 {
+  color: #f1f5f9;
+}
+
+/* Timeline - Dark Mode */
+.farmer-layout.dark .timeline::before {
+  background-color: #2d3f52;
+}
+
+.farmer-layout.dark .timeline-marker {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Activity Type Markers - Dark Mode */
+.farmer-layout.dark .type-watering { background: #0f3a66; border-color: #3b82f6; color: #60a5fa; }
+.farmer-layout.dark .type-fertilizing { background: #0f3f2a; border-color: #10b981; color: #4ade80; }
+.farmer-layout.dark .type-pesticide { background: #4a0e0e; border-color: #ef4444; color: #f87171; }
+.farmer-layout.dark .type-pruning { background: #4a3f0a; border-color: #f59e0b; color: #fbbf24; }
+.farmer-layout.dark .type-planting { background: #3a2a4a; border-color: #8b5cf6; color: #c4b5fd; }
+.farmer-layout.dark .type-harvesting { background: #4a2a3a; border-color: #ec4899; color: #f472b6; }
+
+/* Timeline Content - Dark Mode */
+.farmer-layout.dark .timeline-content {
+  background: #1a2338;
+  border-color: #2d3f52;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.farmer-layout.dark .activity-header h3 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .activity-date {
+  color: #94a3b8;
+}
+
+/* Activity Badges - Dark Mode */
+.farmer-layout.dark .badge-watering { background: #0f3a66; color: #60a5fa; }
+.farmer-layout.dark .badge-fertilizing { background: #0f3f2a; color: #4ade80; }
+.farmer-layout.dark .badge-pesticide { background: #4a0e0e; color: #f87171; }
+.farmer-layout.dark .badge-pruning { background: #4a3f0a; color: #fbbf24; }
+.farmer-layout.dark .badge-planting { background: #3a2a4a; color: #c4b5fd; }
+.farmer-layout.dark .badge-harvesting { background: #4a2a3a; color: #f472b6; }
+
+.farmer-layout.dark .description {
+  color: #cbd5e1;
+}
+
+/* Details Grid - Dark Mode */
+.farmer-layout.dark .details-grid {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .detail-item .value {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .highlight-cost {
+  color: #4ade80;
+}
+
+/* Notes Box - Dark Mode */
+.farmer-layout.dark .notes-box {
+  border-top-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .notes-box strong {
+  color: #f1f5f9;
+}
+
+/* Action Buttons - Dark Mode */
+.farmer-layout.dark .btn-edit {
+  background-color: #0f3a66;
+  color: #60a5fa;
+}
+
+.farmer-layout.dark .btn-edit:hover {
+  background-color: #1e40af;
+  color: white;
+}
+
+.farmer-layout.dark .btn-delete {
+  background-color: #4a0e0e;
+  color: #f87171;
+}
+
+.farmer-layout.dark .btn-delete:hover {
+  background-color: #b91c1c;
+  color: white;
+}
+
+/* Modal - Dark Mode */
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.farmer-layout.dark .modal-dialog {
+  background-color: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .modal-header {
+  border-bottom-color: #2d3f52;
+  background-color: #1a2338;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .close-btn {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  background-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+/* Form Elements - Dark Mode */
+.farmer-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .form-group input,
+.farmer-layout.dark .form-group textarea,
+.farmer-layout.dark .form-group select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .form-group input::placeholder,
+.farmer-layout.dark .form-group textarea::placeholder {
+  color: #64748b;
+}
+
+.farmer-layout.dark .form-group input:focus,
+.farmer-layout.dark .form-group textarea:focus,
+.farmer-layout.dark .form-group select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  background-color: #1a2338;
+}
+
+.farmer-layout.dark .form-group.has-error input,
+.farmer-layout.dark .form-group.has-error textarea,
+.farmer-layout.dark .form-group.has-error select {
+  border-color: #ef4444;
+  background-color: #4a0e0e;
+}
+
+.farmer-layout.dark .form-group.has-error input:focus,
+.farmer-layout.dark .form-group.has-error textarea:focus,
+.farmer-layout.dark .form-group.has-error select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.farmer-layout.dark .error-text {
+  color: #f87171;
+}
+
+/* Form Actions - Dark Mode */
+.farmer-layout.dark .form-actions {
+  border-top-color: #2d3f52;
 }
 </style>

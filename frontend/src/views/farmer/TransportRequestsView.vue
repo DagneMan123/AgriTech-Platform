@@ -1,5 +1,5 @@
 <template>
-  <div class="transport-layout">
+  <div class="transport-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="transport-container">
       <!-- Header -->
@@ -250,6 +250,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, Send, Truck, MapPin, CheckCircle, AlertCircle, RotateCcw, X, Eye, Edit
@@ -257,6 +258,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const error = ref(null)
@@ -872,5 +874,265 @@ onMounted(() => { fetchRequests() })
   .table-row td {
     padding: 12px 8px;
   }
+}
+
+/* Dark Mode Styles */
+
+.transport-layout.dark {
+  background-color: #0b0f17;
+}
+
+.transport-layout.dark .transport-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header - Dark Mode */
+.transport-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.transport-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.transport-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* New Request Button - Dark Mode */
+.transport-layout.dark .btn-new {
+  background: #3b82f6;
+}
+
+.transport-layout.dark .btn-new:hover {
+  background: #2563eb;
+}
+
+/* Loading State - Dark Mode */
+.transport-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.transport-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Error Container - Dark Mode */
+.transport-layout.dark .error-container {
+  background: #7f1d1d;
+  border-color: #b91c1c;
+}
+
+.transport-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.transport-layout.dark .error-message {
+  color: #fca5a5;
+}
+
+.transport-layout.dark .btn-retry {
+  background: #ef4444;
+}
+
+.transport-layout.dark .btn-retry:hover {
+  background: #dc2626;
+}
+
+/* Stats Cards - Dark Mode */
+.transport-layout.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.transport-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.transport-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Table Section - Dark Mode */
+.transport-layout.dark .table-section {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #1e293b;
+}
+
+.transport-layout.dark .table-header {
+  border-bottom-color: #2d3f52;
+}
+
+.transport-layout.dark .table-header h3 {
+  color: #f1f5f9;
+}
+
+/* Filter Select - Dark Mode */
+.transport-layout.dark .filter-select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.transport-layout.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Table - Dark Mode */
+.transport-layout.dark .requests-table thead {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.transport-layout.dark .requests-table th {
+  color: #cbd5e1;
+}
+
+.transport-layout.dark .requests-table tbody tr {
+  border-bottom-color: #2d3f52;
+}
+
+.transport-layout.dark .requests-table tbody tr:hover {
+  background: #1a2338;
+}
+
+.transport-layout.dark .table-row td {
+  color: #f3f4f6;
+}
+
+/* Status Badges - Dark Mode */
+.transport-layout.dark .status-pending { background: #5a3a0a; color: #fbbf24; }
+.transport-layout.dark .status-confirmed { background: #0f3a66; color: #60a5fa; }
+.transport-layout.dark .status-in-transit { background: #3a2a5a; color: #c4b5fd; }
+.transport-layout.dark .status-completed { background: #0a3f2a; color: #4ade80; }
+
+/* Action Buttons - Dark Mode */
+.transport-layout.dark .action-btn {
+  border-color: #2d3f52;
+  color: #94a3b8;
+}
+
+.transport-layout.dark .action-btn:hover {
+  border-color: #3b82f6;
+  color: #60a5fa;
+  background: #0f3a66;
+}
+
+/* Empty State - Dark Mode */
+.transport-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.transport-layout.dark .empty-icon {
+  color: #475569;
+}
+
+.transport-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Modal - Dark Mode */
+.transport-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.transport-layout.dark .modal-content {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.transport-layout.dark .modal-header {
+  border-bottom-color: #2d3f52;
+  background: #1a2338;
+}
+
+.transport-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.transport-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.transport-layout.dark .btn-close:hover {
+  color: #cbd5e1;
+}
+
+/* Form Elements - Dark Mode */
+.transport-layout.dark .form-control {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.transport-layout.dark .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.transport-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+/* Form Actions - Dark Mode */
+.transport-layout.dark .btn-primary {
+  background: #3b82f6;
+}
+
+.transport-layout.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.transport-layout.dark .btn-secondary {
+  background: #2d3f52;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+.transport-layout.dark .btn-secondary:hover {
+  background: #475569;
+}
+
+/* Detail Grid - Dark Mode */
+.transport-layout.dark .detail-grid {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.transport-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.transport-layout.dark .detail-item .value {
+  color: #f1f5f9;
+}
+
+/* Driver Info & Instructions - Dark Mode */
+.transport-layout.dark .driver-info,
+.transport-layout.dark .instructions {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.transport-layout.dark .driver-info h3,
+.transport-layout.dark .instructions h3 {
+  color: #f1f5f9;
+}
+
+.transport-layout.dark .driver-info p,
+.transport-layout.dark .instructions p {
+  color: #cbd5e1;
+}
+
+/* Modal Footer - Dark Mode */
+.transport-layout.dark .modal-footer {
+  border-top-color: #2d3f52;
+  background: #1a2338;
 }
 </style>
