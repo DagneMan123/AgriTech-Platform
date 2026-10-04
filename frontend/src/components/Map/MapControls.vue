@@ -1,5 +1,5 @@
 <template>
-  <div class="map-controls">
+  <div class="map-controls" :class="{ 'light': isLight, 'dark': isDark }">
     <div class="controls-section">
       <h3>Farm Selection</h3>
       <select v-model="selectedFarmId" class="form-select" @change="handleFarmChange">
@@ -102,6 +102,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark, isLight } = useTheme()
 
 interface Farm {
   id: number | string
@@ -387,6 +390,118 @@ const handleRefresh = () => {
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
     max-height: 300px;
+  }
+}
+
+/* Dark Mode Styles */
+
+.map-controls.dark {
+  background: #131b2e;
+  border-right-color: #1e293b;
+  color: #f3f4f6;
+}
+
+.map-controls.dark .controls-section {
+  border-bottom-color: #2d3f52;
+}
+
+.map-controls.dark .controls-section h3 {
+  color: #cbd5e1;
+}
+
+/* Form Select - Dark Mode */
+.map-controls.dark .form-select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.map-controls.dark .form-select option {
+  background-color: #1a2338;
+  color: #f3f4f6;
+}
+
+.map-controls.dark .form-select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Checkboxes and Radio Buttons - Dark Mode */
+.map-controls.dark .checkbox-group label,
+.map-controls.dark .radio-group label {
+  color: #cbd5e1;
+}
+
+.map-controls.dark .checkbox-group label:hover,
+.map-controls.dark .radio-group label:hover {
+  color: #f1f5f9;
+}
+
+.map-controls.dark .checkbox-group input,
+.map-controls.dark .radio-group input {
+  accent-color: #10b981;
+}
+
+/* Buttons - Dark Mode */
+.map-controls.dark .btn-primary {
+  background-color: #10b981;
+  color: white;
+}
+
+.map-controls.dark .btn-primary:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.map-controls.dark .btn-primary:disabled {
+  background-color: #4b5563;
+  opacity: 0.6;
+}
+
+.map-controls.dark .btn-secondary {
+  background-color: #4b5563;
+  color: white;
+}
+
+.map-controls.dark .btn-secondary:hover:not(:disabled) {
+  background-color: #5a6e82;
+}
+
+.map-controls.dark .btn-secondary:disabled {
+  background-color: #2d3f52;
+  opacity: 0.6;
+}
+
+.map-controls.dark .btn-info {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.map-controls.dark .btn-info:hover {
+  background-color: #2563eb;
+}
+
+/* Info Section - Dark Mode */
+.map-controls.dark .info-section {
+  border-top-color: #2d3f52;
+}
+
+.map-controls.dark .farm-info p {
+  color: #cbd5e1;
+}
+
+.map-controls.dark .farm-info strong {
+  color: #f1f5f9;
+}
+
+.map-controls.dark .empty-info {
+  color: #64748b;
+}
+
+/* Responsive Dark Mode */
+@media (max-width: 1024px) {
+  .map-controls.dark {
+    border-right: none;
+    border-bottom-color: #1e293b;
   }
 }
 </style>

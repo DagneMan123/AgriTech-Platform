@@ -1371,8 +1371,8 @@ const handleLogout = async () => {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.farmer-layout.dark .form-group select {
-  color-scheme: dark;
+.form-group textarea {
+  resize: vertical;
 }
 
 .error-text {

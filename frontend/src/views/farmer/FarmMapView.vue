@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <div class="page-header">
@@ -110,6 +110,7 @@
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import MapControls from '@/components/Map/MapControls.vue'
 import apiClient from '@/api/config'
@@ -118,6 +119,7 @@ import 'leaflet/dist/leaflet.css'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 const farms = ref<any[]>([])
 const selectedFarmId = ref<string | number>('')
@@ -757,5 +759,153 @@ const handleLogout = async () => {
   #detail-map {
     height: 250px;
   }
+}
+
+/* Dark Mode Styles */
+
+/* Main Layout */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Page Header */
+.farmer-layout.dark .page-header h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .page-header p {
+  color: #cbd5e1;
+}
+
+/* Map Container */
+.farmer-layout.dark .map-container {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Map Loading and Error States */
+.farmer-layout.dark .map-loading,
+.farmer-layout.dark .map-error {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+}
+
+.farmer-layout.dark .map-loading {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .map-loading p {
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.farmer-layout.dark .retry-info {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .map-error {
+  background: #7f1d1d;
+  border-color: #b91c1c;
+}
+
+.farmer-layout.dark .map-error p {
+  color: #fca5a5;
+}
+
+/* Modal Overlay */
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Modal Dialog */
+.farmer-layout.dark .modal-dialog {
+  background-color: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color: #f3f4f6;
+}
+
+/* Modal Header */
+.farmer-layout.dark .modal-header {
+  background-color: #1a2338;
+  border-bottom: 1px solid #2d3f52;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+/* Close Button */
+.farmer-layout.dark .close-btn {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  color: #cbd5e1;
+}
+
+/* Detail Info */
+.farmer-layout.dark .detail-info {
+  background-color: #1a2338;
+  border-left: 1px solid #2d3f52;
+  padding-right: 10px;
+}
+
+.farmer-layout.dark .detail-info h3 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .detail-info h4 {
+  color: #cbd5e1;
+}
+
+/* Info Items */
+.farmer-layout.dark .info-item .label {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .info-item .value {
+  color: #f1f5f9;
+}
+
+/* Description and Coordinates */
+.farmer-layout.dark .description,
+.farmer-layout.dark .coordinates-info {
+  border-top: 1px solid #2d3f52;
+}
+
+.farmer-layout.dark .description p,
+.farmer-layout.dark .coordinates-info p {
+  color: #cbd5e1;
+}
+
+/* Leaflet Popup Coordinate Labels */
+:deep(.farmer-layout.dark .coordinate-label) {
+  background: rgba(19, 27, 46, 0.95) !important;
+  border: 1px solid #2d3f52 !important;
+  color: #cbd5e1 !important;
+}
+
+:deep(.farmer-layout.dark .leaflet-popup-content-wrapper) {
+  background: #1a2338 !important;
+  border: 1px solid #2d3f52 !important;
+  border-radius: 4px;
+}
+
+:deep(.farmer-layout.dark .leaflet-popup-content) {
+  color: #f1f5f9 !important;
+}
+
+:deep(.farmer-layout.dark .leaflet-popup-tip) {
+  background: #1a2338 !important;
+  border-top-color: #2d3f52 !important;
 }
 </style>

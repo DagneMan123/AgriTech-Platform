@@ -814,4 +814,204 @@ const handleLogout = async () => {
     width: 100%;
   }
 }
+
+/* Dark Mode Styles */
+
+/* Main Layout */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Page Header */
+.farmer-layout.dark .page-header h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .page-header p {
+  color: #cbd5e1;
+}
+
+/* Content Section */
+.farmer-layout.dark .content-section {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  color: #f3f4f6;
+}
+
+/* Section Header */
+.farmer-layout.dark .section-header h2 {
+  color: #f1f5f9;
+}
+
+/* Primary Button */
+.farmer-layout.dark .btn-primary {
+  background-color: #10b981;
+}
+
+.farmer-layout.dark .btn-primary:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.farmer-layout.dark .btn-primary:disabled {
+  background-color: #4b5563;
+}
+
+/* Secondary Button */
+.farmer-layout.dark .btn-secondary {
+  background-color: #4b5563;
+}
+
+.farmer-layout.dark .btn-secondary:hover {
+  background-color: #5a6e82;
+}
+
+/* Loading and Empty States */
+.farmer-layout.dark .loading-message,
+.farmer-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+/* Error Alert */
+.farmer-layout.dark .error-alert {
+  background-color: #7f1d1d;
+  border-color: #b91c1c;
+  color: #fca5a5;
+}
+
+/* Farms Grid */
+.farmer-layout.dark .farm-card {
+  background-color: #1a2338;
+  border: 1px solid #2d3f52;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .farm-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.15);
+  background-color: #1f2d42;
+}
+
+/* Farm Card Header */
+.farmer-layout.dark .farm-header h3 {
+  color: #f1f5f9;
+}
+
+/* Badge */
+.farmer-layout.dark .badge {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+}
+
+/* Farm Details */
+.farmer-layout.dark .farm-details p {
+  color: #cbd5e1;
+}
+
+/* Button Edit */
+.farmer-layout.dark .btn-edit {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+}
+
+.farmer-layout.dark .btn-edit:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Button View */
+.farmer-layout.dark .btn-view {
+  background-color: #5b21b6;
+  color: #c4b5fd;
+}
+
+.farmer-layout.dark .btn-view:hover {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+/* Modal Overlay */
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Modal Dialog */
+.farmer-layout.dark .modal-dialog {
+  background-color: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color: #f3f4f6;
+}
+
+/* Modal Header */
+.farmer-layout.dark .modal-header {
+  background-color: #1a2338;
+  border-bottom: 1px solid #2d3f52;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+/* Close Button */
+.farmer-layout.dark .close-btn {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  color: #cbd5e1;
+}
+
+/* Form Group */
+.farmer-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .form-group input,
+.farmer-layout.dark .form-group textarea,
+.farmer-layout.dark .form-group select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .form-group input::placeholder,
+.farmer-layout.dark .form-group textarea::placeholder,
+.farmer-layout.dark .form-group select::placeholder {
+  color: #64748b;
+}
+
+.farmer-layout.dark .form-group input:focus,
+.farmer-layout.dark .form-group textarea:focus,
+.farmer-layout.dark .form-group select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  background-color: #1a2338;
+}
+
+/* Coordinates Section */
+.farmer-layout.dark .coordinates-section {
+  border-top: 1px solid #2d3f52;
+}
+
+.farmer-layout.dark .coordinates-section h4 {
+  color: #cbd5e1;
+}
+
+/* Error Text */
+.farmer-layout.dark .error-text {
+  color: #f87171;
+}
+
+/* Form Actions */
+.farmer-layout.dark .form-actions {
+  border-top: 1px solid #2d3f52;
+}
 </style>

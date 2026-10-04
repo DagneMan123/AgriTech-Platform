@@ -1202,13 +1202,359 @@ const handleLogout = async () => {
 }
 
 /* Tables */
-.farmer-layout.light table, .farmer-layout.light tr, .farmer-layout.light td, .farmer-layout.light th {
-  background-color: #ffffff;
-  color: #1f2937;
-  border-color: #e5e7eb;
+.farmer-layout.light .stat-content h3 {
+  color: #666;
 }
 
-.farmer-layout.dark table, .farmer-layout.dark tr, .farmer-layout.dark td, .farmer-layout.dark th {
+.farmer-layout.dark .stat-content h3 {
+  color: #cbd5e1;
+}
+
+.farmer-layout.light .stat-value {
+  color: #333;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Controls Section */
+.farmer-layout.light .controls-section {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #1f2937;
+}
+
+.farmer-layout.dark .controls-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+  color: #f3f4f6;
+}
+
+.farmer-layout.light .search-input,
+.farmer-layout.light .quality-select,
+.farmer-layout.light .year-select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+.farmer-layout.dark .search-input,
+.farmer-layout.dark .quality-select,
+.farmer-layout.dark .year-select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.light .search-input:focus,
+.farmer-layout.light .quality-select:focus,
+.farmer-layout.light .year-select:focus {
+  border-color: #10b981;
+}
+
+.farmer-layout.dark .search-input:focus,
+.farmer-layout.dark .quality-select:focus,
+.farmer-layout.dark .year-select:focus {
+  border-color: #10b981;
+  background-color: #1a2338;
+}
+
+/* Harvests Section */
+.farmer-layout.light .harvests-section {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #1f2937;
+}
+
+.farmer-layout.dark .harvests-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+  color: #f3f4f6;
+}
+
+.farmer-layout.light .loading-state,
+.farmer-layout.light .empty-state {
+  color: #666;
+}
+
+.farmer-layout.dark .loading-state,
+.farmer-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.farmer-layout.light .empty-state i {
+  color: #d1d5db;
+}
+
+.farmer-layout.dark .empty-state i {
+  color: #475569;
+}
+
+.farmer-layout.light .empty-state h3 {
+  color: #333;
+}
+
+.farmer-layout.dark .empty-state h3 {
+  color: #f1f5f9;
+}
+
+/* Table */
+.farmer-layout.light .harvests-table th {
+  background-color: #f9fafb;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.farmer-layout.dark .harvests-table th {
+  background-color: #1a2338;
+  color: #cbd5e1;
+  border-bottom: 2px solid #2d3f52;
+}
+
+.farmer-layout.light .harvests-table td {
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.farmer-layout.dark .harvests-table td {
+  color: #f3f4f6;
+  border-bottom: 1px solid #2d3f52;
+}
+
+.farmer-layout.light .harvests-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.farmer-layout.dark .harvests-table tbody tr:hover {
+  background-color: #1a2338;
+}
+
+.farmer-layout.light .crop-name {
+  color: #333;
+}
+
+.farmer-layout.dark .crop-name {
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .crop-name small {
+  color: #666;
+}
+
+.farmer-layout.dark .crop-name small {
+  color: #cbd5e1;
+}
+
+.farmer-layout.light .quantity-value {
+  color: #3b82f6;
+}
+
+.farmer-layout.dark .quantity-value {
+  color: #60a5fa;
+}
+
+.farmer-layout.light .notes-cell {
+  color: #666;
+}
+
+.farmer-layout.dark .notes-cell {
+  color: #cbd5e1;
+}
+
+.farmer-layout.light .no-notes {
+  color: #d1d5db;
+}
+
+.farmer-layout.dark .no-notes {
+  color: #475569;
+}
+
+.farmer-layout.light .notes-preview {
+  border-bottom: 1px dotted #10b981;
+}
+
+.farmer-layout.dark .notes-preview {
+  border-bottom: 1px dotted #4ade80;
+}
+
+/* Buttons */
+.farmer-layout.light .btn-edit {
+  background-color: #e0e7ff;
+  color: #3b82f6;
+}
+
+.farmer-layout.dark .btn-edit {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+}
+
+.farmer-layout.light .btn-edit:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.farmer-layout.dark .btn-edit:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.farmer-layout.light .btn-delete {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.farmer-layout.dark .btn-delete {
+  background-color: #7f1d1d;
+  color: #f87171;
+}
+
+.farmer-layout.light .btn-delete:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+.farmer-layout.dark .btn-delete:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Modal Header */
+.farmer-layout.light .modal-header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+.farmer-layout.dark .modal-header {
+  background-color: #1a2338;
+  border-bottom: 1px solid #2d3f52;
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .modal-header h2 {
+  color: #111827;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .close-btn {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .close-btn {
+  color: #94a3b8;
+}
+
+.farmer-layout.light .close-btn:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  background-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+/* Form Labels */
+.farmer-layout.light .form-group label {
+  color: #374151;
+}
+
+.farmer-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.light .form-group input,
+.farmer-layout.light .form-group textarea,
+.farmer-layout.light .form-group select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+.farmer-layout.dark .form-group input,
+.farmer-layout.dark .form-group textarea,
+.farmer-layout.dark .form-group select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.light .form-group input:focus,
+.farmer-layout.light .form-group textarea:focus,
+.farmer-layout.light .form-group select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.farmer-layout.dark .form-group input:focus,
+.farmer-layout.dark .form-group textarea:focus,
+.farmer-layout.dark .form-group select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.farmer-layout.light .unit-select {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #d1d5db !important;
+}
+
+.farmer-layout.dark .unit-select {
+  background-color: #1a2338 !important;
+  color: #f3f4f6 !important;
+  border-color: #2d3f52 !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%94a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+}
+
+.farmer-layout.dark .unit-select:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+
+.farmer-layout.light .error-text {
+  color: #ef4444;
+}
+
+.farmer-layout.dark .error-text {
+  color: #f87171;
+}
+
+/* Form Actions */
+.farmer-layout.light .form-actions {
+  border-top: 1px solid #e5e7eb;
+}
+
+.farmer-layout.dark .form-actions {
+  border-top: 1px solid #2d3f52;
+}
+
+/* Header Text */
+.farmer-layout.light .header-content h1 {
+  color: #333;
+}
+
+.farmer-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .header-content p {
+  color: #666;
+}
+
+.farmer-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Modal Overlay */
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}mer-layout.dark td, .farmer-layout.dark th {
   background-color: #131b2e;
   color: #f3f4f6;
   border-color: #2d3f52;
