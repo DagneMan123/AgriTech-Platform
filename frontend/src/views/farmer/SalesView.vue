@@ -1,5 +1,5 @@
 <template>
-  <div class="sales-layout">
+  <div class="sales-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="sales-container">
       <!-- Header Section -->
@@ -307,6 +307,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock,
@@ -316,6 +317,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1293,5 +1295,397 @@ onMounted(() => {
   .filters-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Light Mode (Default) */
+.sales-layout.light {
+  background-color: #f0f2f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.sales-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.sales-container {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sales-layout.light .sales-container {
+  background-color: #f0f2f5;
+}
+
+.sales-layout.dark .sales-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.sales-layout.light .page-header {
+  background: white;
+  border-bottom-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.sales-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  color: #f3f4f6;
+}
+
+.sales-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Buttons */
+.sales-layout.dark .btn-filter {
+  background: #1a2338;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .btn-filter:hover {
+  background: #1e293b;
+  border-color: #3d4f63;
+}
+
+.sales-layout.light .btn-export {
+  background: #10b981;
+  color: white;
+}
+
+.sales-layout.dark .btn-export {
+  background: #10b981;
+  color: white;
+}
+
+/* Loading & Error */
+.sales-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #4ade80;
+}
+
+.sales-layout.dark .error-container {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+.sales-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.sales-layout.dark .error-message {
+  color: #fee2e2;
+}
+
+/* Summary Cards */
+.sales-layout.light .summary-card {
+  background: white;
+  color: #1f2937;
+}
+
+.sales-layout.dark .summary-card {
+  background: #1a2338;
+  border-left-color: #4ade80;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sales-layout.dark .summary-card:nth-child(2) {
+  border-left-color: #60a5fa;
+}
+
+.sales-layout.dark .summary-card:nth-child(3) {
+  border-left-color: #a78bfa;
+}
+
+.sales-layout.dark .summary-card:nth-child(4) {
+  border-left-color: #fbbf24;
+}
+
+.sales-layout.dark .card-header h3 {
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .card-value {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .card-icon {
+  color: #2d3f52;
+}
+
+.sales-layout.dark .card-subtitle {
+  color: #94a3b8;
+}
+
+/* Charts Section */
+.sales-layout.light .chart-card {
+  background: white;
+}
+
+.sales-layout.dark .chart-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sales-layout.dark .chart-title {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .chart-placeholder {
+  background: linear-gradient(135deg, #131b2e 0%, #1a2338 100%);
+  color: #2d3f52;
+}
+
+/* Filters Panel */
+.sales-layout.light .filters-panel {
+  background: white;
+  border-color: #e5e7eb;
+}
+
+.sales-layout.dark .filters-panel {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.sales-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .btn-close {
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.sales-layout.light .filter-select {
+  background: white;
+  color: #1f2937;
+  border-color: #e5e7eb;
+}
+
+.sales-layout.dark .filter-select {
+  background: #131b2e;
+  color: #f1f5f9;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .filter-select:focus {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
+}
+
+.sales-layout.dark .btn-apply {
+  background: #10b981;
+  color: white;
+}
+
+.sales-layout.dark .btn-clear {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .btn-clear:hover {
+  background: #2d3f52;
+}
+
+/* Table Section */
+.sales-layout.light .table-section {
+  background: white;
+}
+
+.sales-layout.dark .table-section {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sales-layout.dark .table-header {
+  border-bottom-color: #2d3f52;
+}
+
+.sales-layout.dark .table-header h3 {
+  color: #f1f5f9;
+}
+
+.sales-layout.light .items-select {
+  background: white;
+  color: #4b5563;
+  border-color: #e5e7eb;
+}
+
+.sales-layout.dark .items-select {
+  background: #131b2e;
+  color: #f1f5f9;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .sales-table thead {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+}
+
+.sales-layout.dark .sales-table th {
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .sales-table tbody tr {
+  border-bottom-color: #2d3f52;
+}
+
+.sales-layout.dark .sales-table tbody tr:hover {
+  background: #1e293b;
+}
+
+.sales-layout.dark .table-row td {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .order-badge {
+  background: #0f4c3a;
+  color: #86efac;
+}
+
+.sales-layout.dark .amount-badge {
+  background: #5d4307;
+  color: #fde047;
+}
+
+.sales-layout.dark .status-completed {
+  background: #0f4c3a;
+  color: #86efac;
+}
+
+.sales-layout.dark .status-pending {
+  background: #5d4307;
+  color: #fde047;
+}
+
+.sales-layout.dark .status-cancelled {
+  background: #7f1d1d;
+  color: #f87171;
+}
+
+.sales-layout.dark .action-btn {
+  background: none;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .action-btn:hover {
+  border-color: #4ade80;
+  color: #4ade80;
+  background: #0f4c3a;
+}
+
+.sales-layout.dark .download-btn:hover {
+  border-color: #60a5fa;
+  color: #60a5fa;
+  background: #0c2d52;
+}
+
+/* Empty State */
+.sales-layout.dark .empty-state {
+  color: #94a3b8;
+}
+
+.sales-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+.sales-layout.light .pagination {
+  border-top-color: #e5e7eb;
+}
+
+.sales-layout.dark .pagination {
+  border-top-color: #2d3f52;
+}
+
+.sales-layout.dark .pagination-btn {
+  background: #1a2338;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .pagination-btn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.sales-layout.dark .pagination-info {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.sales-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.sales-layout.light .modal-content {
+  background: white;
+  color: #1f2937;
+}
+
+.sales-layout.dark .modal-content {
+  background: #1a2338;
+  color: #f3f4f6;
+}
+
+.sales-layout.dark .modal-header {
+  border-bottom-color: #2d3f52;
+}
+
+.sales-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .modal-body {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .detail-label {
+  color: #cbd5e1;
+}
+
+.sales-layout.dark .detail-value {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .modal-footer {
+  border-top-color: #2d3f52;
+}
+
+.sales-layout.dark .btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.sales-layout.dark .btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.sales-layout.dark .btn-secondary:hover {
+  background: #2d3f52;
 }
 </style>

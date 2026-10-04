@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <!-- Page Header -->
@@ -317,10 +317,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 // State
 const products = ref([])
@@ -1250,5 +1252,310 @@ const handleLogout = async () => {
     width: 95%;
     max-height: 95vh;
   }
+}
+
+/* Light Mode (Default) */
+.farmer-layout.light {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-page {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .farmer-page {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+/* Text Colors */
+.farmer-layout.light h1, .farmer-layout.light h2, .farmer-layout.light h3, .farmer-layout.light h4, .farmer-layout.light h5, .farmer-layout.light h6 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark h1, .farmer-layout.dark h2, .farmer-layout.dark h3, .farmer-layout.dark h4, .farmer-layout.dark h5, .farmer-layout.dark h6 {
+  color: #ffffff;
+}
+
+.farmer-layout.light p {
+  color: #4b5563;
+}
+
+.farmer-layout.dark p {
+  color: #cbd5e1;
+}
+
+/* Stat Cards */
+.farmer-layout.light .stat-card {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #1f2937;
+}
+
+.farmer-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .stat-content h3 {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Controls Section */
+.farmer-layout.light .controls-section {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.farmer-layout.dark .controls-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+}
+
+/* Form Elements */
+.farmer-layout.light input, 
+.farmer-layout.light textarea, 
+.farmer-layout.light select {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.farmer-layout.dark input, 
+.farmer-layout.dark textarea, 
+.farmer-layout.dark select {
+  background-color: #1a2338;
+  color: #f3f4f6;
+  border: 1px solid #2d3f52;
+}
+
+.farmer-layout.light input:focus, 
+.farmer-layout.light textarea:focus, 
+.farmer-layout.light select:focus {
+  border-color: #10b981;
+}
+
+.farmer-layout.dark input:focus, 
+.farmer-layout.dark textarea:focus, 
+.farmer-layout.dark select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+/* Products Section */
+.farmer-layout.light .products-section {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.farmer-layout.dark .products-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid #1e293b;
+}
+
+.farmer-layout.dark .loading-state,
+.farmer-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .empty-state i {
+  color: #2d3f52;
+}
+
+.farmer-layout.dark .empty-state h3 {
+  color: #f1f5f9;
+}
+
+/* Product Cards */
+.farmer-layout.light .product-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.farmer-layout.dark .product-card {
+  background: #1e293b;
+  border: 1px solid #2d3f52;
+}
+
+.farmer-layout.dark .product-card:hover {
+  border-color: #4ade80;
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15);
+}
+
+.farmer-layout.dark .product-image-container {
+  background: #131b2e;
+}
+
+.farmer-layout.dark .product-image-placeholder {
+  background: linear-gradient(135deg, #1a2338 0%, #131b2e 100%);
+  color: #2d3f52;
+}
+
+.farmer-layout.light .status-badge {
+  background: white;
+}
+
+.farmer-layout.dark .status-badge {
+  background: #131b2e;
+}
+
+.farmer-layout.dark .product-info h3 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .description {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .product-details {
+  border-bottom-color: #2d3f52;
+}
+
+.farmer-layout.dark .detail-item .label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .detail-item .value {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .inventory-label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .inventory-bar {
+  background: #2d3f52;
+}
+
+/* Buttons */
+.farmer-layout.dark .btn-edit {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+}
+
+.farmer-layout.dark .btn-delete {
+  background-color: #7f1d1d;
+  color: #f87171;
+}
+
+/* Modals */
+.farmer-layout.light .modal-dialog,
+.farmer-layout.light .modal-content {
+  background-color: white;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .modal-dialog,
+.farmer-layout.dark .modal-content {
+  background-color: #131b2e;
+  color: #f3f4f6;
+  border: 1px solid #1e293b;
+}
+
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.farmer-layout.light .modal-header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .modal-header {
+  background-color: #1a2338;
+  border-bottom: 1px solid #2d3f52;
+  color: #f3f4f6;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .close-btn {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .close-btn {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  background-color: #2d3f52;
+  color: #f3f4f6;
+}
+
+/* Form Styling */
+.farmer-layout.light .form-group label {
+  color: #333;
+}
+
+.farmer-layout.dark .form-group label {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .currency {
+  background: #1a2338;
+  color: #f3f4f6;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .error-text {
+  color: #f87171;
+}
+
+.farmer-layout.light .image-upload {
+  background-color: #f9fafb;
+  border: 2px dashed #d1d5db;
+}
+
+.farmer-layout.dark .image-upload {
+  background-color: #1a2338;
+  border: 2px dashed #2d3f52;
+}
+
+.farmer-layout.dark .image-upload:hover {
+  border-color: #4ade80;
+  background-color: #1e293b;
+}
+
+.farmer-layout.dark .upload-label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .upload-label i {
+  color: #2d3f52;
+}
+
+.farmer-layout.dark .image-preview img {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.farmer-layout.light .form-actions {
+  border-top: 1px solid #e5e7eb;
+}
+
+.farmer-layout.dark .form-actions {
+  border-top: 1px solid #2d3f52;
 }
 </style>
