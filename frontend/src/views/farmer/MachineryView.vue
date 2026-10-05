@@ -1,5 +1,5 @@
 <template>
-  <div class="machinery-layout">
+  <div class="machinery-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="machinery-container">
       <!-- Header Section -->
@@ -276,6 +276,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Search, Filter, Grid3x3, List, AlertCircle, RotateCcw, X, Eye, 
@@ -284,6 +285,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1404,5 +1406,372 @@ onMounted(() => {
   .filters-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.machinery-layout.dark {
+  background-color: #0b0f17;
+}
+
+.machinery-layout.dark .machinery-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.machinery-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.machinery-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Search Box */
+.machinery-layout.dark .search-box {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.machinery-layout.dark .search-box input {
+  background: #1a2338;
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .search-box input::placeholder {
+  color: #64748b;
+}
+
+.machinery-layout.dark .search-box svg {
+  color: #94a3b8;
+}
+
+/* Buttons */
+.machinery-layout.dark .btn-filter,
+.machinery-layout.dark .btn-view {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .btn-filter:hover,
+.machinery-layout.dark .btn-view:hover {
+  background: #1e293b;
+  border-color: #7c3aed;
+  color: #f1f5f9;
+}
+
+/* Loading */
+.machinery-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #7c3aed;
+}
+
+/* Error */
+.machinery-layout.dark .error-container {
+  background: #1a1a2e;
+  border-color: #dc2626;
+}
+
+.machinery-layout.dark .error-message {
+  color: #fca5a5;
+}
+
+/* Content */
+.machinery-layout.dark .machinery-content {
+  background-color: #0b0f17;
+}
+
+/* Filters Panel */
+.machinery-layout.dark .filters-panel {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.machinery-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.machinery-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.machinery-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .filter-select:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.machinery-layout.dark .price-input {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .price-input::placeholder {
+  color: #64748b;
+}
+
+.machinery-layout.dark .btn-clear {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .btn-clear:hover {
+  background: #1e293b;
+  border-color: #7c3aed;
+}
+
+/* Equipment Cards */
+.machinery-layout.dark .equipment-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.machinery-layout.dark .equipment-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  background: #1e293b;
+}
+
+.machinery-layout.dark .equipment-image {
+  background: #0f1620;
+}
+
+.machinery-layout.dark .condition-badge {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.machinery-layout.dark .equipment-name {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .equipment-type {
+  color: #a78bfa;
+}
+
+.machinery-layout.dark .equipment-description {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .spec-item {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .equipment-specs svg {
+  color: #94a3b8;
+}
+
+.machinery-layout.dark .equipment-pricing {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.machinery-layout.dark .price-label {
+  color: #94a3b8;
+}
+
+.machinery-layout.dark .price-value {
+  color: #c4b5fd;
+}
+
+.machinery-layout.dark .equipment-footer {
+  border-top-color: #2d3f52;
+}
+
+.machinery-layout.dark .availability-badge {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.machinery-layout.dark .btn-details {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #94a3b8;
+}
+
+.machinery-layout.dark .btn-details:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #1a2338;
+}
+
+/* Empty State */
+.machinery-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.machinery-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.machinery-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+.machinery-layout.dark .pagination {
+  background: #131b2e;
+  border-top-color: #2d3f52;
+}
+
+.machinery-layout.dark .pagination-btn {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .pagination-btn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.machinery-layout.dark .pagination-btn:disabled {
+  color: #475569;
+  border-color: #1e293b;
+}
+
+.machinery-layout.dark .pagination-info {
+  color: #94a3b8;
+}
+
+/* Modal */
+.machinery-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.machinery-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.machinery-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.machinery-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .detail-image {
+  background: #0f1620;
+}
+
+.machinery-layout.dark .detail-specs {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.machinery-layout.dark .spec-label {
+  color: #94a3b8;
+}
+
+.machinery-layout.dark .spec-value {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .pricing-details {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.machinery-layout.dark .price-block .label {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .price-block .price {
+  color: #c4b5fd;
+}
+
+.machinery-layout.dark .features-section {
+  border-top-color: #2d3f52;
+}
+
+.machinery-layout.dark .features-section h3 {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .features-list li {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .contact-section {
+  border-top-color: #2d3f52;
+}
+
+.machinery-layout.dark .contact-section h3 {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .owner-contact {
+  background: #0f1620;
+}
+
+.machinery-layout.dark .owner-contact p {
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .owner-contact strong {
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.machinery-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.machinery-layout.dark .btn-secondary:hover {
+  background: #1a2338;
+  border-color: #7c3aed;
+  color: #f1f5f9;
+}
+
+.machinery-layout.dark .btn-primary {
+  background: #7c3aed;
+}
+
+.machinery-layout.dark .btn-primary:hover {
+  background: #6d28d9;
 }
 </style>

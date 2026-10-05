@@ -1,5 +1,5 @@
 <template>
-  <div class="pesticides-layout">
+  <div class="pesticides-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="pesticides-container">
       <!-- Header Section -->
@@ -270,6 +270,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Search, Filter, Grid3x3, List, AlertCircle, RotateCcw, X, Eye, ShoppingCart,
@@ -278,6 +279,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1405,5 +1407,367 @@ onMounted(() => {
   .filters-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dark Mode Styles */
+.pesticides-layout.dark {
+  background-color: #0b0f17;
+}
+
+.pesticides-layout.dark .pesticides-container {
+  background-color: #0b0f17;
+}
+
+/* Header */
+.pesticides-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pesticides-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .header-content p {
+  color: #94a3b8;
+}
+
+/* Search Box */
+.pesticides-layout.dark .search-box {
+  background: #1a2338;
+  border-color: #2d3f52;
+}
+
+.pesticides-layout.dark .search-box input {
+  background: #1a2338;
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .search-box input::placeholder {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .search-box svg {
+  color: #94a3b8;
+}
+
+/* Buttons */
+.pesticides-layout.dark .btn-filter,
+.pesticides-layout.dark .btn-view {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .btn-filter:hover,
+.pesticides-layout.dark .btn-view:hover {
+  background: #1e293b;
+  border-color: #ef4444;
+  color: #f1f5f9;
+}
+
+/* Loading */
+.pesticides-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #ef4444;
+}
+
+/* Error */
+.pesticides-layout.dark .error-container {
+  background: #1a1a2e;
+  border-color: #dc2626;
+}
+
+.pesticides-layout.dark .error-message {
+  color: #fca5a5;
+}
+
+/* Content */
+.pesticides-layout.dark .pesticides-content {
+  background-color: #0b0f17;
+}
+
+/* Filters Panel */
+.pesticides-layout.dark .filters-panel {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pesticides-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.pesticides-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .filter-select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.pesticides-layout.dark .price-input {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .price-input::placeholder {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .checkbox-label {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .btn-clear {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .btn-clear:hover {
+  background: #1e293b;
+  border-color: #ef4444;
+}
+
+/* Product Cards */
+.pesticides-layout.dark .product-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pesticides-layout.dark .product-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  background: #1e293b;
+}
+
+.pesticides-layout.dark .product-image {
+  background: #0f1620;
+}
+
+.pesticides-layout.dark .product-name {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .pest-type {
+  color: #ff6b6b;
+}
+
+.pesticides-layout.dark .product-description {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .product-meta {
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .product-meta svg {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .coverage-info {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.pesticides-layout.dark .coverage-label {
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .coverage-value {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .product-footer {
+  border-top-color: #2d3f52;
+}
+
+.pesticides-layout.dark .original-price {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .current-price {
+  color: #ff6b6b;
+}
+
+.pesticides-layout.dark .unit {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .btn-details {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .btn-details:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #1a2338;
+}
+
+/* Empty State */
+.pesticides-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.pesticides-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+.pesticides-layout.dark .pagination {
+  background: #131b2e;
+  border-top-color: #2d3f52;
+}
+
+.pesticides-layout.dark .pagination-btn {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .pagination-btn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.pesticides-layout.dark .pagination-btn:disabled {
+  color: #475569;
+  border-color: #1e293b;
+}
+
+.pesticides-layout.dark .pagination-info {
+  color: #94a3b8;
+}
+
+/* Modal */
+.pesticides-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.pesticides-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pesticides-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.pesticides-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .detail-image {
+  background: #0f1620;
+}
+
+.pesticides-layout.dark .detail-type {
+  color: #ff6b6b;
+}
+
+.pesticides-layout.dark .detail-description {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .detail-specs {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.pesticides-layout.dark .spec-label {
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .spec-value {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .detail-price .label {
+  color: #94a3b8;
+}
+
+.pesticides-layout.dark .detail-price .original {
+  color: #64748b;
+}
+
+.pesticides-layout.dark .detail-price .price {
+  color: #ff6b6b;
+}
+
+.pesticides-layout.dark .usage-guide {
+  border-top-color: #2d3f52;
+}
+
+.pesticides-layout.dark .usage-guide h3 {
+  color: #f1f5f9;
+}
+
+.pesticides-layout.dark .safety-warning {
+  background: #1a2338;
+  border-color: #dc2626;
+  color: #fca5a5;
+}
+
+.pesticides-layout.dark .guide-content h4 {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .guide-content li {
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.pesticides-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.pesticides-layout.dark .btn-secondary:hover {
+  background: #1a2338;
+  border-color: #ef4444;
+  color: #f1f5f9;
 }
 </style>
