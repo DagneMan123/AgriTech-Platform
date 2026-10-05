@@ -1,5 +1,5 @@
 <template>
-  <div class="consultations-layout">
+  <div class="consultations-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="consultations-container">
       <!-- Header -->
@@ -299,6 +299,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, MessageSquare, AlertCircle, RotateCcw, X, Eye, Calendar, Clock, Video, Star, CheckCircle,
@@ -307,6 +308,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const error = ref(null)
@@ -1113,5 +1115,350 @@ onMounted(() => { fetchConsultations() })
   .detail-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.consultations-layout.dark {
+  background-color: #0b0f17;
+}
+
+.consultations-layout.dark .consultations-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.consultations-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.consultations-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .btn-new {
+  background: #3b82f6;
+  color: white;
+}
+
+.consultations-layout.dark .btn-new:hover {
+  background: #2563eb;
+}
+
+/* Loading */
+.consultations-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Error State */
+.consultations-layout.dark .error-container {
+  background: #2e1a1a;
+  border-color: #dc2626;
+}
+
+.consultations-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.consultations-layout.dark .error-message {
+  color: #f87171;
+}
+
+.consultations-layout.dark .btn-retry {
+  background: #dc2626;
+  color: white;
+}
+
+.consultations-layout.dark .btn-retry:hover {
+  background: #b91c1c;
+}
+
+/* Content */
+.consultations-layout.dark .consultations-content {
+  background-color: #0b0f17;
+}
+
+/* Stats Cards */
+.consultations-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.consultations-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.consultations-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Tabs */
+.consultations-layout.dark .tabs {
+  border-bottom-color: #2d3f52;
+}
+
+.consultations-layout.dark .tab {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .tab:hover {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .tab.active {
+  color: #60a5fa;
+  border-bottom-color: #3b82f6;
+}
+
+/* Consultations Section */
+.consultations-layout.dark .consultations-section {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.consultations-layout.dark .consultation-card {
+  border-color: #2d3f52;
+  background: #1a2338;
+}
+
+.consultations-layout.dark .consultation-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border-color: #3b82f6;
+}
+
+.consultations-layout.dark .expert-info h3 {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .specialty {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .status-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .status-completed {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.consultations-layout.dark .status-scheduled {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+.consultations-layout.dark .status-pending {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.consultations-layout.dark .avatar {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+.consultations-layout.dark .topic {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .detail {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .notes {
+  background: #0f1620;
+}
+
+.consultations-layout.dark .notes p {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .rating-text {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .action-btn {
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .action-btn.primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.consultations-layout.dark .action-btn.primary:hover {
+  background: #2563eb;
+}
+
+.consultations-layout.dark .action-btn.secondary {
+  background: none;
+  color: #60a5fa;
+}
+
+.consultations-layout.dark .action-btn.secondary:hover {
+  background: #1a2e4d;
+}
+
+/* Empty State */
+.consultations-layout.dark .empty-state {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.consultations-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .btn-book {
+  background: #3b82f6;
+  color: white;
+}
+
+.consultations-layout.dark .btn-book:hover {
+  background: #2563eb;
+}
+
+/* Modal */
+.consultations-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.consultations-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.consultations-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.consultations-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.consultations-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.consultations-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .form-control {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .form-control::placeholder {
+  color: #64748b;
+}
+
+.consultations-layout.dark .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.consultations-layout.dark .detail-section h3 {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .expert-card {
+  background: #0f1620;
+}
+
+.consultations-layout.dark .expert-avatar {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+.consultations-layout.dark .expert-details h4 {
+  color: #f1f5f9;
+}
+
+.consultations-layout.dark .expert-details p {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .expert-rating {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .detail-grid {
+  gap: 12px;
+}
+
+.consultations-layout.dark .detail-item {
+  background: #0f1620;
+}
+
+.consultations-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.consultations-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .question-text,
+.consultations-layout.dark .response-text {
+  background: #0f1620;
+  color: #cbd5e1;
+}
+
+/* Modal Footer */
+.consultations-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.consultations-layout.dark .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.consultations-layout.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.consultations-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.consultations-layout.dark .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>

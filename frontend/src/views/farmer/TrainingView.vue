@@ -1,5 +1,5 @@
 <template>
-  <div class="training-layout">
+  <div class="training-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="training-container">
       <!-- Header -->
@@ -241,6 +241,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   BookOpen, CheckCircle, Clock, Award, AlertCircle, RotateCcw, X, Users, Star,
@@ -249,6 +250,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const error = ref(null)
@@ -1069,5 +1071,316 @@ onMounted(() => { fetchTrainingMaterials() })
   .module-status {
     display: none;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.training-layout.dark {
+  background-color: #0b0f17;
+}
+
+.training-layout.dark .training-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.training-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.training-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Loading */
+.training-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Error State */
+.training-layout.dark .error-container {
+  background: #2e1a1a;
+  border-color: #dc2626;
+}
+
+.training-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.training-layout.dark .error-message {
+  color: #f87171;
+}
+
+.training-layout.dark .btn-retry {
+  background: #dc2626;
+  color: white;
+}
+
+.training-layout.dark .btn-retry:hover {
+  background: #b91c1c;
+}
+
+/* Content */
+.training-layout.dark .training-content {
+  background-color: #0b0f17;
+}
+
+/* Search Bar */
+.training-layout.dark .search-bar {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.training-layout.dark .search-input,
+.training-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.training-layout.dark .search-input::placeholder {
+  color: #64748b;
+}
+
+.training-layout.dark .search-input:focus,
+.training-layout.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Stats Cards */
+.training-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.training-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.training-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Training Cards */
+.training-layout.dark .training-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.training-layout.dark .training-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.training-layout.dark .card-image {
+  background: linear-gradient(135deg, #1a2e4d 0%, #0f1a2e 100%);
+}
+
+.training-layout.dark .icon {
+  color: #60a5fa;
+  opacity: 0.7;
+}
+
+.training-layout.dark .level-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.training-layout.dark .level-beginner {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.training-layout.dark .level-intermediate {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.training-layout.dark .level-advanced {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.training-layout.dark .card-content h3 {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .category {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .description {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .info-item {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .progress-bar {
+  background: #0f1620;
+}
+
+.training-layout.dark .progress-text {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.training-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.training-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.training-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.training-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.training-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.training-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.training-layout.dark .section h3 {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .description {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .details-grid {
+  gap: 12px;
+}
+
+.training-layout.dark .detail {
+  background: #0f1620;
+}
+
+.training-layout.dark .detail .label {
+  color: #94a3b8;
+}
+
+.training-layout.dark .detail .value {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .objectives-list li,
+.training-layout.dark .prerequisites-list li {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .objectives-list li svg {
+  color: #4ade80;
+}
+
+.training-layout.dark .modules-list {
+  gap: 10px;
+}
+
+.training-layout.dark .module-item {
+  background: #0f1620;
+  color: #cbd5e1;
+}
+
+.training-layout.dark .module-number {
+  color: #94a3b8;
+}
+
+.training-layout.dark .module-title {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .module-duration {
+  color: #cbd5e1;
+}
+
+.training-layout.dark .module-status {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.training-layout.dark .module-status.completed {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.training-layout.dark .reviews-list {
+  gap: 12px;
+}
+
+.training-layout.dark .review-item {
+  background: #0f1620;
+}
+
+.training-layout.dark .review-name {
+  color: #f1f5f9;
+}
+
+.training-layout.dark .review-text {
+  color: #cbd5e1;
+}
+
+/* Modal Footer */
+.training-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.training-layout.dark .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.training-layout.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.training-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.training-layout.dark .btn-secondary:hover {
+  background: #1a2338;
+}
+
+.training-layout.dark .btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.training-layout.dark .btn-success:hover {
+  background: #059669;
 }
 </style>
