@@ -1,5 +1,5 @@
 <template>
-  <div class="weather-layout">
+  <div class="weather-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="weather-container">
       <!-- Header -->
@@ -197,6 +197,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Cloud, CloudRain, Sun, Wind, Droplets, Eye, Gauge, AlertCircle, RotateCcw, X, MapPin,
@@ -205,6 +206,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const error = ref(null)
@@ -894,5 +896,334 @@ onMounted(() => { fetchWeatherData() })
   .recommendations-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.weather-layout.dark {
+  background-color: #0b0f17;
+}
+
+.weather-layout.dark .weather-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.weather-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.weather-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Loading */
+.weather-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Error State */
+.weather-layout.dark .error-container {
+  background: #2e1a1a;
+  border-color: #dc2626;
+}
+
+.weather-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.weather-layout.dark .error-message {
+  color: #f87171;
+}
+
+.weather-layout.dark .btn-retry {
+  background: #dc2626;
+  color: white;
+}
+
+.weather-layout.dark .btn-retry:hover {
+  background: #b91c1c;
+}
+
+/* Content */
+.weather-layout.dark .weather-content {
+  background-color: #0b0f17;
+}
+
+/* Location Card */
+.weather-layout.dark .location-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.weather-layout.dark .location-card h3 {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .location-coords {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .btn-change-location {
+  background: #1a2e4d;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+.weather-layout.dark .btn-change-location:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Current Weather */
+.weather-layout.dark .current-weather {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.weather-layout.dark .weather-main {
+  border-bottom-color: #2d3f52;
+}
+
+.weather-layout.dark .temperature {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .condition {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .description {
+  color: #94a3b8;
+}
+
+/* Weather Details Grid */
+.weather-layout.dark .detail-card {
+  background: #0f1620;
+}
+
+.weather-layout.dark .detail-card .label {
+  color: #94a3b8;
+}
+
+.weather-layout.dark .detail-card .value {
+  color: #f1f5f9;
+}
+
+/* Forecast Section */
+.weather-layout.dark .forecast-section,
+.weather-layout.dark .hourly-section,
+.weather-layout.dark .alerts-section,
+.weather-layout.dark .recommendations-section {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.weather-layout.dark .section-header {
+  border-bottom-color: #2d3f52;
+}
+
+.weather-layout.dark .section-header h3 {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .alert-header-icon {
+  color: #f87171;
+}
+
+/* Forecast Cards */
+.weather-layout.dark .forecast-card {
+  border-color: #2d3f52;
+  background: #1a2338;
+}
+
+.weather-layout.dark .forecast-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.weather-layout.dark .forecast-day {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .forecast-condition {
+  color: #94a3b8;
+}
+
+.weather-layout.dark .forecast-temp {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .forecast-low {
+  color: #cbd5e1;
+}
+
+/* Hourly Forecast */
+.weather-layout.dark .hourly-card {
+  border-color: #2d3f52;
+  background: #1a2338;
+}
+
+.weather-layout.dark .hour-time {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .hour-temp {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .hour-condition {
+  color: #94a3b8;
+}
+
+/* Alerts */
+.weather-layout.dark .alert-item {
+  background: #2e2a1a;
+  border-left-color: #f59e0b;
+}
+
+.weather-layout.dark .alert-warning {
+  background: #2e2a1a;
+  border-left-color: #f59e0b;
+}
+
+.weather-layout.dark .alert-icon {
+  color: #fbbf24;
+}
+
+.weather-layout.dark .alert-title {
+  color: #fbbf24;
+}
+
+.weather-layout.dark .alert-message {
+  color: #f3e8ff;
+}
+
+.weather-layout.dark .alert-time {
+  color: #fed7aa;
+}
+
+/* Recommendations */
+.weather-layout.dark .rec-positive {
+  background: #1a2e2e;
+  border-left-color: #10b981;
+}
+
+.weather-layout.dark .rec-positive .rec-icon {
+  color: #4ade80;
+}
+
+.weather-layout.dark .rec-positive .rec-content h4 {
+  color: #4ade80;
+}
+
+.weather-layout.dark .rec-positive .rec-content p {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .rec-caution {
+  background: #2e2a1a;
+  border-left-color: #f59e0b;
+}
+
+.weather-layout.dark .rec-caution .rec-icon {
+  color: #fbbf24;
+}
+
+.weather-layout.dark .rec-caution .rec-content h4 {
+  color: #fbbf24;
+}
+
+.weather-layout.dark .rec-caution .rec-content p {
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .rec-warning {
+  background: #2e1a1a;
+  border-left-color: #dc2626;
+}
+
+.weather-layout.dark .rec-warning .rec-icon {
+  color: #f87171;
+}
+
+.weather-layout.dark .rec-warning .rec-content h4 {
+  color: #f87171;
+}
+
+.weather-layout.dark .rec-warning .rec-content p {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.weather-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.weather-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.weather-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.weather-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.weather-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.weather-layout.dark .modal-body {
+  background: #131b2e;
+}
+
+.weather-layout.dark .location-item {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.weather-layout.dark .location-item:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+.weather-layout.dark .location-item.active {
+  background: #1a2e4d;
+  border-color: #3b82f6;
+}
+
+.weather-layout.dark .location-item svg {
+  color: #60a5fa;
+}
+
+.weather-layout.dark .location-name {
+  color: #f1f5f9;
+}
+
+.weather-layout.dark .location-details {
+  color: #cbd5e1;
 }
 </style>

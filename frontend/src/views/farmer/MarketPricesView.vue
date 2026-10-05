@@ -1,5 +1,5 @@
 <template>
-  <div class="market-layout">
+  <div class="market-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="market-container">
       <!-- Header -->
@@ -212,6 +212,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   TrendingUp, TrendingDown, BarChart3, AlertCircle, RotateCcw, X, MapPin, Calendar,
@@ -220,6 +221,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const error = ref(null)
@@ -1031,5 +1033,357 @@ onMounted(() => { fetchMarketData() })
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.market-layout.dark {
+  background-color: #0b0f17;
+}
+
+.market-layout.dark .market-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.market-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.market-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Loading */
+.market-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Error State */
+.market-layout.dark .error-container {
+  background: #2e1a1a;
+  border-color: #dc2626;
+}
+
+.market-layout.dark .error-icon {
+  color: #f87171;
+}
+
+.market-layout.dark .error-message {
+  color: #f87171;
+}
+
+.market-layout.dark .btn-retry {
+  background: #dc2626;
+  color: white;
+}
+
+.market-layout.dark .btn-retry:hover {
+  background: #b91c1c;
+}
+
+/* Content */
+.market-layout.dark .market-content {
+  background-color: #0b0f17;
+}
+
+/* Summary Grid */
+.market-layout.dark .summary-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.market-layout.dark .summary-card.trending-up {
+  border-left-color: #10b981;
+}
+
+.market-layout.dark .summary-card .label {
+  color: #94a3b8;
+}
+
+.market-layout.dark .summary-card .value {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .value.positive {
+  color: #4ade80;
+}
+
+/* Filters Bar */
+.market-layout.dark .filters-bar {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.market-layout.dark .search-input,
+.market-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.market-layout.dark .search-input::placeholder {
+  color: #64748b;
+}
+
+.market-layout.dark .search-input:focus,
+.market-layout.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Price Cards */
+.market-layout.dark .price-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #2d3f52;
+}
+
+.market-layout.dark .price-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  border-color: #3b82f6;
+}
+
+.market-layout.dark .card-header {
+  border-bottom-color: #2d3f52;
+}
+
+.market-layout.dark .product-name {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .unit {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .current-price {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .price-change.positive {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.market-layout.dark .price-change.negative {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.market-layout.dark .price-details {
+  background: #0f1620;
+}
+
+.market-layout.dark .detail .label {
+  color: #94a3b8;
+}
+
+.market-layout.dark .detail .value {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .market-status {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .market-badge {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+/* Modal */
+.market-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.market-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.market-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.market-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.market-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.market-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.market-layout.dark .chart-section h3,
+.market-layout.dark .stats-section h3,
+.market-layout.dark .insights-section h3,
+.market-layout.dark .recommendation-section h3,
+.market-layout.dark .markets-section h3 {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .chart-placeholder {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.market-layout.dark .chart-icon {
+  color: #2d3f52;
+}
+
+.market-layout.dark .chart-placeholder p {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .stat {
+  background: #0f1620;
+}
+
+.market-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.market-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .stat-value.positive {
+  color: #4ade80;
+}
+
+.market-layout.dark .insight-positive {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.market-layout.dark .insight-positive svg {
+  color: #4ade80;
+}
+
+.market-layout.dark .insight-caution {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.market-layout.dark .insight-caution svg {
+  color: #fbbf24;
+}
+
+.market-layout.dark .insight-negative {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.market-layout.dark .insight-negative svg {
+  color: #f87171;
+}
+
+.market-layout.dark .rec-buy {
+  background: #1a2e2e;
+  border-left-color: #10b981;
+}
+
+.market-layout.dark .rec-buy h3 {
+  color: #4ade80;
+}
+
+.market-layout.dark .rec-buy p {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .rec-hold {
+  background: #2e2a1a;
+  border-left-color: #f59e0b;
+}
+
+.market-layout.dark .rec-hold h3 {
+  color: #fbbf24;
+}
+
+.market-layout.dark .rec-hold p {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .rec-sell {
+  background: #2e1a1a;
+  border-left-color: #dc2626;
+}
+
+.market-layout.dark .rec-sell h3 {
+  color: #f87171;
+}
+
+.market-layout.dark .rec-sell p {
+  color: #cbd5e1;
+}
+
+.market-layout.dark .market-listing {
+  background: #0f1620;
+  border-left-color: #2d3f52;
+}
+
+.market-layout.dark .market-name {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .market-price {
+  color: #f1f5f9;
+}
+
+.market-layout.dark .market-status {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.market-layout.dark .market-status.live {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+/* Modal Footer */
+.market-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.market-layout.dark .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.market-layout.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.market-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.market-layout.dark .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>

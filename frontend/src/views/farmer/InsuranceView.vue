@@ -1,5 +1,5 @@
 <template>
-  <div class="insurance-layout">
+  <div class="insurance-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="insurance-container">
       <!-- Header -->
@@ -394,6 +394,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, Shield, DollarSign, AlertCircle, CheckCircle, Eye, FileText, X, Download
@@ -401,6 +402,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const selectedPolicy = ref(null)
@@ -1296,5 +1298,408 @@ onMounted(() => { fetchPolicies() })
   .modal-content {
     width: 95%;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.insurance-layout.dark {
+  background-color: #0b0f17;
+}
+
+.insurance-layout.dark .insurance-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.insurance-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .btn-new {
+  background: #8b5cf6;
+  color: white;
+}
+
+.insurance-layout.dark .btn-new:hover {
+  background: #7c3aed;
+}
+
+/* Loading */
+.insurance-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #8b5cf6;
+}
+
+/* Content */
+.insurance-layout.dark .insurance-content {
+  background-color: #0b0f17;
+}
+
+/* Stats Cards */
+.insurance-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.insurance-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Section Headers */
+.insurance-layout.dark .section-header h2,
+.insurance-layout.dark .products-section h2,
+.insurance-layout.dark .claims-section h2 {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .filter-select:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Policy Cards */
+.insurance-layout.dark .policy-card {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-layout.dark .policy-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.insurance-layout.dark .card-header {
+  border-bottom-color: #2d3f52;
+}
+
+.insurance-layout.dark .card-header h3 {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .status-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .status-active {
+  background: #2e1a3e;
+  color: #d8b4fe;
+}
+
+.insurance-layout.dark .status-expired {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.insurance-layout.dark .status-pending {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.insurance-layout.dark .card-content {
+  background: #131b2e;
+}
+
+.insurance-layout.dark .policy-item .label {
+  color: #94a3b8;
+}
+
+.insurance-layout.dark .policy-item .value {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .policy-item .value.highlight {
+  color: #d8b4fe;
+}
+
+.insurance-layout.dark .card-footer {
+  border-top-color: #2d3f52;
+}
+
+.insurance-layout.dark .btn-action {
+  background: none;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .btn-action:hover {
+  background: #1a2338;
+}
+
+.insurance-layout.dark .btn-action.btn-primary {
+  background: #2e1a3e;
+  color: #d8b4fe;
+  border-color: #8b5cf6;
+}
+
+.insurance-layout.dark .btn-action.btn-primary:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+/* Empty State */
+.insurance-layout.dark .empty-state {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.insurance-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Product Cards */
+.insurance-layout.dark .product-card {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-layout.dark .product-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.insurance-layout.dark .product-header h3 {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .badge {
+  background: #2e1a3e;
+  color: #d8b4fe;
+}
+
+.insurance-layout.dark .product-description {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .product-features {
+  background: #0f1620;
+}
+
+.insurance-layout.dark .feature .label {
+  color: #94a3b8;
+}
+
+.insurance-layout.dark .feature .value {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .btn-purchase {
+  background: #8b5cf6;
+  color: white;
+}
+
+.insurance-layout.dark .btn-purchase:hover {
+  background: #7c3aed;
+}
+
+/* Claims Table */
+.insurance-layout.dark .claims-table-wrapper {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.insurance-layout.dark .claims-table thead {
+  background: #0f1620;
+  border-bottom-color: #2d3f52;
+}
+
+.insurance-layout.dark .claims-table th {
+  color: #cbd5e1;
+  background: #0f1620;
+}
+
+.insurance-layout.dark .claims-table tbody tr {
+  border-bottom-color: #2d3f52;
+}
+
+.insurance-layout.dark .claims-table tbody tr:hover {
+  background: #1a2338;
+}
+
+.insurance-layout.dark .table-row td {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .claim-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .claim-approved {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.insurance-layout.dark .claim-pending {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.insurance-layout.dark .claim-rejected {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.insurance-layout.dark .action-btn {
+  background: none;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .action-btn:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: #2e1a3e;
+}
+
+/* Modal */
+.insurance-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.insurance-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.insurance-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+  position: sticky;
+  top: 0;
+}
+
+.insurance-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.insurance-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.insurance-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+/* Detail Section */
+.insurance-layout.dark .detail-section h3 {
+  color: #f1f5f9;
+  border-bottom-color: #2d3f52;
+}
+
+.insurance-layout.dark .detail-grid {
+  background: #0f1620;
+}
+
+.insurance-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.insurance-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .detail-item .value.highlight {
+  color: #d8b4fe;
+}
+
+.insurance-layout.dark .coverage-list li {
+  background: #0f1620;
+  border-left-color: #8b5cf6;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .terms-text {
+  background: #0f1620;
+  color: #cbd5e1;
+}
+
+/* Form */
+.insurance-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .form-control {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.insurance-layout.dark .form-control::placeholder {
+  color: #64748b;
+}
+
+.insurance-layout.dark .form-control:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.insurance-layout.dark .form-group small {
+  color: #94a3b8;
+}
+
+/* Modal Footer */
+.insurance-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+  position: sticky;
+  bottom: 0;
+}
+
+.insurance-layout.dark .btn-primary {
+  background: #8b5cf6;
+  color: white;
+}
+
+.insurance-layout.dark .btn-primary:hover {
+  background: #7c3aed;
+}
+
+.insurance-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.insurance-layout.dark .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>
