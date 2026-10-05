@@ -1,5 +1,5 @@
 <template>
-  <div class="loans-layout">
+  <div class="loans-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="loans-container">
       <div class="page-header">
@@ -273,6 +273,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, DollarSign, TrendingUp, CheckCircle, AlertCircle, Eye, CreditCard, X, Download
@@ -280,6 +281,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const showNewApplication = ref(false)
@@ -997,5 +999,344 @@ onMounted(() => { fetchLoans() })
   .products-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.loans-layout.dark {
+  background-color: #0b0f17;
+}
+
+.loans-layout.dark .loans-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.loans-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.loans-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .btn-new {
+  background: #059669;
+  color: white;
+}
+
+.loans-layout.dark .btn-new:hover {
+  background: #047857;
+}
+
+/* Loading */
+.loans-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #059669;
+}
+
+/* Content */
+.loans-layout.dark .loans-content {
+  background-color: #0b0f17;
+}
+
+/* Stats Cards */
+.loans-layout.dark .stat-card {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.loans-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.loans-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Table Section */
+.loans-layout.dark .table-section {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.loans-layout.dark .table-header {
+  border-bottom-color: #2d3f52;
+}
+
+.loans-layout.dark .table-header h3 {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .filter-select:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+/* Table */
+.loans-layout.dark .loans-table thead {
+  background: #0f1620;
+  border-bottom-color: #2d3f52;
+}
+
+.loans-layout.dark .loans-table th {
+  color: #cbd5e1;
+  background: #0f1620;
+}
+
+.loans-layout.dark .loans-table tbody tr {
+  border-bottom-color: #2d3f52;
+}
+
+.loans-layout.dark .loans-table tbody tr:hover {
+  background: #1a2338;
+}
+
+.loans-layout.dark .table-row td {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .status-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .status-active {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.loans-layout.dark .status-pending {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+.loans-layout.dark .status-completed {
+  background: #2e1a3e;
+  color: #d8b4fe;
+}
+
+/* Action Buttons */
+.loans-layout.dark .action-btn {
+  background: none;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .action-btn:hover {
+  border-color: #059669;
+  color: #059669;
+  background: #1a2e2e;
+}
+
+/* Empty State */
+.loans-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.loans-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Products Section */
+.loans-layout.dark .products-section h2 {
+  color: #f1f5f9;
+}
+
+/* Product Cards */
+.loans-layout.dark .product-card {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.loans-layout.dark .product-card:hover {
+  border-color: #059669;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.loans-layout.dark .product-header h3 {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .badge {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.loans-layout.dark .product-description {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .product-features {
+  background: #0f1620;
+}
+
+.loans-layout.dark .feature .label {
+  color: #94a3b8;
+}
+
+.loans-layout.dark .feature .value {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .btn-apply-product {
+  background: #059669;
+  color: white;
+}
+
+.loans-layout.dark .btn-apply-product:hover {
+  background: #047857;
+}
+
+/* Modal */
+.loans-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.loans-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.loans-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.loans-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.loans-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.loans-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+/* Detail Grid */
+.loans-layout.dark .detail-grid {
+  background: #0f1620;
+}
+
+.loans-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.loans-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .detail-item .value.highlight {
+  color: #4ade80;
+}
+
+/* Payment History */
+.loans-layout.dark .payment-history h3 {
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .history-table thead {
+  background: #0f1620;
+}
+
+.loans-layout.dark .history-table th {
+  color: #cbd5e1;
+  border-bottom-color: #2d3f52;
+  background: #0f1620;
+}
+
+.loans-layout.dark .history-table td {
+  border-bottom-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .payment-badge {
+  background: #1a2338;
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .payment-paid {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.loans-layout.dark .payment-pending {
+  background: #2e2a1a;
+  color: #fbbf24;
+}
+
+/* Modal Footer */
+.loans-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.loans-layout.dark .btn-primary {
+  background: #059669;
+  color: white;
+}
+
+.loans-layout.dark .btn-primary:hover {
+  background: #047857;
+}
+
+.loans-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .btn-secondary:hover {
+  background: #1a2338;
+}
+
+/* Form */
+.loans-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.loans-layout.dark .form-control {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.loans-layout.dark .form-control::placeholder {
+  color: #64748b;
+}
+
+.loans-layout.dark .form-control:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 </style>

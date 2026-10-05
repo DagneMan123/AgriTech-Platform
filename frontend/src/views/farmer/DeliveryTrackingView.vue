@@ -1,5 +1,5 @@
 <template>
-  <div class="delivery-tracking-layout">
+  <div class="delivery-tracking-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="tracking-container">
       <!-- Header -->
@@ -278,6 +278,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   CheckCircle, AlertCircle, RotateCcw, X, ChevronRight, ChevronLeft, Package, 
@@ -286,6 +287,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const selectedDelivery = ref(null)
@@ -1220,5 +1222,376 @@ onMounted(() => { fetchDeliveries() })
   .modal-content {
     width: 95%;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.delivery-tracking-layout.dark {
+  background-color: #0b0f17;
+}
+
+.delivery-tracking-layout.dark .tracking-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.delivery-tracking-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.delivery-tracking-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Loading */
+.delivery-tracking-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Content */
+.delivery-tracking-layout.dark .tracking-content {
+  background-color: #0b0f17;
+}
+
+/* Filters Section */
+.delivery-tracking-layout.dark .filters-section {
+  background: #131b2e;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.delivery-tracking-layout.dark .search-input,
+.delivery-tracking-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .search-input::placeholder,
+.delivery-tracking-layout.dark .filter-select::placeholder {
+  color: #64748b;
+}
+
+.delivery-tracking-layout.dark .search-input:focus,
+.delivery-tracking-layout.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Deliveries List */
+.delivery-tracking-layout.dark .deliveries-list {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.delivery-tracking-layout.dark .delivery-item {
+  border-bottom-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .delivery-item:hover {
+  background: #1a2338;
+}
+
+.delivery-tracking-layout.dark .delivery-header h3 {
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .delivery-route {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .product-info {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .meta-item {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .meta-item svg {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .btn-view-details {
+  background: #1a2e4d;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+.delivery-tracking-layout.dark .btn-view-details:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Empty State */
+.delivery-tracking-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.delivery-tracking-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+.delivery-tracking-layout.dark .btn-pagination {
+  background: #1a2338;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .btn-pagination:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+.delivery-tracking-layout.dark .page-info {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.delivery-tracking-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.delivery-tracking-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.delivery-tracking-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+  position: sticky;
+  top: 0;
+}
+
+.delivery-tracking-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.delivery-tracking-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+/* Status Summary */
+.delivery-tracking-layout.dark .status-summary {
+  border-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-delivered {
+  background: #1a2e2e;
+  border-color: #10b981;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-delivered .summary-icon {
+  color: #4ade80;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-cancelled {
+  background: #2e1a1a;
+  border-color: #ef4444;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-cancelled .summary-icon {
+  color: #f87171;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-returned {
+  background: #2e2a1a;
+  border-color: #f59e0b;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-returned .summary-icon {
+  color: #fbbf24;
+}
+
+.delivery-tracking-layout.dark .status-summary.summary-delivered .summary-content,
+.delivery-tracking-layout.dark .status-summary.summary-cancelled .summary-content,
+.delivery-tracking-layout.dark .status-summary.summary-returned .summary-content {
+  color: #f1f5f9;
+}
+
+/* Info Section */
+.delivery-tracking-layout.dark .info-section {
+  border-bottom-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .section-title {
+  color: #f1f5f9;
+  border-bottom-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .location-info .label {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .location-info .location {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .route-line {
+  background: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .detail-grid {
+  background: #0f1620;
+}
+
+.delivery-tracking-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .detail-item .value.highlight {
+  color: #4ade80;
+}
+
+/* Timeline */
+.delivery-tracking-layout.dark .timeline {
+  padding-left: 30px;
+}
+
+.delivery-tracking-layout.dark .timeline-item::before {
+  border-color: #2d3f52;
+  background: #131b2e;
+}
+
+.delivery-tracking-layout.dark .timeline-item.pickup::before {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.delivery-tracking-layout.dark .timeline-item.delivered::before {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.delivery-tracking-layout.dark .timeline-item.cancelled::before {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.delivery-tracking-layout.dark .timeline-item.in-transit::before {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.delivery-tracking-layout.dark .timeline-item:not(:last-child)::after {
+  background: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .event-title {
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .event-description {
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .timeline-content small {
+  color: #64748b;
+}
+
+/* Driver Info */
+.delivery-tracking-layout.dark .driver-info {
+  background: #0f1620;
+}
+
+.delivery-tracking-layout.dark .driver-detail .label {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .driver-detail .value {
+  color: #cbd5e1;
+}
+
+/* Stats Grid */
+.delivery-tracking-layout.dark .stat {
+  background: #0f1620;
+}
+
+.delivery-tracking-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.delivery-tracking-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Documents */
+.delivery-tracking-layout.dark .document-item {
+  background: #0f1620;
+}
+
+.delivery-tracking-layout.dark .document-item svg {
+  color: #60a5fa;
+}
+
+.delivery-tracking-layout.dark .doc-title {
+  color: #f1f5f9;
+}
+
+.delivery-tracking-layout.dark .document-item small {
+  color: #64748b;
+}
+
+.delivery-tracking-layout.dark .btn-download {
+  color: #60a5fa;
+}
+
+.delivery-tracking-layout.dark .btn-download:hover {
+  color: #93c5fd;
+}
+
+/* Modal Footer */
+.delivery-tracking-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.delivery-tracking-layout.dark .btn-primary {
+  background: #3b82f6;
+}
+
+.delivery-tracking-layout.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.delivery-tracking-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.delivery-tracking-layout.dark .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>

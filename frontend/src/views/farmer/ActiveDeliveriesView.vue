@@ -1,5 +1,5 @@
 <template>
-  <div class="active-deliveries-layout">
+  <div class="active-deliveries-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="deliveries-container">
       <!-- Header -->
@@ -226,6 +226,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Truck, Clock, Package, MapPin, User, Phone, MessageSquare, Navigation, X
@@ -233,6 +234,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const selectedDelivery = ref(null)
@@ -910,5 +912,307 @@ onMounted(() => { fetchDeliveries() })
   .delivery-details {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.active-deliveries-layout.dark {
+  background-color: #0b0f17;
+}
+
+.active-deliveries-layout.dark .deliveries-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.active-deliveries-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.active-deliveries-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Loading */
+.active-deliveries-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+/* Content */
+.active-deliveries-layout.dark .deliveries-content {
+  background-color: #0b0f17;
+}
+
+/* Stats Grid */
+.active-deliveries-layout.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.active-deliveries-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.active-deliveries-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Deliveries Section */
+.active-deliveries-layout.dark .section-header h2 {
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Delivery Cards */
+.active-deliveries-layout.dark .delivery-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .delivery-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  border-color: #3b82f6;
+}
+
+.active-deliveries-layout.dark .card-header {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .card-header h3 {
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .destination {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .status-on-way {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+.active-deliveries-layout.dark .status-near {
+  background: #1a1a2e;
+  color: #fbbf24;
+}
+
+.active-deliveries-layout.dark .status-delayed {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.active-deliveries-layout.dark .card-info {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .info-item .label {
+  color: #94a3b8;
+}
+
+.active-deliveries-layout.dark .info-item .value {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .delivery-map {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .map-placeholder {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .map-placeholder p {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .delivery-progress {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .progress-bar {
+  background: #0f1620;
+}
+
+.active-deliveries-layout.dark .progress-text {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .delivery-details {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .detail svg {
+  color: #60a5fa;
+}
+
+.active-deliveries-layout.dark .detail-label {
+  color: #94a3b8;
+}
+
+.active-deliveries-layout.dark .detail-value {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .card-actions {
+  padding: 12px 16px;
+  gap: 8px;
+}
+
+.active-deliveries-layout.dark .btn-contact {
+  background: #1a2e4d;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+.active-deliveries-layout.dark .btn-contact:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.active-deliveries-layout.dark .btn-track {
+  background: #1a2e2e;
+  color: #4ade80;
+  border-color: #10b981;
+}
+
+.active-deliveries-layout.dark .btn-track:hover {
+  background: #10b981;
+  color: white;
+}
+
+/* Empty State */
+.active-deliveries-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.active-deliveries-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.active-deliveries-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.active-deliveries-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.active-deliveries-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.active-deliveries-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.active-deliveries-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .map-placeholder-large {
+  background: #0f1620;
+}
+
+.active-deliveries-layout.dark .map-placeholder-large p {
+  color: #cbd5e1;
+}
+
+/* Tracking Details */
+.active-deliveries-layout.dark .tracking-details {
+  border-color: #2d3f52;
+  background: transparent;
+}
+
+.active-deliveries-layout.dark .timeline-item:not(:last-child)::after {
+  background: #2d3f52;
+}
+
+.active-deliveries-layout.dark .timeline-item.current::after {
+  background: #3b82f6;
+}
+
+.active-deliveries-layout.dark .timeline-content .time {
+  color: #f1f5f9;
+}
+
+.active-deliveries-layout.dark .timeline-content p {
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .timeline-content small {
+  color: #64748b;
+}
+
+.active-deliveries-layout.dark .tracking-stats {
+  background: #0f1620;
+}
+
+.active-deliveries-layout.dark .stat-row {
+  border-bottom-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.active-deliveries-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Modal Footer */
+.active-deliveries-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.active-deliveries-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.active-deliveries-layout.dark .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>
