@@ -1,5 +1,5 @@
 <template>
-  <div class="payments-layout">
+  <div class="payments-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="payments-container">
       <!-- Header -->
@@ -358,6 +358,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, CreditCard, TrendingUp, DollarSign, CheckCircle, Smartphone, Bank, Edit, Trash2,
@@ -366,6 +367,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const showAddPayment = ref(false)
@@ -557,7 +559,10 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-onMounted(() => { fetchPayments() })
+onMounted(() => { 
+  console.log('PaymentsView mounted successfully')
+  fetchPayments() 
+})
 </script>
 
 <style scoped>
@@ -1263,6 +1268,387 @@ onMounted(() => { fetchPayments() })
   position: sticky;
   bottom: 0;
   background: white;
+}
+
+/* Dark Mode Styles */
+.payments-layout.dark {
+  background-color: #0b0f17;
+}
+
+.dark .payments-container {
+  background-color: #0b0f17;
+}
+
+.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+}
+
+.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.dark .header-content p {
+  color: #cbd5e1;
+}
+
+.dark .btn-new {
+  background: #3b82f6;
+  color: white;
+  border-color: transparent;
+}
+
+.dark .btn-new:hover {
+  background: #2563eb;
+}
+
+.dark .loading-container {
+  color: #f1f5f9;
+}
+
+.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #3b82f6;
+}
+
+.dark .payments-content {
+  background: #0b0f17;
+}
+
+.dark .stats-grid {
+  /* Grid layout remains the same */
+}
+
+.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #2d3f52;
+}
+
+.dark .stat-label {
+  color: #cbd5e1;
+}
+
+.dark .stat-value {
+  color: #f1f5f9;
+}
+
+.dark .stat-icon.methods { color: #3b82f6; }
+.dark .stat-icon.total { color: #a78bfa; }
+.dark .stat-icon.spent { color: #10b981; }
+.dark .stat-icon.pending { color: #fbbf24; }
+
+.dark .methods-section h2,
+.dark .transactions-section h2,
+.dark .schedules-section h2 {
+  color: #f1f5f9;
+}
+
+.dark .method-card {
+  background: #1a2338;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .method-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.dark .method-header {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .method-info h3 {
+  color: #f1f5f9;
+}
+
+.dark .method-detail {
+  color: #cbd5e1;
+}
+
+.dark .default-badge {
+  background: #064e3b;
+  color: #10b981;
+}
+
+.dark .icon-card { background: #1e3a8a; color: #3b82f6; }
+.dark .icon-bank { background: #15803d; color: #10b981; }
+.dark .icon-mobile { background: #92400e; color: #fbbf24; }
+
+.dark .method-body {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .method-text {
+  color: #cbd5e1;
+}
+
+.dark .btn-action {
+  background: #0f1620;
+  color: #cbd5e1;
+  border-color: #2d3f52;
+}
+
+.dark .btn-action:hover {
+  background: #1a2338;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.dark .btn-action.btn-danger:hover {
+  background: #7f1d1d;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.dark .empty-state {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .empty-icon {
+  color: #475569;
+}
+
+.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+.dark .section-header {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .filter-group {
+  /* Flex layout remains the same */
+}
+
+.dark .filter-select {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.dark .filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dark .transactions-list {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .transaction-item {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .transaction-item:hover {
+  background: #131b2e;
+}
+
+.dark .transaction-icon {
+  color: white;
+}
+
+.dark .icon-purchase { background: #1e40af; }
+.dark .icon-payment { background: #6b21a8; }
+.dark .icon-refund { background: #065f46; }
+
+.dark .transaction-info h3 {
+  color: #f1f5f9;
+}
+
+.dark .transaction-meta {
+  color: #cbd5e1;
+}
+
+.dark .transaction-amount {
+  color: #f1f5f9;
+}
+
+.dark .amount-purchase { color: #ff6b6b; }
+.dark .amount-payment { color: #ff6b6b; }
+.dark .amount-refund { color: #10b981; }
+
+.dark .transaction-status {
+  background: transparent;
+}
+
+.dark .status-completed { background: #064e3b; color: #10b981; }
+.dark .status-pending { background: #713f12; color: #fbbf24; }
+.dark .status-failed { background: #7f1d1d; color: #ef4444; }
+
+.dark .schedules-list {
+  /* Grid layout remains the same */
+}
+
+.dark .schedule-card {
+  background: #1a2338;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .schedule-header {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .schedule-header h3 {
+  color: #f1f5f9;
+}
+
+.dark .schedule-id {
+  color: #cbd5e1;
+}
+
+.dark .amount-badge {
+  background: #1e3a8a;
+  color: #3b82f6;
+}
+
+.dark .schedule-detail {
+  /* Flex layout remains the same */
+}
+
+.dark .schedule-detail .label {
+  color: #cbd5e1;
+}
+
+.dark .schedule-detail .value {
+  color: #f1f5f9;
+}
+
+.dark .status-badge {
+  background: transparent;
+}
+
+.dark .status-badge.status-upcoming { background: #0ea5e9; color: #001f3f; }
+
+.dark .btn-pay {
+  background: #3b82f6;
+  color: white;
+}
+
+.dark .btn-pay:hover {
+  background: #2563eb;
+}
+
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dark .modal-content {
+  background: #1a2338;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.dark .btn-close {
+  color: #cbd5e1;
+}
+
+.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+.dark .modal-body {
+  background: #0f1620;
+}
+
+.dark .modal-body.receipt {
+  background: #0f1620;
+}
+
+.dark .receipt {
+  background: #131b2e;
+  border-color: #2d3f52;
+}
+
+.dark .receipt-header {
+  border-bottom-color: #2d3f52;
+}
+
+.dark .receipt-id,
+.dark .receipt-date {
+  color: #cbd5e1;
+}
+
+.dark .receipt-id {
+  color: #f1f5f9;
+}
+
+.dark .receipt-item {
+  background: #1a2338;
+  color: #f1f5f9;
+}
+
+.dark .receipt-details {
+  /* Flex layout remains the same */
+}
+
+.dark .receipt-row {
+  /* Flex layout remains the same */
+}
+
+.dark .receipt-row span:first-child {
+  color: #cbd5e1;
+}
+
+.dark .receipt-row span:last-child {
+  color: #f1f5f9;
+}
+
+.dark .form-group label {
+  color: #f1f5f9;
+}
+
+.dark .form-control {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.dark .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.dark .form-group.checkbox label {
+  color: #f1f5f9;
+}
+
+.dark .btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.dark .btn-primary:hover {
+  background: #2563eb;
+}
+
+.dark .btn-secondary {
+  background: #0f1620;
+  color: #f1f5f9;
+  border-color: #2d3f52;
+}
+
+.dark .btn-secondary:hover {
+  background: #131b2e;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
 }
 
 @media (max-width: 768px) {
