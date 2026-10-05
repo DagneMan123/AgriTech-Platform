@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     
     <div class="farmer-page">
@@ -166,10 +166,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 const filters = ref({
   search: '',
@@ -192,11 +194,20 @@ const handleLogout = async () => {
   min-height: 100vh;
 }
 
+.farmer-layout.dark {
+  background: #0b0f17;
+}
+
 .farmer-page {
   margin-left: 260px;
   flex: 1;
   background-color: #f9fafb;
   min-height: 100vh;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
 }
 
 .page-container {
@@ -212,12 +223,22 @@ const handleLogout = async () => {
   color: #1f2937;
   margin: 0 0 8px 0;
   font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header h1 {
+  color: #f1f5f9;
 }
 
 .page-header p {
   color: #6b7280;
   margin: 0;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header p {
+  color: #cbd5e1;
 }
 
 .controls {
@@ -233,6 +254,23 @@ const handleLogout = async () => {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.dark .search-input,
+.dark .filter-select {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.dark .search-input:focus,
+.dark .filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .search-input {
@@ -272,6 +310,12 @@ const handleLogout = async () => {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .summary-card {
+  background: #1a2338;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .summary-card h4 {
@@ -280,6 +324,11 @@ const handleLogout = async () => {
   text-transform: uppercase;
   margin: 0 0 10px 0;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.dark .summary-card h4 {
+  color: #cbd5e1;
 }
 
 .summary-card .amount {
@@ -287,15 +336,29 @@ const handleLogout = async () => {
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 8px 0;
+  transition: color 0.3s ease;
+}
+
+.dark .summary-card .amount {
+  color: #f1f5f9;
 }
 
 .summary-card .change {
   font-size: 12px;
   color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+.dark .summary-card .change {
+  color: #94a3b8;
 }
 
 .summary-card .change.positive {
   color: #059669;
+}
+
+.dark .summary-card .change.positive {
+  color: #10b981;
 }
 
 .reports-section {
@@ -310,6 +373,12 @@ const handleLogout = async () => {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dark .production-table {
+  background: #1a2338;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .production-table h2 {
@@ -318,6 +387,12 @@ const handleLogout = async () => {
   margin: 0;
   font-size: 18px;
   color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.dark .production-table h2 {
+  color: #f1f5f9;
+  border-bottom-color: #2d3f52;
 }
 
 .table-responsive {
@@ -333,6 +408,11 @@ const handleLogout = async () => {
 
 .production-table thead {
   background: #f9fafb;
+  transition: background-color 0.3s ease;
+}
+
+.dark .production-table thead {
+  background: #0f1620;
 }
 
 .production-table th {
@@ -343,6 +423,12 @@ const handleLogout = async () => {
   font-size: 13px;
   text-transform: uppercase;
   border-bottom: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.dark .production-table th {
+  color: #cbd5e1;
+  border-bottom-color: #2d3f52;
 }
 
 .production-table td {
@@ -350,10 +436,20 @@ const handleLogout = async () => {
   border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
   color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.dark .production-table td {
+  color: #f1f5f9;
+  border-bottom-color: #2d3f52;
 }
 
 .production-table tbody tr:hover {
   background: #f9fafb;
+}
+
+.dark .production-table tbody tr:hover {
+  background: rgba(45, 63, 82, 0.5);
 }
 
 .status-badge {
@@ -362,6 +458,7 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .status-badge.growing {
@@ -369,9 +466,19 @@ const handleLogout = async () => {
   color: #1e40af;
 }
 
+.dark .status-badge.growing {
+  background: #1e3a8a;
+  color: #3b82f6;
+}
+
 .status-badge.ready {
   background: #d1fae5;
   color: #065f46;
+}
+
+.dark .status-badge.ready {
+  background: #064e3b;
+  color: #10b981;
 }
 
 .grade-a {
@@ -382,6 +489,12 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.dark .grade-a {
+  background: #064e3b;
+  color: #10b981;
 }
 
 .grade-b {
@@ -392,6 +505,12 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.dark .grade-b {
+  background: #92400e;
+  color: #fbbf24;
 }
 
 .chart-section {
@@ -399,12 +518,23 @@ const handleLogout = async () => {
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .chart-section {
+  background: #1a2338;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .chart-section h2 {
   font-size: 18px;
   margin: 0 0 20px 0;
   color: #1f2937;
+  transition: color 0.3s ease;
+}
+
+.dark .chart-section h2 {
+  color: #f1f5f9;
 }
 
 .chart-placeholder {
@@ -418,6 +548,13 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.dark .chart-placeholder {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {

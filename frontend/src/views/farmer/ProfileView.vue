@@ -256,6 +256,11 @@ const handleLogout = async () => {
 .farmer-layout {
   display: flex;
   height: 100vh;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.dark {
+  background: #0b0f17;
 }
 
 .farmer-page {
@@ -264,6 +269,11 @@ const handleLogout = async () => {
   overflow-y: auto;
   background-color: #f5f5f5;
   padding: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
 }
 
 .page-header {
@@ -275,10 +285,20 @@ const handleLogout = async () => {
   font-weight: bold;
   color: #333;
   margin-bottom: 5px;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header h1 {
+  color: #f1f5f9;
 }
 
 .page-header p {
   color: #666;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header p {
+  color: #cbd5e1;
 }
 
 .profile-container {
@@ -292,6 +312,12 @@ const handleLogout = async () => {
   padding: 30px;
   margin-bottom: 30px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .profile-card {
+  background: #1a2338;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .profile-header {
@@ -313,6 +339,11 @@ const handleLogout = async () => {
   font-weight: bold;
   color: #333;
   margin: 0 0 10px 0;
+  transition: color 0.3s ease;
+}
+
+.dark .profile-info h2 {
+  color: #f1f5f9;
 }
 
 .role-badge {
@@ -324,11 +355,22 @@ const handleLogout = async () => {
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.dark .role-badge {
+  background-color: #064e3b;
+  color: #10b981;
 }
 
 .email {
   color: #666;
   margin-bottom: 15px;
+  transition: color 0.3s ease;
+}
+
+.dark .email {
+  color: #cbd5e1;
 }
 
 .btn-edit-photo {
@@ -339,6 +381,7 @@ const handleLogout = async () => {
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
+  transition: all 0.3s;
 }
 
 .btn-edit-photo:hover {
@@ -357,12 +400,23 @@ const handleLogout = async () => {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .info-section {
+  background: #1a2338;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .info-section h3 {
   margin: 0 0 20px 0;
   color: #333;
   font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.dark .info-section h3 {
+  color: #f1f5f9;
 }
 
 .info-group {
@@ -375,6 +429,11 @@ const handleLogout = async () => {
   font-weight: 600;
   color: #333;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.dark .info-group label {
+  color: #cbd5e1;
 }
 
 .info-group input,
@@ -385,11 +444,39 @@ const handleLogout = async () => {
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
+  background: white;
+  color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.dark .info-group input,
+.dark .info-group textarea {
+  background: #0f1620;
+  color: #f1f5f9;
+  border-color: #2d3f52;
 }
 
 .info-group input:disabled {
   background-color: #f3f4f6;
   cursor: not-allowed;
+}
+
+.dark .info-group input:disabled {
+  background-color: #0f1620;
+  cursor: not-allowed;
+}
+
+.info-group input:focus,
+.info-group textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .info-group input:focus,
+.dark .info-group textarea:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .stats-grid {
@@ -405,18 +492,34 @@ const handleLogout = async () => {
   padding: 20px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .stat-card h4 {
   margin: 0 0 10px 0;
   color: #666;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.dark .stat-card h4 {
+  color: #cbd5e1;
 }
 
 .stat-value {
   margin: 0;
   font-size: 32px;
   font-weight: bold;
+  color: #10b981;
+  transition: color 0.3s ease;
+}
+
+.dark .stat-value {
   color: #10b981;
 }
 
@@ -426,12 +529,23 @@ const handleLogout = async () => {
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .settings-section {
+  background: #1a2338;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .settings-section h3 {
   margin: 0 0 20px 0;
   color: #333;
   font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.dark .settings-section h3 {
+  color: #f1f5f9;
 }
 
 .setting-item {
@@ -439,10 +553,25 @@ const handleLogout = async () => {
   justify-content: space-between;
   padding: 12px 0;
   border-bottom: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  color: #1f2937;
+}
+
+.dark .setting-item {
+  border-bottom-color: #2d3f52;
+  color: #f1f5f9;
 }
 
 .setting-item:last-child {
   border-bottom: none;
+}
+
+.setting-item span {
+  transition: color 0.3s ease;
+}
+
+.dark .setting-item span {
+  color: #cbd5e1;
 }
 
 .status-active {
@@ -534,123 +663,4 @@ const handleLogout = async () => {
     width: 100%;
   }
 }
-
-/* Light Mode (Default) */
-.farmer-layout.light {
-  background-color: #f5f5f5;
-  color: #1f2937;
-}
-
-/* Dark Mode */
-.farmer-layout.dark {
-  background-color: #0b0f17;
-  color: #f3f4f6;
-}
-
-.farmer-page {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.farmer-layout.light .farmer-page {
-  background-color: #f5f5f5;
-  color: #1f2937;
-}
-
-.farmer-layout.dark .farmer-page {
-  background-color: #0b0f17;
-  color: #f3f4f6;
-}
-
-/* Text Colors */
-.farmer-layout.light h1, .farmer-layout.light h2, .farmer-layout.light h3, .farmer-layout.light h4, .farmer-layout.light h5, .farmer-layout.light h6 {
-  color: #1f2937;
-}
-
-.farmer-layout.dark h1, .farmer-layout.dark h2, .farmer-layout.dark h3, .farmer-layout.dark h4, .farmer-layout.dark h5, .farmer-layout.dark h6 {
-  color: #ffffff;
-}
-
-.farmer-layout.light p {
-  color: #4b5563;
-}
-
-.farmer-layout.dark p {
-  color: #cbd5e1;
-}
-
-/* Cards and Containers */
-.farmer-layout.light .card, .farmer-layout.light .section, .farmer-layout.light [class*="card"], .farmer-layout.light [class*="container"] {
-  background-color: #ffffff;
-  color: #1f2937;
-}
-
-.farmer-layout.dark .card, .farmer-layout.dark .section, .farmer-layout.dark [class*="card"], .farmer-layout.dark [class*="container"] {
-  background-color: #131b2e;
-  color: #f3f4f6;
-  border: 1px solid #1e293b;
-}
-
-/* Stat Cards */
-.farmer-layout.light .stat-card {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  color: #1f2937;
-}
-
-.farmer-layout.dark .stat-card {
-  background: #131b2e;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  border: 1px solid #1e293b;
-  color: #f3f4f6;
-}
-
-/* Form Elements */
-.farmer-layout.light input, .farmer-layout.light textarea, .farmer-layout.light select {
-  background-color: #ffffff;
-  color: #1f2937;
-  border: 1px solid #d1d5db;
-}
-
-.farmer-layout.dark input, .farmer-layout.dark textarea, .farmer-layout.dark select {
-  background-color: #1a2338;
-  color: #f3f4f6;
-  border: 1px solid #2d3f52;
-}
-
-.farmer-layout.light input:focus, .farmer-layout.light textarea:focus, .farmer-layout.light select:focus {
-  border-color: #10b981;
-}
-
-.farmer-layout.dark input:focus, .farmer-layout.dark textarea:focus, .farmer-layout.dark select:focus {
-  border-color: #10b981;
-}
-
-/* Modals */
-.farmer-layout.light .modal-dialog, .farmer-layout.light .modal-content {
-  background-color: white;
-  color: #1f2937;
-}
-
-.farmer-layout.dark .modal-dialog, .farmer-layout.dark .modal-content {
-  background-color: #131b2e;
-  color: #f3f4f6;
-  border: 1px solid #1e293b;
-}
-
-/* Tables */
-.farmer-layout.light table, .farmer-layout.light tr, .farmer-layout.light td, .farmer-layout.light th {
-  background-color: #ffffff;
-  color: #1f2937;
-  border-color: #e5e7eb;
-}
-
-.farmer-layout.dark table, .farmer-layout.dark tr, .farmer-layout.dark td, .farmer-layout.dark th {
-  background-color: #131b2e;
-  color: #f3f4f6;
-  border-color: #2d3f52;
-}
-
-/* Buttons stay consistent but ensure text contrast */
-.btn-primary { color: white; }
-.btn-secondary { color: white; }
 </style>

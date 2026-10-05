@@ -1,5 +1,5 @@
 <template>
-  <div class="farmer-layout">
+  <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     
     <div class="farmer-page">
@@ -141,10 +141,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { isDark, isLight } = useTheme()
 
 const filters = ref({
   search: '',
@@ -167,11 +169,20 @@ const handleLogout = async () => {
   min-height: 100vh;
 }
 
+.farmer-layout.dark {
+  background: #0b0f17;
+}
+
 .farmer-page {
   margin-left: 260px;
   flex: 1;
   background-color: #f9fafb;
   min-height: 100vh;
+  transition: background-color 0.3s ease;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
 }
 
 .page-container {
@@ -187,12 +198,22 @@ const handleLogout = async () => {
   color: #1f2937;
   margin: 0 0 8px 0;
   font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header h1 {
+  color: #f1f5f9;
 }
 
 .page-header p {
   color: #6b7280;
   margin: 0;
   font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.dark .page-header p {
+  color: #cbd5e1;
 }
 
 .controls {
@@ -208,6 +229,23 @@ const handleLogout = async () => {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.dark .search-input,
+.dark .filter-select {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.dark .search-input:focus,
+.dark .filter-select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 .search-input {
@@ -249,6 +287,12 @@ const handleLogout = async () => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.dark .report-card {
+  background: #1a2338;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .report-header {
@@ -258,6 +302,12 @@ const handleLogout = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: all 0.3s ease;
+}
+
+.dark .report-header {
+  background: #0f1620;
+  border-bottom-color: #2d3f52;
 }
 
 .report-header h3 {
@@ -265,6 +315,11 @@ const handleLogout = async () => {
   font-size: 16px;
   color: #1f2937;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.dark .report-header h3 {
+  color: #f1f5f9;
 }
 
 .badge {
@@ -274,11 +329,22 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .badge.success {
   background: #d1fae5;
   color: #065f46;
+}
+
+.dark .badge {
+  background: #1e3a8a;
+  color: #3b82f6;
+}
+
+.dark .badge.success {
+  background: #064e3b;
+  color: #10b981;
 }
 
 .report-body {
@@ -295,15 +361,30 @@ const handleLogout = async () => {
   padding: 10px 0;
   border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.dark .metric {
+  border-bottom-color: #2d3f52;
 }
 
 .metric span:first-child {
   color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.dark .metric span:first-child {
+  color: #cbd5e1;
 }
 
 .metric .value {
   color: #1f2937;
   font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.dark .metric .value {
+  color: #f1f5f9;
 }
 
 .btn-view {
@@ -324,17 +405,39 @@ const handleLogout = async () => {
   border-color: #9ca3af;
 }
 
+.dark .btn-view {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.dark .btn-view:hover {
+  background: #131b2e;
+  border-color: #3d5066;
+}
+
 .chart-section {
   background: white;
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark .chart-section {
+  background: #1a2338;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .chart-section h2 {
   font-size: 18px;
   margin: 0 0 20px 0;
   color: #1f2937;
+  transition: color 0.3s ease;
+}
+
+.dark .chart-section h2 {
+  color: #f1f5f9;
 }
 
 .chart-placeholder {
@@ -348,6 +451,13 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.dark .chart-placeholder {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
