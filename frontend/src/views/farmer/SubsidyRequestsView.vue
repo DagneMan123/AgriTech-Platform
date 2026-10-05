@@ -1,5 +1,5 @@
 <template>
-  <div class="subsidy-layout">
+  <div class="subsidy-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="subsidy-container">
       <div class="page-header">
@@ -201,6 +201,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, X, Eye, RefreshCw, Gift, Download, FileText, CheckCircle, Clock, DollarSign
@@ -208,6 +209,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 const loading = ref(false)
 const showNewRequest = ref(false)
@@ -744,5 +746,277 @@ onMounted(() => { fetchRequests() })
   .request-header {
     flex-direction: column;
   }
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.subsidy-layout.dark {
+  background-color: #0b0f17;
+}
+
+.subsidy-layout.dark .subsidy-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.subsidy-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subsidy-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Buttons */
+.subsidy-layout.dark .btn-new {
+  background: #10b981;
+}
+
+.subsidy-layout.dark .btn-new:hover {
+  background: #059669;
+}
+
+/* Loading */
+.subsidy-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #10b981;
+}
+
+/* Content */
+.subsidy-layout.dark .subsidy-content {
+  background-color: #0b0f17;
+}
+
+/* Stats Grid */
+.subsidy-layout.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.subsidy-layout.dark .stat-card svg {
+  color: #2d3f52;
+}
+
+.subsidy-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.subsidy-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Request Cards */
+.subsidy-layout.dark .request-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-left-color: #10b981;
+}
+
+.subsidy-layout.dark .request-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  background: #1e293b;
+}
+
+.subsidy-layout.dark .request-header h3 {
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .status-approved {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.subsidy-layout.dark .status-pending {
+  background: #1a1a2e;
+  color: #fbbf24;
+}
+
+.subsidy-layout.dark .status-rejected {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.subsidy-layout.dark .request-details {
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .btn-view,
+.subsidy-layout.dark .btn-reapply {
+  border-color: #2d3f52;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .btn-view:hover,
+.subsidy-layout.dark .btn-reapply:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: #0f3c2a;
+}
+
+/* Empty State */
+.subsidy-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.subsidy-layout.dark .empty-state svg {
+  color: #2d3f52;
+}
+
+.subsidy-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .empty-state .btn-primary {
+  background: #10b981;
+}
+
+.subsidy-layout.dark .empty-state .btn-primary:hover {
+  background: #059669;
+}
+
+/* Modal */
+.subsidy-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.subsidy-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.subsidy-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.subsidy-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.subsidy-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+/* Modal Body */
+.subsidy-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+/* Form */
+.subsidy-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .form-control {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .form-control:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.subsidy-layout.dark .form-control::placeholder {
+  color: #64748b;
+}
+
+.subsidy-layout.dark .file-upload {
+  border-color: #2d3f52;
+  background: transparent;
+}
+
+.subsidy-layout.dark .file-upload:hover {
+  border-color: #10b981;
+  background: #0f3c2a;
+}
+
+.subsidy-layout.dark .file-upload span {
+  color: #cbd5e1;
+}
+
+/* Form Actions */
+.subsidy-layout.dark .btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.subsidy-layout.dark .btn-primary:hover {
+  background: #059669;
+}
+
+.subsidy-layout.dark .form-actions .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .form-actions .btn-secondary:hover {
+  background: #1a2338;
+  border-color: #3d4f63;
+}
+
+/* Detail Sections */
+.subsidy-layout.dark .detail-section {
+  border-bottom-color: #2d3f52;
+}
+
+.subsidy-layout.dark .detail-section h3 {
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.subsidy-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .detail-section.remarks {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.subsidy-layout.dark .detail-section.remarks h3 {
+  color: #f1f5f9;
+}
+
+.subsidy-layout.dark .detail-section.remarks p {
+  color: #cbd5e1;
+}
+
+/* Modal Footer */
+.subsidy-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.subsidy-layout.dark .modal-footer .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.subsidy-layout.dark .modal-footer .btn-secondary:hover {
+  background: #1a2338;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="orders-layout">
+  <div class="orders-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="orders-container">
       <!-- Header -->
@@ -251,6 +251,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Filter, Download, AlertCircle, RotateCcw, X, Eye, FileDown, 
@@ -259,6 +260,7 @@ import {
 
 const auth = useAuthStore()
 const router = useRouter()
+const { isDark, isLight } = useTheme()
 
 // State
 const loading = ref(false)
@@ -1010,4 +1012,321 @@ onMounted(() => { fetchOrders() })
     padding: 12px 8px;
   }
 }
-</style>
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Layout & Background */
+.orders-layout.dark {
+  background-color: #0b0f17;
+}
+
+.orders-layout.dark .orders-container {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.orders-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #2d3f52;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.orders-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Buttons */
+.orders-layout.dark .btn-filter {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .btn-filter:hover {
+  background: #1e293b;
+  border-color: #059669;
+}
+
+.orders-layout.dark .btn-export {
+  background: #059669;
+  border-color: #059669;
+}
+
+.orders-layout.dark .btn-export:hover {
+  background: #047857;
+}
+
+/* Loading & Error */
+.orders-layout.dark .loading-container {
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .spinner {
+  border-color: #2d3f52;
+  border-top-color: #10b981;
+}
+
+.orders-layout.dark .error-container {
+  background: #1a1a2e;
+  border-color: #dc2626;
+}
+
+.orders-layout.dark .error-message {
+  color: #fca5a5;
+}
+
+/* Content */
+.orders-layout.dark .orders-content {
+  background-color: #0b0f17;
+}
+
+/* Stats */
+.orders-layout.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.orders-layout.dark .stat-icon {
+  color: #2d3f52;
+}
+
+.orders-layout.dark .stat-label {
+  color: #94a3b8;
+}
+
+.orders-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Filters */
+.orders-layout.dark .filters-panel {
+  background: #131b2e;
+  border-color: #2d3f52;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.orders-layout.dark .filters-header {
+  border-bottom-color: #2d3f52;
+}
+
+.orders-layout.dark .filters-header h3 {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .btn-close {
+  color: #94a3b8;
+}
+
+.orders-layout.dark .btn-close:hover {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .filter-group label {
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .filter-select {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .filter-select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.orders-layout.dark .btn-apply {
+  background: #10b981;
+}
+
+.orders-layout.dark .btn-apply:hover {
+  background: #059669;
+}
+
+.orders-layout.dark .btn-clear {
+  background: #1a2338;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .btn-clear:hover {
+  background: #1e293b;
+}
+
+/* Table */
+.orders-layout.dark .table-section {
+  background: #131b2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.orders-layout.dark .orders-table thead {
+  background: #0f1620;
+  border-bottom-color: #2d3f52;
+}
+
+.orders-layout.dark .orders-table th {
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .orders-table tbody tr {
+  border-bottom-color: #2d3f52;
+}
+
+.orders-layout.dark .orders-table tbody tr:hover {
+  background: #1a2338;
+}
+
+.orders-layout.dark .table-row td {
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .status-pending {
+  background: #1a1a2e;
+  color: #fbbf24;
+}
+
+.orders-layout.dark .status-confirmed {
+  background: #1a2e4d;
+  color: #60a5fa;
+}
+
+.orders-layout.dark .status-shipped {
+  background: #1a1a3d;
+  color: #818cf8;
+}
+
+.orders-layout.dark .status-delivered {
+  background: #1a2e2e;
+  color: #4ade80;
+}
+
+.orders-layout.dark .status-cancelled {
+  background: #2e1a1a;
+  color: #f87171;
+}
+
+.orders-layout.dark .action-btn {
+  border-color: #2d3f52;
+  color: #94a3b8;
+}
+
+.orders-layout.dark .action-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  background: #0f3c2a;
+}
+
+/* Empty State */
+.orders-layout.dark .empty-state {
+  color: #64748b;
+}
+
+.orders-layout.dark .empty-icon {
+  color: #2d3f52;
+}
+
+.orders-layout.dark .empty-state p {
+  color: #cbd5e1;
+}
+
+/* Modal */
+.orders-layout.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.orders-layout.dark .modal-content {
+  background: #131b2e;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.orders-layout.dark .modal-header {
+  background: #1a2338;
+  border-bottom-color: #2d3f52;
+}
+
+.orders-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .modal-body {
+  background: #131b2e;
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .order-summary {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.orders-layout.dark .summary-item .label {
+  color: #94a3b8;
+}
+
+.orders-layout.dark .summary-item .value {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .timeline {
+  border-bottom-color: #2d3f52;
+}
+
+.orders-layout.dark .timeline h3 {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .timeline-icon {
+  color: #2d3f52;
+}
+
+.orders-layout.dark .timeline-item.completed .timeline-icon {
+  color: #10b981;
+}
+
+.orders-layout.dark .timeline-title {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .timeline-date {
+  color: #64748b;
+}
+
+.orders-layout.dark .supplier-info {
+  background: #0f1620;
+  border-color: #2d3f52;
+}
+
+.orders-layout.dark .supplier-info h3 {
+  color: #f1f5f9;
+}
+
+.orders-layout.dark .supplier-info p {
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .modal-footer {
+  background: #1a2338;
+  border-top-color: #2d3f52;
+}
+
+.orders-layout.dark .btn-primary {
+  background: #10b981;
+}
+
+.orders-layout.dark .btn-primary:hover {
+  background: #059669;
+}
+
+.orders-layout.dark .btn-secondary {
+  background: #0f1620;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.orders-layout.dark .btn-secondary:hover {
+  background: #1a2338;
+}</style>
