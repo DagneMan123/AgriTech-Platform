@@ -33,4 +33,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+                
+                return response()->json([
+                    'message' => $e->getMessage() ?: 'An error occurred',
+                    'errors' => [],
+                ], $statusCode)->withHeaders([
+                    'Access-Control-Allow-Origin' => env('FRONTEND_URL', 'http://localhost:5173'),
+                    'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
+                    'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
+                    'Access-Control-Allow-Credentials' => 'true',
+                ]);
+            }
+        });
     })->create();

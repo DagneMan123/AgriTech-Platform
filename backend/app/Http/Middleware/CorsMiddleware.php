@@ -8,39 +8,29 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CorsMiddleware
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Get the origin from the request
         $origin = $request->header('Origin');
         
-        // List of allowed origins - includes common dev ports and FRONTEND_URL from .env
         $allowedOrigins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
-            'http://localhost:5174',
-            'http://127.0.0.1:5174',
             'http://localhost:3000',
             'http://127.0.0.1:3000',
             'http://localhost:8080',
             'http://127.0.0.1:8080',
         ];
         
-        // Add FRONTEND_URL from .env if configured
-        $frontendUrl = config('app.frontend_url');
+        $frontendUrl = env('FRONTEND_URL');
         if ($frontendUrl && !in_array($frontendUrl, $allowedOrigins)) {
             $allowedOrigins[] = $frontendUrl;
         }
         
-        // Check if origin is allowed
-        $originAllowed = in_array($origin, $allowedOrigins);
-        $responseOrigin = $originAllowed ? $origin : null;
+        $isOriginAllowed = in_array($origin, $allowedOrigins);
+        $responseOrigin = $isOriginAllowed ? $origin : $frontendUrl;
 
-        // CORS headers that will be added to every response
         $corsHeaders = [
-            'Access-Control-Allow-Origin' => $responseOrigin ?? config('app.frontend_url', 'http://localhost:5173'),
+            'Access-Control-Allow-Origin' => $responseOrigin,
             'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
             'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
             'Access-Control-Max-Age' => '86400',
@@ -48,16 +38,13 @@ class CorsMiddleware
             'Access-Control-Expose-Headers' => 'Content-Type, Authorization',
         ];
 
-        // Handle preflight (OPTIONS) requests
         if ($request->isMethod('OPTIONS')) {
-            return response('', 200)
+            return response('', 204)
                 ->withHeaders($corsHeaders);
         }
 
-        // Process the request
         $response = $next($request);
 
-        // Add CORS headers to the response
         foreach ($corsHeaders as $key => $value) {
             $response->header($key, $value);
         }
