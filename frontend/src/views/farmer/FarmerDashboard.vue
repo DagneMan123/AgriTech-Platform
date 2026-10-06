@@ -2,7 +2,6 @@
   <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-dashboard">
-      
       <div class="dashboard-header-wrapper">
         <div class="dashboard-header">
           <h1>Farmer Dashboard</h1>
@@ -18,13 +17,11 @@
         </button>
       </div>
 
-     
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
         <p>Loading dashboard data...</p>
       </div>
 
-      <!-- Error State -->
       <div v-if="error && !loading" class="error-container">
         <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
@@ -41,7 +38,6 @@
         </button>
       </div>
 
-     
       <div v-if="!loading && !error" class="stats-section">
         <div class="stat-card stat-farms">
           <div class="stat-header">
@@ -98,15 +94,66 @@
         </div>
       </div>
 
-      <!-- Recent Activity -->
-      <div v-if="!loading && !error" class="recent-section">
+      <div v-if="!loading && !error" class="charts-section">
         <div class="chart-card full-width">
-          <h2>Revenue Trend (Last 30 Days)</h2>
+          <div class="chart-header">
+            <h2>Revenue Trend</h2>
+            <div class="time-filter-buttons">
+              <button
+                v-for="option in timeRangeOptions"
+                :key="option.value"
+                @click="onTimeRangeChange(option.value)"
+                :class="['filter-btn', { active: selectedTimeRange === option.value }]"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
           <div class="chart-container">
             <Line :data="chartData" :options="chartOptions" />
           </div>
         </div>
 
+        <div class="chart-grid">
+          <div class="chart-card">
+            <h2>Crop Sales Distribution</h2>
+            <div class="doughnut-container">
+              <Doughnut :data="doughnutData" :options="doughnutOptions" />
+            </div>
+          </div>
+
+          <div class="transactions-card">
+            <h2>Recent Transactions</h2>
+            <div class="transactions-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Crop</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="tx in dashboard?.recent_transactions" :key="tx.id" class="transaction-row">
+                    <td class="tx-id">{{ tx.id }}</td>
+                    <td class="tx-crop">{{ tx.crop }}</td>
+                    <td class="tx-qty">{{ tx.quantity }}</td>
+                    <td class="tx-price">{{ formatNumber(tx.price) }}</td>
+                    <td class="tx-date">{{ formatDate(tx.date) }}</td>
+                  </tr>
+                  <tr v-if="!dashboard?.recent_transactions?.length" class="empty-row">
+                    <td colspan="5">No transactions yet</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!loading && !error" class="recent-section">
         <div class="recent-card">
           <h2>Recent Harvests</h2>
           <div v-if="dashboard?.recent_harvests?.length > 0" class="list-items">
@@ -118,17 +165,6 @@
           </div>
           <div v-else class="empty-state">
             <p>No harvests yet</p>
-          </div>
-        </div>
-
-        <div class="recent-card">
-          <h2>Pending Loans</h2>
-          <div class="list-items">
-            <div class="list-item">
-              <span class="item-name">Seasonal Funding</span>
-              <span class="item-amount">2,000</span>
-              <span class="status-badge status-pending">Pending</span>
-            </div>
           </div>
         </div>
 
@@ -152,15 +188,15 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { Line } from 'vue-chartjs'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
+import { Line, Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import { farmerAPI } from '@/api/farmer'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -169,12 +205,26 @@ const { isDark, isLight, toggleTheme } = useTheme()
 const dashboard = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const selectedTimeRange = ref('30')
+
+const timeRangeOptions = [
+  { label: '7D', value: '7' },
+  { label: '30D', value: '30' },
+  { label: '1Y', value: '365' }
+]
 
 const chartData = computed(() => {
   if (!dashboard.value?.chart_data) {
     return { labels: [], datasets: [] }
   }
   return dashboard.value.chart_data
+})
+
+const doughnutData = computed(() => {
+  if (!dashboard.value?.crop_sales) {
+    return { labels: [], datasets: [] }
+  }
+  return dashboard.value.crop_sales
 })
 
 const chartOptions = computed(() => ({
@@ -186,16 +236,10 @@ const chartOptions = computed(() => ({
       position: 'top',
       labels: {
         color: isDark.value ? '#f3f4f6' : '#1f2937',
-        font: {
-          size: 14,
-          weight: '600'
-        },
+        font: { size: 14, weight: '600' },
         padding: 20,
         usePointStyle: true,
       }
-    },
-    title: {
-      display: false,
     },
     tooltip: {
       backgroundColor: isDark.value ? 'rgba(19, 27, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
@@ -205,38 +249,51 @@ const chartOptions = computed(() => ({
       borderWidth: 1,
       padding: 12,
       displayColors: true,
-      callbacks: {
-        label: function(context) {
-          return context.dataset.label + ': ' + context.parsed.y.toFixed(2)
-        }
-      }
     }
   },
   scales: {
     y: {
       grid: {
         color: isDark.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-        drawBorder: true,
       },
       ticks: {
         color: isDark.value ? '#94a3b8' : '#6b7280',
-        font: {
-          size: 12,
-        },
-        callback: function(value) {
-          return value
-        }
+        font: { size: 12 },
       }
     },
     x: {
-      grid: {
-        display: false,
-        drawBorder: true,
-      },
+      grid: { display: false },
       ticks: {
         color: isDark.value ? '#94a3b8' : '#6b7280',
-        font: {
-          size: 12,
+        font: { size: 12 },
+      }
+    }
+  }
+}))
+
+const doughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: {
+      position: 'right',
+      labels: {
+        color: isDark.value ? '#f3f4f6' : '#1f2937',
+        font: { size: 13, weight: '500' },
+        padding: 15,
+        usePointStyle: true,
+      }
+    },
+    tooltip: {
+      backgroundColor: isDark.value ? 'rgba(19, 27, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      titleColor: isDark.value ? '#f3f4f6' : '#1f2937',
+      bodyColor: isDark.value ? '#f3f4f6' : '#1f2937',
+      borderColor: isDark.value ? '#1e293b' : '#e5e7eb',
+      borderWidth: 1,
+      padding: 12,
+      callbacks: {
+        label: function(context) {
+          return context.label + ': ' + context.parsed + '%'
         }
       }
     }
@@ -258,7 +315,7 @@ const fetchDashboardData = async () => {
       return
     }
 
-    const res = await farmerAPI.getDashboard()
+    const res = await farmerAPI.getDashboard(selectedTimeRange.value)
     dashboard.value = res.data
     
     if (!dashboard.value.summary) {
@@ -296,6 +353,11 @@ const fetchDashboardData = async () => {
   }
 }
 
+const onTimeRangeChange = async (range) => {
+  selectedTimeRange.value = range
+  await fetchDashboardData()
+}
+
 const formatNumber = (num) => {
   return new Intl.NumberFormat().format(num || 0)
 }
@@ -317,13 +379,11 @@ const handleLogout = async () => {
   height: 100vh;
 }
 
-/* Light Mode (Default) */
 .farmer-layout.light {
   background-color: #f0f2f5;
   color: #1f2937;
 }
 
-/* Dark Mode */
 .farmer-layout.dark {
   background-color: #0b0f17;
   color: #f3f4f6;
@@ -334,29 +394,26 @@ const handleLogout = async () => {
   flex: 1;
   overflow-y: auto;
   min-height: 100vh;
-  padding: 30px;
+  padding: 20px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Light Mode Dashboard */
 .farmer-layout.light .farmer-dashboard {
   background-color: #f0f2f5;
   color: #1f2937;
 }
 
-/* Dark Mode Dashboard */
 .farmer-layout.dark .farmer-dashboard {
   background-color: #0b0f17;
   color: #f3f4f6;
 }
 
-/* Header Wrapper */
 .dashboard-header-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 40px;
-  gap: 20px;
+  margin-bottom: 25px;
+  gap: 15px;
 }
 
 .dashboard-header {
@@ -364,9 +421,9 @@ const handleLogout = async () => {
 }
 
 .dashboard-header h1 {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   transition: color 0.3s ease;
 }
 
@@ -379,7 +436,7 @@ const handleLogout = async () => {
 }
 
 .dashboard-header p {
-  font-size: 16px;
+  font-size: 14px;
   transition: color 0.3s ease;
 }
 
@@ -391,15 +448,14 @@ const handleLogout = async () => {
   color: #9ca3af;
 }
 
-/* Theme Toggle Button ( ክብ ቅርጽ የተሰጠው ) */
 .theme-toggle-btn {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: 2px solid;
   background-color: transparent;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -435,16 +491,6 @@ const handleLogout = async () => {
   transform: translateY(-2px);
 }
 
-.theme-icon {
-  display: inline-block;
-  transition: transform 0.3s ease;
-}
-
-.theme-toggle-btn:active .theme-icon {
-  transform: rotate(20deg);
-}
-
-/* Loading State */
 .loading-container {
   border-radius: 12px;
   padding: 60px;
@@ -491,12 +537,6 @@ const handleLogout = async () => {
   to { transform: rotate(360deg); }
 }
 
-.loading-container p {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-/* Error State */
 .error-container {
   border-radius: 12px;
   padding: 40px;
@@ -516,257 +556,348 @@ const handleLogout = async () => {
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
-.error-icon {
-  width: 60px;
-  height: 60px;
-  color: #dc2626;
-  margin-bottom: 15px;
-}
-
-.error-message {
-  margin-bottom: 20px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.farmer-layout.light .error-message {
-  color: #991b1b;
-}
-
-.farmer-layout.dark .error-message {
-  color: #fca5a5;
-}
-
-.btn-retry {
-  background: #dc2626;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.btn-retry:hover {
-  background: #b91c1c;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.btn-retry svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Stats Section */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 14px 12px;
   transition: all 0.3s;
-  border-left: 5px solid #10b981;
+  border-left: 4px solid #10b981;
 }
 
 .farmer-layout.light .stat-card {
   background: white;
   color: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .farmer-layout.dark .stat-card {
   background: #131b2e;
   color: #f3f4f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid #1e293b;
-  border-left: 5px solid #10b981;
+  border-left: 4px solid #10b981;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-}
-
-.farmer-layout.dark .stat-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-  border-color: #2e3a52;
-}
-
-.stat-card.stat-crops {
-  border-left-color: #8b5cf6;
-}
-
-.stat-card.stat-products {
-  border-left-color: #f59e0b;
-}
-
-.stat-card.stat-orders {
-  border-left-color: #3b82f6;
-}
-
-.stat-card.stat-revenue {
-  border-left-color: #ef4444;
-}
-
-.stat-card.stat-consultations {
-  border-left-color: #ec4899;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .stat-header h3 {
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   margin: 0;
   font-weight: 700;
   transition: color 0.3s ease;
-}
-
-.farmer-layout.light .stat-header h3 {
-  color: #6b7280;
-}
-
-.farmer-layout.dark .stat-header h3 {
-  color: #9ca3af;
+  flex: 1;
 }
 
 .stat-header svg {
   width: 20px;
   height: 20px;
-  transition: color 0.3s ease;
-}
-
-.farmer-layout.light .stat-header svg {
-  color: #d1d5db;
-}
-
-.farmer-layout.dark .stat-header svg {
-  color: #64748b;
+  stroke-width: 1.5;
+  flex-shrink: 0;
+  margin-left: 6px;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
-  margin: 8px 0 4px 0;
-}
-
-.farmer-layout.light .stat-value {
-  color: #1f2937;
-}
-
-.farmer-layout.dark .stat-value {
-  color: #ffffff;
+  margin: 4px 0 2px 0;
 }
 
 .stat-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   margin: 0;
   transition: color 0.3s ease;
+  opacity: 0.85;
 }
 
-.farmer-layout.light .stat-subtitle {
-  color: #9ca3af;
+.charts-section {
+  margin-bottom: 30px;
 }
 
-.farmer-layout.dark .stat-subtitle {
-  color: #94a3b8;
-}
-
-/* Recent Activity Section */
-.recent-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.recent-card,
 .chart-card {
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 10px;
+  padding: 18px;
   transition: all 0.3s;
-}
-
-.chart-card.full-width {
-  grid-column: 1 / -1;
-  min-height: 400px;
 }
 
 .farmer-layout.light .chart-card {
   background: white;
   color: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .farmer-layout.dark .chart-card {
   background: #131b2e;
   color: #f3f4f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid #1e293b;
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+  margin-bottom: 20px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.chart-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .chart-header h2 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .chart-header h2 {
+  color: #ffffff;
+}
+
+.time-filter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 2px solid;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.farmer-layout.light .filter-btn {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.farmer-layout.light .filter-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.farmer-layout.light .filter-btn.active {
+  background-color: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.farmer-layout.dark .filter-btn {
+  border-color: #1e293b;
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .filter-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.farmer-layout.dark .filter-btn.active {
+  background-color: #10b981;
+  color: white;
+  border-color: #10b981;
 }
 
 .chart-container {
   position: relative;
-  height: 350px;
-  margin-top: 20px;
+  height: 300px;
+  margin-top: 12px;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.doughnut-container {
+  position: relative;
+  height: 280px;
+  margin-top: 12px;
+}
+
+.transactions-card {
+  border-radius: 10px;
+  padding: 18px;
+  transition: all 0.3s;
+}
+
+.farmer-layout.light .transactions-card {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.farmer-layout.dark .transactions-card {
+  background: #131b2e;
+  color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #1e293b;
+}
+
+.transactions-card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 14px 0;
+}
+
+.transactions-table {
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+}
+
+.farmer-layout.light thead {
+  background-color: #f9fafb;
+}
+
+.farmer-layout.dark thead {
+  background-color: #1a2338;
+}
+
+th {
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid;
+}
+
+.farmer-layout.light th {
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.farmer-layout.dark th {
+  border-color: #1e293b;
+  color: #94a3b8;
+}
+
+.transaction-row {
+  border-bottom: 1px solid;
+  transition: background-color 0.3s;
+}
+
+.farmer-layout.light .transaction-row {
+  border-color: #e5e7eb;
+}
+
+.farmer-layout.light .transaction-row:hover {
+  background-color: #f9fafb;
+}
+
+.farmer-layout.dark .transaction-row {
+  border-color: #1e293b;
+}
+
+.farmer-layout.dark .transaction-row:hover {
+  background-color: #1a2338;
+}
+
+td {
+  padding: 10px 8px;
+}
+
+.tx-id {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.empty-row {
+  text-align: center;
+}
+
+.farmer-layout.light .empty-row {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .empty-row {
+  color: #64748b;
+}
+
+.recent-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.recent-card {
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.3s;
 }
 
 .farmer-layout.light .recent-card {
   background: white;
   color: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .farmer-layout.dark .recent-card {
   background: #131b2e;
   color: #f3f4f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid #1e293b;
 }
 
 .recent-card h2 {
-  font-size: 18px;
-  margin-bottom: 20px;
+  font-size: 15px;
+  margin-bottom: 14px;
   font-weight: 700;
   transition: color 0.3s ease;
-}
-
-.farmer-layout.light .recent-card h2 {
-  color: #1f2937;
-}
-
-.farmer-layout.dark .recent-card h2 {
-  color: #ffffff;
 }
 
 .list-items {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
   border-left: 3px solid #10b981;
   transition: all 0.3s ease;
 }
@@ -784,59 +915,16 @@ const handleLogout = async () => {
 }
 
 .list-item:hover {
-  transform: translateX(4px);
-}
-
-.farmer-layout.light .list-item:hover {
-  background-color: #f3f4f6;
-}
-
-.farmer-layout.dark .list-item:hover {
-  background-color: #202c44;
-}
-
-.item-name {
-  font-weight: 600;
-  flex: 1;
-}
-
-.item-quantity,
-.item-amount,
-.item-date {
-  font-size: 13px;
-  margin: 0 12px;
-  transition: color 0.3s ease;
-}
-
-.farmer-layout.light .item-quantity,
-.farmer-layout.light .item-amount,
-.farmer-layout.light .item-date {
-  color: #6b7280;
-}
-
-.farmer-layout.dark .item-quantity,
-.farmer-layout.dark .item-amount,
-.farmer-layout.dark .item-date {
-  color: #94a3b8;
+  transform: translateX(2px);
 }
 
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
   transition: all 0.3s ease;
-}
-
-.status-badge.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.farmer-layout.dark .status-badge.status-pending {
-  background-color: rgba(217, 119, 6, 0.25);
-  color: #fcd34d;
 }
 
 .status-badge.status-completed,
@@ -851,20 +939,10 @@ const handleLogout = async () => {
   color: #6ee7b7;
 }
 
-.status-badge.status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.farmer-layout.dark .status-badge.status-cancelled {
-  background-color: rgba(220, 38, 38, 0.25);
-  color: #fca5a5;
-}
-
 .empty-state {
-  padding: 20px;
+  padding: 16px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
   transition: color 0.3s ease;
 }
 
@@ -876,54 +954,114 @@ const handleLogout = async () => {
   color: #64748b;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+
   .farmer-dashboard {
-    padding: 20px;
+    padding: 16px;
   }
 
   .stats-section {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .dashboard-header-wrapper {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
   }
 }
 
 @media (max-width: 768px) {
   .farmer-dashboard {
     margin-left: 0;
-    padding: 15px;
+    padding: 12px;
   }
 
   .dashboard-header h1 {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .stats-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px 8px;
+  }
+
+  .stat-header h3 {
+    font-size: 9px;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 16px;
+  }
+
+  .stat-subtitle {
+    font-size: 10px;
   }
 
   .recent-section {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-header-wrapper {
-    flex-direction: column-reverse;
-    align-items: stretch;
+  .chart-container {
+    height: 220px;
   }
 
-  .theme-toggle-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
+  .doughnut-container {
+    height: 220px;
+  }
+
+  .transactions-table {
+    font-size: 12px;
+  }
+
+  .time-filter-buttons {
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .stat-card {
+    padding: 8px 6px;
+  }
+
+  .stat-header h3 {
+    font-size: 8px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-subtitle {
+    font-size: 9px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+
+  .dashboard-header p {
+    font-size: 13px;
+  }
+
+  .chart-container {
+    height: 180px;
+  }
+
+  .doughnut-container {
+    height: 180px;
   }
 }
 </style>

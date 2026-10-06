@@ -97,5 +97,8 @@ export const farmerAPI = {
   createLoan: (data: any) => apiClient.post('/farmer/loans', data),
 
   // Dashboard
-  getDashboard: () => apiClient.get('/farmer/dashboard'),
+  getDashboard: (timeRange?: string | number) => {
+    const params = timeRange ? { time_range: timeRange } : {};
+    return apiClient.get('/farmer/dashboard', { params });
+  },
 }

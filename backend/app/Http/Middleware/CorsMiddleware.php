@@ -21,7 +21,7 @@ class CorsMiddleware
             'http://127.0.0.1:8080',
         ];
         
-        $frontendUrl = env('FRONTEND_URL');
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
         if ($frontendUrl && !in_array($frontendUrl, $allowedOrigins)) {
             $allowedOrigins[] = $frontendUrl;
         }
@@ -52,4 +52,3 @@ class CorsMiddleware
         return $response;
     }
 }
-

@@ -128,6 +128,23 @@ Route::get('/market-prices', [MarketPriceController::class, 'index']);
 Route::get('/experts', [ExpertController::class, 'index']);
 Route::get('/locations', [MapController::class, 'index']);
 
+
+Route::options('/{any}', function () {
+    $corsHeaders = [
+        'Access-Control-Allow-Origin' => env('FRONTEND_URL', 'http://localhost:5173'),
+        'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
+        'Access-Control-Max-Age' => '86400',
+        'Access-Control-Allow-Credentials' => 'true',
+    ];
+    
+    $response = response('', 204);
+    foreach ($corsHeaders as $key => $value) {
+        $response->header($key, $value);
+    }
+    return $response;
+})->where('any', '.*');
+
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
