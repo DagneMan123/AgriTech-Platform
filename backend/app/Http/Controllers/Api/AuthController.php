@@ -74,12 +74,13 @@ class AuthController extends Controller
                 ]);
             }
 
-            $token = $user->createToken('api-token')->plainTextToken;
+            $token = $user->createToken('api-token', ['*'])->plainTextToken;
 
             return response()->json([
                 'message' => 'User registered successfully. Please wait for document verification.',
                 'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region']),
                 'token' => $token,
+                'token_type' => 'Bearer',
                 'status' => 'pending_verification',
             ], 201);
         } catch (QueryException $e) {
@@ -278,12 +279,20 @@ class AuthController extends Controller
                 \Illuminate\Support\Facades\Log::warning('Could not update last_login_at: ' . $e->getMessage());
             }
 
-            $token = $user->createToken('api-token')->plainTextToken;
+            // Revoke previous tokens for better security (optional - set to true for single device login)
+            $shouldRevokePrevious = env('SANCTUM_REVOKE_PREVIOUS_TOKENS', false);
+            if ($shouldRevokePrevious) {
+                $user->tokens()->delete();
+            }
+
+            // Create new Sanctum token with ability-based permissions
+            $token = $user->createToken('api-token', ['*'])->plainTextToken;
 
             return response()->json([
                 'message' => 'Login successful',
                 'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region', 'is_active']),
                 'token' => $token,
+                'token_type' => 'Bearer',
             ], 200);
         } catch (QueryException $e) {
             Log::error('Login database error: ' . $e->getMessage());
