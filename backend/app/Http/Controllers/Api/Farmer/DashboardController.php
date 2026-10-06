@@ -18,14 +18,32 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         try {
+            \Log::info('Dashboard endpoint called');
+            
+            // Get authenticated user
             $user = auth('api')->user();
             
+            \Log::info('Authenticated user: ' . ($user ? $user->id : 'NULL'));
+            
             if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
+                return response()->json([
+                    'message' => 'Unauthorized',
+                    'error' => 'No authenticated user found'
+                ], 401);
             }
 
-            // Get farmer profile - use first() instead of firstOrFail to handle no farmer gracefully
+            // Get time range parameter (default 30 days)
+            $timeRange = (int) $request->query('time_range', 30);
+            if ($timeRange < 1 || $timeRange > 365) {
+                $timeRange = 30; // Validate range
+            }
+
+            \Log::info('Time range: ' . $timeRange);
+
+            // Get farmer profile
             $farmer = Farmer::where('user_id', $user->id)->first();
+            
+            \Log::info('Farmer found: ' . ($farmer ? $farmer->id : 'NULL'));
             
             if (!$farmer) {
                 // Return empty dashboard if no farmer profile
@@ -35,25 +53,22 @@ class DashboardController extends Controller
                     'summary' => $this->getEmptySummary(),
                     'recent_harvests' => [],
                     'recent_orders' => [],
-                    'chart_data' => $this->getEmptyChartData(30),
+                    'chart_data' => $this->getEmptyChartData($timeRange),
                     'crop_sales' => $this->getEmptyCropSalesData(),
                     'recent_transactions' => [],
                 ], 200);
             }
-            
-            $timeRange = $request->query('time_range', '30'); 
-            $days = intval($timeRange);
 
-            // Build summary with real data
+            // Get summary data
             $summary = $this->getSummary($farmer);
 
-            // Get chart data with real order data
-            $chartData = $this->getChartData($farmer, $days);
+            // Get chart data - dynamically calculates last N days from today
+            $chartData = $this->getChartData($farmer, $timeRange);
             
-            // Get crop sales distribution from order items
+            // Get crop sales distribution
             $cropSalesData = $this->getCropSalesDistribution($farmer);
             
-            // Get recent transactions from orders
+            // Get recent transactions
             $recentTransactions = $this->getRecentTransactions($farmer, 10);
 
             return response()->json([
@@ -66,8 +81,9 @@ class DashboardController extends Controller
                 'crop_sales' => $cropSalesData,
                 'recent_transactions' => $recentTransactions,
             ], 200);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Dashboard Error', [
+
+        } catch (\Exception $e) {
+            \Log::error('Dashboard Error', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -76,12 +92,13 @@ class DashboardController extends Controller
             
             return response()->json([
                 'message' => 'Server error',
-                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
+                'error' => env('APP_DEBUG') ? $e->getMessage() : 'Internal Server Error',
+                'debug' => env('APP_DEBUG') ? ['file' => $e->getFile(), 'line' => $e->getLine()] : null,
             ], 500);
         }
     }
 
-    private function getEmptySummary()
+    private function getEmptySummary(): array
     {
         return [
             'total_farms' => 0,
@@ -100,7 +117,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getEmptyChartData($days)
+    private function getEmptyChartData(int $days): array
     {
         $labels = [];
         $data = [];
@@ -129,7 +146,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getEmptyCropSalesData()
+    private function getEmptyCropSalesData(): array
     {
         return [
             'labels' => [],
@@ -143,71 +160,72 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getSummary(Farmer $farmer)
+    private function getSummary(Farmer $farmer): array
     {
         try {
             return [
                 'total_farms' => Farm::where('farmer_id', $farmer->id)->count(),
                 'total_farm_area_hectares' => (float) (Farm::where('farmer_id', $farmer->id)->sum('farm_size') ?? 0),
                 'total_crops' => Crop::where('farmer_id', $farmer->id)->count(),
-                'active_crops' => Crop::where('farmer_id', $farmer->id)
-                    ->where('status', 'active')
-                    ->count(),
+                'active_crops' => Crop::where('farmer_id', $farmer->id)->where('status', 'active')->count(),
                 'total_products' => Product::where('farmer_id', $farmer->id)->count(),
-                'active_products' => Product::where('farmer_id', $farmer->id)
-                    ->where('status', 'available')
-                    ->count(),
-                'pending_orders' => Order::where('farmer_id', $farmer->id)
-                    ->whereIn('status', ['pending', 'approved'])
-                    ->count(),
+                'active_products' => Product::where('farmer_id', $farmer->id)->where('status', 'available')->count(),
+                'pending_orders' => Order::where('farmer_id', $farmer->id)->whereIn('status', ['pending', 'approved'])->count(),
                 'total_orders' => Order::where('farmer_id', $farmer->id)->count(),
-                'completed_orders' => Order::where('farmer_id', $farmer->id)
-                    ->where('status', 'delivered')
-                    ->count(),
-                'total_sales' => (float) (Order::where('farmer_id', $farmer->id)
-                    ->where('status', 'delivered')
-                    ->sum('grand_total') ?? 0),
-                'average_order_value' => (float) (Order::where('farmer_id', $farmer->id)
-                    ->where('status', 'delivered')
-                    ->avg('grand_total') ?? 0),
+                'completed_orders' => Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->count(),
+                'total_sales' => (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->sum('grand_total') ?? 0),
+                'average_order_value' => (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->avg('grand_total') ?? 0),
                 'pending_consultations' => 0,
                 'total_consultations' => 0,
             ];
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('getSummary Error', [
-                'message' => $e->getMessage(),
-            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('getSummary Error: ' . $e->getMessage());
             return $this->getEmptySummary();
         }
     }
 
-    private function getChartData(Farmer $farmer, $days = 30)
+    private function getChartData(Farmer $farmer, int $days = 30): array
     {
         try {
             $labels = [];
             $data = [];
             
-            // Generate date labels
+            // Generate date labels for last N days (today backwards)
             for ($i = $days - 1; $i >= 0; $i--) {
-                $labels[] = Carbon::now()->subDays($i)->format('M d');
+                $date = Carbon::now()->subDays($i);
+                $labels[] = $date->format('M d'); // Format: "Oct 06"
             }
 
-            // Query real order data grouped by date
+            // Define date range
             $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
             $endDate = Carbon::now()->endOfDay();
 
-            $ordersByDate = Order::where('farmer_id', $farmer->id)
+            // Initialize array with all dates to ensure complete data
+            $revenueByDate = [];
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $dateKey = Carbon::now()->subDays($i)->format('Y-m-d');
+                $revenueByDate[$dateKey] = 0;
+            }
+
+            // Query real order data grouped by delivery date
+            $orders = Order::where('farmer_id', $farmer->id)
                 ->where('status', 'delivered')
                 ->whereNotNull('delivered_at')
                 ->whereBetween('delivered_at', [$startDate, $endDate])
-                ->select(DB::raw('DATE(delivered_at) as date'), DB::raw('COALESCE(SUM(grand_total), 0) as total'))
-                ->groupBy('date')
-                ->pluck('total', 'date');
+                ->get();
 
-            // Map data to dates
+            // Sum revenue by date
+            foreach ($orders as $order) {
+                $dateKey = $order->delivered_at->format('Y-m-d');
+                if (isset($revenueByDate[$dateKey])) {
+                    $revenueByDate[$dateKey] += (float) $order->grand_total;
+                }
+            }
+
+            // Build data array matching the date labels
             for ($i = $days - 1; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i)->format('Y-m-d');
-                $data[] = (float) ($ordersByDate[$date] ?? 0);
+                $dateKey = Carbon::now()->subDays($i)->format('Y-m-d');
+                $data[] = $revenueByDate[$dateKey] ?? 0;
             }
 
             return [
@@ -227,31 +245,30 @@ class DashboardController extends Controller
                     'pointHoverRadius' => 6,
                 ]]
             ];
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('getChartData Error', [
-                'message' => $e->getMessage(),
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('getChartData Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'farmer_id' => $farmer->id ?? null
             ]);
             return $this->getEmptyChartData($days);
         }
     }
 
-    private function getCropSalesDistribution(Farmer $farmer)
+    private function getCropSalesDistribution(Farmer $farmer): array
     {
         try {
-            // Get sales by product from order items
+            // Get top 5 crops by sales
             $cropSales = OrderItem::whereHas('order', function ($query) use ($farmer) {
-                $query->where('farmer_id', $farmer->id)
-                      ->where('status', 'delivered');
+                $query->where('farmer_id', $farmer->id)->where('status', 'delivered');
             })
-            ->select('product_id', DB::raw('COALESCE(SUM(quantity * price), 0) as total_amount'))
+            ->select('product_id', DB::raw('COALESCE(SUM(CAST(quantity AS NUMERIC) * CAST(price AS NUMERIC)), 0) as total_amount'))
             ->groupBy('product_id')
-            ->with('product')
             ->orderByDesc('total_amount')
             ->limit(5)
+            ->with('product:id,name')
             ->get();
 
             if ($cropSales->isEmpty()) {
-                // Return empty template if no sales
                 return $this->getEmptyCropSalesData();
             }
 
@@ -282,15 +299,13 @@ class DashboardController extends Controller
                     'hoverOffset' => 10,
                 ]]
             ];
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('getCropSalesDistribution Error', [
-                'message' => $e->getMessage(),
-            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('getCropSalesDistribution Error: ' . $e->getMessage());
             return $this->getEmptyCropSalesData();
         }
     }
 
-    private function getRecentTransactions(Farmer $farmer, $limit = 10)
+    private function getRecentTransactions(Farmer $farmer, int $limit = 10): array
     {
         try {
             $transactions = OrderItem::whereHas('order', function ($query) use ($farmer) {
@@ -300,7 +315,7 @@ class DashboardController extends Controller
             })
             ->with([
                 'order' => function ($query) {
-                    $query->select('id', 'farmer_id', 'delivered_at', 'order_number');
+                    $query->select('id', 'farmer_id', 'delivered_at');
                 },
                 'product' => function ($query) {
                     $query->select('id', 'name');
@@ -311,7 +326,7 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($item) {
                 return [
-                    'id' => 'ORD-' . str_pad($item->order_id, 5, '0', STR_PAD_LEFT),
+                    'id' => 'ORD-' . str_pad((string) $item->order_id, 5, '0', STR_PAD_LEFT),
                     'crop' => $item->product?->name ?? 'Unknown',
                     'quantity' => (int) $item->quantity,
                     'price' => (float) $item->price,
@@ -322,10 +337,8 @@ class DashboardController extends Controller
             ->toArray();
 
             return $transactions;
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('getRecentTransactions Error', [
-                'message' => $e->getMessage(),
-            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('getRecentTransactions Error: ' . $e->getMessage());
             return [];
         }
     }

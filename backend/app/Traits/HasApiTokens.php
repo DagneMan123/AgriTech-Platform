@@ -12,18 +12,25 @@ trait HasApiTokens
         $plainToken = Str::random(80);
         $hashedToken = hash('sha256', $plainToken);
         
-        $this->tokens()->create([
+        $token = $this->tokens()->create([
             'name' => $name,
             'token' => $hashedToken,
             'abilities' => json_encode($abilities),
         ]);
         
-        return new class($plainToken) {
+        return new class($plainToken, $token) {
             public $plainTextToken;
+            private $token;
             
-            public function __construct($token)
+            public function __construct($plainToken, $token)
             {
-                $this->plainTextToken = $token;
+                $this->plainTextToken = $plainToken;
+                $this->token = $token;
+            }
+            
+            public function accessToken()
+            {
+                return $this->token;
             }
         };
     }
@@ -35,6 +42,12 @@ trait HasApiTokens
 
     public function currentAccessToken()
     {
-        return $this->tokens()->latest()->first();
+        $token = request()->bearerToken();
+        if (!$token) {
+            return null;
+        }
+        
+        $hashedToken = hash('sha256', $token);
+        return $this->tokens()->where('token', $hashedToken)->first();
     }
 }

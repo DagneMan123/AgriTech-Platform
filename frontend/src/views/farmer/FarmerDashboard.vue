@@ -394,7 +394,7 @@ const handleLogout = async () => {
   flex: 1;
   overflow-y: auto;
   min-height: 100vh;
-  padding: 20px;
+  padding: 30px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 

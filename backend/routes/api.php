@@ -152,7 +152,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-Route::middleware(['auth:api'])->group(function () {
+Route::middleware(['api.token'])->group(function () {
     
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
