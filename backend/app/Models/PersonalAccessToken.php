@@ -7,12 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class PersonalAccessToken extends Model
 {
     protected $table = 'personal_access_tokens';
-    
-    protected $fillable = ['name', 'token', 'abilities', 'tokenable_type', 'tokenable_id'];
+    protected $fillable = ['name', 'token', 'abilities', 'tokenable_type', 'tokenable_id', 'created_at'];
+    public $timestamps = true;
 
-    /**
-     * Get the tokenable model that the token belongs to.
-     */
     public function tokenable()
     {
         return $this->morphTo();

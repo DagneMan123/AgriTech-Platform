@@ -13,17 +13,24 @@ class DashboardController extends Controller
             $user = $request->user();
             
             if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
+                return response()->json([
+                    'message' => 'Unauthorized - user not authenticated',
+                    'debug' => [
+                        'has_auth_header' => $request->hasHeader('Authorization'),
+                        'bearer_token' => $request->bearerToken() ? 'present' : 'missing'
+                    ]
+                ], 401);
             }
 
-            // Return minimal dashboard data
             return response()->json([
+                'message' => 'Dashboard loaded successfully',
                 'farmer' => [
                     'id' => 1,
                     'user_id' => $user->id,
+                    'user_name' => $user->name,
                     'farmer_registration_number' => 'FRM-' . $user->id . '-' . time(),
                     'farm_name' => $user->name . ' Farm',
-                    'region' => 'Not Specified',
+                    'region' => $user->region ?? 'Not Specified',
                 ],
                 'summary' => [
                     'total_farms' => 0,
@@ -45,16 +52,19 @@ class DashboardController extends Controller
                 'recent_products' => [],
                 'recent_orders' => [],
                 'recent_harvests' => [],
-            ]);
+            ], 200);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Dashboard error: ' . $e->getMessage(), [
+            \Illuminate\Support\Facades\Log::error('Farmer Dashboard Error', [
+                'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $request->user()?->id ?? 'unknown',
             ]);
             
             return response()->json([
-                'message' => 'Server error',
-                'error' => $e->getMessage(),
+                'message' => 'Server error. Please try again later.',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null,
             ], 500);
         }
     }

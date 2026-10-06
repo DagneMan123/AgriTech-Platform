@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Providers\AuthServiceProvider::class,
         \App\Providers\ConstraintFixerServiceProvider::class,
         \App\Providers\CropsTableFixerProvider::class,
+        \App\Providers\SanctumTokenGuardProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -259,11 +259,9 @@ class AuthController extends Controller
                 'password.required' => 'Password is required.',
             ]);
 
-            // Optimized query: use composite index on (email, is_active)
-            // Select only needed columns to reduce memory and network overhead
             $user = User::select('id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region')
                 ->where('email', $request->email)
-                ->where('is_active', true)  // Add filter here to use composite index
+                ->where('is_active', true)
                 ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
@@ -279,13 +277,11 @@ class AuthController extends Controller
                 \Illuminate\Support\Facades\Log::warning('Could not update last_login_at: ' . $e->getMessage());
             }
 
-            // Revoke previous tokens for better security (optional - set to true for single device login)
             $shouldRevokePrevious = env('SANCTUM_REVOKE_PREVIOUS_TOKENS', false);
             if ($shouldRevokePrevious) {
                 $user->tokens()->delete();
             }
 
-            // Create new Sanctum token with ability-based permissions
             $token = $user->createToken('api-token', ['*'])->plainTextToken;
 
             return response()->json([
@@ -295,12 +291,12 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
             ], 200);
         } catch (QueryException $e) {
-            Log::error('Login database error: ' . $e->getMessage());
+            Log::error('Login database error', ['message' => $e->getMessage()]);
             return response()->json([
                 'message' => 'An error occurred during login. Please try again later.',
             ], 500);
         } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
+            Log::error('Login error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'message' => 'An error occurred during login. Please try again later.',
             ], 500);

@@ -54,4 +54,6 @@ return [
     
 
     'revoke_previous_tokens' => env('SANCTUM_REVOKE_PREVIOUS_TOKENS', false),
+
+    'model' => \App\Models\PersonalAccessToken::class,
 ];

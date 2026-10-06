@@ -76,6 +76,15 @@ Route::get('/diagnostic/health', fn() => response()->json([
     'time' => now(),
 ]));
 
+Route::get('/test-auth', function(\Illuminate\Http\Request $request) {
+    return response()->json([
+        'authenticated' => $request->user() !== null,
+        'user' => $request->user(),
+        'token' => $request->bearerToken() ? 'present' : 'missing',
+        'guard' => 'api'
+    ]);
+});
+
 Route::prefix('email')->group(function () {
     Route::get('/health', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'health']);
     Route::get('/test-config', [App\Http\Controllers\Api\EmailDiagnosticController::class, 'testConfiguration']);
