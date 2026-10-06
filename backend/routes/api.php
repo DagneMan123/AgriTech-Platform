@@ -77,12 +77,37 @@ Route::get('/diagnostic/health', fn() => response()->json([
 ]));
 
 Route::get('/test-auth', function(\Illuminate\Http\Request $request) {
+    $token = $request->bearerToken();
+    $user = auth('api')->user();
+    
     return response()->json([
-        'authenticated' => $request->user() !== null,
-        'user' => $request->user(),
-        'token' => $request->bearerToken() ? 'present' : 'missing',
-        'guard' => 'api'
+        'authenticated' => $user !== null,
+        'user' => $user,
+        'token_present' => $token ? true : false,
+        'guard' => 'api',
+        'timestamp' => now(),
     ]);
+});
+
+Route::get('/test-db', function() {
+    try {
+        $tables = \Illuminate\Support\Facades\DB::select('SELECT table_name FROM information_schema.tables WHERE table_schema = ?', [env('DB_DATABASE')]);
+        $table_names = array_map(fn($t) => $t->table_name, $tables);
+        
+        $pat_exists = in_array('personal_access_tokens', $table_names);
+        $pat_count = $pat_exists ? \App\Models\PersonalAccessToken::count() : 0;
+        
+        return response()->json([
+            'database' => env('DB_DATABASE'),
+            'personal_access_tokens_table_exists' => $pat_exists,
+            'personal_access_tokens_count' => $pat_count,
+            'all_tables' => $table_names,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+        ], 500);
+    }
 });
 
 Route::prefix('email')->group(function () {
@@ -110,7 +135,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:api'])->group(function () {
     
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);

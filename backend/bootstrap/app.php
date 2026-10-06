@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,8 +27,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withProviders([
         \App\Providers\AuthServiceProvider::class,
-        \App\Providers\ConstraintFixerServiceProvider::class,
-        \App\Providers\CropsTableFixerProvider::class,
         \App\Providers\SanctumTokenGuardProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -37,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+                $statusCode = $e instanceof HttpException ? $e->getStatusCode() : 500;
                 
                 return response()->json([
                     'message' => $e->getMessage() ?: 'An error occurred',
@@ -51,3 +50,4 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
     })->create();
+
