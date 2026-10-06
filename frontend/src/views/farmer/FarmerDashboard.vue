@@ -84,7 +84,7 @@
             <h3>Revenue</h3>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
           </div>
-          <p class="stat-value">${{ formatNumber(dashboard?.summary?.total_sales || 0) }}</p>
+          <p class="stat-value">{{ formatNumber(dashboard?.summary?.total_sales || 0) }}</p>
           <p class="stat-subtitle">total sales</p>
         </div>
 
@@ -100,6 +100,13 @@
 
       <!-- Recent Activity -->
       <div v-if="!loading && !error" class="recent-section">
+        <div class="chart-card full-width">
+          <h2>Revenue Trend (Last 30 Days)</h2>
+          <div class="chart-container">
+            <Line :data="chartData" :options="chartOptions" />
+          </div>
+        </div>
+
         <div class="recent-card">
           <h2>Recent Harvests</h2>
           <div v-if="dashboard?.recent_harvests?.length > 0" class="list-items">
@@ -119,7 +126,7 @@
           <div class="list-items">
             <div class="list-item">
               <span class="item-name">Seasonal Funding</span>
-              <span class="item-amount">$2,000</span>
+              <span class="item-amount">2,000</span>
               <span class="status-badge status-pending">Pending</span>
             </div>
           </div>
@@ -130,7 +137,7 @@
           <div v-if="dashboard?.recent_orders?.length > 0" class="list-items">
             <div v-for="order in dashboard?.recent_orders?.slice(0, 3)" :key="order.id" class="list-item">
               <span class="item-name">Order #{{ order.id }}</span>
-              <span class="item-amount">${{ formatNumber(order.grand_total) }}</span>
+              <span class="item-amount">{{ formatNumber(order.grand_total) }}</span>
               <span class="status-badge" :class="`status-${order.status}`">{{ order.status }}</span>
             </div>
           </div>
@@ -144,12 +151,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { Line } from 'vue-chartjs'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import { farmerAPI } from '@/api/farmer'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -158,6 +169,79 @@ const { isDark, isLight, toggleTheme } = useTheme()
 const dashboard = ref(null)
 const loading = ref(false)
 const error = ref(null)
+
+const chartData = computed(() => {
+  if (!dashboard.value?.chart_data) {
+    return { labels: [], datasets: [] }
+  }
+  return dashboard.value.chart_data
+})
+
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top',
+      labels: {
+        color: isDark.value ? '#f3f4f6' : '#1f2937',
+        font: {
+          size: 14,
+          weight: '600'
+        },
+        padding: 20,
+        usePointStyle: true,
+      }
+    },
+    title: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: isDark.value ? 'rgba(19, 27, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+      titleColor: isDark.value ? '#f3f4f6' : '#1f2937',
+      bodyColor: isDark.value ? '#f3f4f6' : '#1f2937',
+      borderColor: isDark.value ? '#1e293b' : '#e5e7eb',
+      borderWidth: 1,
+      padding: 12,
+      displayColors: true,
+      callbacks: {
+        label: function(context) {
+          return context.dataset.label + ': ' + context.parsed.y.toFixed(2)
+        }
+      }
+    }
+  },
+  scales: {
+    y: {
+      grid: {
+        color: isDark.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        drawBorder: true,
+      },
+      ticks: {
+        color: isDark.value ? '#94a3b8' : '#6b7280',
+        font: {
+          size: 12,
+        },
+        callback: function(value) {
+          return value
+        }
+      }
+    },
+    x: {
+      grid: {
+        display: false,
+        drawBorder: true,
+      },
+      ticks: {
+        color: isDark.value ? '#94a3b8' : '#6b7280',
+        font: {
+          size: 12,
+        }
+      }
+    }
+  }
+}))
 
 onMounted(async () => {
   await fetchDashboardData()
@@ -611,10 +695,35 @@ const handleLogout = async () => {
   margin-top: 40px;
 }
 
-.recent-card {
+.recent-card,
+.chart-card {
   border-radius: 12px;
   padding: 24px;
   transition: all 0.3s;
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+  min-height: 400px;
+}
+
+.farmer-layout.light .chart-card {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.farmer-layout.dark .chart-card {
+  background: #131b2e;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #1e293b;
+}
+
+.chart-container {
+  position: relative;
+  height: 350px;
+  margin-top: 20px;
 }
 
 .farmer-layout.light .recent-card {
