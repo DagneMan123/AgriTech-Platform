@@ -38,34 +38,25 @@ class Buyer extends Model
     protected $with = [];
     protected $appends = [];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'buyer_id');
-    }
-    public function reviews()
-    {
-        return $this->morphMany(Review::class, 'reviewable');
-    }
-    public function wishlists()
-    {
-        return $this->hasMany(Wishlist::class);
-    }
-    public function cart()
-    {
-        return $this->hasMany(Cart::class);
-    }
+    /**
+     * DISABLED: All relationships blocked to prevent recursion during auth
+     * Use direct database queries instead
+     */
+    public function user() { return null; }
+    public function orders() { return null; }
+    public function reviews() { return null; }
+    public function wishlists() { return null; }
+    public function cart() { return null; }
 
     public function getTotalOrdersAttribute()
     {
-        return $this->orders()->count();
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 
     public function getTotalSpentAttribute()
     {
-        return $this->orders()->where('status', 'delivered')->sum('grand_total') ?? 0;
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 }

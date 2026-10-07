@@ -40,31 +40,29 @@ class Expert extends Model
     protected $with = [];
     protected $appends = [];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-    public function consultations()
-    {
-        return $this->hasMany(Consultation::class);
-    }
-    public function reviews()
-    {
-        return $this->morphMany(Review::class, 'reviewable');
-    }
+    /**
+     * DISABLED: All relationships blocked to prevent recursion during auth
+     * Use direct database queries instead
+     */
+    public function user() { return null; }
+    public function consultations() { return null; }
+    public function reviews() { return null; }
 
     public function getAverageRatingAttribute()
     {
-        return $this->reviews()->avg('rating') ?? 0;
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 
     public function getTotalConsultationsAttribute()
     {
-        return $this->consultations()->count();
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 
     public function getAnsweredConsultationsAttribute()
     {
-        return $this->consultations()->where('status', 'answered')->count();
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 }

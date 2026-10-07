@@ -36,13 +36,12 @@ class Review extends Model
     }
     
     /**
-     * DISABLED: morphTo causes infinite recursion during authentication
-     * Access reviewable data via direct database queries instead
+     * Polymorphic relationship to reviewable entities
+     * Safe because we don't eager load this anywhere in auth
      */
     public function reviewable()
     {
-        // Return null to prevent morphTo resolution chain
-        return null;
+        return $this->morphTo();
     }
 
     public function getRatingStarsAttribute()

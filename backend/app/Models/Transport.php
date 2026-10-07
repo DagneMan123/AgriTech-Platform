@@ -43,18 +43,11 @@ class Transport extends Model
     protected $with = [];
     protected $appends = [];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function deliveries()
-    {
-        return $this->hasMany(Delivery::class, 'transporter_id');
-    }
-
-    public function reviews()
-    {
-        return $this->morphMany(Review::class, 'reviewable');
-    }
+    /**
+     * DISABLED: All relationships blocked to prevent recursion during auth
+     * Use direct database queries instead
+     */
+    public function user() { return null; }
+    public function deliveries() { return null; }
+    public function reviews() { return null; }
 }

@@ -84,14 +84,12 @@ class AuthController extends Controller
                 ->header('Access-Control-Allow-Credentials', 'true')
                 ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
                 ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Login validation failed', ['email' => $request->email]);
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
-
         } catch (\Exception $e) {
             Log::error('Login error', [
                 'message' => $e->getMessage(),
@@ -337,4 +335,3 @@ class AuthController extends Controller
         ], 501);
     }
 }
-

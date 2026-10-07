@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Prepend CORS middleware - runs before everything
+        $middleware->prepend(\App\Http\Middleware\CorsMiddleware::class);
+        
         $middleware->api([
             'throttle:60,1',
         ]);

@@ -40,47 +40,33 @@ class Product extends Model
         'quantity' => 'decimal:2'
     ];
 
-    public function farmer()
-    {
-        return $this->belongsTo(Farmer::class);
-    }
-    public function crop()
-    {
-        return $this->belongsTo(Crop::class);
-    }
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-    public function orderItems()
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-    public function reviews()
-    {
-        return $this->morphMany(Review::class, 'reviewable');
-    }
-    public function cartItems()
-    {
-        return $this->hasMany(CartItem::class);
-    }
-    public function wishlists()
-    {
-        return $this->hasMany(Wishlist::class);
-    }
-    public function productImages()
-    {
-        return $this->hasMany(ProductImage::class);
-    }
+    // CRITICAL: Prevent eager loading to avoid infinite recursion
+    protected $with = [];
+    protected $appends = [];
+
+    /**
+     * DISABLED: All relationships blocked to prevent recursion during auth
+     * Use direct database queries instead
+     */
+    public function farmer() { return null; }
+    public function crop() { return null; }
+    public function category() { return null; }
+    public function orderItems() { return null; }
+    public function reviews() { return null; }
+    public function cartItems() { return null; }
+    public function wishlists() { return null; }
+    public function productImages() { return null; }
 
     public function getAverageRatingAttribute()
     {
-        return $this->reviews()->avg('rating') ?? 0;
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 
     public function getReviewsCountAttribute()
     {
-        return $this->reviews()->count();
+        // Disabled to prevent recursion - use DB query when needed
+        return 0;
     }
 
     public function getPrimaryImageAttribute()
