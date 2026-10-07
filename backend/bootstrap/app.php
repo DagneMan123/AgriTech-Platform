@@ -4,7 +4,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ምንም አይነት Custom CorsMiddleware የለም። 
+        // Laravel በውስጡ ባለው አብሮገነብ የ CORS ማስተካከያ በቂ ነው።
+        
         $middleware->api([
             'throttle:60,1',
         ]);
@@ -25,29 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
-        );
-
+        // እዚህጋ withHeaders በመጠቀም ስታክ ሉፕ እንዳይፈጠር በቀጥታ እናስተካክለዋለን
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                $statusCode = $e instanceof HttpException ? $e->getStatusCode() : 500;
-
-                // ከ '*' ይልቅ ትክክለኛውን የፍሮንቴንድ ዩአርኤል እናስገባለን
-                $origin = $request->header('Origin', 'http://localhost:5173');
-                $allowedOrigin = in_array($origin, ['http://localhost:5173', 'http://127.0.0.1:5173'])
-                    ? $origin
-                    : 'http://localhost:5173';
-
                 return response()->json([
                     'message' => $e->getMessage() ?: 'An error occurred',
-                    'errors' => [],
-                ], $statusCode)->withHeaders([
-                    'Access-Control-Allow-Origin' => $allowedOrigin,
-                    'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
-                    'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
-                    'Access-Control-Allow-Credentials' => 'true',
-                ]);
+                ], 500);
             }
         });
     })->create();

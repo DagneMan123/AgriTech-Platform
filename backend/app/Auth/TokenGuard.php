@@ -39,7 +39,8 @@ class TokenGuard implements Guard
                 ->first();
 
             if ($personalAccessToken) {
-                $this->user = $personalAccessToken->tokenable;
+                // Use direct method - NO morphTo relationships
+                $this->user = $personalAccessToken->getUser();
                 return $this->user;
             }
         }

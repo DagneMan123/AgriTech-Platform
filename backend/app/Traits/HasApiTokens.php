@@ -7,12 +7,19 @@ use App\Models\PersonalAccessToken;
 
 trait HasApiTokens
 {
+    /**
+     * Create a new personal access token for the user.
+     * NEVER use $this->tokens() - it causes infinite recursion with morphMany
+     */
     public function createToken($name, $abilities = ['*'])
     {
         $plainToken = Str::random(80);
         $hashedToken = hash('sha256', $plainToken);
         
-        $token = $this->tokens()->create([
+        // Create token directly - bypass relationships
+        $token = PersonalAccessToken::create([
+            'tokenable_type' => self::class,
+            'tokenable_id' => $this->id,
             'name' => $name,
             'token' => $hashedToken,
             'abilities' => json_encode($abilities),
@@ -35,11 +42,20 @@ trait HasApiTokens
         };
     }
     
+    /**
+     * NEVER call this - morphMany causes infinite recursion
+     * Only included for compatibility
+     */
     public function tokens()
     {
-        return $this->morphMany(PersonalAccessToken::class, 'tokenable');
+        // Return an empty relationship to prevent issues
+        return collect();
     }
 
+    /**
+     * Get current access token without relationship loading.
+     * This is the ONLY safe way to get the token.
+     */
     public function currentAccessToken()
     {
         $token = request()->bearerToken();
@@ -48,6 +64,9 @@ trait HasApiTokens
         }
         
         $hashedToken = hash('sha256', $token);
-        return $this->tokens()->where('token', $hashedToken)->first();
+        return PersonalAccessToken::where('token', $hashedToken)
+            ->where('tokenable_id', $this->id)
+            ->where('tokenable_type', self::class)
+            ->first();
     }
 }

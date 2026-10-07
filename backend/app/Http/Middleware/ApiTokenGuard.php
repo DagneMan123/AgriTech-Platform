@@ -30,7 +30,8 @@ class ApiTokenGuard
             ], 401);
         }
 
-        $user = User::find($personalAccessToken->tokenable_id);
+        // Use safe method - NO morphTo
+        $user = $personalAccessToken->getUser();
 
         if (!$user) {
             return response()->json([

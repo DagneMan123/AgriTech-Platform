@@ -29,6 +29,9 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token'];
     protected $casts = ['email_verified_at' => 'datetime', 'is_active' => 'boolean', 'last_login_at' => 'datetime'];
+    
+    // Disable automatic relationship loading to prevent memory exhaustion
+    protected $with = [];
 
     public function farmer()
     {

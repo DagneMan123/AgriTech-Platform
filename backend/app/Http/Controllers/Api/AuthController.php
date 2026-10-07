@@ -257,7 +257,8 @@ class AuthController extends Controller
 
             $user = User::where('email', $request->email)
                 ->where('is_active', true)
-                ->first(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region']);
+                ->select(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region'])
+                ->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
@@ -266,12 +267,22 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            $token = $user->createToken('api-token', ['*'])->plainTextToken;
+            // Create token without loading relationships
+            $plainToken = \Illuminate\Support\Str::random(80);
+            $hashedToken = hash('sha256', $plainToken);
+            
+            $token = \App\Models\PersonalAccessToken::create([
+                'tokenable_type' => User::class,
+                'tokenable_id' => $user->id,
+                'name' => 'api-token',
+                'token' => $hashedToken,
+                'abilities' => json_encode(['*']),
+            ]);
 
             return response()->json([
                 'message' => 'Login successful',
                 'user' => $user->only(['id', 'name', 'email', 'phone', 'role']),
-                'token' => $token,
+                'token' => $plainToken,
                 'token_type' => 'Bearer',
             ], 200);
         } catch (\Exception $e) {

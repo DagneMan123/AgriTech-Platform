@@ -75,15 +75,14 @@ class SanctumTokenGuard implements Guard
             $hashedToken = hash('sha256', $token);
             $tokenModel = \App\Models\PersonalAccessToken::class;
             
-            $tokenInstance = $tokenModel::where('token', $hashedToken)
-                ->with('tokenable')
-                ->first();
+            $tokenInstance = $tokenModel::where('token', $hashedToken)->first();
 
             if (!$tokenInstance) {
                 return null;
             }
 
-            $user = $tokenInstance->tokenable;
+            // Use direct method - NO morphTo
+            $user = $tokenInstance->getUser();
             if (!$user) {
                 return null;
             }
