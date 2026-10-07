@@ -34,6 +34,10 @@ class Buyer extends Model
         'average_rating' => 'decimal:2'
     ];
 
+    // CRITICAL: Prevent eager loading to avoid infinite recursion
+    protected $with = [];
+    protected $appends = [];
+
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Support\Str;
 use App\Models\PersonalAccessToken;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasApiTokens
 {
@@ -43,13 +44,14 @@ trait HasApiTokens
     }
     
     /**
-     * NEVER call this - morphMany causes infinite recursion
-     * Only included for compatibility
+     * Define the tokens relationship - safe version without morphMany
+     * Returns empty query builder to prevent recursion
      */
     public function tokens()
     {
-        // Return an empty relationship to prevent issues
-        return collect();
+        // Return a query that won't execute the morphMany relationship chain
+        return PersonalAccessToken::where('tokenable_id', $this->id)
+            ->where('tokenable_type', self::class);
     }
 
     /**

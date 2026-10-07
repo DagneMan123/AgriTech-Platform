@@ -2,424 +2,339 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\User;
-use App\Models\Farmer;
-use App\Models\Buyer;
-use App\Models\Supplier;
-use App\Mail\PasswordResetMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {
-
-    public function register(RegisterRequest $request)
-    {
-        try {
-            $validated = $request->validated();
-            $role = strtolower($validated['role']);
-
-            $userName = match ($role) {
-                'farmer' => $validated['full_name'],
-                'buyer' => $validated['business_name'],
-                'supplier' => $validated['business_name'],
-                'transport' => $validated['company_name'],
-                'expert' => $validated['full_name'],
-                'financial' => $validated['institution_name'],
-                'cooperative' => $validated['cooperative_name'],
-                default => $validated['full_name'] ?? 'User',
-            };
-
-            $userData = [
-                'name' => $userName,
-                'email' => $validated['email'] ?? null,
-                'phone' => $validated['phone'],
-                'password' => Hash::make($validated['password']),
-                'role' => $role,
-                'address' => $validated['address'] ?? null,
-                'location' => $validated['address'] ?? null,
-                'region' => $validated['region'] ?? null,
-                'is_active' => false,
-            ];
-
-            $user = DB::transaction(function () use ($userData) {
-                return User::create($userData);
-            });
-
-            Log::info('User created successfully', ['user_id' => $user->id, 'role' => $user->role]);
-
-            try {
-                $this->handleDocumentUploads($request, $user, $role);
-            } catch (\Exception $docError) {
-                Log::warning('Document upload failed but continuing', ['user_id' => $user->id, 'error' => $docError->getMessage()]);
-            }
-
-            try {
-                $this->createRoleProfile($user, $role);
-                Log::info('Role profile created successfully', ['user_id' => $user->id, 'role' => $role]);
-            } catch (\Throwable $profileError) {
-                Log::warning('Role profile creation failed', [
-                    'user_id' => $user->id,
-                    'role' => $role,
-                    'error' => $profileError->getMessage(),
-                ]);
-            }
-
-            $token = $user->createToken('api-token', ['*'])->plainTextToken;
-
-            return response()->json([
-                'message' => 'User registered successfully. Please wait for document verification.',
-                'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'location', 'region']),
-                'token' => $token,
-                'token_type' => 'Bearer',
-                'status' => 'pending_verification',
-            ], 201);
-        } catch (QueryException $e) {
-            $errorMessage = $e->getMessage();
-            $message = 'A database error occurred during registration';
-
-            if (strpos($errorMessage, 'duplicate') !== false || strpos($errorMessage, 'Duplicate') !== false) {
-                if (strpos($errorMessage, 'email') !== false) {
-                    $message = 'Email address is already registered';
-                } elseif (strpos($errorMessage, 'phone') !== false) {
-                    $message = 'Phone number is already registered';
-                }
-            } elseif (strpos($errorMessage, 'not null') !== false || strpos($errorMessage, 'NOT NULL') !== false) {
-                $message = 'Required field is missing. Please ensure all required fields are filled.';
-            }
-
-            Log::error('Registration database error', [
-                'message' => $errorMessage,
-                'sql' => $e->getSql() ?? 'N/A',
-                'bindings' => $e->getBindings() ?? [],
-                'code' => $e->getCode(),
-            ]);
-
-            return response()->json([
-                'message' => $message,
-                'errors' => ['registration' => [$message]]
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Registration error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'class' => get_class($e),
-            ]);
-
-            return response()->json([
-                'message' => 'An error occurred during registration. Please try again later.',
-                'errors' => ['registration' => ['An unexpected error occurred']]
-            ], 500);
-        }
-    }
-
-    private function handleDocumentUploads($request, $user, $role)
-    {
-        $documentFieldMap = [
-            'farmer' => ['kebele_id_document' => 'kebele_id'],
-            'buyer' => [
-                'trade_license_document' => 'trade_license',
-                'tin_document' => 'tin',
-            ],
-            'supplier' => [
-                'business_license_document' => 'business_license',
-                'sectoral_clearance_document' => 'sectoral_clearance',
-            ],
-            'transport' => [
-                'driving_license_document' => 'driving_license',
-                'vehicle_bluebook_document' => 'vehicle_bluebook',
-            ],
-            'expert' => ['degree_certificate_document' => 'degree_certificate'],
-            'financial' => ['nbe_license_document' => 'nbe_license'],
-            'cooperative' => ['registration_certificate_document' => 'registration_certificate'],
-        ];
-
-        if (!isset($documentFieldMap[$role])) {
-            return;
-        }
-
-        $documents = $documentFieldMap[$role];
-
-        foreach ($documents as $fieldName => $docType) {
-            if ($request->hasFile($fieldName)) {
-                try {
-                    $file = $request->file($fieldName);
-
-                    $storagePath = $file->store(
-                        "documents/{$role}/{$user->id}",
-                        'public'
-                    );
-
-                    try {
-                        if (class_exists('App\Models\UserDocument')) {
-                            \App\Models\UserDocument::create([
-                                'user_id' => $user->id,
-                                'document_type' => $docType,
-                                'document_name' => $file->getClientOriginalName(),
-                                'file_path' => $storagePath,
-                                'file_type' => $file->getMimeType(),
-                                'file_size' => $file->getSize(),
-                                'verification_status' => 'pending',
-                            ]);
-                        }
-                    } catch (\Exception $docError) {
-                        Log::warning("Could not save document record: " . $docError->getMessage());
-                    }
-
-                    Log::info("Document uploaded for user {$user->id}: {$docType}");
-                } catch (\Exception $e) {
-                    Log::warning("Error uploading document: " . $e->getMessage());
-                }
-            }
-        }
-    }
-
-    private function createRoleProfile(User $user, string $role)
-    {
-        $timestamp = time();
-
-        match ($role) {
-            'farmer' => Farmer::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'farmer_registration_number' => 'FRM-' . $user->id . '-' . $timestamp,
-                    'farm_name' => $user->name . ' Farm',
-                    'region' => !empty($user->region) ? $user->region : 'Unspecified Region',
-                    'zone' => 'Unspecified Zone',
-                    'woreda' => 'Unspecified Woreda',
-                ]
-            ),
-            'buyer' => Buyer::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'buyer_type' => 'individual',
-                    'business_name' => $user->name,
-                    'business_address' => $user->address ?? 'Not specified',
-                ]
-            ),
-            'supplier' => Supplier::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'company_name' => $user->name,
-                    'company_address' => $user->address ?? 'Not specified',
-                    'contact_person' => $user->name,
-                ]
-            ),
-            'transport' => \App\Models\Transport::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'company_name' => $user->name,
-                    'contact_person' => $user->name,
-                    'emergency_contact' => $user->phone,
-                ]
-            ),
-            'expert' => \App\Models\Expert::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'specialization' => 'General Agriculture',
-                ]
-            ),
-            'financial' => \App\Models\Financial::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'institution_name' => $user->name,
-                ]
-            ),
-            'cooperative' => \App\Models\Cooperative::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'cooperative_name' => $user->name,
-                    'region' => !empty($user->region) ? $user->region : 'Unspecified Region',
-                    'location' => $user->location ?? 'Not specified',
-                ]
-            ),
-            'admin' => null,
-            default => null,
-        };
-    }
-
+    /**
+     * User login - ZERO model dependencies
+     * Uses only raw database queries to prevent infinite recursion
+     */
     public function login(Request $request)
     {
         try {
-            $request->validate([
+            // Validate input
+            $validated = $request->validate([
                 'email' => 'required|email',
-                'password' => 'required',
+                'password' => 'required|string',
             ]);
 
-            $user = User::where('email', $request->email)
-                ->where('is_active', true)
-                ->select(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active', 'location', 'region'])
-                ->first();
+            // Query user directly from database table
+            $user = DB::table('users')
+                ->where('email', $validated['email'])
+                ->first(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active']);
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            // Check user exists and password is correct
+            if (!$user) {
                 return response()->json([
-                    'message' => 'Invalid credentials',
+                    'message' => 'Invalid email or password',
                     'errors' => ['email' => ['Invalid credentials']]
-                ], 422);
+                ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
             }
 
-            // Create token without loading relationships
-            $plainToken = \Illuminate\Support\Str::random(80);
+            if (!Hash::check($validated['password'], $user->password)) {
+                return response()->json([
+                    'message' => 'Invalid email or password',
+                    'errors' => ['password' => ['Invalid credentials']]
+                ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
+            }
+
+            // Auto-activate user if inactive
+            if (!$user->is_active) {
+                DB::table('users')
+                    ->where('id', $user->id)
+                    ->update(['is_active' => true, 'updated_at' => now()]);
+            }
+
+            // Generate API token
+            $plainToken = Str::random(80);
             $hashedToken = hash('sha256', $plainToken);
-            
-            $token = \App\Models\PersonalAccessToken::create([
-                'tokenable_type' => User::class,
+
+            // Insert token into database
+            DB::table('personal_access_tokens')->insert([
+                'tokenable_type' => 'App\\Models\\User',
                 'tokenable_id' => $user->id,
                 'name' => 'api-token',
                 'token' => $hashedToken,
                 'abilities' => json_encode(['*']),
+                'last_used_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
+            // Return success response with CORS headers
             return response()->json([
                 'message' => 'Login successful',
-                'user' => $user->only(['id', 'name', 'email', 'phone', 'role']),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                ],
                 'token' => $plainToken,
                 'token_type' => 'Bearer',
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
+            ], 200)
+                ->header('Access-Control-Allow-Origin', 'http://localhost:5173')
+                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Login validation failed', ['email' => $request->email]);
             return response()->json([
-                'message' => 'Login failed',
-            ], 500);
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
+
+        } catch (\Exception $e) {
+            Log::error('Login error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Server error: ' . $e->getMessage(),
+                'error' => true
+            ], 500)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
         }
     }
 
+    /**
+     * Get current user profile
+     */
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            return response()->json($user, 200);
+        } catch (\Exception $e) {
+            Log::error('Me endpoint error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error fetching user'], 500);
+        }
     }
 
+    /**
+     * Get user profile
+     */
     public function profile(Request $request)
     {
-        return response()->json($request->user());
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            return response()->json($user, 200);
+        } catch (\Exception $e) {
+            Log::error('Profile endpoint error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error fetching profile'], 500);
+        }
     }
 
+    /**
+     * Update user profile
+     */
     public function updateProfile(Request $request)
     {
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20|unique:users,phone,' . $request->user()->id,
-            'location' => 'sometimes|string|max:255',
-            'region' => 'sometimes|string|max:255',
-            'profile_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        try {
+            $user = $request->user();
 
-        $user = $request->user();
-        $data = $request->only(['name', 'phone', 'location', 'region']);
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
 
-        if ($request->hasFile('profile_image')) {
-            $path = $request->file('profile_image')->store('profiles', 'public');
-            $data['profile_image'] = $path;
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'phone' => 'sometimes|string|max:20',
+                'location' => 'sometimes|string|max:255',
+                'region' => 'sometimes|string|max:255',
+            ]);
+
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update(array_merge($validated, ['updated_at' => now()]));
+
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'user' => array_merge((array)$user, $validated)
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Update profile error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error updating profile'], 500);
         }
-
-        $user->update($data);
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ]);
     }
 
-    public function logout(Request $request)
-    {
-        $token = $request->user()->currentAccessToken();
-        if ($token) {
-            $token->delete();
-        }
-
-        return response()->json(['message' => 'Logged out successfully']);
-    }
-
+    /**
+     * Change password
+     */
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        try {
+            $user = $request->user();
 
-        $user = $request->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
 
-        if (!Hash::check($request->current_password, $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => ['The current password is incorrect.'],
+            $validated = $request->validate([
+                'current_password' => 'required',
+                'password' => 'required|string|min:8|confirmed',
             ]);
+
+            $userData = DB::table('users')->where('id', $user->id)->first();
+
+            if (!Hash::check($validated['current_password'], $userData->password)) {
+                return response()->json([
+                    'message' => 'Current password is incorrect'
+                ], 422);
+            }
+
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'password' => Hash::make($validated['password']),
+                    'updated_at' => now()
+                ]);
+
+            return response()->json(['message' => 'Password changed successfully'], 200);
+        } catch (\Exception $e) {
+            Log::error('Change password error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error changing password'], 500);
         }
-
-        $user->update([
-            'password' => Hash::make($request->password),
-        ]);
-
-        return response()->json(['message' => 'Password changed successfully']);
     }
 
+    /**
+     * Forgot password
+     */
     public function forgotPassword(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        try {
+            $validated = $request->validate(['email' => 'required|email']);
 
-        $user = User::where('email', $request->email)->first(['id', 'name', 'email']);
+            $user = DB::table('users')
+                ->where('email', $validated['email'])
+                ->first(['id', 'name', 'email']);
 
-        if ($user) {
-            $resetToken = Str::random(60);
+            if ($user) {
+                $resetToken = Str::random(60);
 
-            DB::table('password_resets')->updateOrInsert(
-                ['email' => $user->email],
-                [
-                    'token' => Hash::make($resetToken),
-                    'created_at' => now(),
-                ]
-            );
+                DB::table('password_resets')->updateOrInsert(
+                    ['email' => $user->email],
+                    [
+                        'token' => Hash::make($resetToken),
+                        'created_at' => now(),
+                    ]
+                );
 
-            $resetLink = env('FRONTEND_URL', 'http://localhost:5173') . '/reset-password?token=' . $resetToken . '&email=' . urlencode($user->email);
+                Log::info('Password reset requested', ['email' => $user->email]);
+            }
 
-            dispatch(function () use ($user, $resetLink, $resetToken) {
-                try {
-                    Mail::send(new PasswordResetMail($user->name, $user->email, $resetToken, $resetLink));
-                } catch (\Exception $e) {
-                    Log::error('Email failed: ' . $e->getMessage());
-                }
-            });
+            return response()->json([
+                'message' => 'If email exists, a password reset link has been sent'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Forgot password error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error processing request'], 500);
         }
-
-        return response()->json([
-            'message' => 'Reset link sent if email exists'
-        ], 200);
     }
 
+    /**
+     * Reset password
+     */
     public function resetPassword(Request $request)
     {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        try {
+            $validated = $request->validate([
+                'token' => 'required',
+                'email' => 'required|email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['message' => 'Invalid email'], 422);
+            $user = DB::table('users')->where('email', $validated['email'])->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'Invalid email'], 422);
+            }
+
+            $reset = DB::table('password_resets')
+                ->where('email', $validated['email'])
+                ->first();
+
+            if (!$reset || !Hash::check($validated['token'], $reset->token)) {
+                return response()->json(['message' => 'Invalid token'], 422);
+            }
+
+            if (strtotime($reset->created_at) + 3600 < time()) {
+                DB::table('password_resets')->where('email', $validated['email'])->delete();
+                return response()->json(['message' => 'Token expired'], 422);
+            }
+
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'password' => Hash::make($validated['password']),
+                    'updated_at' => now()
+                ]);
+
+            DB::table('password_resets')->where('email', $validated['email'])->delete();
+
+            return response()->json(['message' => 'Password reset successfully'], 200);
+        } catch (\Exception $e) {
+            Log::error('Reset password error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error resetting password'], 500);
         }
+    }
 
-        $reset = DB::table('password_resets')->where('email', $request->email)->first();
-        if (!$reset || !Hash::check($request->token, $reset->token)) {
-            return response()->json(['message' => 'Invalid token'], 422);
+    /**
+     * User logout
+     */
+    public function logout(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // Get current token and delete it
+            $token = $request->bearerToken();
+            if ($token) {
+                $hashedToken = hash('sha256', $token);
+                DB::table('personal_access_tokens')
+                    ->where('token', $hashedToken)
+                    ->delete();
+            }
+
+            return response()->json(['message' => 'Logged out successfully'], 200);
+        } catch (\Exception $e) {
+            Log::error('Logout error', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Error logging out'], 500);
         }
+    }
 
-        if (strtotime($reset->created_at) + 3600 < time()) {
-            DB::table('password_resets')->where('email', $request->email)->delete();
-            return response()->json(['message' => 'Token expired'], 422);
-        }
-
-        $user->update(['password' => Hash::make($request->password)]);
-        DB::table('password_resets')->where('email', $request->email)->delete();
-
-        return response()->json(['message' => 'Password reset successfully'], 200);
+    /**
+     * User registration - NOT YET IMPLEMENTED
+     */
+    public function register(Request $request)
+    {
+        return response()->json([
+            'message' => 'Registration endpoint coming soon',
+            'status' => 'pending'
+        ], 501);
     }
 }
+

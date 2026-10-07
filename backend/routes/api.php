@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 
 use App\Http\Controllers\Api\AuthController;
@@ -67,6 +69,120 @@ use App\Http\Controllers\Api\Notification\NotificationController;
 use App\Http\Controllers\Api\RepairController;
 
 Route::get('/health', fn() => response()->json(['status' => 'ok', 'time' => now()]));
+
+Route::get('/test/db', function () {
+    try {
+        $count = DB::table('users')->count();
+        return response()->json(['users' => $count, 'database' => 'connected']);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+Route::post('/auth/login', function (Request $request) {
+    try {
+        // Validate input
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:1',
+        ]);
+
+        // Step 1: Query user WITHOUT instantiating model
+        $user = DB::table('users')
+            ->where('email', $validated['email'])
+            ->first(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active']);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Invalid email or password',
+                'errors' => ['email' => ['Invalid credentials']]
+            ], 422);
+        }
+
+        // Step 2: Verify password
+        if (!Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Invalid email or password',
+                'errors' => ['password' => ['Invalid credentials']]
+            ], 422);
+        }
+
+        // Step 3: Auto-activate inactive users
+        if (!$user->is_active) {
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'is_active' => true,
+                    'updated_at' => now()
+                ]);
+        }
+
+        // Step 4: Generate token WITHOUT loading any models
+        $plainToken = Str::random(80);
+        $hashedToken = hash('sha256', $plainToken);
+
+        // Step 5: Insert token directly (no Model::create, no relationships)
+        DB::table('personal_access_tokens')->insert([
+            'tokenable_type' => 'App\\Models\\User',
+            'tokenable_id' => $user->id,
+            'name' => 'api-token',
+            'token' => $hashedToken,
+            'abilities' => json_encode(['*']),
+            'last_used_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Step 6: Return ONLY plain data - NO MODEL SERIALIZATION
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => [
+                'id' => (int)$user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role,
+                'is_active' => (bool)$user->is_active,
+            ],
+            'token' => $plainToken,
+            'token_type' => 'Bearer',
+        ], 200);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::warning('Login validation error', ['email' => $request->email]);
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Throwable $e) {
+        \Log::error('Login fatal error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+        return response()->json([
+            'message' => 'Server error',
+        ], 500);
+    }
+});
+
+Route::get('/cors-test', fn() => response()->json(['message' => 'CORS working!', 'timestamp' => now()]));
+
+Route::post('/cors-test', fn() => response()->json(['message' => 'POST CORS working!', 'timestamp' => now()]));
+
+Route::get('/debug/login', function () {
+    return response()->json([
+        'endpoint' => '/api/auth/login',
+        'method' => 'POST',
+        'headers' => ['Content-Type' => 'application/json'],
+        'body' => [
+            'email' => 'test@example.com',
+            'password' => 'password123'
+        ],
+        'cors_origin' => 'http://localhost:5173',
+        'backend_ready' => true
+    ]);
+});
 
 Route::get('/diagnostic/health', fn() => response()->json([
     'status' => 'ok',
@@ -147,7 +263,6 @@ Route::options('/{any}', function () {
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });

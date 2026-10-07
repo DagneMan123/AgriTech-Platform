@@ -14,13 +14,6 @@ class PersonalAccessToken extends Model
     // DO NOT LOAD RELATIONSHIPS
     protected $with = [];
     protected $appends = [];
-    
-    // Override relationships completely to prevent any recursion
-    public function tokenable()
-    {
-        // NEVER call morphTo - it causes infinite recursion
-        return null;
-    }
 
     /**
      * Get the User associated with this token without any relationship loading.

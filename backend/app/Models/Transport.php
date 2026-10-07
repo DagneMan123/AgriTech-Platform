@@ -39,6 +39,10 @@ class Transport extends Model
         'is_active' => 'boolean',
     ];
 
+    // CRITICAL: Prevent eager loading to avoid infinite recursion
+    protected $with = [];
+    protected $appends = [];
+
     public function user()
     {
         return $this->belongsTo(User::class);

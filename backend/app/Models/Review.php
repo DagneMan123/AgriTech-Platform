@@ -26,13 +26,23 @@ class Review extends Model
         'rating' => 'integer'
     ];
 
+    // CRITICAL: Prevent eager loading of relationships to avoid infinite recursion
+    protected $with = [];
+    protected $appends = [];
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+    
+    /**
+     * DISABLED: morphTo causes infinite recursion during authentication
+     * Access reviewable data via direct database queries instead
+     */
     public function reviewable()
     {
-        return $this->morphTo();
+        // Return null to prevent morphTo resolution chain
+        return null;
     }
 
     public function getRatingStarsAttribute()

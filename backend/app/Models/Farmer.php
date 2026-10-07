@@ -39,53 +39,18 @@ class Farmer extends Model
         'is_verified' => 'boolean'
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-    public function farms()
-    {
-        return $this->hasMany(Farm::class);
-    }
-    public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
-    public function reviews()
-    {
-        return $this->morphMany(Review::class, 'reviewable');
-    }
-    public function cooperativeMembers()
-    {
-        return $this->hasMany(CooperativeMember::class);
-    }
+    // CRITICAL: Prevent eager loading to avoid infinite recursion
+    protected $with = [];
+    protected $appends = [];
 
-    public function cropActivities()
-    {
-        return $this->hasMany(CropActivity::class);
-    }
-
-    public function getAverageRatingAttribute()
-    {
-        return $this->reviews()->avg('rating') ?? 0;
-    }
-
-    public function getTotalRevenueAttribute()
-    {
-        return $this->orders()->where('status', 'delivered')->sum('grand_total') ?? 0;
-    }
-
-    public function getTotalProductsAttribute()
-    {
-        return $this->products()->count();
-    }
-
-    public function getTotalFarmsAttribute()
-    {
-        return $this->farms()->count();
-    }
+    /**
+     * DISABLED: All relationships blocked to prevent recursion
+     */
+    public function user() { return null; }
+    public function farms() { return null; }
+    public function products() { return null; }
+    public function orders() { return null; }
+    public function reviews() { return null; }
+    public function cooperativeMembers() { return null; }
+    public function cropActivities() { return null; }
 }
