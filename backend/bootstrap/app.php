@@ -14,12 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS handling - Laravel 13 built-in
-        $middleware->statefulApi();
-
-
         $middleware->api([
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:60,1',
         ]);
 
@@ -29,10 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.token' => \App\Http\Middleware\ApiTokenGuard::class,
         ]);
     })
-    ->withProviders([
-        \Laravel\Sanctum\SanctumServiceProvider::class,
-        \App\Providers\AuthServiceProvider::class,
-    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
@@ -42,11 +33,17 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*') || $request->expectsJson()) {
                 $statusCode = $e instanceof HttpException ? $e->getStatusCode() : 500;
 
+                // ከ '*' ይልቅ ትክክለኛውን የፍሮንቴንድ ዩአርኤል እናስገባለን
+                $origin = $request->header('Origin', 'http://localhost:5173');
+                $allowedOrigin = in_array($origin, ['http://localhost:5173', 'http://127.0.0.1:5173'])
+                    ? $origin
+                    : 'http://localhost:5173';
+
                 return response()->json([
                     'message' => $e->getMessage() ?: 'An error occurred',
                     'errors' => [],
                 ], $statusCode)->withHeaders([
-                    'Access-Control-Allow-Origin' => env('FRONTEND_URL', 'http://localhost:5173'),
+                    'Access-Control-Allow-Origin' => $allowedOrigin,
                     'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
                     'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
                     'Access-Control-Allow-Credentials' => 'true',
