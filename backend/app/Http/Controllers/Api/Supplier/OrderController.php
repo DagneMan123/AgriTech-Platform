@@ -154,8 +154,8 @@ class OrderController extends Controller
             'confirmed_orders' => $orders->where('status', 'confirmed')->count(),
             'shipped_orders' => $orders->where('status', 'shipped')->count(),
             'delivered_orders' => $orders->where('status', 'delivered')->count(),
-            'total_revenue' => $orders->sum('total_amount'),
-            'average_order_value' => $orders->count() > 0 ? $orders->avg('total_amount') : 0,
+            'total_revenue' => $orders->sum('grand_total'),
+            'average_order_value' => $orders->count() > 0 ? $orders->avg('grand_total') : 0,
         ];
 
         return response()->json([

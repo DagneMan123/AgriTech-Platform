@@ -65,11 +65,11 @@ class SalesReportController extends Controller
         $orders = $query->get();
 
         return [
-            'total_sales' => $orders->sum('total_amount'),
+            'total_sales' => $orders->sum('grand_total'),
             'total_orders' => $orders->count(),
-            'average_order_value' => $orders->count() > 0 ? $orders->avg('total_amount') : 0,
-            'highest_order' => $orders->max('total_amount'),
-            'lowest_order' => $orders->min('total_amount'),
+            'average_order_value' => $orders->count() > 0 ? $orders->avg('grand_total') : 0,
+            'highest_order' => $orders->max('grand_total'),
+            'lowest_order' => $orders->min('grand_total'),
         ];
     }
 
@@ -107,7 +107,7 @@ class SalesReportController extends Controller
             ->selectRaw('farmer_id')
             ->selectRaw('users.name as farmer_name')
             ->selectRaw('COUNT(*) as order_count')
-            ->selectRaw('SUM(total_amount) as total_sales')
+            ->selectRaw('SUM(grand_total) as total_sales')
             ->join('users', 'orders.farmer_id', '=', 'users.id');
 
         if ($farmerId) {
@@ -129,7 +129,7 @@ class SalesReportController extends Controller
             ->selectRaw('buyer_id')
             ->selectRaw('users.name as buyer_name')
             ->selectRaw('COUNT(*) as order_count')
-            ->selectRaw('SUM(total_amount) as total_spending')
+            ->selectRaw('SUM(grand_total) as total_spending')
             ->join('users', 'orders.buyer_id', '=', 'users.id');
 
         if ($farmerId) {
@@ -150,8 +150,8 @@ class SalesReportController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as date')
             ->selectRaw('COUNT(*) as orders')
-            ->selectRaw('SUM(total_amount) as total_sales')
-            ->selectRaw('AVG(total_amount) as avg_order_value');
+            ->selectRaw('SUM(grand_total) as total_sales')
+            ->selectRaw('AVG(grand_total) as avg_order_value');
 
         if ($farmerId) {
             $query->where('farmer_id', $farmerId);
@@ -171,7 +171,7 @@ class SalesReportController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as period')
             ->selectRaw('COUNT(*) as order_count')
-            ->selectRaw('SUM(total_amount) as total_sales');
+            ->selectRaw('SUM(grand_total) as total_sales');
 
         if ($farmerId) {
             $query->where('farmer_id', $farmerId);
@@ -258,9 +258,9 @@ class SalesReportController extends Controller
             ->get();
 
         $metrics = [
-            'total_sales' => $orders->sum('total_amount'),
+            'total_sales' => $orders->sum('grand_total'),
             'total_orders' => $orders->count(),
-            'avg_order_value' => $orders->count() > 0 ? $orders->avg('total_amount') : 0,
+            'avg_order_value' => $orders->count() > 0 ? $orders->avg('grand_total') : 0,
             'order_fulfillment_rate' => ($orders->count() / max(Order::where('farmer_id', $farmerId)->where('created_at', '>=', $startDate)->count(), 1)) * 100,
             'repeat_customer_rate' => $this->calculateRepeatCustomerRate($startDate, $farmerId),
             'conversion_rate' => $this->calculateConversionRate($startDate, $farmerId),

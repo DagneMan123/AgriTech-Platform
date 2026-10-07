@@ -28,7 +28,7 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
         $completedOrders = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->count();
         $cancelledOrders = Order::where('buyer_id', $buyer->id)
             ->where('status', 'cancelled')
@@ -36,8 +36,8 @@ class DashboardController extends Controller
 
         // Shopping statistics
         $totalSpent = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'completed')
-            ->sum('total_amount');
+            ->where('status', 'delivered')
+            ->sum('grand_total');
 
         $cartCount = Cart::where('buyer_id', $buyer->id)->count();
         $wishlistCount = Wishlist::where('buyer_id', $buyer->id)->count();
@@ -80,7 +80,7 @@ class DashboardController extends Controller
 
         // Monthly spending trend (database-agnostic query)
         $spendingByMonth = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->whereDate('created_at', '>=', now()->subMonths(6))
             ->get()
             ->groupBy(function($date) {
@@ -89,7 +89,7 @@ class DashboardController extends Controller
             ->map(function($group) {
                 return [
                     'month' => $group->first()->created_at->format('Y-m'),
-                    'spent' => $group->sum('total_amount'),
+                    'spent' => $group->sum('grand_total'),
                     'orders' => $group->count(),
                 ];
             })
@@ -227,7 +227,7 @@ class DashboardController extends Controller
 
         $favoriteSuppliers = Order::where('buyer_id', $buyer->id)
             ->groupBy('farmer_id')
-            ->selectRaw('farmer_id, count(*) as purchase_count, SUM(total_amount) as total_spent')
+            ->selectRaw('farmer_id, count(*) as purchase_count, SUM(grand_total) as total_spent')
             ->with('farm')
             ->orderByDesc('total_spent')
             ->limit(10)

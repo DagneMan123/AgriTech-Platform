@@ -41,13 +41,13 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
         $processedOrders = Order::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->count();
 
         // Revenue
         $totalRevenue = Order::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->sum('total_amount');
+            ->where('status', 'delivered')
+            ->sum('grand_total');
 
         // Warehouse statistics
         $totalWarehouses = Warehouse::where('supplier_id', $supplier->id)->count();
@@ -83,7 +83,7 @@ class DashboardController extends Controller
 
         // Monthly revenue trend
         $revenueByMonth = Order::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->whereDate('created_at', '>=', now()->subMonths(6))
             ->get()
             ->groupBy(function($date) {
@@ -92,7 +92,7 @@ class DashboardController extends Controller
             ->map(function($group) {
                 return [
                     'month' => $group->first()->created_at->format('Y-m'),
-                    'revenue' => $group->sum('total_amount'),
+                    'revenue' => $group->sum('grand_total'),
                     'orders' => $group->count(),
                 ];
             })
@@ -189,7 +189,7 @@ class DashboardController extends Controller
         $period = $request->query('period', 30);
 
         $sales = Order::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->whereDate('created_at', '>=', now()->subDays($period))
             ->get();
 
@@ -200,9 +200,9 @@ class DashboardController extends Controller
             ->take(10);
 
         $buyerStats = Order::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
+            ->where('status', 'delivered')
             ->groupBy('buyer_id')
-            ->selectRaw('buyer_id, count(*) as purchase_count, SUM(total_amount) as total_spent')
+            ->selectRaw('buyer_id, count(*) as purchase_count, SUM(grand_total) as total_spent')
             ->with('buyer')
             ->orderByDesc('total_spent')
             ->limit(10)
@@ -210,9 +210,9 @@ class DashboardController extends Controller
 
         return response()->json([
             'period_days' => $period,
-            'total_sales' => $sales->sum('total_amount'),
+            'total_sales' => $sales->sum('grand_total'),
             'sales_count' => $sales->count(),
-            'average_order_value' => $sales->avg('total_amount') ?? 0,
+            'average_order_value' => $sales->avg('grand_total') ?? 0,
             'top_products' => $topProducts,
             'top_buyers' => $buyerStats,
         ]);

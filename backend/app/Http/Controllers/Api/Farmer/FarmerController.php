@@ -17,7 +17,7 @@ class FarmerController extends Controller
             'total_orders' => $farmer->orders()->count(),
             'total_revenue' => $farmer->orders()
                 ->where('status', 'delivered')
-                ->sum('total_amount'),
+                ->sum('grand_total'),
             'pending_consultations' => $farmer->consultations()
                 ->where('status', 'open')
                 ->count(),

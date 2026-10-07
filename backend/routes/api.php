@@ -76,10 +76,10 @@ Route::get('/diagnostic/health', fn() => response()->json([
     'time' => now(),
 ]));
 
-Route::get('/test-auth', function(\Illuminate\Http\Request $request) {
+Route::get('/test-auth', function (\Illuminate\Http\Request $request) {
     $token = $request->bearerToken();
     $user = auth('api')->user();
-    
+
     return response()->json([
         'authenticated' => $user !== null,
         'user' => $user,
@@ -89,14 +89,14 @@ Route::get('/test-auth', function(\Illuminate\Http\Request $request) {
     ]);
 });
 
-Route::get('/test-db', function() {
+Route::get('/test-db', function () {
     try {
         $tables = \Illuminate\Support\Facades\DB::select('SELECT table_name FROM information_schema.tables WHERE table_schema = ?', [env('DB_DATABASE')]);
         $table_names = array_map(fn($t) => $t->table_name, $tables);
-        
+
         $pat_exists = in_array('personal_access_tokens', $table_names);
         $pat_count = $pat_exists ? \App\Models\PersonalAccessToken::count() : 0;
-        
+
         return response()->json([
             'database' => env('DB_DATABASE'),
             'personal_access_tokens_table_exists' => $pat_exists,
@@ -137,7 +137,7 @@ Route::options('/{any}', function () {
         'Access-Control-Max-Age' => '86400',
         'Access-Control-Allow-Credentials' => 'true',
     ];
-    
+
     $response = response('', 204);
     foreach ($corsHeaders as $key => $value) {
         $response->header($key, $value);
@@ -152,8 +152,10 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-Route::middleware(['api.token'])->group(function () {
-    
+Route::get('/farmer/dashboard', [FarmerDashboardController::class, 'index']);
+
+Route::middleware(['auth:sanctum'])->group(function () {
+
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/profile', [AuthController::class, 'profile']);

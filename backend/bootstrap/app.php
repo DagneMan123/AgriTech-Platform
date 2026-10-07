@@ -14,19 +14,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend(\App\Http\Middleware\CorsMiddleware::class);
+        // CORS handling - Laravel 13 built-in
+        $middleware->statefulApi();
+
+
+        $middleware->api([
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'throttle:60,1',
+        ]);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'api.token' => \App\Http\Middleware\ApiTokenGuard::class,
         ]);
-
-        $middleware->api([
-            'throttle:60,1',
-        ]);
     })
     ->withProviders([
+        \Laravel\Sanctum\SanctumServiceProvider::class,
         \App\Providers\AuthServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -37,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 $statusCode = $e instanceof HttpException ? $e->getStatusCode() : 500;
-                
+
                 return response()->json([
                     'message' => $e->getMessage() ?: 'An error occurred',
                     'errors' => [],
@@ -50,4 +54,3 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
     })->create();
-

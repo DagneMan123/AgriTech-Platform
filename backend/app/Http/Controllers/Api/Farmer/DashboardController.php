@@ -9,6 +9,7 @@ use App\Models\Crop;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Harvest;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +19,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         try {
-            \Log::info('Dashboard endpoint called');
-            
-            // Get authenticated user
             $user = auth('api')->user();
-            
-            \Log::info('Authenticated user: ' . ($user ? $user->id : 'NULL'));
             
             if (!$user) {
                 return response()->json([
@@ -32,21 +28,14 @@ class DashboardController extends Controller
                 ], 401);
             }
 
-            // Get time range parameter (default 30 days)
             $timeRange = (int) $request->query('time_range', 30);
             if ($timeRange < 1 || $timeRange > 365) {
-                $timeRange = 30; // Validate range
+                $timeRange = 30;
             }
 
-            \Log::info('Time range: ' . $timeRange);
-
-            // Get farmer profile
             $farmer = Farmer::where('user_id', $user->id)->first();
             
-            \Log::info('Farmer found: ' . ($farmer ? $farmer->id : 'NULL'));
-            
             if (!$farmer) {
-                // Return empty dashboard if no farmer profile
                 return response()->json([
                     'message' => 'Success',
                     'farmer' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role],
@@ -59,41 +48,29 @@ class DashboardController extends Controller
                 ], 200);
             }
 
-            // Get summary data
             $summary = $this->getSummary($farmer);
-
-            // Get chart data - dynamically calculates last N days from today
             $chartData = $this->getChartData($farmer, $timeRange);
-            
-            // Get crop sales distribution
             $cropSalesData = $this->getCropSalesDistribution($farmer);
-            
-            // Get recent transactions
             $recentTransactions = $this->getRecentTransactions($farmer, 10);
+
+            $recentHarvests = [];
+            $recentOrders = [];
 
             return response()->json([
                 'message' => 'Success',
                 'farmer' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role],
                 'summary' => $summary,
-                'recent_harvests' => [],
-                'recent_orders' => [],
+                'recent_harvests' => $recentHarvests,
+                'recent_orders' => $recentOrders,
                 'chart_data' => $chartData,
                 'crop_sales' => $cropSalesData,
                 'recent_transactions' => $recentTransactions,
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Dashboard Error', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
             return response()->json([
                 'message' => 'Server error',
                 'error' => env('APP_DEBUG') ? $e->getMessage() : 'Internal Server Error',
-                'debug' => env('APP_DEBUG') ? ['file' => $e->getFile(), 'line' => $e->getLine()] : null,
             ], 500);
         }
     }
@@ -137,11 +114,6 @@ class DashboardController extends Controller
                 'borderWidth' => 2,
                 'tension' => 0.4,
                 'fill' => true,
-                'pointBackgroundColor' => '#10b981',
-                'pointBorderColor' => '#ffffff',
-                'pointBorderWidth' => 2,
-                'pointRadius' => 4,
-                'pointHoverRadius' => 6,
             ]]
         ];
     }
@@ -153,9 +125,6 @@ class DashboardController extends Controller
             'datasets' => [[
                 'data' => [],
                 'backgroundColor' => [],
-                'borderColor' => ['#ffffff'],
-                'borderWidth' => 2,
-                'hoverOffset' => 10,
             ]]
         ];
     }
@@ -179,7 +148,6 @@ class DashboardController extends Controller
                 'total_consultations' => 0,
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('getSummary Error: ' . $e->getMessage());
             return $this->getEmptySummary();
         }
     }
@@ -190,31 +158,26 @@ class DashboardController extends Controller
             $labels = [];
             $data = [];
             
-            // Generate date labels for last N days (today backwards)
             for ($i = $days - 1; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i);
-                $labels[] = $date->format('M d'); // Format: "Oct 06"
+                $labels[] = $date->format('M d');
             }
 
-            // Define date range
             $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
             $endDate = Carbon::now()->endOfDay();
 
-            // Initialize array with all dates to ensure complete data
             $revenueByDate = [];
             for ($i = $days - 1; $i >= 0; $i--) {
                 $dateKey = Carbon::now()->subDays($i)->format('Y-m-d');
                 $revenueByDate[$dateKey] = 0;
             }
 
-            // Query real order data grouped by delivery date
             $orders = Order::where('farmer_id', $farmer->id)
                 ->where('status', 'delivered')
                 ->whereNotNull('delivered_at')
                 ->whereBetween('delivered_at', [$startDate, $endDate])
                 ->get();
 
-            // Sum revenue by date
             foreach ($orders as $order) {
                 $dateKey = $order->delivered_at->format('Y-m-d');
                 if (isset($revenueByDate[$dateKey])) {
@@ -222,7 +185,6 @@ class DashboardController extends Controller
                 }
             }
 
-            // Build data array matching the date labels
             for ($i = $days - 1; $i >= 0; $i--) {
                 $dateKey = Carbon::now()->subDays($i)->format('Y-m-d');
                 $data[] = $revenueByDate[$dateKey] ?? 0;
@@ -238,18 +200,9 @@ class DashboardController extends Controller
                     'borderWidth' => 2,
                     'tension' => 0.4,
                     'fill' => true,
-                    'pointBackgroundColor' => '#10b981',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
-                    'pointRadius' => 4,
-                    'pointHoverRadius' => 6,
                 ]]
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('getChartData Error: ' . $e->getMessage(), [
-                'exception' => $e,
-                'farmer_id' => $farmer->id ?? null
-            ]);
             return $this->getEmptyChartData($days);
         }
     }
@@ -257,7 +210,6 @@ class DashboardController extends Controller
     private function getCropSalesDistribution(Farmer $farmer): array
     {
         try {
-            // Get top 5 crops by sales
             $cropSales = OrderItem::whereHas('order', function ($query) use ($farmer) {
                 $query->where('farmer_id', $farmer->id)->where('status', 'delivered');
             })
@@ -284,7 +236,6 @@ class DashboardController extends Controller
                 $total += $amount;
             }
             
-            // Calculate percentages
             $percentages = array_map(function ($value) use ($total) {
                 return $total > 0 ? (int) round(($value / $total) * 100) : 0;
             }, $values);
@@ -294,13 +245,9 @@ class DashboardController extends Controller
                 'datasets' => [[
                     'data' => $percentages,
                     'backgroundColor' => array_slice($colors, 0, count($labels)),
-                    'borderColor' => ['#ffffff'],
-                    'borderWidth' => 2,
-                    'hoverOffset' => 10,
                 ]]
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('getCropSalesDistribution Error: ' . $e->getMessage());
             return $this->getEmptyCropSalesData();
         }
     }
@@ -331,14 +278,12 @@ class DashboardController extends Controller
                     'quantity' => (int) $item->quantity,
                     'price' => (float) $item->price,
                     'date' => $item->order?->delivered_at?->format('Y-m-d') ?? Carbon::now()->format('Y-m-d'),
-                    'status' => 'completed'
                 ];
             })
             ->toArray();
 
             return $transactions;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('getRecentTransactions Error: ' . $e->getMessage());
             return [];
         }
     }
