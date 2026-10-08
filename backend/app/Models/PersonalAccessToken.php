@@ -11,14 +11,11 @@ class PersonalAccessToken extends Model
     public $timestamps = true;
     public $incrementing = true;
     
-    // DO NOT LOAD RELATIONSHIPS
+   
     protected $with = [];
     protected $appends = [];
 
-    /**
-     * Get the User associated with this token without any relationship loading.
-     * This is the ONLY safe way to get the user.
-     */
+   
     public function getUser()
     {
         if (!$this->tokenable_type || !$this->tokenable_id) {

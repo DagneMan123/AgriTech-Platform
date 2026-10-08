@@ -34,14 +34,14 @@ class AuthController extends Controller
                 return response()->json([
                     'message' => 'Invalid email or password',
                     'errors' => ['email' => ['Invalid credentials']]
-                ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
+                ], 422);
             }
 
             if (!Hash::check($validated['password'], $user->password)) {
                 return response()->json([
                     'message' => 'Invalid email or password',
                     'errors' => ['password' => ['Invalid credentials']]
-                ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
+                ], 422);
             }
 
             // Auto-activate user if inactive
@@ -51,23 +51,36 @@ class AuthController extends Controller
                     ->update(['is_active' => true, 'updated_at' => now()]);
             }
 
-            // Generate API token
-            $plainToken = Str::random(80);
+            // Generate API token - using SHA256 hash
+            $plainToken = Str::random(120);
             $hashedToken = hash('sha256', $plainToken);
 
-            // Insert token into database
-            DB::table('personal_access_tokens')->insert([
-                'tokenable_type' => 'App\\Models\\User',
-                'tokenable_id' => $user->id,
-                'name' => 'api-token',
-                'token' => $hashedToken,
-                'abilities' => json_encode(['*']),
-                'last_used_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Insert token into database with proper error handling
+            try {
+                DB::table('personal_access_tokens')->insert([
+                    'tokenable_type' => 'App\\Models\\User',
+                    'tokenable_id' => $user->id,
+                    'name' => 'api-token',
+                    'token' => $hashedToken,
+                    'abilities' => json_encode(['*']),
+                    'last_used_at' => null,
+                    'expires_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Throwable $tokenError) {
+                Log::error('Token insertion failed', [
+                    'message' => $tokenError->getMessage(),
+                    'user_id' => $user->id,
+                    'token_hash' => substr($hashedToken, 0, 10) . '...'
+                ]);
+                return response()->json([
+                    'message' => 'Failed to create session token',
+                    'error' => true
+                ], 500);
+            }
 
-            // Return success response with CORS headers
+            // Return success response
             return response()->json([
                 'message' => 'Login successful',
                 'user' => [
@@ -79,18 +92,14 @@ class AuthController extends Controller
                 ],
                 'token' => $plainToken,
                 'token_type' => 'Bearer',
-            ], 200)
-                ->header('Access-Control-Allow-Origin', 'http://localhost:5173')
-                ->header('Access-Control-Allow-Credentials', 'true')
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Login validation failed', ['email' => $request->email]);
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
-            ], 422)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
-        } catch (\Exception $e) {
+            ], 422);
+        } catch (\Throwable $e) {
             Log::error('Login error', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -100,7 +109,7 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Server error: ' . $e->getMessage(),
                 'error' => true
-            ], 500)->header('Access-Control-Allow-Origin', 'http://localhost:5173');
+            ], 500);
         }
     }
 

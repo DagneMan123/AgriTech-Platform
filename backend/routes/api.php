@@ -119,82 +119,16 @@ Route::get('/test/login-debug', function () {
 
 
 
-Route::post('/auth/login', function (Request $request) {
-    try {
-        // Validate input
-        $email = $request->input('email');
-        $password = $request->input('password');
-
-        if (!$email || !$password) {
-            return response()->json([
-                'message' => 'Email and password are required',
-            ], 422);
-        }
-
-        // Find user
-        $user = DB::table('users')
-            ->where('email', $email)
-            ->first();
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
-        // Verify password
-        if (!Hash::check($password, $user->password)) {
-            return response()->json([
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
-        // Check if active
-        if (!$user->is_active) {
-            return response()->json([
-                'message' => 'Account is inactive',
-            ], 403);
-        }
-
-        // Create token
-        $token = Str::random(80);
-        $hashedToken = hash('sha256', $token);
-
-        DB::table('personal_access_tokens')->insert([
-            'tokenable_type' => 'App\\Models\\User',
-            'tokenable_id' => $user->id,
-            'name' => 'api-token',
-            'token' => $hashedToken,
-            'abilities' => json_encode(['*']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return response()->json([
-            'message' => 'Login successful',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone ?? null,
-                'role' => $user->role,
-            ],
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ], 200);
-
-    } catch (\Throwable $e) {
-        Log::error('Login failed', ['error' => $e->getMessage(), 'line' => $e->getLine()]);
-        return response()->json([
-            'message' => 'Server error',
-            'debug' => $e->getMessage(),
-        ], 500);
-    }
-});
+// Login endpoint removed - use AuthController route below instead
 
 
 
 Route::prefix('auth')->group(function () {
+
+    Route::post('/login', [
+        AuthController::class,
+        'login'
+    ]);
 
     Route::post('/register', [
         AuthController::class,
