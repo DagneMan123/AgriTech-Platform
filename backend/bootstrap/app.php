@@ -12,13 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Prepend CORS middleware - runs before everything
-        $middleware->prepend(\App\Http\Middleware\CorsMiddleware::class);
-        
-        $middleware->api([
-            'throttle:60,1',
+        // የ role ሚድልዌርን እዚህ ላይ እንደ አሊያስ እንመዝገበዋለን
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // ምንም ተጨማሪ render ሎጂክ የለም (ላራቬል በራሱ እንዲይዘው እንተወዋለን)
+        //
     })->create();

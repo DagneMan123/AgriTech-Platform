@@ -7,29 +7,32 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {
-    /**
-     * User login - ZERO model dependencies
-     * Uses only raw database queries to prevent infinite recursion
-     */
     public function login(Request $request)
     {
         try {
-            // Validate input
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
                 'password' => 'required|string',
             ]);
 
-            // Query user directly from database table
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
+
             $user = DB::table('users')
                 ->where('email', $validated['email'])
                 ->first(['id', 'name', 'email', 'phone', 'role', 'password', 'is_active']);
 
-            // Check user exists and password is correct
             if (!$user) {
                 return response()->json([
                     'message' => 'Invalid email or password',
@@ -44,18 +47,15 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            // Auto-activate user if inactive
             if (!$user->is_active) {
                 DB::table('users')
                     ->where('id', $user->id)
                     ->update(['is_active' => true, 'updated_at' => now()]);
             }
 
-            // Generate API token - using SHA256 hash
             $plainToken = Str::random(120);
             $hashedToken = hash('sha256', $plainToken);
 
-            // Insert token into database with proper error handling
             try {
                 DB::table('personal_access_tokens')->insert([
                     'tokenable_type' => 'App\\Models\\User',
@@ -80,7 +80,6 @@ class AuthController extends Controller
                 ], 500);
             }
 
-            // Return success response
             return response()->json([
                 'message' => 'Login successful',
                 'user' => [
@@ -113,9 +112,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Get current user profile
-     */
     public function me(Request $request)
     {
         try {
@@ -132,9 +128,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Get user profile
-     */
     public function profile(Request $request)
     {
         try {
@@ -151,9 +144,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Update user profile
-     */
     public function updateProfile(Request $request)
     {
         try {
@@ -163,12 +153,21 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'phone' => 'sometimes|string|max:20',
                 'location' => 'sometimes|string|max:255',
                 'region' => 'sometimes|string|max:255',
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
 
             DB::table('users')
                 ->where('id', $user->id)
@@ -184,9 +183,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Change password
-     */
     public function changePassword(Request $request)
     {
         try {
@@ -196,10 +192,19 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(), [
                 'current_password' => 'required',
                 'password' => 'required|string|min:8|confirmed',
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
 
             $userData = DB::table('users')->where('id', $user->id)->first();
 
@@ -223,13 +228,19 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Forgot password
-     */
     public function forgotPassword(Request $request)
     {
         try {
-            $validated = $request->validate(['email' => 'required|email']);
+            $validator = Validator::make($request->all(), ['email' => 'required|email']);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
 
             $user = DB::table('users')
                 ->where('email', $validated['email'])
@@ -258,17 +269,23 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Reset password
-     */
     public function resetPassword(Request $request)
     {
         try {
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(), [
                 'token' => 'required',
                 'email' => 'required|email',
                 'password' => 'required|string|min:8|confirmed',
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
 
             $user = DB::table('users')->where('email', $validated['email'])->first();
 
@@ -305,9 +322,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * User logout
-     */
     public function logout(Request $request)
     {
         try {
@@ -317,7 +331,6 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
-            // Get current token and delete it
             $token = $request->bearerToken();
             if ($token) {
                 $hashedToken = hash('sha256', $token);
@@ -333,9 +346,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * User registration - NOT YET IMPLEMENTED
-     */
     public function register(Request $request)
     {
         return response()->json([

@@ -14,6 +14,8 @@ class PersonalAccessToken extends Model
    
     protected $with = [];
     protected $appends = [];
+    protected $hidden = ['token'];  // Hide token for security
+
 
    
     public function getUser()
