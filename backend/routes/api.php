@@ -146,6 +146,35 @@ Route::prefix('auth')->group(function () {
     ]);
 });
 
+Route::get('/test-farmer-dashboard', function () {
+    try {
+        $farmer = \App\Models\Farmer::first();
+        if (!$farmer) {
+            return response()->json(['error' => 'No farmer found'], 404);
+        }
+
+        $farm = \App\Models\Farm::where('farmer_id', $farmer->id)->first();
+        $crop = \App\Models\Crop::first();
+        $product = \App\Models\Product::first();
+        $order = \App\Models\Order::first();
+
+        return response()->json([
+            'farmer' => $farmer->id,
+            'farm_exists' => $farm ? true : false,
+            'crop_exists' => $crop ? true : false,
+            'product_exists' => $product ? true : false,
+            'order_exists' => $order ? true : false,
+            'test' => 'Models loaded successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ], 500);
+    }
+});
+
 
 
 Route::prefix('marketplace')->group(function () {

@@ -39,18 +39,38 @@ class Farmer extends Model
         'is_verified' => 'boolean'
     ];
 
-    // CRITICAL: Prevent eager loading to avoid infinite recursion
-    protected $with = [];
-    protected $appends = [];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    /**
-     * DISABLED: All relationships blocked to prevent recursion
-     */
-    public function user() { return null; }
-    public function farms() { return null; }
-    public function products() { return null; }
-    public function orders() { return null; }
-    public function reviews() { return null; }
-    public function cooperativeMembers() { return null; }
-    public function cropActivities() { return null; }
+    public function farms()
+    {
+        return $this->hasMany(Farm::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function cooperativeMembers()
+    {
+        return $this->hasMany(CooperativeMember::class);
+    }
+
+    public function cropActivities()
+    {
+        return $this->hasMany(CropActivity::class);
+    }
 }

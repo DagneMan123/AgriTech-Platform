@@ -33,7 +33,13 @@ class DashboardController extends Controller
                 $timeRange = 30;
             }
 
-            $farmer = Farmer::where('user_id', $user->id)->first();
+            // Try to find farmer
+            $farmer = null;
+            try {
+                $farmer = Farmer::where('user_id', $user->id)->first();
+            } catch (\Exception $e) {
+                \Log::error('Error finding farmer: ' . $e->getMessage());
+            }
             
             if (!$farmer) {
                 return response()->json([
@@ -48,29 +54,33 @@ class DashboardController extends Controller
                 ], 200);
             }
 
-            $summary = $this->getSummary($farmer);
-            $chartData = $this->getChartData($farmer, $timeRange);
-            $cropSalesData = $this->getCropSalesDistribution($farmer);
-            $recentTransactions = $this->getRecentTransactions($farmer, 10);
-
-            $recentHarvests = [];
-            $recentOrders = [];
+            // Build summary safely
+            $summary = $this->buildSummary($farmer);
+            $chartData = $this->buildChartData($farmer, $timeRange);
+            $cropSalesData = $this->buildCropSalesDistribution($farmer);
+            $recentTransactions = $this->buildRecentTransactions($farmer, 10);
 
             return response()->json([
                 'message' => 'Success',
                 'farmer' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role],
                 'summary' => $summary,
-                'recent_harvests' => $recentHarvests,
-                'recent_orders' => $recentOrders,
+                'recent_harvests' => [],
+                'recent_orders' => [],
                 'chart_data' => $chartData,
                 'crop_sales' => $cropSalesData,
                 'recent_transactions' => $recentTransactions,
             ], 200);
 
         } catch (\Exception $e) {
+            \Log::error('Dashboard Error: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
+            \Log::error('Trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'message' => 'Server error',
                 'error' => env('APP_DEBUG') ? $e->getMessage() : 'Internal Server Error',
+                'file' => env('APP_DEBUG') ? $e->getFile() : null,
+                'line' => env('APP_DEBUG') ? $e->getLine() : null,
             ], 500);
         }
     }
@@ -129,30 +139,57 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getSummary(Farmer $farmer): array
+    private function buildSummary(Farmer $farmer): array
     {
         try {
-            return [
-                'total_farms' => Farm::where('farmer_id', $farmer->id)->count(),
-                'total_farm_area_hectares' => (float) (Farm::where('farmer_id', $farmer->id)->sum('farm_size') ?? 0),
-                'total_crops' => Crop::where('farmer_id', $farmer->id)->count(),
-                'active_crops' => Crop::where('farmer_id', $farmer->id)->where('status', 'active')->count(),
-                'total_products' => Product::where('farmer_id', $farmer->id)->count(),
-                'active_products' => Product::where('farmer_id', $farmer->id)->where('status', 'available')->count(),
-                'pending_orders' => Order::where('farmer_id', $farmer->id)->whereIn('status', ['pending', 'approved'])->count(),
-                'total_orders' => Order::where('farmer_id', $farmer->id)->count(),
-                'completed_orders' => Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->count(),
-                'total_sales' => (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->sum('grand_total') ?? 0),
-                'average_order_value' => (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->avg('grand_total') ?? 0),
-                'pending_consultations' => 0,
-                'total_consultations' => 0,
-            ];
+            $summary = $this->getEmptySummary();
+
+            // Count farms
+            try {
+                $summary['total_farms'] = Farm::where('farmer_id', $farmer->id)->count();
+                $summary['total_farm_area_hectares'] = (float) (Farm::where('farmer_id', $farmer->id)->sum('size_hectares') ?? 0);
+            } catch (\Exception $e) {
+                \Log::error('Error getting farms: ' . $e->getMessage());
+            }
+
+            // Count crops - query through farms
+            try {
+                $farmIds = Farm::where('farmer_id', $farmer->id)->pluck('id')->toArray();
+                if (!empty($farmIds)) {
+                    $summary['total_crops'] = Crop::whereIn('farm_id', $farmIds)->count();
+                    $summary['active_crops'] = Crop::whereIn('farm_id', $farmIds)->where('status', 'growing')->count();
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error getting crops: ' . $e->getMessage());
+            }
+
+            // Count products
+            try {
+                $summary['total_products'] = Product::where('farmer_id', $farmer->id)->count();
+                $summary['active_products'] = Product::where('farmer_id', $farmer->id)->where('status', 'available')->count();
+            } catch (\Exception $e) {
+                \Log::error('Error getting products: ' . $e->getMessage());
+            }
+
+            // Count orders
+            try {
+                $summary['pending_orders'] = Order::where('farmer_id', $farmer->id)->whereIn('status', ['pending', 'approved'])->count();
+                $summary['total_orders'] = Order::where('farmer_id', $farmer->id)->count();
+                $summary['completed_orders'] = Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->count();
+                $summary['total_sales'] = (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->sum('grand_total') ?? 0);
+                $summary['average_order_value'] = (float) (Order::where('farmer_id', $farmer->id)->where('status', 'delivered')->avg('grand_total') ?? 0);
+            } catch (\Exception $e) {
+                \Log::error('Error getting orders: ' . $e->getMessage());
+            }
+
+            return $summary;
         } catch (\Exception $e) {
+            \Log::error('Error in buildSummary: ' . $e->getMessage());
             return $this->getEmptySummary();
         }
     }
 
-    private function getChartData(Farmer $farmer, int $days = 30): array
+    private function buildChartData(Farmer $farmer, int $days = 30): array
     {
         try {
             $labels = [];
@@ -203,11 +240,12 @@ class DashboardController extends Controller
                 ]]
             ];
         } catch (\Exception $e) {
+            \Log::error('Error in buildChartData: ' . $e->getMessage());
             return $this->getEmptyChartData($days);
         }
     }
 
-    private function getCropSalesDistribution(Farmer $farmer): array
+    private function buildCropSalesDistribution(Farmer $farmer): array
     {
         try {
             $cropSales = OrderItem::whereHas('order', function ($query) use ($farmer) {
@@ -217,7 +255,6 @@ class DashboardController extends Controller
             ->groupBy('product_id')
             ->orderByDesc('total_amount')
             ->limit(5)
-            ->with('product:id,name')
             ->get();
 
             if ($cropSales->isEmpty()) {
@@ -230,7 +267,13 @@ class DashboardController extends Controller
             $total = 0;
 
             foreach ($cropSales as $item) {
-                $labels[] = $item->product?->name ?? 'Unknown';
+                try {
+                    $product = Product::find($item->product_id);
+                    $labels[] = $product?->name ?? 'Unknown';
+                } catch (\Exception $e) {
+                    $labels[] = 'Unknown';
+                }
+                
                 $amount = (float) ($item->total_amount ?? 0);
                 $values[] = $amount;
                 $total += $amount;
@@ -248,11 +291,12 @@ class DashboardController extends Controller
                 ]]
             ];
         } catch (\Exception $e) {
+            \Log::error('Error in buildCropSalesDistribution: ' . $e->getMessage());
             return $this->getEmptyCropSalesData();
         }
     }
 
-    private function getRecentTransactions(Farmer $farmer, int $limit = 10): array
+    private function buildRecentTransactions(Farmer $farmer, int $limit = 10): array
     {
         try {
             $transactions = OrderItem::whereHas('order', function ($query) use ($farmer) {
@@ -260,31 +304,33 @@ class DashboardController extends Controller
                       ->where('status', 'delivered')
                       ->orderBy('delivered_at', 'desc');
             })
-            ->with([
-                'order' => function ($query) {
-                    $query->select('id', 'farmer_id', 'delivered_at');
-                },
-                'product' => function ($query) {
-                    $query->select('id', 'name');
-                }
-            ])
             ->select('id', 'order_id', 'product_id', 'quantity', 'price')
             ->limit($limit)
             ->get()
             ->map(function ($item) {
-                return [
-                    'id' => 'ORD-' . str_pad((string) $item->order_id, 5, '0', STR_PAD_LEFT),
-                    'crop' => $item->product?->name ?? 'Unknown',
-                    'quantity' => (int) $item->quantity,
-                    'price' => (float) $item->price,
-                    'date' => $item->order?->delivered_at?->format('Y-m-d') ?? Carbon::now()->format('Y-m-d'),
-                ];
+                try {
+                    $order = Order::find($item->order_id);
+                    $product = Product::find($item->product_id);
+                    
+                    return [
+                        'id' => 'ORD-' . str_pad((string) $item->order_id, 5, '0', STR_PAD_LEFT),
+                        'crop' => $product?->name ?? 'Unknown',
+                        'quantity' => (int) $item->quantity,
+                        'price' => (float) $item->price,
+                        'date' => $order?->delivered_at?->format('Y-m-d') ?? Carbon::now()->format('Y-m-d'),
+                    ];
+                } catch (\Exception $e) {
+                    return null;
+                }
             })
+            ->filter()
             ->toArray();
 
             return $transactions;
         } catch (\Exception $e) {
+            \Log::error('Error in buildRecentTransactions: ' . $e->getMessage());
             return [];
         }
     }
 }
+

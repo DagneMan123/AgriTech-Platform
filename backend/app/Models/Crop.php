@@ -65,4 +65,14 @@ class Crop extends Model
         
         return $name;
     }
+
+    /**
+     * Scope to get crops by farmer through farms
+     */
+    public function scopeByFarmer($query, $farmerId)
+    {
+        return $query->whereHas('farm', function ($q) use ($farmerId) {
+            $q->where('farmer_id', $farmerId);
+        });
+    }
 }
