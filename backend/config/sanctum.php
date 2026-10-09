@@ -7,7 +7,7 @@ return [
         env('FRONTEND_URL') ? ',' . parse_url(env('FRONTEND_URL'), PHP_URL_HOST) : ''
     ))),
 
-    'guard' => ['web', 'api'],
+    'guard' => 'web',
     'expiration' => null,
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
     'middleware' => [
@@ -36,4 +36,3 @@ return [
 
     'model' => \App\Models\PersonalAccessToken::class,
 ];
-
