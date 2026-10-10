@@ -221,10 +221,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, Store, Package, LayoutGrid, 
   Heart, ShoppingCart, ShoppingBag, Clock, History, RotateCcw, Handshake, 
@@ -234,9 +233,24 @@ import {
   User, LogOut 
 } from 'lucide-vue-next'
 
-const { isDark } = useTheme()
 const router = useRouter()
 const auth = useAuthStore()
+
+// Reactively sync Dark Mode state with localStorage & Dashboard
+const isDark = ref(localStorage.getItem('buyer_dark_mode') === 'true')
+
+const checkDarkMode = () => {
+  isDark.value = localStorage.getItem('buyer_dark_mode') === 'true'
+}
+
+onMounted(() => {
+  window.addEventListener('storage', checkDarkMode)
+  const interval = setInterval(checkDarkMode, 200)
+  onUnmounted(() => {
+    window.removeEventListener('storage', checkDarkMode)
+    clearInterval(interval)
+  })
+})
 
 const expandedSections = ref({
   marketplace: true,
@@ -272,6 +286,7 @@ const handleLogout = async () => {
   top: 0;
   overflow-y: auto;
   z-index: 1000;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .sidebar-header {
@@ -371,7 +386,6 @@ const handleLogout = async () => {
   position: relative;
 }
 
-/* ለብቻው ላለው የ Dashboard አገናኝ የሚሆን ስታይል */
 .main-dashboard-link {
   padding: 12px 20px;
   font-weight: 600;
@@ -462,11 +476,11 @@ const handleLogout = async () => {
   background: #fee2e2 !important;
 }
 
-/* ================= DARK MODE STYLES ================= */
+/* ================= DARK MODE STYLES (MATCHES FARMER PORTAL) ================= */
 .sidebar.dark {
-  background: #131b2e !important;
+  background: #0f172a !important; /* Matches Farmer Sidebar */
   border-right: 1px solid #1e293b !important;
-  color: #f3f4f6 !important;
+  color: #f8fafc !important;
 }
 
 .sidebar.dark .sidebar-header {
@@ -483,7 +497,7 @@ const handleLogout = async () => {
 
 .sidebar.dark .section-toggle:hover {
   color: #ffffff !important;
-  background: #1a2338 !important;
+  background: #1e293b !important;
 }
 
 .sidebar.dark .section-icon,
@@ -497,7 +511,7 @@ const handleLogout = async () => {
 
 .sidebar.dark .main-dashboard-link:hover {
   color: #ffffff !important;
-  background: #1a2338 !important;
+  background: #1e293b !important;
 }
 
 .sidebar.dark .main-dashboard-link .sub-icon {
@@ -505,12 +519,12 @@ const handleLogout = async () => {
 }
 
 .sidebar.dark .main-dashboard-link.active {
-  color: #60a5fa !important;
-  background: rgba(37, 99, 235, 0.15) !important;
+  color: #38bdf8 !important;
+  background: #132338 !important;
 }
 
 .sidebar.dark .main-dashboard-link.active .sub-icon {
-  color: #60a5fa !important;
+  color: #38bdf8 !important;
 }
 
 .sidebar.dark .menu-item {
@@ -523,7 +537,7 @@ const handleLogout = async () => {
 
 .sidebar.dark .menu-item:hover {
   color: #ffffff !important;
-  background: #1a2338 !important;
+  background: #1e293b !important;
 }
 
 .sidebar.dark .menu-item:hover .sub-icon {
@@ -531,12 +545,12 @@ const handleLogout = async () => {
 }
 
 .sidebar.dark .menu-item.active {
-  color: #60a5fa !important;
-  background: rgba(37, 99, 235, 0.15) !important;
+  color: #38bdf8 !important;
+  background: #132338 !important;
 }
 
 .sidebar.dark .menu-item.active .sub-icon {
-  color: #60a5fa !important;
+  color: #38bdf8 !important;
 }
 
 .sidebar.dark .sidebar-bottom {

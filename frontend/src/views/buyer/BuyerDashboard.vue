@@ -1,66 +1,107 @@
 <template>
-  <!-- ዋናው ገጽ Background (በምስሉ መሰረት Soft Light Gray) -->
-  <div class="flex min-h-screen bg-slate-100 text-slate-800 font-sans antialiased">
-    <BuyerSidebar @logout="handleLogout" />
+  <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-800']">
+    
+    <!-- Sidebar Container (Responsive) -->
+    <div :class="['fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full']">
+      <BuyerSidebar @logout="handleLogout" />
+    </div>
 
-    <!-- Dashboard Content Area -->
-    <main class="ml-0 lg:ml-64 flex-1 p-6 lg:p-8 overflow-y-auto min-h-screen" role="main">
+    <!-- Mobile Backdrop -->
+    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header -->
+      <!-- Header Section -->
       <header class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div>
-          <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900">Buyer Dashboard</h1>
-          <p class="text-slate-500 text-sm mt-1">Manage your orders, deliveries, and purchases</p>
-        </div>
         <div class="flex items-center gap-3">
+          <!-- Mobile Sidebar Hamburger Toggle Button -->
           <button 
-            class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs lg:text-sm font-semibold text-slate-700 hover:text-blue-600 hover:border-blue-500 transition-all shadow-2xs cursor-pointer"
+            @click="sidebarOpen = !sidebarOpen" 
+            :class="['lg:hidden p-2.5 rounded-xl border transition-colors cursor-pointer', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50']"
+            aria-label="Toggle Navigation Menu"
+          >
+            <i class="fas" :class="sidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
+          </button>
+
+          <div>
+            <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">Buyer Dashboard</h1>
+            <p :class="['text-sm mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Manage your orders, deliveries, and purchases</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Custom Animated Pill Switch Toggle (Dark / Light Mode) -->
+          <button 
+            @click="toggleDarkMode" 
+            type="button"
+            :class="[
+              'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+              darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-slate-200 border-slate-300'
+            ]"
+            role="switch"
+            :aria-checked="darkMode"
+            title="Toggle Dark Mode"
+          >
+            <!-- Sliding Circle with Icon -->
+            <span
+              :class="[
+                'pointer-events-none inline-block h-7 w-7 transform rounded-full shadow-md ring-0 transition duration-300 ease-in-out flex items-center justify-center text-xs',
+                darkMode ? 'translate-x-8 bg-slate-800 text-amber-400' : 'translate-x-0 bg-white text-amber-500'
+              ]"
+            >
+              <i class="fas" :class="darkMode ? 'fa-moon' : 'fa-sun'"></i>
+            </span>
+          </button>
+
+          <!-- Refresh Data Button -->
+          <button 
+            :class="['inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs lg:text-sm font-semibold border transition-all cursor-pointer shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-200 hover:border-blue-500' : 'bg-white border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-500']"
             :disabled="loading" 
             @click="fetchDashboardData"
           >
             <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
-            <span>Refresh</span>
+            <span class="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </header>
 
-      <!-- Error State -->
+      <!-- Error Message Banner -->
       <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl mb-6 text-sm font-medium" role="alert">
         <i class="fas fa-exclamation-circle text-lg shrink-0"></i>
         <span>{{ error }}</span>
       </div>
 
-      <!-- Summary Stats Cards (በግራ በኩል ሰማያዊ መስመር ያላቸው - BLUE BORDER) -->
+      <!-- Summary Statistics Grid (Blue Border Accent) -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6" aria-label="Summary statistics">
         <article
           v-for="card in summaryCards"
           :key="card.key"
-          class="bg-white rounded-xl p-4 border-l-4 border-l-blue-600 border-y border-r border-slate-200/60 shadow-2xs hover:shadow-md transition-all flex justify-between items-start"
+          :class="['rounded-xl p-4 border-l-4 border-l-blue-600 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/60 text-slate-900']"
         >
           <div class="min-w-0 flex-1">
-            <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 truncate">{{ card.label }}</h3>
-            <p class="text-xl lg:text-2xl font-black text-slate-900 tracking-tight">{{ card.value }}</p>
-            <p class="text-[11px] text-slate-400 font-medium truncate mt-1">{{ card.sub }}</p>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ card.label }}</h3>
+            <p class="text-xl lg:text-2xl font-black tracking-tight">{{ card.value }}</p>
+            <p :class="['text-[11px] font-medium truncate mt-1', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ card.sub }}</p>
           </div>
-          <!-- በቀኝ በኩል የሚቀመጥ አዶ -->
-          <div class="text-slate-400 text-lg shrink-0 pt-0.5">
+          <div :class="['text-lg shrink-0 pt-0.5', darkMode ? 'text-blue-400' : 'text-slate-400']">
             <i :class="card.icon"></i>
           </div>
         </article>
       </section>
 
-      <!-- Main Section Container (በምስሉ መሰረት ነጭ ቦክስ) -->
-      <section class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs mb-6 overflow-hidden">
-        <!-- Tabs Bar (Active Tab ሰማያዊ) -->
-        <nav class="flex border-b border-slate-200 overflow-x-auto px-4 gap-2 scrollbar-none" role="tablist">
+      <!-- Main Section Tabs Container -->
+      <section :class="['rounded-2xl border shadow-2xs mb-6 overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
+        <!-- Navigation Tabs Bar -->
+        <nav :class="['flex border-b overflow-x-auto px-4 gap-2 scrollbar-none', darkMode ? 'border-slate-800' : 'border-slate-200']" role="tablist">
           <button
             v-for="tab in tabs"
             :key="tab"
             :class="[
               'px-4 py-3.5 text-sm font-bold whitespace-nowrap border-b-2 transition-all cursor-pointer',
               activeTab === tab 
-                ? 'border-blue-600 text-blue-600 bg-blue-50/50' 
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50 dark:bg-blue-950/40' 
+                : darkMode ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-800'
             ]"
             role="tab"
             :aria-selected="activeTab === tab"
@@ -70,11 +111,11 @@
           </button>
         </nav>
 
-        <!-- Orders Content -->
+        <!-- Orders Tab Content -->
         <div v-show="activeTab === 'orders'" class="p-6" role="tabpanel">
           <div class="flex justify-between items-center gap-4 mb-5 flex-wrap">
-            <h2 class="text-base font-bold text-slate-900">My Orders</h2>
-            <select v-model="orderFilter" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-blue-600 cursor-pointer">
+            <h2 :class="['text-base font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">My Orders</h2>
+            <select v-model="orderFilter" :class="['px-3 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-blue-600 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-800 text-slate-200' : 'bg-white border-slate-200 text-slate-700']">
               <option value="">All Orders</option>
               <option value="pending">Pending</option>
               <option value="completed">Completed</option>
@@ -82,10 +123,10 @@
             </select>
           </div>
 
-          <div class="overflow-x-auto rounded-lg border border-slate-100">
+          <div :class="['overflow-x-auto rounded-lg border', darkMode ? 'border-slate-800' : 'border-slate-100']">
             <table class="w-full text-left border-collapse min-w-[650px]">
               <thead>
-                <tr class="bg-slate-50 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
+                <tr :class="['text-[11px] font-bold uppercase tracking-wider border-b', darkMode ? 'bg-[#0b0f19]/80 text-slate-400 border-slate-800' : 'bg-slate-50 text-slate-400 border-slate-100']">
                   <th class="p-3">Order ID</th>
                   <th class="p-3">Supplier</th>
                   <th class="p-3">Items</th>
@@ -95,9 +136,9 @@
                   <th class="p-3">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-600">
-                <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-slate-50/50">
-                  <td class="p-3 font-bold text-slate-900">#{{ order.id }}</td>
+              <tbody :class="['divide-y text-xs font-semibold', darkMode ? 'divide-slate-800/80 text-slate-300' : 'divide-slate-100 text-slate-600']">
+                <tr v-for="order in filteredOrders" :key="order.id" :class="[darkMode ? 'hover:bg-[#0b0f19]/50' : 'hover:bg-slate-50/50']">
+                  <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">#{{ order.id }}</td>
                   <td class="p-3">{{ order.supplier?.name || 'N/A' }}</td>
                   <td class="p-3">{{ order.items?.length || 0 }}</td>
                   <td class="p-3">
@@ -105,10 +146,10 @@
                       {{ order.status }}
                     </span>
                   </td>
-                  <td class="p-3 font-bold text-slate-900">ETB {{ formatNumber(order.total_amount) }}</td>
+                  <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.total_amount || order.grand_total) }}</td>
                   <td class="p-3">{{ formatDate(order.created_at) }}</td>
                   <td class="p-3">
-                    <button class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md font-bold transition-colors cursor-pointer" @click="viewOrder(order)">
+                    <button class="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 rounded-md font-bold transition-colors cursor-pointer" @click="viewOrder(order)">
                       View
                     </button>
                   </td>
@@ -123,29 +164,24 @@
           </div>
         </div>
 
-        <!-- Deliveries Tab -->
+        <!-- Deliveries Tab Content -->
         <div v-show="activeTab === 'deliveries'" class="p-6" role="tabpanel">
-          <h2 class="text-base font-bold text-slate-900 mb-4">Active Deliveries</h2>
+          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Active Deliveries</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <article
               v-for="delivery in dashboard?.active_deliveries || []"
               :key="delivery.id"
-              class="bg-white border border-slate-200/80 rounded-xl p-4 hover:shadow-sm"
+              :class="['border rounded-xl p-4 hover:shadow-sm', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']"
             >
               <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-slate-900 text-sm">Order #{{ delivery.order_id }}</h3>
-                <span class="px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
+                <h3 :class="['font-bold text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ delivery.order_id }}</h3>
+                <span class="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
               </div>
-              <div class="space-y-1.5 text-xs text-slate-600 mb-4">
-                <p><strong class="text-slate-800">From:</strong> {{ delivery.from_location }}</p>
-                <p><strong class="text-slate-800">To:</strong> {{ delivery.to_location }}</p>
-                <p><strong class="text-slate-800">Driver:</strong> {{ delivery.driver_name }}</p>
-                <p><strong class="text-slate-800">Est. Date:</strong> {{ formatDate(delivery.estimated_delivery_date) }}</p>
+              <div :class="['space-y-1.5 text-xs mb-4', darkMode ? 'text-slate-300' : 'text-slate-600']">
+                <p><strong :class="darkMode ? 'text-slate-100' : 'text-slate-800'">From:</strong> {{ delivery.from_location || 'Farm Location' }}</p>
+                <p><strong :class="darkMode ? 'text-slate-100' : 'text-slate-800'">To:</strong> {{ delivery.to_location || 'Destination' }}</p>
               </div>
-              <div class="flex gap-2">
-                <button class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="trackDelivery(delivery)">Track Order</button>
-                <button class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="contactDriver(delivery)">Contact</button>
-              </div>
+              <button class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="trackDelivery(delivery)">Track Order</button>
             </article>
 
             <div v-if="!(dashboard?.active_deliveries || []).length" class="col-span-full text-center py-10 text-slate-400 font-medium">
@@ -154,124 +190,48 @@
           </div>
         </div>
 
-        <!-- Cart Tab -->
+        <!-- Cart Tab Content -->
         <div v-show="activeTab === 'cart'" class="p-6" role="tabpanel">
-          <h2 class="text-base font-bold text-slate-900 mb-4">Shopping Cart</h2>
-          <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-            <div class="flex flex-col gap-3">
-              <div v-if="!dashboard?.cart_items_count" class="text-center py-10 text-slate-400 font-medium">
-                Your cart is empty
-              </div>
-
-              <div
-                v-for="i in (dashboard?.cart_items_count || 0)"
-                :key="i"
-                class="bg-white border border-slate-200/80 rounded-xl p-4 flex justify-between items-center gap-4"
-              >
-                <div>
-                  <h4 class="font-bold text-slate-900 text-sm mb-0.5">Product {{ i }}</h4>
-                  <p class="text-xs text-slate-500">Quantity: 5 units</p>
-                </div>
-                <div class="font-bold text-blue-600 text-sm">ETB 150.00</div>
-                <button class="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="removeFromCart(i)">Remove</button>
-              </div>
-            </div>
-
-            <aside class="bg-white border border-slate-200/80 rounded-xl p-5 sticky top-5 shadow-2xs">
-              <div class="flex justify-between py-2 border-b border-slate-100 text-xs text-slate-600 font-medium">
-                <span>Subtotal</span>
-                <span>ETB {{ formatNumber(cartSubtotal) }}</span>
-              </div>
-              <div class="flex justify-between py-2 border-b border-slate-100 text-xs text-slate-600 font-medium">
-                <span>Tax (15%)</span>
-                <span>ETB {{ formatNumber(cartTax) }}</span>
-              </div>
-              <div class="flex justify-between py-3 text-sm font-bold text-slate-900 mb-4 border-t border-slate-200 mt-2">
-                <span>Total</span>
-                <span>ETB {{ formatNumber(cartTotal) }}</span>
-              </div>
-              <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-colors shadow-2xs cursor-pointer" @click="proceedToCheckout">
-                Proceed to Checkout
-              </button>
-            </aside>
+          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Shopping Cart Summary</h2>
+          <div class="text-center py-10 text-slate-400 font-medium">
+            You have {{ dashboard?.summary?.cart_items_count || 0 }} items in your shopping cart.
           </div>
         </div>
 
-        <!-- Reviews Tab -->
+        <!-- Reviews Tab Content -->
         <div v-show="activeTab === 'reviews'" class="p-6" role="tabpanel">
-          <h2 class="text-base font-bold text-slate-900 mb-4">My Reviews</h2>
-          <div class="flex flex-col gap-3">
-            <article v-for="i in 3" :key="i" class="bg-white border border-slate-200/80 rounded-xl p-4">
-              <div class="flex justify-between items-center mb-1">
-                <h4 class="font-bold text-slate-900 text-sm">Product Review</h4>
-                <div class="flex gap-1 text-amber-400 text-xs">
-                  <i v-for="j in 5" :key="j" class="fas fa-star"></i>
-                </div>
-              </div>
-              <p class="text-xs text-slate-600 leading-relaxed my-1.5">
-                Great quality products! Fast delivery and excellent customer service.
-              </p>
-              <p class="text-[11px] text-slate-400">{{ formatDate(new Date()) }}</p>
-            </article>
+          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">My Written Reviews</h2>
+          <div class="text-center py-10 text-slate-400 font-medium">
+            No reviews written yet.
           </div>
         </div>
 
-        <!-- Wishlist Tab -->
+        <!-- Wishlist Tab Content -->
         <div v-show="activeTab === 'wishlist'" class="p-6" role="tabpanel">
-          <h2 class="text-base font-bold text-slate-900 mb-4">My Wishlist</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <article
-              v-for="i in (dashboard?.wishlist_items_count || 0)"
-              :key="i"
-              class="bg-white border border-slate-200/80 rounded-xl p-4 hover:shadow-sm"
-            >
-              <div class="w-full h-32 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 text-xl mb-3">
-                <i class="fas fa-image"></i>
-              </div>
-              <div>
-                <h4 class="font-bold text-slate-900 text-sm mb-0.5">Product {{ i }}</h4>
-                <p class="text-red-500 font-bold text-sm my-1">ETB {{ (100 + i * 50).toFixed(2) }}</p>
-                <p class="text-[11px] text-slate-400">Supplier {{ i }}</p>
-              </div>
-              <div class="flex gap-2 mt-3">
-                <button class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="addToCart(i)">Add to Cart</button>
-                <button class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="removeFromWishlist(i)">Remove</button>
-              </div>
-            </article>
-
-            <div v-if="!dashboard?.wishlist_items_count" class="col-span-full text-center py-10 text-slate-400 font-medium">
-              Your wishlist is empty
-            </div>
+          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">My Wishlist</h2>
+          <div class="text-center py-10 text-slate-400 font-medium">
+            You have {{ dashboard?.summary?.wishlist_items_count || 0 }} items saved in your wishlist.
           </div>
         </div>
 
-        <!-- Analytics Tab -->
+        <!-- Analytics Tab Content -->
         <div v-show="activeTab === 'analytics'" class="p-6" role="tabpanel">
-          <h2 class="text-base font-bold text-slate-900 mb-4">Purchase Analytics</h2>
+          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Purchase Analytics</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white border border-slate-200/80 rounded-xl p-4">
-              <h3 class="font-bold text-slate-900 text-sm mb-3">Spending Overview</h3>
-              <div class="divide-y divide-slate-100 text-xs text-slate-600">
+            <div :class="['border rounded-xl p-4', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+              <h3 :class="['font-bold text-sm mb-3', darkMode ? 'text-slate-100' : 'text-slate-900']">Spending Overview</h3>
+              <div :class="['divide-y text-xs', darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-100 text-slate-600']">
                 <p class="flex justify-between py-2.5">
                   <span>Total Spent</span>
-                  <strong class="text-slate-900">ETB {{ formatNumber(dashboard?.total_spent) }}</strong>
+                  <strong :class="darkMode ? 'text-slate-100' : 'text-slate-900'">ETB {{ formatNumber(dashboard?.summary?.total_spent) }}</strong>
                 </p>
                 <p class="flex justify-between py-2.5">
-                  <span>Avg Order Value</span>
-                  <strong class="text-slate-900">ETB {{ formatNumber(dashboard?.average_order_value) }}</strong>
+                  <span>Average Order Value</span>
+                  <strong :class="darkMode ? 'text-slate-100' : 'text-slate-900'">ETB {{ formatNumber(dashboard?.summary?.average_order_value) }}</strong>
                 </p>
                 <p class="flex justify-between py-2.5">
                   <span>Total Orders</span>
-                  <strong class="text-slate-900">{{ dashboard?.order_statistics?.total || 0 }}</strong>
-                </p>
-              </div>
-            </div>
-            <div class="bg-white border border-slate-200/80 rounded-xl p-4">
-              <h3 class="font-bold text-slate-900 text-sm mb-3">Top Purchases</h3>
-              <div class="divide-y divide-slate-100 text-xs text-slate-600">
-                <p v-for="i in 3" :key="i" class="flex justify-between py-2.5">
-                  <span>{{ i }}. Product {{ i }}</span>
-                  <strong class="text-slate-900">3 purchases</strong>
+                  <strong :class="darkMode ? 'text-slate-100' : 'text-slate-900'">{{ dashboard?.summary?.total_orders || 0 }}</strong>
                 </p>
               </div>
             </div>
@@ -279,40 +239,40 @@
         </div>
       </section>
 
-      <!-- Bottom Recent Section -->
+      <!-- Bottom Activity Grid -->
       <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recent Transactions -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-          <h2 class="font-bold text-slate-900 mb-4 text-sm">Recent Transactions</h2>
+        <!-- Recent Transactions Card -->
+        <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
+          <h2 :class="['font-bold mb-4 text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Recent Activity</h2>
           <div class="flex flex-col gap-2">
             <div
               v-for="order in (dashboard?.recent_orders || []).slice(0, 5)"
               :key="order.id"
-              class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs"
+              :class="['flex items-center justify-between p-3 rounded-lg text-xs', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-50/60']"
             >
-              <span class="font-bold text-slate-900">Order #{{ order.id }}</span>
-              <span class="font-bold text-slate-900">ETB {{ formatNumber(order.total_amount) }}</span>
+              <span :class="['font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ order.id }}</span>
+              <span :class="['font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.grand_total || order.total_amount) }}</span>
               <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
                 {{ order.status }}
               </span>
             </div>
             <div v-if="!(dashboard?.recent_orders || []).length" class="text-center py-6 text-slate-400 text-xs">
-              No recent transactions
+              No recent activity
             </div>
           </div>
         </div>
 
-        <!-- Local Payment Methods -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-          <h2 class="font-bold text-slate-900 mb-4 text-sm">Payment Methods</h2>
+        <!-- Payment Integration Card -->
+        <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
+          <h2 :class="['font-bold mb-4 text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Payment Integration</h2>
           <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs font-semibold">
-              <span class="text-slate-800 flex items-center gap-2"><i class="fas fa-mobile-alt text-blue-600"></i> Telebirr</span>
-              <span class="text-[11px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">Primary</span>
+            <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
+              <span class="flex items-center gap-2"><i class="fas fa-mobile-alt text-blue-500"></i> Telebirr</span>
+              <span class="text-[11px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">Primary</span>
             </div>
-            <div class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs font-semibold">
-              <span class="text-slate-800 flex items-center gap-2"><i class="fas fa-university text-blue-600"></i> CBE Birr / Bank Transfer</span>
-              <span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">Active</span>
+            <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
+              <span class="flex items-center gap-2"><i class="fas fa-university text-blue-500"></i> CBE Birr / Bank Transfer</span>
+              <span :class="['text-[11px] font-bold px-2 py-0.5 rounded-md', darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600']">Active</span>
             </div>
           </div>
         </div>
@@ -339,7 +299,16 @@ const orderFilter = ref('')
 const loading = ref(false)
 const error = ref('')
 
-/* -------- Computed -------- */
+// Component States
+const sidebarOpen = ref(false)
+const darkMode = ref(localStorage.getItem('buyer_dark_mode') === 'true')
+
+const toggleDarkMode = () => {
+  darkMode.value = !darkMode.value
+  localStorage.setItem('buyer_dark_mode', darkMode.value)
+}
+
+/* -------- Computed Properties -------- */
 
 const filteredOrders = computed(() => {
   const orders = dashboard.value?.recent_orders || []
@@ -347,55 +316,15 @@ const filteredOrders = computed(() => {
   return orders.filter(o => o.status === orderFilter.value)
 })
 
-const cartSubtotal = computed(() => dashboard.value?.total_spent || 0)
-const cartTax = computed(() => cartSubtotal.value * 0.15)
-const cartTotal = computed(() => cartSubtotal.value + cartTax.value)
-
 const summaryCards = computed(() => {
-  const d = dashboard.value
+  const s = dashboard.value?.summary
   return [
-    {
-      key: 'total',
-      label: 'Total Orders',
-      value: d?.order_statistics?.total || 0,
-      sub: 'All purchases',
-      icon: 'fas fa-home'
-    },
-    {
-      key: 'pending',
-      label: 'Pending Orders',
-      value: d?.order_statistics?.pending || 0,
-      sub: 'Awaiting shipment',
-      icon: 'fas fa-clock'
-    },
-    {
-      key: 'completed',
-      label: 'Completed Orders',
-      value: d?.order_statistics?.completed || 0,
-      sub: 'Delivered',
-      icon: 'fas fa-check-circle'
-    },
-    {
-      key: 'spent',
-      label: 'Total Spent',
-      value: `ETB ${formatNumber(d?.total_spent)}`,
-      sub: `Avg: ETB ${formatNumber(d?.average_order_value)}`,
-      icon: 'fas fa-wallet'
-    },
-    {
-      key: 'cart',
-      label: 'Cart Items',
-      value: d?.cart_items_count || 0,
-      sub: 'Ready to checkout',
-      icon: 'fas fa-shopping-bag'
-    },
-    {
-      key: 'wishlist',
-      label: 'Wishlist Items',
-      value: d?.wishlist_items_count || 0,
-      sub: 'Saved items',
-      icon: 'fas fa-heart'
-    }
+    { key: 'total', label: 'Total Orders', value: s?.total_orders || 0, sub: 'All purchases', icon: 'fas fa-shopping-cart' },
+    { key: 'pending', label: 'Pending Orders', value: s?.pending_orders || 0, sub: 'Awaiting shipment', icon: 'fas fa-clock' },
+    { key: 'completed', label: 'Completed Orders', value: s?.completed_orders || 0, sub: 'Delivered', icon: 'fas fa-check-circle' },
+    { key: 'spent', label: 'Total Spent', value: `ETB ${formatNumber(s?.total_spent)}`, sub: `Avg: ETB ${formatNumber(s?.average_order_value)}`, icon: 'fas fa-wallet' },
+    { key: 'cart', label: 'Cart Items', value: s?.cart_items_count || 0, sub: 'Ready to checkout', icon: 'fas fa-shopping-bag' },
+    { key: 'wishlist', label: 'Wishlist Items', value: s?.wishlist_items_count || 0, sub: 'Saved items', icon: 'fas fa-heart' }
   ]
 })
 
@@ -403,18 +332,19 @@ const summaryCards = computed(() => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 'completed': return 'bg-emerald-50 text-emerald-700'
-    case 'pending': return 'bg-amber-50 text-amber-700'
-    case 'cancelled': return 'bg-red-50 text-red-700'
-    default: return 'bg-slate-100 text-slate-700'
+    case 'completed':
+    case 'delivered': 
+      return 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+    case 'pending': 
+      return 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+    case 'cancelled': 
+      return 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400'
+    default: 
+      return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
   }
 }
 
-/* -------- Lifecycle -------- */
-
 onMounted(fetchDashboardData)
-
-/* -------- API Fetch -------- */
 
 async function fetchDashboardData() {
   loading.value = true
@@ -425,7 +355,7 @@ async function fetchDashboardData() {
     })
     if (!res.ok) throw new Error(`Request failed (${res.status})`)
     const data = await res.json()
-    dashboard.value = data.data || data
+    dashboard.value = data
   } catch (err) {
     console.error('Error fetching dashboard:', err)
     error.value = 'Unable to load dashboard data. Please try again.'
@@ -434,68 +364,11 @@ async function fetchDashboardData() {
   }
 }
 
-/* -------- Formatters -------- */
+const formatNumber = (num) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0)
+const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'
+const formatTabName = (tab) => ({ orders: 'My Orders', deliveries: 'Deliveries', cart: 'Shopping Cart', reviews: 'Reviews', wishlist: 'Wishlist', analytics: 'Analytics' }[tab] || tab)
 
-const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(num || 0)
-}
-
-const formatDate = (date) => {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-const formatTabName = (tab) => {
-  const names = {
-    orders: 'My Orders',
-    deliveries: 'Deliveries',
-    cart: 'Shopping Cart',
-    reviews: 'Reviews',
-    wishlist: 'Wishlist',
-    analytics: 'Analytics'
-  }
-  return names[tab] || tab
-}
-
-/* -------- Actions -------- */
-
-const handleLogout = async () => {
-  await auth.logout()
-  router.push('/login')
-}
-
-const viewOrder = (order) => {
-  router.push(`/buyer/orders/${order.id}`)
-}
-
-const trackDelivery = (delivery) => {
-  router.push(`/buyer/deliveries/${delivery.id}/track`)
-}
-
-const contactDriver = (delivery) => {
-  console.log('Contact driver for delivery', delivery.id)
-}
-
-const removeFromCart = (id) => {
-  console.log('Remove from cart', id)
-}
-
-const addToCart = (id) => {
-  console.log('Add to cart', id)
-}
-
-const removeFromWishlist = (id) => {
-  console.log('Remove from wishlist', id)
-}
-
-const proceedToCheckout = () => {
-  router.push('/buyer/checkout')
-}
+const handleLogout = async () => { await auth.logout(); router.push('/login'); }
+const viewOrder = (order) => router.push(`/buyer/orders/${order.id}`)
+const trackDelivery = (delivery) => router.push(`/buyer/deliveries/${delivery.id}/track`)
 </script>
