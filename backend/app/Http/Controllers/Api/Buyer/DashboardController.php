@@ -39,16 +39,16 @@ class DashboardController extends Controller
             ->where('status', 'delivered')
             ->sum('grand_total');
 
-        $cartCount = Cart::where('buyer_id', $buyer->id)->count();
-        $wishlistCount = Wishlist::where('buyer_id', $buyer->id)->count();
+        $cartCount = Cart::where('user_id', $buyer->id)->count();
+        $wishlistCount = Wishlist::where('user_id', $buyer->id)->count();
 
         // Delivery tracking
         $activeDeliveries = Delivery::whereHas('order', fn($q) => $q->where('buyer_id', $buyer->id))
             ->where('status', 'in_transit')
             ->count();
 
-        // Payment statistics
-        $totalPayments = Payment::where('buyer_id', $buyer->id)
+        // Payment statistics (linked via order's buyer_id)
+        $totalPayments = Payment::whereHas('order', fn($q) => $q->where('buyer_id', $buyer->id))
             ->where('status', 'completed')
             ->count();
 
@@ -66,7 +66,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Active deliveries
+        // Active deliveries details
         $activeDeliveryDetails = Delivery::whereHas('order', fn($q) => $q->where('buyer_id', $buyer->id))
             ->where('status', 'in_transit')
             ->with(['order', 'tracking'])
@@ -78,7 +78,7 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly spending trend (database-agnostic query)
+        // Monthly spending trend
         $spendingByMonth = Order::where('buyer_id', $buyer->id)
             ->where('status', 'delivered')
             ->whereDate('created_at', '>=', now()->subMonths(6))
@@ -103,8 +103,8 @@ class DashboardController extends Controller
                 'cancelled_orders' => $cancelledOrders,
                 'total_spent' => $totalSpent,
                 'average_order_value' => $totalOrders > 0 ? $totalSpent / $totalOrders : 0,
-                'cart_items' => $cartCount,
-                'wishlist_items' => $wishlistCount,
+                'cart_items_count' => $cartCount,
+                'wishlist_items_count' => $wishlistCount,
                 'active_deliveries' => $activeDeliveries,
                 'total_payments' => $totalPayments,
             ],
@@ -123,7 +123,7 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
         $status = $request->query('status');
-        $period = $request->query('period', 90); // days
+        $period = $request->query('period', 90);
 
         $query = Order::where('buyer_id', $buyer->id)
             ->whereDate('created_at', '>=', now()->subDays($period));
@@ -146,7 +146,7 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
 
-        $cartItems = Cart::where('buyer_id', $buyer->id)
+        $cartItems = Cart::where('user_id', $buyer->id)
             ->with('product')
             ->get();
 
@@ -156,7 +156,7 @@ class DashboardController extends Controller
             'items' => $cartItems,
             'total_items' => $cartItems->count(),
             'subtotal' => $total,
-            'estimated_tax' => $total * 0.15, // 15% tax
+            'estimated_tax' => $total * 0.15,
             'estimated_total' => $total * 1.15,
         ]);
     }
@@ -183,7 +183,7 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
 
-        $payments = Payment::where('buyer_id', $buyer->id)
+        $payments = Payment::whereHas('order', fn($q) => $q->where('buyer_id', $buyer->id))
             ->with('order')
             ->latest()
             ->paginate(20);
@@ -198,7 +198,7 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
 
-        $wishlistItems = Wishlist::where('buyer_id', $buyer->id)
+        $wishlistItems = Wishlist::where('user_id', $buyer->id)
             ->with('product')
             ->latest()
             ->paginate(20);
