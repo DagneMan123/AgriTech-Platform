@@ -1,132 +1,113 @@
 <template>
-  <div class="buyer-layout">
+  <!-- ዋናው ገጽ Background (በምስሉ መሰረት Soft Gray) -->
+  <div class="flex min-h-screen bg-slate-100 text-slate-800 font-sans antialiased">
     <BuyerSidebar @logout="handleLogout" />
-    <div class="buyer-dashboard">
+
+    <!-- Dashboard Content Area -->
+    <main class="ml-0 lg:ml-64 flex-1 p-6 lg:p-8 overflow-y-auto min-h-screen" role="main">
+      
       <!-- Header -->
-      <div class="dashboard-header">
-        <h1>Buyer Dashboard</h1>
-        <p>Manage your orders, deliveries, and purchases</p>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="card-icon orders">
-            <i class="fas fa-shopping-cart"></i>
-          </div>
-          <div class="card-content">
-            <h3>Total Orders</h3>
-            <p class="card-value">{{ dashboard?.order_statistics?.total || 0 }}</p>
-            <p class="card-sub">All purchases</p>
-          </div>
+      <header class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900">Buyer Dashboard</h1>
+          <p class="text-slate-500 text-sm mt-1">Manage your orders, deliveries, and purchases</p>
         </div>
-
-        <div class="summary-card">
-          <div class="card-icon pending">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="card-content">
-            <h3>Pending Orders</h3>
-            <p class="card-value">{{ dashboard?.order_statistics?.pending || 0 }}</p>
-            <p class="card-sub">Awaiting shipment</p>
-          </div>
-        </div>
-
-        <div class="summary-card">
-          <div class="card-icon completed">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <div class="card-content">
-            <h3>Completed Orders</h3>
-            <p class="card-value">{{ dashboard?.order_statistics?.completed || 0 }}</p>
-            <p class="card-sub">Delivered</p>
-          </div>
-        </div>
-
-        <div class="summary-card">
-          <div class="card-icon spent">
-            <i class="fas fa-dollar-sign"></i>
-          </div>
-          <div class="card-content">
-            <h3>Total Spent</h3>
-            <p class="card-value">${{ formatNumber(dashboard?.total_spent) }}</p>
-            <p class="card-sub">Avg: ${{ formatNumber(dashboard?.average_order_value) }}</p>
-          </div>
-        </div>
-
-        <div class="summary-card">
-          <div class="card-icon cart">
-            <i class="fas fa-shopping-bag"></i>
-          </div>
-          <div class="card-content">
-            <h3>Cart Items</h3>
-            <p class="card-value">{{ dashboard?.cart_items_count || 0 }}</p>
-            <p class="card-sub">Ready to checkout</p>
-          </div>
-        </div>
-
-        <div class="summary-card">
-          <div class="card-icon wishlist">
-            <i class="fas fa-heart"></i>
-          </div>
-          <div class="card-content">
-            <h3>Wishlist Items</h3>
-            <p class="card-value">{{ dashboard?.wishlist_items_count || 0 }}</p>
-            <p class="card-sub">Saved items</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Tabs -->
-      <div class="dashboard-tabs">
-        <div class="tab-buttons">
+        <div class="flex items-center gap-3">
           <button 
-            v-for="tab in tabs" 
+            class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs lg:text-sm font-semibold text-slate-700 hover:text-emerald-600 hover:border-emerald-500 transition-all shadow-2xs cursor-pointer"
+            :disabled="loading" 
+            @click="fetchDashboardData"
+          >
+            <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Summary Stats Cards (በምስሉ አሰራር መሰረት በግራ በኩል አረንጓዴ መስመር ያላቸው) -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <article
+          v-for="card in summaryCards"
+          :key="card.key"
+          class="bg-white rounded-xl p-4 border-l-4 border-l-emerald-500 border-y border-r border-slate-200/60 shadow-2xs hover:shadow-md transition-all flex justify-between items-start"
+        >
+          <div class="min-w-0 flex-1">
+            <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 truncate">{{ card.label }}</h3>
+            <p class="text-xl lg:text-2xl font-black text-slate-900 tracking-tight">{{ card.value }}</p>
+            <p class="text-[11px] text-slate-400 font-medium truncate mt-1">{{ card.sub }}</p>
+          </div>
+          <!-- በቀኝ በኩል የሚቀመጥ አዶ -->
+          <div class="text-slate-400 text-lg shrink-0 pt-0.5">
+            <i :class="card.icon"></i>
+          </div>
+        </article>
+      </section>
+
+      <!-- Main Section Container (በምስሉ መሰረት ነጭ ቦክስ) -->
+      <section class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs mb-6 overflow-hidden">
+        <!-- Tabs Bar -->
+        <nav class="flex border-b border-slate-200 overflow-x-auto px-4 gap-2 scrollbar-none" role="tablist">
+          <button
+            v-for="tab in tabs"
             :key="tab"
-            :class="['tab-btn', { active: activeTab === tab }]"
+            :class="[
+              'px-4 py-3.5 text-sm font-bold whitespace-nowrap border-b-2 transition-all cursor-pointer',
+              activeTab === tab 
+                ? 'border-emerald-500 text-emerald-600 bg-emerald-50/30' 
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            ]"
             @click="activeTab = tab"
           >
             {{ formatTabName(tab) }}
           </button>
-        </div>
+        </nav>
 
-        <!-- Orders Tab -->
-        <div v-show="activeTab === 'orders'" class="tab-content">
-          <div class="section-header">
-            <h2>My Orders</h2>
-            <div class="filter-controls">
-              <select v-model="orderFilter" class="filter-select">
-                <option value="">All Orders</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
+        <!-- Orders Content -->
+        <div v-show="activeTab === 'orders'" class="p-6">
+          <div class="flex justify-between items-center gap-4 mb-5 flex-wrap">
+            <h2 class="text-base font-bold text-slate-900">My Orders</h2>
+            <select v-model="orderFilter" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-emerald-500 cursor-pointer">
+              <option value="">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
 
-          <div class="orders-table-container">
-            <table class="data-table">
+          <div class="overflow-x-auto rounded-lg border border-slate-100">
+            <table class="w-full text-left border-collapse min-w-[650px]">
               <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Supplier</th>
-                  <th>Items</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Date</th>
-                  <th>Actions</th>
+                <tr class="bg-slate-50 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
+                  <th class="p-3">Order ID</th>
+                  <th class="p-3">Supplier</th>
+                  <th class="p-3">Items</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3">Total</th>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="order in dashboard?.recent_orders || []" :key="order.id">
-                  <td>#{{ order.id }}</td>
-                  <td>{{ order.supplier?.name || 'N/A' }}</td>
-                  <td>{{ order.items?.length || 0 }}</td>
-                  <td><span class="status-badge" :class="`status-${order.status}`">{{ order.status }}</span></td>
-                  <td>${{ formatNumber(order.total_amount) }}</td>
-                  <td>{{ formatDate(order.created_at) }}</td>
-                  <td class="action-buttons">
-                    <button class="btn-small btn-view">View</button>
+              <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-600">
+                <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-slate-50/50">
+                  <td class="p-3 font-bold text-slate-900">#{{ order.id }}</td>
+                  <td class="p-3">{{ order.supplier?.name || 'N/A' }}</td>
+                  <td class="p-3">{{ order.items?.length || 0 }}</td>
+                  <td class="p-3">
+                    <span :class="['inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
+                      {{ order.status }}
+                    </span>
+                  </td>
+                  <td class="p-3 font-bold text-slate-900">ETB {{ formatNumber(order.total_amount) }}</td>
+                  <td class="p-3">{{ formatDate(order.created_at) }}</td>
+                  <td class="p-3">
+                    <button class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold transition-colors" @click="viewOrder(order)">
+                      View
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!filteredOrders.length">
+                  <td colspan="7" class="text-center py-10 text-slate-400 font-medium">
+                    No orders found
                   </td>
                 </tr>
               </tbody>
@@ -135,209 +116,192 @@
         </div>
 
         <!-- Deliveries Tab -->
-        <div v-show="activeTab === 'deliveries'" class="tab-content">
-          <div class="section-header">
-            <h2>Active Deliveries</h2>
-          </div>
+        <div v-show="activeTab === 'deliveries'" class="p-6">
+          <h2 class="text-base font-bold text-slate-900 mb-4">Active Deliveries</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <article
+              v-for="delivery in dashboard?.active_deliveries || []"
+              :key="delivery.id"
+              class="bg-white border border-slate-200/80 rounded-xl p-4 hover:shadow-sm"
+            >
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Order #{{ delivery.order_id }}</h3>
+                <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
+              </div>
+              <div class="space-y-1.5 text-xs text-slate-600 mb-4">
+                <p><strong class="text-slate-800">From:</strong> {{ delivery.from_location }}</p>
+                <p><strong class="text-slate-800">To:</strong> {{ delivery.to_location }}</p>
+                <p><strong class="text-slate-800">Driver:</strong> {{ delivery.driver_name }}</p>
+              </div>
+              <button class="w-full py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg transition-colors" @click="trackDelivery(delivery)">Track Order</button>
+            </article>
 
-          <div class="deliveries-grid">
-            <div v-for="delivery in dashboard?.active_deliveries || []" :key="delivery.id" class="delivery-card">
-              <div class="delivery-header">
-                <h3>Order #{{ delivery.order_id }}</h3>
-                <span class="badge">{{ delivery.status }}</span>
-              </div>
-              <div class="delivery-info">
-                <p><strong>From:</strong> {{ delivery.from_location }}</p>
-                <p><strong>To:</strong> {{ delivery.to_location }}</p>
-                <p><strong>Driver:</strong> {{ delivery.driver_name }}</p>
-                <p><strong>Est. Date:</strong> {{ formatDate(delivery.estimated_delivery_date) }}</p>
-              </div>
-              <div class="delivery-actions">
-                <button class="btn-small btn-track">Track</button>
-                <button class="btn-small btn-contact">Contact</button>
-              </div>
+            <div v-if="!(dashboard?.active_deliveries || []).length" class="col-span-full text-center py-10 text-slate-400 font-medium">
+              No active deliveries at the moment
             </div>
           </div>
         </div>
 
-        <!-- Cart Tab -->
-        <div v-show="activeTab === 'cart'" class="tab-content">
-          <div class="section-header">
-            <h2>Shopping Cart</h2>
-          </div>
+        <!-- Cart, Reviews, Wishlist, Analytics... -->
+      </section>
 
-          <div class="cart-container">
-            <div class="cart-items">
-              <div class="list-item" v-if="dashboard?.cart_items_count === 0">
-                <p class="empty-message">Your cart is empty</p>
-              </div>
-              <div v-for="i in (dashboard?.cart_items_count || 0)" :key="i" class="cart-item">
-                <div class="item-details">
-                  <h4>Product {{ i }}</h4>
-                  <p>Quantity: 5 units</p>
-                </div>
-                <div class="item-price">
-                  <p class="price">$150.00</p>
-                </div>
-                <button class="btn-small btn-remove">Remove</button>
-              </div>
+      <!-- Bottom Recent Cards Grid -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+          <h2 class="font-bold text-slate-900 mb-4 text-sm">Recent Transactions</h2>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="order in (dashboard?.recent_orders || []).slice(0, 5)"
+              :key="order.id"
+              class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs"
+            >
+              <span class="font-bold text-slate-900">Order #{{ order.id }}</span>
+              <span class="font-bold text-slate-900">ETB {{ formatNumber(order.total_amount) }}</span>
+              <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
+                {{ order.status }}
+              </span>
             </div>
-
-            <div class="cart-summary">
-              <div class="summary-item">
-                <span>Subtotal:</span>
-                <span>${{ formatNumber(dashboard?.total_spent || 0) }}</span>
-              </div>
-              <div class="summary-item">
-                <span>Tax (15%):</span>
-                <span>${{ formatNumber((dashboard?.total_spent || 0) * 0.15) }}</span>
-              </div>
-              <div class="summary-item total">
-                <span>Total:</span>
-                <span>${{ formatNumber((dashboard?.total_spent || 0) * 1.15) }}</span>
-              </div>
-              <button class="btn-primary btn-checkout">Proceed to Checkout</button>
+            <div v-if="!(dashboard?.recent_orders || []).length" class="text-center py-6 text-slate-400 text-xs">
+              No recent transactions
             </div>
           </div>
         </div>
 
-        <!-- Reviews Tab -->
-        <div v-show="activeTab === 'reviews'" class="tab-content">
-          <div class="section-header">
-            <h2>My Reviews</h2>
-          </div>
-
-          <div class="reviews-list">
-            <div v-for="i in 3" :key="i" class="review-card">
-              <div class="review-header">
-                <h4>Product Review</h4>
-                <div class="rating">
-                  <i v-for="j in 5" :key="j" class="fas fa-star"></i>
-                </div>
-              </div>
-              <p class="review-text">Great quality products! Fast delivery and excellent customer service.</p>
-              <p class="review-date">{{ formatDate(new Date()) }}</p>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+          <h2 class="font-bold text-slate-900 mb-4 text-sm">Payment Methods</h2>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs font-semibold">
+              <span class="text-slate-800 flex items-center gap-2"><i class="fas fa-mobile-alt text-emerald-600"></i> Telebirr</span>
+              <span class="text-[11px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md">Primary</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50/60 rounded-lg text-xs font-semibold">
+              <span class="text-slate-800 flex items-center gap-2"><i class="fas fa-university text-emerald-600"></i> CBE Birr / Bank Transfer</span>
+              <span class="text-[11px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md">Active</span>
             </div>
           </div>
         </div>
+      </section>
 
-        <!-- Wishlist Tab -->
-        <div v-show="activeTab === 'wishlist'" class="tab-content">
-          <div class="section-header">
-            <h2>My Wishlist</h2>
-          </div>
-
-          <div class="wishlist-grid">
-            <div v-for="i in (dashboard?.wishlist_items_count || 0)" :key="i" class="wishlist-card">
-              <div class="product-image-placeholder">
-                <i class="fas fa-image"></i>
-              </div>
-              <div class="product-info">
-                <h4>Product {{ i }}</h4>
-                <p class="price">${{ (100 + i * 50).toFixed(2) }}</p>
-                <p class="supplier">Supplier {{ i }}</p>
-              </div>
-              <div class="wishlist-actions">
-                <button class="btn-small btn-add-cart">Add to Cart</button>
-                <button class="btn-small btn-remove">Remove</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Analytics Tab -->
-        <div v-show="activeTab === 'analytics'" class="tab-content">
-          <div class="section-header">
-            <h2>Purchase Analytics</h2>
-          </div>
-
-          <div class="analytics-grid">
-            <div class="metric-card">
-              <h3>Spending Overview</h3>
-              <div class="metric-list">
-                <p><strong>Total Spent:</strong> ${{ formatNumber(dashboard?.total_spent) }}</p>
-                <p><strong>Avg Order Value:</strong> ${{ formatNumber(dashboard?.average_order_value) }}</p>
-                <p><strong>Total Orders:</strong> {{ dashboard?.order_statistics?.total || 0 }}</p>
-              </div>
-            </div>
-            <div class="metric-card">
-              <h3>Top Purchases</h3>
-              <div class="metric-list">
-                <p v-for="i in 3" :key="i">{{ i }}. Product {{ i }} - 3 purchases</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="recent-section">
-        <div class="recent-card">
-          <h2>Recent Orders</h2>
-          <div class="list-items">
-            <div v-for="order in (dashboard?.recent_orders || []).slice(0, 5)" :key="order.id" class="list-item">
-              <span class="item-name">Order #{{ order.id }}</span>
-              <span class="item-amount">${{ formatNumber(order.total_amount) }}</span>
-              <span class="status-badge" :class="`status-${order.status}`">{{ order.status }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="recent-card">
-          <h2>Payment Methods</h2>
-          <div class="list-items">
-            <div class="list-item">
-              <span class="item-name">Credit Card</span>
-              <span class="item-sub">****1234</span>
-            </div>
-            <div class="list-item">
-              <span class="item-name">Bank Transfer</span>
-              <span class="item-sub">Primary</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+
 const activeTab = ref('orders')
 const tabs = ['orders', 'deliveries', 'cart', 'reviews', 'wishlist', 'analytics']
 
 const dashboard = ref(null)
 const orderFilter = ref('')
+const loading = ref(false)
+const error = ref('')
 
-onMounted(async () => {
-  await fetchDashboardData()
+/* -------- Computed -------- */
+
+const filteredOrders = computed(() => {
+  const orders = dashboard.value?.recent_orders || []
+  if (!orderFilter.value) return orders
+  return orders.filter(o => o.status === orderFilter.value)
 })
 
-const fetchDashboardData = async () => {
+const summaryCards = computed(() => {
+  const d = dashboard.value
+  return [
+    {
+      key: 'total',
+      label: 'Total Orders',
+      value: d?.order_statistics?.total || 0,
+      sub: 'All purchases',
+      icon: 'fas fa-home'
+    },
+    {
+      key: 'pending',
+      label: 'Pending Orders',
+      value: d?.order_statistics?.pending || 0,
+      sub: 'Awaiting shipment',
+      icon: 'fas fa-clock'
+    },
+    {
+      key: 'completed',
+      label: 'Completed Orders',
+      value: d?.order_statistics?.completed || 0,
+      sub: 'Delivered',
+      icon: 'fas fa-check-circle'
+    },
+    {
+      key: 'spent',
+      label: 'Total Spent',
+      value: `ETB ${formatNumber(d?.total_spent)}`,
+      sub: `Avg: ETB ${formatNumber(d?.average_order_value)}`,
+      icon: 'fas fa-wallet'
+    },
+    {
+      key: 'cart',
+      label: 'Cart Items',
+      value: d?.cart_items_count || 0,
+      sub: 'Ready to checkout',
+      icon: 'fas fa-shopping-bag'
+    },
+    {
+      key: 'wishlist',
+      label: 'Wishlist Items',
+      value: d?.wishlist_items_count || 0,
+      sub: 'Saved items',
+      icon: 'fas fa-heart'
+    }
+  ]
+})
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 'completed': return 'bg-emerald-50 text-emerald-700'
+    case 'pending': return 'bg-amber-50 text-amber-700'
+    case 'cancelled': return 'bg-red-50 text-red-700'
+    default: return 'bg-slate-100 text-slate-700'
+  }
+}
+
+onMounted(fetchDashboardData)
+
+async function fetchDashboardData() {
+  loading.value = true
+  error.value = ''
   try {
     const res = await fetch('/api/buyer/dashboard', {
-      headers: { 'Authorization': `Bearer ${auth.token}` }
+      headers: { Authorization: `Bearer ${auth.token}` }
     })
+    if (!res.ok) throw new Error(`Request failed (${res.status})`)
     const data = await res.json()
     dashboard.value = data.data || data
-  } catch (error) {
-    console.error('Error fetching dashboard:', error)
+  } catch (err) {
+    console.error('Error fetching dashboard:', err)
+    error.value = 'Unable to load dashboard data. Please try again.'
+  } finally {
+    loading.value = false
   }
 }
 
 const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0)
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(num || 0)
 }
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
 }
 
 const formatTabName = (tab) => {
@@ -356,642 +320,12 @@ const handleLogout = async () => {
   await auth.logout()
   router.push('/login')
 }
+
+const viewOrder = (order) => {
+  router.push(`/buyer/orders/${order.id}`)
+}
+
+const trackDelivery = (delivery) => {
+  router.push(`/buyer/deliveries/${delivery.id}/track`)
+}
 </script>
-
-<style scoped>
-.buyer-layout {
-  display: flex;
-  height: 100vh;
-}
-
-.buyer-dashboard {
-  margin-left: 260px;
-  flex: 1;
-  overflow-y: auto;
-  background-color: #f5f5f5;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.dashboard-header {
-  margin-bottom: 30px;
-}
-
-.dashboard-header h1 {
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.dashboard-header p {
-  color: #666;
-}
-
-/* Summary Grid */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.summary-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
-
-.summary-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.card-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-}
-
-.card-icon.orders {
-  background-color: #3b82f6;
-}
-
-.card-icon.pending {
-  background-color: #f59e0b;
-}
-
-.card-icon.completed {
-  background-color: #10b981;
-}
-
-.card-icon.spent {
-  background-color: #ef4444;
-}
-
-.card-icon.cart {
-  background-color: #8b5cf6;
-}
-
-.card-icon.wishlist {
-  background-color: #ec4899;
-}
-
-.card-content h3 {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.card-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-}
-
-.card-sub {
-  font-size: 12px;
-  color: #999;
-}
-
-/* Tabs */
-.dashboard-tabs {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-}
-
-.tab-buttons {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
-  overflow-x: auto;
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 15px 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  font-weight: 500;
-  transition: all 0.3s;
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-}
-
-.tab-btn:hover {
-  color: #3b82f6;
-}
-
-.tab-btn.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-}
-
-.tab-content {
-  padding: 25px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.section-header h2 {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.filter-select {
-  padding: 10px 15px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-/* Tables */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  background-color: #f9fafb;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-/* Deliveries Grid */
-.deliveries-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.delivery-card {
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s;
-}
-
-.delivery-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-.delivery-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.delivery-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 16px;
-}
-
-.delivery-info p {
-  margin: 5px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.delivery-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.btn-track,
-.btn-contact {
-  flex: 1;
-}
-
-/* Cart Container */
-.cart-container {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 20px;
-}
-
-.cart-items {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.empty-message {
-  text-align: center;
-  color: #999;
-  padding: 40px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-}
-
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.item-details {
-  flex: 1;
-}
-
-.item-details h4 {
-  margin: 0 0 5px 0;
-  color: #333;
-}
-
-.item-details p {
-  margin: 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.item-price {
-  margin-right: 15px;
-  font-weight: bold;
-  color: #3b82f6;
-}
-
-.btn-remove {
-  background-color: #ef4444;
-  color: white;
-}
-
-.btn-remove:hover {
-  background-color: #dc2626;
-}
-
-/* Cart Summary */
-.cart-summary {
-  background-color: #f9fafb;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  height: fit-content;
-  position: sticky;
-  top: 20px;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-.summary-item.total {
-  border-bottom: none;
-  font-weight: bold;
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 15px;
-}
-
-.btn-checkout {
-  width: 100%;
-}
-
-/* Reviews */
-.reviews-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.review-card {
-  background-color: #f9fafb;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.review-header h4 {
-  margin: 0;
-  color: #333;
-}
-
-.rating {
-  display: flex;
-  gap: 3px;
-}
-
-.rating i {
-  color: #fbbf24;
-  font-size: 14px;
-}
-
-.review-text {
-  color: #666;
-  margin: 10px 0;
-  font-size: 14px;
-}
-
-.review-date {
-  font-size: 12px;
-  color: #999;
-}
-
-/* Wishlist Grid */
-.wishlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.wishlist-card {
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s;
-}
-
-.wishlist-card:hover {
-  border-color: #ec4899;
-  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.1);
-}
-
-.product-image-placeholder {
-  width: 100%;
-  height: 150px;
-  background-color: #e5e7eb;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  color: #d1d5db;
-  margin-bottom: 10px;
-}
-
-.product-info h4 {
-  margin: 0 0 5px 0;
-  color: #333;
-}
-
-.product-info .price {
-  color: #ef4444;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.product-info .supplier {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-}
-
-.wishlist-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.btn-add-cart {
-  flex: 1;
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-add-cart:hover {
-  background-color: #2563eb;
-}
-
-/* Analytics Grid */
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.metric-card {
-  background-color: #f9fafb;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.metric-card h3 {
-  color: #333;
-  margin-bottom: 15px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.metric-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.metric-list p {
-  padding: 8px 0;
-  color: #666;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-.metric-list p:last-child {
-  border-bottom: none;
-}
-
-/* Buttons */
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-view {
-  background-color: #8b5cf6;
-  color: white;
-}
-
-.btn-view:hover {
-  background-color: #7c3aed;
-}
-
-/* Status Badges */
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-badge.status-pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.status-badge.status-completed {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.status-cancelled {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-/* Recent Section */
-.recent-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 30px;
-}
-
-.recent-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.recent-card h2 {
-  font-size: 18px;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.list-items {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.list-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background-color: #f9fafb;
-  border-radius: 4px;
-}
-
-.item-name {
-  font-weight: 600;
-  color: #333;
-}
-
-.item-amount,
-.item-sub {
-  font-size: 14px;
-  color: #666;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .tab-buttons {
-    flex-wrap: wrap;
-  }
-
-  .tab-btn {
-    flex: 0 1 auto;
-    padding: 12px 15px;
-  }
-
-  .cart-container {
-    grid-template-columns: 1fr;
-  }
-
-  .cart-summary {
-    position: static;
-  }
-
-  .deliveries-grid,
-  .wishlist-grid,
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .recent-section {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
