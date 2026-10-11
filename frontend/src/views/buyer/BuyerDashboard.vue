@@ -30,28 +30,20 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-4">
-          <!-- Custom Animated Pill Switch Toggle (Dark / Light Mode) -->
+        <div class="flex items-center gap-3">
+          <!-- 💡 Circular Dark/Light Mode Icon Button (በምስሉ መሰረት የተስተካከለ) -->
           <button 
             @click="toggleDarkMode" 
             type="button"
             :class="[
-              'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-              darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-slate-200 border-slate-300'
+              'flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-300 cursor-pointer shadow-sm focus:outline-none',
+              darkMode 
+                ? 'bg-[#131b2e] border-slate-700/80 text-amber-400 hover:bg-slate-800' 
+                : 'bg-white border-slate-200 text-amber-500 hover:bg-slate-50'
             ]"
-            role="switch"
-            :aria-checked="darkMode"
-            title="Toggle Dark Mode"
+            :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           >
-            <!-- Sliding Circle with Icon -->
-            <span
-              :class="[
-                'pointer-events-none inline-block h-7 w-7 transform rounded-full shadow-md ring-0 transition duration-300 ease-in-out flex items-center justify-center text-xs',
-                darkMode ? 'translate-x-8 bg-slate-800 text-amber-400' : 'translate-x-0 bg-white text-amber-500'
-              ]"
-            >
-              <i class="fas" :class="darkMode ? 'fa-moon' : 'fa-sun'"></i>
-            </span>
+            <span class="text-base select-none">{{ darkMode ? '🌙' : '☀️' }}</span>
           </button>
 
           <!-- Refresh Data Button -->
@@ -72,7 +64,7 @@
         <span>{{ error }}</span>
       </div>
 
-      <!-- Summary Statistics Grid (Blue Border Accent) -->
+      <!-- Summary Statistics Grid -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6" aria-label="Summary statistics">
         <article
           v-for="card in summaryCards"
@@ -100,7 +92,7 @@
             :class="[
               'px-4 py-3.5 text-sm font-bold whitespace-nowrap border-b-2 transition-all cursor-pointer',
               activeTab === tab 
-                ? 'border-blue-600 text-blue-600 bg-blue-50/50 dark:bg-blue-950/40' 
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50' 
                 : darkMode ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-800'
             ]"
             role="tab"
@@ -149,7 +141,7 @@
                   <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.total_amount || order.grand_total) }}</td>
                   <td class="p-3">{{ formatDate(order.created_at) }}</td>
                   <td class="p-3">
-                    <button class="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-400 rounded-md font-bold transition-colors cursor-pointer" @click="viewOrder(order)">
+                    <button class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md font-bold transition-colors cursor-pointer" @click="viewOrder(order)">
                       View
                     </button>
                   </td>
@@ -175,7 +167,7 @@
             >
               <div class="flex justify-between items-center mb-3">
                 <h3 :class="['font-bold text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ delivery.order_id }}</h3>
-                <span class="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
+                <span class="px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
               </div>
               <div :class="['space-y-1.5 text-xs mb-4', darkMode ? 'text-slate-300' : 'text-slate-600']">
                 <p><strong :class="darkMode ? 'text-slate-100' : 'text-slate-800'">From:</strong> {{ delivery.from_location || 'Farm Location' }}</p>
@@ -268,7 +260,7 @@
           <div class="flex flex-col gap-2">
             <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
               <span class="flex items-center gap-2"><i class="fas fa-mobile-alt text-blue-500"></i> Telebirr</span>
-              <span class="text-[11px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">Primary</span>
+              <span class="text-[11px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">Primary</span>
             </div>
             <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
               <span class="flex items-center gap-2"><i class="fas fa-university text-blue-500"></i> CBE Birr / Bank Transfer</span>
@@ -298,15 +290,38 @@ const dashboard = ref(null)
 const orderFilter = ref('')
 const loading = ref(false)
 const error = ref('')
-
-// Component States
 const sidebarOpen = ref(false)
-const darkMode = ref(localStorage.getItem('buyer_dark_mode') === 'true')
+
+// Global app_dark_mode state
+const darkMode = ref(localStorage.getItem('app_dark_mode') === 'true')
+
+const updateDOMTheme = (isDark) => {
+  if (isDark) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+}
 
 const toggleDarkMode = () => {
   darkMode.value = !darkMode.value
-  localStorage.setItem('buyer_dark_mode', darkMode.value)
+  localStorage.setItem('app_dark_mode', darkMode.value.toString())
+  updateDOMTheme(darkMode.value)
 }
+
+onMounted(() => {
+  updateDOMTheme(darkMode.value)
+  
+  // Cross-page real-time sync
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'app_dark_mode') {
+      darkMode.value = e.newValue === 'true'
+      updateDOMTheme(darkMode.value)
+    }
+  })
+  
+  fetchDashboardData()
+})
 
 /* -------- Computed Properties -------- */
 
@@ -334,17 +349,15 @@ const getStatusClass = (status) => {
   switch (status) {
     case 'completed':
     case 'delivered': 
-      return 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+      return 'bg-emerald-50 text-emerald-600'
     case 'pending': 
-      return 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+      return 'bg-amber-50 text-amber-600'
     case 'cancelled': 
-      return 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400'
+      return 'bg-red-50 text-red-600'
     default: 
-      return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+      return 'bg-slate-100 text-slate-600'
   }
 }
-
-onMounted(fetchDashboardData)
 
 async function fetchDashboardData() {
   loading.value = true
