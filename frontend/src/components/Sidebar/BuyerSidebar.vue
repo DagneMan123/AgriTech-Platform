@@ -236,20 +236,31 @@ import {
 const router = useRouter()
 const auth = useAuthStore()
 
-// Reactively sync Dark Mode state with localStorage & Dashboard
-const isDark = ref(localStorage.getItem('buyer_dark_mode') === 'true')
+// 💡 1. ቨርቹዋል እንደገና እንዳይዘገይ በ 'app_dark_mode' የመተግበሪያ ቁልፍ መፈተሽ
+const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
 
 const checkDarkMode = () => {
-  isDark.value = localStorage.getItem('buyer_dark_mode') === 'true'
+  isDark.value = localStorage.getItem('app_dark_mode') === 'true'
 }
 
+let observer = null
+
 onMounted(() => {
+  // 💡 2. የ 'storage' ኢቨንት አዳማጭ ለሌሎች ታቦች
   window.addEventListener('storage', checkDarkMode)
-  const interval = setInterval(checkDarkMode, 200)
-  onUnmounted(() => {
-    window.removeEventListener('storage', checkDarkMode)
-    clearInterval(interval)
+  
+  // 💡 3. MutationObserver በመጠቀም በ HTML root element (<html>) ላይ '.dark' class ሲጨመር/ሲወገድ በቅጽበት ይከታተላል
+  observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark') || localStorage.getItem('app_dark_mode') === 'true'
   })
+  
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  checkDarkMode()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', checkDarkMode)
+  if (observer) observer.disconnect()
 })
 
 const expandedSections = ref({
@@ -478,7 +489,7 @@ const handleLogout = async () => {
 
 /* ================= DARK MODE STYLES (MATCHES FARMER PORTAL) ================= */
 .sidebar.dark {
-  background: #0f172a !important; /* Matches Farmer Sidebar */
+  background: #0f172a !important;
   border-right: 1px solid #1e293b !important;
   color: #f8fafc !important;
 }
