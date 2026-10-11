@@ -31,7 +31,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- 💡 Circular Dark/Light Mode Icon Button (በምስሉ መሰረት የተስተካከለ) -->
+          <!-- 💡 Circular Dark/Light Mode Icon Button (Connected with Pinia Theme Store) -->
           <button 
             @click="toggleDarkMode" 
             type="button"
@@ -277,10 +277,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore' // 💡 Pinia Theme Store ገብቷል
 import { useRouter } from 'vue-router'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
 const auth = useAuthStore()
+const themeStore = useThemeStore() // 💡 Store መጥሪያ
 const router = useRouter()
 
 const activeTab = ref('orders')
@@ -292,34 +294,11 @@ const loading = ref(false)
 const error = ref('')
 const sidebarOpen = ref(false)
 
-// Global app_dark_mode state
-const darkMode = ref(localStorage.getItem('app_dark_mode') === 'true')
-
-const updateDOMTheme = (isDark) => {
-  if (isDark) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-}
-
-const toggleDarkMode = () => {
-  darkMode.value = !darkMode.value
-  localStorage.setItem('app_dark_mode', darkMode.value.toString())
-  updateDOMTheme(darkMode.value)
-}
+// 💡 ከ Pinia Store ጋር ማገናኘት (ይህም ከ Home እና ሌሎች ገፆች ጋር በቅጽበት እንዲቀያየር ያደርገዋል)
+const darkMode = computed(() => themeStore.darkMode)
+const toggleDarkMode = () => themeStore.toggleDarkMode()
 
 onMounted(() => {
-  updateDOMTheme(darkMode.value)
-  
-  // Cross-page real-time sync
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'app_dark_mode') {
-      darkMode.value = e.newValue === 'true'
-      updateDOMTheme(darkMode.value)
-    }
-  })
-  
   fetchDashboardData()
 })
 
