@@ -69,7 +69,7 @@
         <article
           v-for="card in summaryCards"
           :key="card.key"
-          :class="['rounded-xl p-4 border-l-4 border-l-blue-600 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/60 text-slate-900']"
+          :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200/60 text-slate-900 !border-l-blue-600']"
         >
           <div class="min-w-0 flex-1">
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ card.label }}</h3>
