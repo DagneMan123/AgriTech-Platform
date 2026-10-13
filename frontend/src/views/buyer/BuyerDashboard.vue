@@ -231,45 +231,6 @@
         </div>
       </section>
 
-      <!-- Bottom Activity Grid -->
-      <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recent Transactions Card -->
-        <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
-          <h2 :class="['font-bold mb-4 text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Recent Activity</h2>
-          <div class="flex flex-col gap-2">
-            <div
-              v-for="order in (dashboard?.recent_orders || []).slice(0, 5)"
-              :key="order.id"
-              :class="['flex items-center justify-between p-3 rounded-lg text-xs', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-50/60']"
-            >
-              <span :class="['font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ order.id }}</span>
-              <span :class="['font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.grand_total || order.total_amount) }}</span>
-              <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
-                {{ order.status }}
-              </span>
-            </div>
-            <div v-if="!(dashboard?.recent_orders || []).length" class="text-center py-6 text-slate-400 text-xs">
-              No recent activity
-            </div>
-          </div>
-        </div>
-
-        <!-- Payment Integration Card -->
-        <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
-          <h2 :class="['font-bold mb-4 text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Payment Integration</h2>
-          <div class="flex flex-col gap-2">
-            <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
-              <span class="flex items-center gap-2"><i class="fas fa-mobile-alt text-blue-500"></i> Telebirr</span>
-              <span class="text-[11px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">Primary</span>
-            </div>
-            <div :class="['flex items-center justify-between p-3 rounded-lg text-xs font-semibold', darkMode ? 'bg-[#0b0f19] text-slate-200' : 'bg-slate-50/60 text-slate-800']">
-              <span class="flex items-center gap-2"><i class="fas fa-university text-blue-500"></i> CBE Birr / Bank Transfer</span>
-              <span :class="['text-[11px] font-bold px-2 py-0.5 rounded-md', darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600']">Active</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
     </main>
   </div>
 </template>
