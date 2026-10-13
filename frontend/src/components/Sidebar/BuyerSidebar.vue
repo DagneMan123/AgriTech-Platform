@@ -158,10 +158,6 @@
             <Building2 class="sub-icon" />
             <span>Supplier Directory</span>
           </router-link>
-          <router-link to="/buyer/services/consultations" class="menu-item sub-item" active-class="active">
-            <UserCheck class="sub-icon" />
-            <span>Consultations</span>
-          </router-link>
         </div>
       </div>
 

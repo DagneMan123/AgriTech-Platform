@@ -45,16 +45,6 @@
           >
             <span class="text-base select-none">{{ darkMode ? '🌙' : '☀️' }}</span>
           </button>
-
-          <!-- Refresh Data Button -->
-          <button 
-            :class="['inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs lg:text-sm font-semibold border transition-all cursor-pointer shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-200 hover:border-blue-500' : 'bg-white border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-500']"
-            :disabled="loading" 
-            @click="fetchDashboardData"
-          >
-            <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
-            <span class="hidden sm:inline">Refresh</span>
-          </button>
         </div>
       </header>
 
