@@ -79,9 +79,9 @@ class MarketPriceController extends Controller
         ]);
 
         $prices = Product::whereIn('id', $validated['products'])
-            ->with('prices' => function ($q) {
+            ->with(['prices' => function ($q) {
                 $q->latest()->limit(1);
-            })
+            }])
             ->get();
 
         return response()->json([

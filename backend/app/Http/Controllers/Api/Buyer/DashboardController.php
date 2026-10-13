@@ -78,22 +78,47 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly spending trend
+        // Monthly spending trend (last 12 months)
         $spendingByMonth = Order::where('buyer_id', $buyer->id)
             ->where('status', 'delivered')
-            ->whereDate('created_at', '>=', now()->subMonths(6))
+            ->whereDate('created_at', '>=', now()->subMonths(12))
             ->get()
             ->groupBy(function($date) {
                 return $date->created_at->format('Y-m');
             })
             ->map(function($group) {
                 return [
-                    'month' => $group->first()->created_at->format('Y-m'),
+                    'month' => $group->first()->created_at->format('M'),
+                    'year_month' => $group->first()->created_at->format('Y-m'),
                     'spent' => $group->sum('grand_total'),
                     'orders' => $group->count(),
                 ];
             })
             ->values();
+
+        // Purchases by category
+        try {
+            $purchasesByCategory = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->where('orders.buyer_id', $buyer->id)
+                ->where('orders.status', 'delivered')
+                ->groupBy('categories.id', 'categories.name')
+                ->selectRaw('categories.name as category, COUNT(DISTINCT order_items.id) as purchase_count, SUM(order_items.quantity) as total_quantity, SUM(order_items.subtotal) as total_spent')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'category' => $item->category ?? 'Uncategorized',
+                        'count' => $item->purchase_count,
+                        'quantity' => $item->total_quantity,
+                        'spent' => $item->total_spent,
+                    ];
+                });
+        } catch (\Exception $e) {
+            // If categories table doesn't exist or query fails, return empty array
+            $purchasesByCategory = collect([]);
+        }
 
         return response()->json([
             'summary' => [
@@ -113,6 +138,7 @@ class DashboardController extends Controller
             'active_deliveries' => $activeDeliveryDetails,
             'orders_by_status' => $ordersByStatus,
             'spending_by_month' => $spendingByMonth,
+            'purchases_by_category' => $purchasesByCategory,
         ]);
     }
 

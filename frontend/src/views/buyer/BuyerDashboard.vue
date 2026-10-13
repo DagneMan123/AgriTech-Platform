@@ -208,10 +208,94 @@
 
         <!-- Analytics Tab Content -->
         <div v-show="activeTab === 'analytics'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Purchase Analytics</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h2 :class="['text-base font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">Purchase Analytics</h2>
+              <p :class="['text-xs mt-1', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                Visual insights into your spending patterns and order history
+              </p>
+            </div>
+          </div>
+          
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 1. Monthly Spending Trend (Line Chart) -->
+            <div :class="['border rounded-xl p-5', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+              <h3 :class="['font-bold text-sm mb-4 flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
+                📈 Monthly Spending Trend
+                <span :class="['text-[10px] font-normal px-2 py-0.5 rounded-full', darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500']">
+                  Last 12 months
+                </span>
+              </h3>
+              <div style="position: relative; height: 300px;">
+                <canvas ref="spendingTrendChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 2. Order Status Distribution (Doughnut Chart) -->
+            <div :class="['border rounded-xl p-5', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+              <h3 :class="['font-bold text-sm mb-4 flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
+                🍩 Order Status Distribution
+                <span :class="['text-[10px] font-normal px-2 py-0.5 rounded-full', darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500']">
+                  All time
+                </span>
+              </h3>
+              <div style="position: relative; height: 300px;">
+                <canvas ref="statusChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Purchases by Category (Bar Chart) - Full Width -->
+          <div :class="['border rounded-xl p-5 mb-6', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+            <h3 :class="['font-bold text-sm mb-4 flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
+              📊 Purchases by Category
+              <span :class="['text-[10px] font-normal px-2 py-0.5 rounded-full', darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500']">
+                Completed orders
+              </span>
+            </h3>
+            
+            <!-- No Data Message -->
+            <div v-if="!dashboard?.purchases_by_category || dashboard.purchases_by_category.length === 0" class="text-center py-12">
+              <i class="fas fa-chart-bar text-4xl mb-3" :class="darkMode ? 'text-slate-700' : 'text-slate-300'"></i>
+              <p :class="['text-sm font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                No purchase data available yet
+              </p>
+              <p :class="['text-xs mt-1', darkMode ? 'text-slate-500' : 'text-slate-400']">
+                Start ordering to see your category breakdown
+              </p>
+            </div>
+            
+            <div v-else style="position: relative; height: 350px;">
+              <canvas ref="categoryChart"></canvas>
+            </div>
+            
+            <!-- Category Stats Summary -->
+            <div v-if="dashboard?.purchases_by_category && dashboard.purchases_by_category.length > 0" class="mt-5 pt-4 border-t" :class="darkMode ? 'border-slate-800' : 'border-slate-200'">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div
+                  v-for="(cat, idx) in dashboard.purchases_by_category.slice(0, 4)"
+                  :key="idx"
+                  :class="['rounded-lg p-3 text-center', darkMode ? 'bg-[#131b2e]' : 'bg-slate-50']"
+                >
+                  <p :class="['text-xs font-semibold mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    {{ cat.category }}
+                  </p>
+                  <p :class="['text-lg font-black', darkMode ? 'text-slate-100' : 'text-slate-900']">
+                    {{ cat.count }}
+                  </p>
+                  <p :class="['text-[10px] font-medium', darkMode ? 'text-slate-500' : 'text-slate-400']">
+                    ETB {{ formatNumber(cat.spent) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spending Overview Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div :class="['border rounded-xl p-4', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
-              <h3 :class="['font-bold text-sm mb-3', darkMode ? 'text-slate-100' : 'text-slate-900']">Spending Overview</h3>
+              <h3 :class="['font-bold text-sm mb-3', darkMode ? 'text-slate-100' : 'text-slate-900']">💰 Spending Overview</h3>
               <div :class="['divide-y text-xs', darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-100 text-slate-600']">
                 <p class="flex justify-between py-2.5">
                   <span>Total Spent</span>
@@ -227,6 +311,42 @@
                 </p>
               </div>
             </div>
+
+            <div :class="['border rounded-xl p-4', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+              <h3 :class="['font-bold text-sm mb-3', darkMode ? 'text-slate-100' : 'text-slate-900']">📦 Order Breakdown</h3>
+              <div :class="['divide-y text-xs', darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-100 text-slate-600']">
+                <p class="flex justify-between py-2.5">
+                  <span>🟢 Completed</span>
+                  <strong class="text-emerald-600">{{ dashboard?.summary?.completed_orders || 0 }}</strong>
+                </p>
+                <p class="flex justify-between py-2.5">
+                  <span>🟡 Pending</span>
+                  <strong class="text-amber-600">{{ dashboard?.summary?.pending_orders || 0 }}</strong>
+                </p>
+                <p class="flex justify-between py-2.5">
+                  <span>🔴 Cancelled</span>
+                  <strong class="text-red-600">{{ dashboard?.summary?.cancelled_orders || 0 }}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div :class="['border rounded-xl p-4', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']">
+              <h3 :class="['font-bold text-sm mb-3', darkMode ? 'text-slate-100' : 'text-slate-900']">📈 Insights</h3>
+              <div :class="['space-y-2 text-xs', darkMode ? 'text-slate-300' : 'text-slate-600']">
+                <p class="flex items-start gap-2">
+                  <span class="text-blue-500">•</span>
+                  <span>Most orders placed in last quarter</span>
+                </p>
+                <p class="flex items-start gap-2">
+                  <span class="text-green-500">•</span>
+                  <span>{{ dashboard?.summary?.completed_orders || 0 }} successful deliveries</span>
+                </p>
+                <p class="flex items-start gap-2">
+                  <span class="text-purple-500">•</span>
+                  <span>{{ dashboard?.purchases_by_category?.length || 0 }} categories purchased</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -236,7 +356,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useRouter } from 'vue-router'
@@ -255,6 +375,16 @@ const loading = ref(false)
 const error = ref('')
 const sidebarOpen = ref(false)
 
+// Chart refs
+const spendingTrendChart = ref(null)
+const statusChart = ref(null)
+const categoryChart = ref(null)
+
+// Chart instances
+let spendingChart = null
+let orderStatusChart = null
+let purchaseCategoryChart = null
+
 // Use themeStore for dark mode (synchronized across all pages)
 const darkMode = computed(() => themeStore.isDark)
 
@@ -262,9 +392,357 @@ const toggleDarkMode = () => {
   themeStore.toggleTheme()
 }
 
-onMounted(() => {
+// Load Chart.js from CDN
+const loadChartJS = () => {
+  return new Promise((resolve, reject) => {
+    if (window.Chart) {
+      resolve()
+      return
+    }
+    
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
+    script.onload = resolve
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+// Initialize all charts
+const initializeCharts = async () => {
+  await loadChartJS()
+  await nextTick()
+  
+  if (activeTab.value === 'analytics') {
+    createSpendingTrendChart()
+    createOrderStatusChart()
+    createCategoryChart()
+  }
+}
+
+// 1. Monthly Spending Trend Chart (Line Chart)
+const createSpendingTrendChart = () => {
+  if (!spendingTrendChart.value) {
+    console.warn('Spending chart ref not found')
+    return
+  }
+  
+  try {
+    // Destroy existing chart
+    if (spendingChart) {
+      spendingChart.destroy()
+    }
+    
+    const ctx = spendingTrendChart.value.getContext('2d')
+    
+    // Get data from API or use empty arrays
+    const spendingData = dashboard.value?.spending_by_month || []
+    
+    // Fill in missing months for last 12 months
+    const allMonths = []
+    const allSpending = []
+    const now = new Date()
+    
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthLabel = d.toLocaleDateString('en-US', { month: 'short' })
+      const yearMonth = d.toISOString().slice(0, 7)
+      
+      allMonths.push(monthLabel)
+      
+      const found = spendingData.find(item => item.year_month === yearMonth)
+      allSpending.push(found ? parseFloat(found.spent) : 0)
+    }
+    
+    spendingChart = new window.Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: allMonths,
+        datasets: [{
+          label: 'Monthly Spending (ETB)',
+          data: allSpending,
+          borderColor: darkMode.value ? '#60a5fa' : '#3b82f6',
+          backgroundColor: darkMode.value ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: darkMode.value ? '#60a5fa' : '#3b82f6',
+          pointBorderColor: darkMode.value ? '#1e293b' : '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              color: darkMode.value ? '#cbd5e1' : '#475569',
+              font: { size: 12, weight: 'bold' }
+            }
+          },
+          tooltip: {
+            backgroundColor: darkMode.value ? '#1e293b' : '#ffffff',
+            titleColor: darkMode.value ? '#f1f5f9' : '#0f172a',
+            bodyColor: darkMode.value ? '#cbd5e1' : '#475569',
+            borderColor: darkMode.value ? '#334155' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: (context) => `ETB ${context.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: darkMode.value ? '#1e293b' : '#f1f5f9',
+              drawBorder: false
+            },
+            ticks: {
+              color: darkMode.value ? '#94a3b8' : '#64748b',
+              font: { size: 11, weight: 'bold' }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: darkMode.value ? '#1e293b' : '#f1f5f9',
+              drawBorder: false
+            },
+            ticks: {
+              color: darkMode.value ? '#94a3b8' : '#64748b',
+              font: { size: 11, weight: 'bold' },
+              callback: (value) => {
+                if (value >= 1000) return `${(value / 1000).toFixed(0)}k`
+                return value
+              }
+            }
+          }
+        }
+      }
+    })
+  } catch (err) {
+    console.error('Error creating spending chart:', err)
+  }
+}
+
+// 2. Order Status Distribution Chart (Doughnut Chart)
+const createOrderStatusChart = () => {
+  if (!statusChart.value) {
+    console.warn('Status chart ref not found')
+    return
+  }
+  
+  try {
+    // Destroy existing chart
+    if (orderStatusChart) {
+      orderStatusChart.destroy()
+    }
+    
+    const ctx = statusChart.value.getContext('2d')
+    
+    // Get data from dashboard or use sample data
+    const completed = dashboard.value?.summary?.completed_orders || 0
+    const pending = dashboard.value?.summary?.pending_orders || 0
+    const cancelled = dashboard.value?.summary?.cancelled_orders || 0
+    
+    orderStatusChart = new window.Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['🟢 Completed', '🟡 Pending', '🔴 Cancelled'],
+        datasets: [{
+          data: [completed, pending, cancelled],
+          backgroundColor: [
+            '#10b981', // Green for completed
+            '#f59e0b', // Yellow for pending
+            '#ef4444'  // Red for cancelled
+          ],
+          borderColor: darkMode.value ? '#0b0f19' : '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              color: darkMode.value ? '#cbd5e1' : '#475569',
+              font: { size: 12, weight: 'bold' },
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: darkMode.value ? '#1e293b' : '#ffffff',
+            titleColor: darkMode.value ? '#f1f5f9' : '#0f172a',
+            bodyColor: darkMode.value ? '#cbd5e1' : '#475569',
+            borderColor: darkMode.value ? '#334155' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            callbacks: {
+              label: (context) => {
+                const label = context.label || ''
+                const value = context.parsed || 0
+                const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
+                return `${label}: ${value} orders (${percentage}%)`
+              }
+            }
+          }
+        }
+      }
+    })
+  } catch (err) {
+    console.error('Error creating status chart:', err)
+  }
+}
+
+// 3. Purchases by Category Chart (Bar Chart)
+const createCategoryChart = () => {
+  if (!categoryChart.value) {
+    console.warn('Category chart ref not found')
+    return
+  }
+  
+  try {
+    // Destroy existing chart
+    if (purchaseCategoryChart) {
+      purchaseCategoryChart.destroy()
+    }
+    
+    const ctx = categoryChart.value.getContext('2d')
+    
+    // Get data from API
+    const categoryData = dashboard.value?.purchases_by_category || []
+    
+    // Extract categories and purchase counts
+    const categories = categoryData.map(item => item.category || 'Uncategorized')
+    const purchaseCounts = categoryData.map(item => parseInt(item.count) || 0)
+    
+    // If no data, show placeholder
+    const hasData = categories.length > 0
+    const displayCategories = hasData ? categories : ['No Data']
+    const displayData = hasData ? purchaseCounts : [0]
+    
+    // Color palette for categories
+    const colors = [
+      '#f59e0b', // Amber
+      '#8b5cf6', // Purple
+      '#10b981', // Green
+      '#ef4444', // Red
+      '#3b82f6', // Blue
+      '#ec4899', // Pink
+      '#06b6d4', // Cyan
+      '#f97316', // Orange
+      '#14b8a6', // Teal
+      '#a855f7', // Violet
+    ]
+    
+    const backgroundColors = displayData.map((_, index) => colors[index % colors.length])
+    
+    purchaseCategoryChart = new window.Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: displayCategories,
+        datasets: [{
+          label: 'Number of Purchases',
+          data: displayData,
+          backgroundColor: backgroundColors,
+          borderColor: darkMode.value ? '#0b0f19' : '#ffffff',
+          borderWidth: 2,
+          borderRadius: 8,
+          barThickness: 'flex',
+          maxBarThickness: 60
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: darkMode.value ? '#1e293b' : '#ffffff',
+            titleColor: darkMode.value ? '#f1f5f9' : '#0f172a',
+            bodyColor: darkMode.value ? '#cbd5e1' : '#475569',
+            borderColor: darkMode.value ? '#334155' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: (context) => `${context.parsed.y} purchase${context.parsed.y !== 1 ? 's' : ''}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false,
+              drawBorder: false
+            },
+            ticks: {
+              color: darkMode.value ? '#94a3b8' : '#64748b',
+              font: { size: 11, weight: 'bold' },
+              maxRotation: 45,
+              minRotation: 0
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: darkMode.value ? '#1e293b' : '#f1f5f9',
+              drawBorder: false
+            },
+            ticks: {
+              color: darkMode.value ? '#94a3b8' : '#64748b',
+              font: { size: 11, weight: 'bold' },
+              stepSize: 1,
+              callback: (value) => Math.floor(value) === value ? value : ''
+            }
+          }
+        }
+      }
+    })
+  } catch (err) {
+    console.error('Error creating category chart:', err)
+  }
+}
+
+// Watch for tab changes to initialize charts
+watch(activeTab, async (newTab) => {
+  if (newTab === 'analytics') {
+    await nextTick()
+    setTimeout(() => {
+      initializeCharts()
+    }, 100)
+  }
+})
+
+// Watch for theme changes to update charts
+watch(darkMode, async () => {
+  if (activeTab.value === 'analytics') {
+    await nextTick()
+    setTimeout(() => {
+      initializeCharts()
+    }, 100)
+  }
+})
+
+onMounted(async () => {
   themeStore.initializeTheme()
-  fetchDashboardData()
+  await fetchDashboardData()
 })
 
 /* -------- Computed Properties -------- */
@@ -313,6 +791,14 @@ async function fetchDashboardData() {
     if (!res.ok) throw new Error(`Request failed (${res.status})`)
     const data = await res.json()
     dashboard.value = data
+    
+    // Refresh charts if on analytics tab
+    if (activeTab.value === 'analytics') {
+      await nextTick()
+      setTimeout(() => {
+        initializeCharts()
+      }, 150)
+    }
   } catch (err) {
     console.error('Error fetching dashboard:', err)
     error.value = 'Unable to load dashboard data. Please try again.'
