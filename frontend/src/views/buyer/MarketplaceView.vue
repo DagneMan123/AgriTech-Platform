@@ -1,82 +1,81 @@
 <template>
-  <div class="buyer-layout" :class="{ 'dark': isDark }">
-    <!-- Sidebar -->
-    <BuyerSidebar @logout="handleLogout" />
+  <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-800']">
+    
+    <!-- Sidebar Container (Responsive) -->
+    <div :class="['fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full']">
+      <BuyerSidebar @logout="handleLogout" />
+    </div>
 
-    <!-- Main Content -->
-    <div class="marketplace-container">
-      <!-- Header Section -->
-      <div class="marketplace-header">
-        <div>
-          <h1 class="page-title">Marketplace</h1>
-          <p class="page-subtitle">Browse and discover fresh agricultural products</p>
+    <!-- Mobile Backdrop -->
+    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
+      
+      <!-- Header Section (Border changed to Blue) -->
+      <header :class="['flex flex-wrap justify-between items-center gap-4 mb-6 p-6 rounded-2xl border transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 shadow-sm' : 'bg-white border-blue-200/80 shadow-sm']">
+        <div class="flex items-center gap-3">
+          <!-- Mobile Sidebar Hamburger Toggle Button -->
+          <button 
+            @click="sidebarOpen = !sidebarOpen" 
+            :class="['lg:hidden p-2.5 rounded-xl border transition-colors cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
+            aria-label="Toggle Navigation Menu"
+          >
+            <i class="fas" :class="sidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
+          </button>
+
+          <div>
+            <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">Marketplace</h1>
+            <p :class="['text-sm mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Browse and discover fresh agricultural products</p>
+          </div>
         </div>
-        <div class="header-actions">
-          <button @click="showFilters = !showFilters" class="btn-secondary">
+
+        <div class="flex items-center gap-3">
+          <!-- Filters & Refresh Action Buttons -->
+          <button @click="showFilters = !showFilters" :class="['px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
             <i class="fas fa-sliders-h"></i> Filters
           </button>
-          <button @click="refreshProducts" class="btn-secondary">
+          <button @click="refreshProducts" :class="['px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
             <i class="fas fa-sync-alt"></i> Refresh
           </button>
-        </div>
-      </div>
 
-      <!-- Stats Section -->
-      <div class="stats-section">
-        <div class="stat-card">
-          <div class="stat-icon total">
-            <i class="fas fa-box"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalProducts }}</div>
-            <div class="stat-label">Total Products</div>
-          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon pending">
-            <i class="fas fa-store"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalSuppliers }}</div>
-            <div class="stat-label">Suppliers</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon shipped">
-            <i class="fas fa-list"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalCategories }}</div>
-            <div class="stat-label">Categories</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon delivered">
-            <i class="fas fa-heart"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ wishlistCount }}</div>
-            <div class="stat-label">Wishlist Items</div>
-          </div>
-        </div>
-      </div>
+      </header>
 
-      <!-- Filters Section -->
-      <div v-if="showFilters" class="filter-section">
-        <div class="filter-group-row">
-          <div class="filter-group">
-            <label>Search:</label>
+      <!-- Summary Statistics Grid (Cards Border changed to Blue) -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Marketplace summary statistics">
+        <article
+          v-for="card in summaryCards"
+          :key="card.key"
+          :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-blue-500' : 'bg-white border-blue-200 text-slate-900 !border-l-blue-600']"
+        >
+          <div class="min-w-0 flex-1">
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ card.label }}</h3>
+            <p class="text-xl lg:text-2xl font-black tracking-tight">{{ card.value }}</p>
+            <p :class="['text-[11px] font-medium truncate mt-1', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ card.sub }}</p>
+          </div>
+          <div :class="['text-lg shrink-0 pt-0.5', darkMode ? 'text-blue-400' : 'text-blue-600']">
+            <i :class="card.icon"></i>
+          </div>
+        </article>
+      </section>
+
+      <!-- Filters Section Panel (Border changed to Blue) -->
+      <section v-if="showFilters" :class="['rounded-2xl border p-5 mb-6 shadow-sm', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div class="flex flex-col gap-1.5">
+            <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Search:</label>
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search products..."
-              class="filter-input"
+              :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']"
               @input="handleSearch"
             />
           </div>
-          <div class="filter-group">
-            <label>Category:</label>
-            <select v-model="selectedCategory" class="filter-select" @change="handleSearch">
+          <div class="flex flex-col gap-1.5">
+            <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Category:</label>
+            <select v-model="selectedCategory" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="">All Categories</option>
               <option value="vegetables">Vegetables</option>
               <option value="grains">Grains</option>
@@ -85,9 +84,9 @@
               <option value="meat">Meat</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label>Price Range:</label>
-            <select v-model="priceRange" class="filter-select" @change="handleSearch">
+          <div class="flex flex-col gap-1.5">
+            <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Price Range:</label>
+            <select v-model="priceRange" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="">All Prices</option>
               <option value="0-500">Under Ksh 500</option>
               <option value="500-1000">Ksh 500 - 1,000</option>
@@ -95,9 +94,9 @@
               <option value="5000+">Above Ksh 5,000</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label>Sort by:</label>
-            <select v-model="sortBy" class="filter-select" @change="handleSearch">
+          <div class="flex flex-col gap-1.5">
+            <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Sort by:</label>
+            <select v-model="sortBy" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="newest">Newest First</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
@@ -105,175 +104,118 @@
             </select>
           </div>
         </div>
-        <div class="filter-actions">
-          <button @click="applyFilters" class="btn-primary">Apply Filters</button>
-          <button @click="clearFilters" class="btn-secondary">Clear Filters</button>
+        <div class="flex justify-end gap-2">
+          <button @click="applyFilters" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">Apply Filters</button>
+          <button @click="clearFilters" :class="['px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">Clear Filters</button>
         </div>
+      </section>
+
+      <!-- Loading State -->
+      <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div class="w-10 h-10 border-4 border-slate-300 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
+        <p :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">Loading marketplace products...</p>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="!loading && safeProducts.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-inbox"></i>
+      <!-- Products Grid Section -->
+      <section v-else-if="safeProducts.length > 0" class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <p :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">Showing {{ safeProducts.length }} product(s)</p>
         </div>
-        <h2>No products found</h2>
-        <p>Try adjusting your filters or search terms</p>
-        <button @click="clearFilters" class="btn-primary">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <article
+            v-for="product in safeProducts"
+            :key="product.id"
+            :class="['rounded-2xl border overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']"
+          >
+            <!-- Product Image -->
+            <div :class="['relative w-full pt-[100%] overflow-hidden', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-100']">
+              <img
+                v-if="product.image"
+                :src="product.image"
+                :alt="product.name"
+                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              />
+              <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-3xl">
+                <i class="fas fa-image"></i>
+              </div>
+              <button
+                @click.stop="toggleWishlist(product)"
+                :class="[
+                  'absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer',
+                  isInWishlist(product.id) ? 'bg-red-50 text-red-500' : (darkMode ? 'bg-[#131b2e]/80 text-slate-300 hover:text-red-500' : 'bg-white text-slate-400 hover:text-red-500')
+                ]"
+              >
+                <i class="fas fa-heart"></i>
+              </button>
+              <div v-if="product.rating" class="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-0.5 rounded-md text-[11px] font-bold flex items-center gap-1">
+                <i class="fas fa-star text-amber-300"></i> {{ product.rating }}
+              </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 :class="['text-sm font-bold mb-1 line-clamp-2', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ product.name }}</h3>
+                <p :class="['text-xs mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  <i class="fas fa-store text-xs"></i> {{ product.farmer_name || 'Supplier' }}
+                </p>
+                <p :class="['text-[11px] uppercase tracking-wider mb-3', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ product.category || 'Uncategorized' }}</p>
+              </div>
+
+              <div>
+                <div :class="['flex justify-between items-center mb-3 pt-3 border-t', darkMode ? 'border-blue-500/30' : 'border-slate-100']">
+                  <span class="text-sm font-black text-emerald-500">Ksh {{ formatNumber(product.price || 0) }}</span>
+                  <span v-if="product.original_price" class="text-xs text-slate-400 line-through">Ksh {{ formatNumber(product.original_price) }}</span>
+                </div>
+
+                <div class="flex gap-2">
+                  <button @click.stop="viewProduct(product.id)" :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
+                    View
+                  </button>
+                  <button @click.stop="addToCart(product)" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs">
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Empty State (Border changed to Blue) -->
+      <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600']">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">
+          No products found
+        </h3>
+        <p :class="['text-xs max-w-sm mb-5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+          Try adjusting your filters or search terms to find available agricultural products.
+        </p>
+        <button @click="clearFilters" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
           <i class="fas fa-redo"></i> Reset Filters
         </button>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading products...</p>
-      </div>
-
-      <!-- Products Grid -->
-      <div v-if="!loading && safeProducts.length > 0" class="products-section">
-        <div class="products-header">
-          <p class="product-count">Showing {{ safeProducts.length }} product(s)</p>
-        </div>
-        <div class="products-grid">
-          <div
-            v-for="product in safeProducts"
-            :key="product.id"
-            class="product-card"
-          >
-            <!-- Product Image -->
-            <div class="product-image">
-              <img
-                v-if="product.image"
-                :src="product.image"
-                :alt="product.name"
-                class="image"
-              />
-              <div v-else class="no-image">
-                <i class="fas fa-image"></i>
-              </div>
-              <button
-                @click.stop="toggleWishlist(product)"
-                :class="['wishlist-btn', { active: isInWishlist(product.id) }]"
-              >
-                <i :class="['fas', isInWishlist(product.id) ? 'fa-heart' : 'fa-heart']"></i>
-              </button>
-              <div class="product-badge" v-if="product.rating">
-                <i class="fas fa-star"></i> {{ product.rating }}
-              </div>
-            </div>
-
-            <!-- Product Details -->
-            <div class="product-details">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <p class="product-supplier">
-                <i class="fas fa-store"></i> {{ product.farmer_name || 'Supplier' }}
-              </p>
-              <p class="product-category">{{ product.category || 'Uncategorized' }}</p>
-
-              <!-- Product Price & Rating -->
-              <div class="product-footer">
-                <div class="price-section">
-                  <span class="product-price">Ksh {{ formatNumber(product.price || 0) }}</span>
-                  <span v-if="product.original_price" class="original-price">
-                    Ksh {{ formatNumber(product.original_price) }}
-                  </span>
-                </div>
-                <div class="rating-section" v-if="product.rating">
-                  <span class="rating">{{ product.rating }}/5</span>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="product-actions">
-                <button
-                  @click.stop="viewProduct(product.id)"
-                  class="btn-secondary btn-block"
-                >
-                  <i class="fas fa-eye"></i> View Details
-                </button>
-                <button
-                  @click.stop="addToCart(product)"
-                  class="btn-primary btn-block"
-                >
-                  <i class="fas fa-shopping-cart"></i> Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recommended Products Section -->
-      <div v-if="!loading && recommendedProducts.length > 0" class="recommended-section">
-        <h2 class="section-title">
-          <i class="fas fa-star"></i> Recommended For You
-        </h2>
-        <div class="products-grid">
-          <div
-            v-for="product in recommendedProducts.slice(0, 4)"
-            :key="product.id"
-            class="product-card"
-          >
-            <!-- Product Image -->
-            <div class="product-image">
-              <img
-                v-if="product.image"
-                :src="product.image"
-                :alt="product.name"
-                class="image"
-              />
-              <div v-else class="no-image">
-                <i class="fas fa-image"></i>
-              </div>
-              <button
-                @click.stop="toggleWishlist(product)"
-                :class="['wishlist-btn', { active: isInWishlist(product.id) }]"
-              >
-                <i class="fas fa-heart"></i>
-              </button>
-            </div>
-
-            <!-- Product Details -->
-            <div class="product-details">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <p class="product-supplier">
-                <i class="fas fa-store"></i> {{ product.farmer_name || 'Supplier' }}
-              </p>
-
-              <!-- Product Price -->
-              <div class="product-footer">
-                <span class="product-price">Ksh {{ formatNumber(product.price || 0) }}</span>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="product-actions">
-                <button
-                  @click.stop="addToCart(product)"
-                  class="btn-primary btn-block"
-                >
-                  <i class="fas fa-shopping-cart"></i> Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMarketplaceStore } from '@/stores/marketplaceStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
 const router = useRouter()
 const marketplaceStore = useMarketplaceStore()
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 const loading = ref(false)
 const showFilters = ref(false)
@@ -281,23 +223,15 @@ const searchQuery = ref('')
 const selectedCategory = ref('')
 const priceRange = ref('')
 const sortBy = ref('newest')
+const sidebarOpen = ref(false)
 
-const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
-
-const checkDarkMode = () => {
-  isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
+const darkMode = computed(() => themeStore.isDark)
+const toggleDarkMode = () => {
+  themeStore.toggleTheme()
 }
 
-let observer: MutationObserver | null = null
-
 onMounted(async () => {
-  window.addEventListener('storage', checkDarkMode)
-  observer = new MutationObserver(() => {
-    checkDarkMode()
-  })
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  checkDarkMode()
-
+  themeStore.initializeTheme()
   loading.value = true
   try {
     await marketplaceStore.fetchProducts()
@@ -308,12 +242,6 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => {
-  window.removeEventListener('storage', checkDarkMode)
-  if (observer) observer.disconnect()
-})
-
-// Safe Products Array Getter
 const safeProducts = computed(() => {
   const raw = marketplaceStore.products
   if (Array.isArray(raw)) return raw
@@ -323,37 +251,26 @@ const safeProducts = computed(() => {
   return []
 })
 
-// Computed properties for stats
 const totalProducts = computed(() => safeProducts.value.length)
-
-const totalSuppliers = computed(() => {
-  const suppliers = new Set(safeProducts.value.map(p => p.farmer_name))
-  return suppliers.size
-})
-
-const totalCategories = computed(() => {
-  const categories = new Set(safeProducts.value.map(p => p.category))
-  return categories.size
-})
-
+const totalSuppliers = computed(() => new Set(safeProducts.value.map(p => p.farmer_name)).size)
+const totalCategories = computed(() => new Set(safeProducts.value.map(p => p.category)).size)
 const wishlistCount = computed(() => buyerStore.wishlist?.length || 0)
 
-// Recommended products
-const recommendedProducts = computed(() => {
-  return safeProducts.value.slice(0, 8)
-})
+const summaryCards = computed(() => [
+  { key: 'total', label: 'Total Products', value: totalProducts.value, sub: 'Available items', icon: 'fas fa-box' },
+  { key: 'suppliers', label: 'Suppliers', value: totalSuppliers.value, sub: 'Active vendors', icon: 'fas fa-store' },
+  { key: 'categories', label: 'Categories', value: totalCategories.value, sub: 'Product types', icon: 'fas fa-list' },
+  { key: 'wishlist', label: 'Wishlist Items', value: wishlistCount.value, sub: 'Saved products', icon: 'fas fa-heart' }
+])
 
-// Check if product is in wishlist
 const isInWishlist = (productId: number) => {
   return buyerStore.wishlist?.some((item: any) => item.product_id === productId) || false
 }
 
-// Format number with comma separator
 const formatNumber = (num: number) => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0)
 }
 
-// Handle search input
 const handleSearch = async () => {
   loading.value = true
   try {
@@ -373,12 +290,10 @@ const handleSearch = async () => {
   }
 }
 
-// Apply filters
 const applyFilters = async () => {
   await handleSearch()
 }
 
-// Clear filters
 const clearFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = ''
@@ -387,7 +302,6 @@ const clearFilters = () => {
   handleSearch()
 }
 
-// Refresh products
 const refreshProducts = async () => {
   loading.value = true
   try {
@@ -399,25 +313,22 @@ const refreshProducts = async () => {
   }
 }
 
-// View product details
 const viewProduct = (id: number) => {
   router.push(`/app/buyer/products/${id}`)
 }
 
-// Add to cart
 const addToCart = async (product: any) => {
   try {
     await buyerStore.addToCart({
       product_id: product.id,
       quantity: 1
     })
-    alert('Added to cart')
+    alert('Added to cart successfully')
   } catch (error) {
     console.error('Failed to add to cart:', error)
   }
 }
 
-// Toggle wishlist
 const toggleWishlist = async (product: any) => {
   try {
     await buyerStore.addToWishlist({ product_id: product.id })
@@ -426,635 +337,8 @@ const toggleWishlist = async (product: any) => {
   }
 }
 
-// Handle logout
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
 }
 </script>
-
-<style scoped>
-/* Layout */
-.buyer-layout {
-  display: flex;
-  width: 100%;
-  height: 100vh;
-}
-
-.marketplace-container {
-  margin-left: 260px;
-  flex: 1;
-  overflow-y: auto;
-  background: linear-gradient(135deg, #f5f7fa 0%, #f8fafb 100%);
-  padding: 30px;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-/* Header */
-.marketplace-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* Buttons */
-.btn-primary {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-secondary {
-  background: white;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-secondary:hover {
-  color: #1f2937;
-  border-color: #9ca3af;
-  background: #f9fafb;
-}
-
-.btn-block {
-  width: 100%;
-}
-
-/* Stats Section */
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-}
-
-.stat-icon.total {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-}
-
-.stat-icon.pending {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.stat-icon.shipped {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-}
-
-.stat-icon.delivered {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-/* Filter Section */
-.filter-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: background 0.3s, border-color 0.3s;
-}
-
-.filter-group-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.filter-select,
-.filter-input {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1f2937;
-  background: white;
-  transition: all 0.3s;
-}
-
-.filter-select:hover,
-.filter-input:hover {
-  border-color: #9ca3af;
-}
-
-.filter-select:focus,
-.filter-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.filter-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* Empty State */
-.empty-state {
-  background: white;
-  border-radius: 12px;
-  padding: 60px 20px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: background 0.3s ease;
-}
-
-.empty-icon {
-  font-size: 64px;
-  color: #d1d5db;
-  margin-bottom: 20px;
-}
-
-.empty-state h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 8px;
-}
-
-.empty-state p {
-  color: #6b7280;
-  margin-bottom: 20px;
-}
-
-/* Loading State */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 12px;
-  transition: background 0.3s ease;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-state p {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-/* Products Section */
-.products-section {
-  margin-bottom: 40px;
-}
-
-.products-header {
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.product-count {
-  color: #6b7280;
-  font-size: 14px;
-  margin: 0;
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-/* Product Card */
-.product-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
-  display: flex;
-  flex-direction: column;
-}
-
-.product-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-4px);
-}
-
-.product-image {
-  position: relative;
-  width: 100%;
-  padding-top: 100%;
-  background: #f3f4f6;
-  overflow: hidden;
-}
-
-.product-image .image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.product-card:hover .product-image .image {
-  transform: scale(1.05);
-}
-
-.product-image .no-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  color: #d1d5db;
-}
-
-.wishlist-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d1d5db;
-  transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  font-size: 18px;
-}
-
-.wishlist-btn:hover {
-  color: #ef4444;
-  transform: scale(1.1);
-}
-
-.wishlist-btn.active {
-  color: #ef4444;
-  background: #fee2e2;
-}
-
-.product-badge {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: #3b82f6;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.product-details {
-  padding: 16px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.product-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.product-supplier {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0 0 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.product-category {
-  font-size: 12px;
-  color: #9ca3af;
-  margin: 4px 0 8px 0;
-  text-transform: capitalize;
-}
-
-.product-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 12px 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.price-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.product-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: #10b981;
-}
-
-.original-price {
-  font-size: 12px;
-  color: #d1d5db;
-  text-decoration: line-through;
-}
-
-.rating-section {
-  font-size: 12px;
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.product-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.product-actions button {
-  padding: 10px;
-  font-size: 13px;
-}
-
-/* Recommended Section */
-.recommended-section {
-  margin-top: 40px;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-title i {
-  color: #f59e0b;
-}
-
-/* ================= EXACT DASHBOARD DARK MODE STYLES ================= */
-.buyer-layout.dark .marketplace-container {
-  background: #0b0f19 !important; /* የዳሽቦርዱ ዋና ዳራ color */
-  color: #f8fafc !important;
-}
-
-.buyer-layout.dark .marketplace-header,
-.buyer-layout.dark .stat-card,
-.buyer-layout.dark .filter-section,
-.buyer-layout.dark .empty-state,
-.buyer-layout.dark .loading-state,
-.buyer-layout.dark .product-card {
-  background: #111827 !important; /* የካርዶች ዳራ color (ለስላሳ Dark Navy) */
-  color: #f8fafc !important;
-  border: 1px solid #1e293b !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
-}
-
-.buyer-layout.dark .page-title,
-.buyer-layout.dark .stat-value,
-.buyer-layout.dark .filter-group label,
-.buyer-layout.dark .empty-state h2,
-.buyer-layout.dark .product-name,
-.buyer-layout.dark .section-title {
-  color: #ffffff !important;
-}
-
-.buyer-layout.dark .page-subtitle,
-.buyer-layout.dark .stat-label,
-.buyer-layout.dark .empty-state p,
-.buyer-layout.dark .loading-state p,
-.buyer-layout.dark .product-count,
-.buyer-layout.dark .product-supplier,
-.buyer-layout.dark .product-category {
-  color: #94a3b8 !important;
-}
-
-.buyer-layout.dark .btn-secondary {
-  background: #1e293b !important;
-  color: #cbd5e1 !important;
-  border: 1px solid #334155 !important;
-}
-
-.buyer-layout.dark .btn-secondary:hover {
-  background: #334155 !important;
-  color: #ffffff !important;
-}
-
-.buyer-layout.dark .filter-select,
-.buyer-layout.dark .filter-input {
-  background: #0b0f19 !important;
-  color: #ffffff !important;
-  border-color: #334155 !important;
-}
-
-.buyer-layout.dark .filter-select:focus,
-.buyer-layout.dark .filter-input:focus {
-  border-color: #10b981 !important;
-}
-
-.buyer-layout.dark .product-image {
-  background: #0b0f19 !important;
-}
-
-.buyer-layout.dark .wishlist-btn {
-  background: #1e293b !important;
-  color: #94a3b8 !important;
-}
-
-.buyer-layout.dark .wishlist-btn:hover,
-.buyer-layout.dark .wishlist-btn.active {
-  color: #f87171 !important;
-  background: rgba(239, 68, 68, 0.2) !important;
-}
-
-.buyer-layout.dark .product-footer {
-  border-bottom-color: #1e293b !important;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .marketplace-container {
-    padding: 20px;
-  }
-  .marketplace-header {
-    flex-direction: column;
-    gap: 16px;
-  }
-  .header-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .marketplace-container {
-    margin-left: 0;
-    padding: 16px;
-  }
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .filter-group-row {
-    grid-template-columns: 1fr;
-  }
-  .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .marketplace-container {
-    padding: 12px;
-  }
-  .stats-section {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-}
-</style>
