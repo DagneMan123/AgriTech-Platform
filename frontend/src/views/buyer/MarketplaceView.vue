@@ -112,7 +112,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="!loading && marketplaceStore.products.length === 0" class="empty-state">
+      <div v-if="!loading && safeProducts.length === 0" class="empty-state">
         <div class="empty-icon">
           <i class="fas fa-inbox"></i>
         </div>
@@ -130,13 +130,13 @@
       </div>
 
       <!-- Products Grid -->
-      <div v-if="!loading && marketplaceStore.products.length > 0" class="products-section">
+      <div v-if="!loading && safeProducts.length > 0" class="products-section">
         <div class="products-header">
-          <p class="product-count">Showing {{ marketplaceStore.products.length }} product(s)</p>
+          <p class="product-count">Showing {{ safeProducts.length }} product(s)</p>
         </div>
         <div class="products-grid">
           <div
-            v-for="product in marketplaceStore.products"
+            v-for="product in safeProducts"
             :key="product.id"
             class="product-card"
           >
@@ -269,6 +269,7 @@ import { useMarketplaceStore } from '@/stores/marketplaceStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+
 const router = useRouter()
 const marketplaceStore = useMarketplaceStore()
 const buyerStore = useBuyerStore()
@@ -292,21 +293,34 @@ onMounted(async () => {
   }
 })
 
+// 💡 ደህንነቱ የተጠበቀ የผลิตภัณฑ์ዎች አርሬ (Safe Products Array Getter)
+const safeProducts = computed(() => {
+  const raw = marketplaceStore.products
+  if (Array.isArray(raw)) return raw
+  if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) {
+    return (raw as any).data
+  }
+  return []
+})
+
 // Computed properties for stats
-const totalProducts = computed(() => marketplaceStore.products.length)
+const totalProducts = computed(() => safeProducts.value.length)
+
 const totalSuppliers = computed(() => {
-  const suppliers = new Set(marketplaceStore.products.map(p => p.farmer_name))
+  const suppliers = new Set(safeProducts.value.map(p => p.farmer_name))
   return suppliers.size
 })
+
 const totalCategories = computed(() => {
-  const categories = new Set(marketplaceStore.products.map(p => p.category))
+  const categories = new Set(safeProducts.value.map(p => p.category))
   return categories.size
 })
+
 const wishlistCount = computed(() => buyerStore.wishlist?.length || 0)
 
 // Recommended products (random selection)
 const recommendedProducts = computed(() => {
-  return marketplaceStore.products.slice(0, 8)
+  return safeProducts.value.slice(0, 8)
 })
 
 // Check if product is in wishlist
@@ -398,6 +412,7 @@ const handleLogout = () => {
   router.push('/login')
 }
 </script>
+
 <style scoped>
 /* Layout */
 .buyer-layout {

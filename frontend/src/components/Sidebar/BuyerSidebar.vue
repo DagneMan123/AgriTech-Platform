@@ -225,29 +225,26 @@ import {
   Heart, ShoppingCart, ShoppingBag, Clock, History, RotateCcw, Handshake, 
   FileText, FileSignature, CheckSquare, Truck, MapPin, BookUser, Send, 
   Banknote, CreditCard, Receipt, ShieldCheck, CloudSun, BarChart3, Building2, 
-  UserCheck, PieChart, FileSpreadsheet, BarChart2, UserCog, Bell, Mail, 
+  PieChart, FileSpreadsheet, BarChart2, UserCog, Bell, Mail, 
   User, LogOut 
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// 💡 1. ቨርቹዋል እንደገና እንዳይዘገይ በ 'app_dark_mode' የመተግበሪያ ቁልፍ መፈተሽ
 const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
 
 const checkDarkMode = () => {
-  isDark.value = localStorage.getItem('app_dark_mode') === 'true'
+  isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
 }
 
 let observer = null
 
 onMounted(() => {
-  // 💡 2. የ 'storage' ኢቨንት አዳማጭ ለሌሎች ታቦች
   window.addEventListener('storage', checkDarkMode)
   
-  // 💡 3. MutationObserver በመጠቀም በ HTML root element (<html>) ላይ '.dark' class ሲጨመር/ሲወገድ በቅጽበት ይከታተላል
   observer = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains('dark') || localStorage.getItem('app_dark_mode') === 'true'
+    checkDarkMode()
   })
   
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
@@ -483,7 +480,7 @@ const handleLogout = async () => {
   background: #fee2e2 !important;
 }
 
-/* ================= DARK MODE STYLES (MATCHES FARMER PORTAL) ================= */
+/* ================= DARK MODE STYLES ================= */
 .sidebar.dark {
   background: #0f172a !important;
   border-right: 1px solid #1e293b !important;

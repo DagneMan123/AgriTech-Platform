@@ -60,7 +60,6 @@ const FarmerProfileView = () => import('@/views/farmer/ProfileView.vue')
 
 const BuyerDashboardView = () => import('@/views/buyer/BuyerDashboard.vue')
 const BuyerMarketplaceView = () => import('@/views/buyer/MarketplaceView.vue')
-const BuyerProductDetailView = () => import('@/views/buyer/ProductDetailView.vue')
 const BuyerCartView = () => import('@/views/buyer/CartView.vue')
 const BuyerOrdersView = () => import('@/views/buyer/OrdersView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
@@ -390,12 +389,7 @@ const routes: RouteRecordRaw[] = [
         component: BuyerMarketplaceView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Marketplace' }
       },
-      {
-        path: 'products/:id',
-        name: 'buyer-product-detail',
-        component: BuyerProductDetailView,
-        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Product Details' }
-      },
+     
       {
         path: 'cart',
         name: 'buyer-cart',
