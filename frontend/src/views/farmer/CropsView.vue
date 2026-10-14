@@ -680,44 +680,61 @@ const handleLogout = async () => {
 
 /* Header */
 .page-header {
+  background: white;
+  padding: 30px;
+  margin: -20px -20px 30px -20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
   gap: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.farmer-layout.light .page-header {
+  background: white;
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .header-content h1 {
-  font-size: 32px;
-  font-weight: bold;
-  margin: 0 0 5px 0;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
   transition: color 0.3s ease;
 }
 
 .farmer-layout.light .header-content h1 {
-  color: #333;
+  color: #1f2937;
 }
 
 .farmer-layout.dark .header-content h1 {
-  color: #ffffff;
+  color: #f1f5f9;
 }
 
 .header-content p {
   margin: 0;
+  font-size: 14px;
   transition: color 0.3s ease;
 }
 
 .farmer-layout.light .header-content p {
-  color: #666;
+  color: #6b7280;
 }
 
 .farmer-layout.dark .header-content p {
-  color: #9ca3af;
+  color: #cbd5e1;
 }
 
 .btn-large {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -862,6 +879,15 @@ const handleLogout = async () => {
   background-color: #1a2338;
   color: #f3f4f6;
   border: 1px solid #2d3f52;
+}
+
+.farmer-layout.dark .btn-primary {
+  background-color: #10b981;
+  color: white;
+}
+
+.farmer-layout.dark .btn-primary:hover {
+  background-color: #059669;
 }
 
 .search-input:focus,
