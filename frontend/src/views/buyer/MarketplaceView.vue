@@ -1,5 +1,5 @@
 <template>
-  <div class="buyer-layout">
+  <div class="buyer-layout" :class="{ 'dark': isDark }">
     <!-- Sidebar -->
     <BuyerSidebar @logout="handleLogout" />
 
@@ -263,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMarketplaceStore } from '@/stores/marketplaceStore'
 import { useBuyerStore } from '@/stores/buyerStore'
@@ -282,7 +282,22 @@ const selectedCategory = ref('')
 const priceRange = ref('')
 const sortBy = ref('newest')
 
+const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
+
+const checkDarkMode = () => {
+  isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
+}
+
+let observer: MutationObserver | null = null
+
 onMounted(async () => {
+  window.addEventListener('storage', checkDarkMode)
+  observer = new MutationObserver(() => {
+    checkDarkMode()
+  })
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  checkDarkMode()
+
   loading.value = true
   try {
     await marketplaceStore.fetchProducts()
@@ -293,7 +308,12 @@ onMounted(async () => {
   }
 })
 
-// 💡 ደህንነቱ የተጠበቀ የผลิตภัณฑ์ዎች አርሬ (Safe Products Array Getter)
+onUnmounted(() => {
+  window.removeEventListener('storage', checkDarkMode)
+  if (observer) observer.disconnect()
+})
+
+// Safe Products Array Getter
 const safeProducts = computed(() => {
   const raw = marketplaceStore.products
   if (Array.isArray(raw)) return raw
@@ -318,7 +338,7 @@ const totalCategories = computed(() => {
 
 const wishlistCount = computed(() => buyerStore.wishlist?.length || 0)
 
-// Recommended products (random selection)
+// Recommended products
 const recommendedProducts = computed(() => {
   return safeProducts.value.slice(0, 8)
 })
@@ -427,6 +447,7 @@ const handleLogout = () => {
   overflow-y: auto;
   background: linear-gradient(135deg, #f5f7fa 0%, #f8fafb 100%);
   padding: 30px;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Header */
@@ -439,6 +460,7 @@ const handleLogout = () => {
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .page-title {
@@ -461,7 +483,7 @@ const handleLogout = () => {
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
   border: none;
   padding: 10px 16px;
@@ -477,7 +499,7 @@ const handleLogout = () => {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .btn-secondary {
@@ -503,11 +525,6 @@ const handleLogout = () => {
 
 .btn-block {
   width: 100%;
-}
-
-.btn-sm {
-  padding: 8px 12px;
-  font-size: 13px;
 }
 
 /* Stats Section */
@@ -546,19 +563,19 @@ const handleLogout = () => {
 }
 
 .stat-icon.total {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .stat-icon.pending {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
 .stat-icon.shipped {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
 .stat-icon.delivered {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .stat-content {
@@ -584,6 +601,7 @@ const handleLogout = () => {
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .filter-group-row {
@@ -641,6 +659,7 @@ const handleLogout = () => {
   padding: 60px 20px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s ease;
 }
 
 .empty-icon {
@@ -670,6 +689,7 @@ const handleLogout = () => {
   padding: 60px 20px;
   background: white;
   border-radius: 12px;
+  transition: background 0.3s ease;
 }
 
 .spinner {
@@ -839,10 +859,6 @@ const handleLogout = () => {
   gap: 4px;
 }
 
-.product-supplier i {
-  font-size: 10px;
-}
-
 .product-category {
   font-size: 12px;
   color: #9ca3af;
@@ -913,22 +929,98 @@ const handleLogout = () => {
   color: #f59e0b;
 }
 
+/* ================= EXACT DASHBOARD DARK MODE STYLES ================= */
+.buyer-layout.dark .marketplace-container {
+  background: #0b0f19 !important; /* የዳሽቦርዱ ዋና ዳራ color */
+  color: #f8fafc !important;
+}
+
+.buyer-layout.dark .marketplace-header,
+.buyer-layout.dark .stat-card,
+.buyer-layout.dark .filter-section,
+.buyer-layout.dark .empty-state,
+.buyer-layout.dark .loading-state,
+.buyer-layout.dark .product-card {
+  background: #111827 !important; /* የካርዶች ዳራ color (ለስላሳ Dark Navy) */
+  color: #f8fafc !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.buyer-layout.dark .page-title,
+.buyer-layout.dark .stat-value,
+.buyer-layout.dark .filter-group label,
+.buyer-layout.dark .empty-state h2,
+.buyer-layout.dark .product-name,
+.buyer-layout.dark .section-title {
+  color: #ffffff !important;
+}
+
+.buyer-layout.dark .page-subtitle,
+.buyer-layout.dark .stat-label,
+.buyer-layout.dark .empty-state p,
+.buyer-layout.dark .loading-state p,
+.buyer-layout.dark .product-count,
+.buyer-layout.dark .product-supplier,
+.buyer-layout.dark .product-category {
+  color: #94a3b8 !important;
+}
+
+.buyer-layout.dark .btn-secondary {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+
+.buyer-layout.dark .btn-secondary:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+.buyer-layout.dark .filter-select,
+.buyer-layout.dark .filter-input {
+  background: #0b0f19 !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+.buyer-layout.dark .filter-select:focus,
+.buyer-layout.dark .filter-input:focus {
+  border-color: #10b981 !important;
+}
+
+.buyer-layout.dark .product-image {
+  background: #0b0f19 !important;
+}
+
+.buyer-layout.dark .wishlist-btn {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+.buyer-layout.dark .wishlist-btn:hover,
+.buyer-layout.dark .wishlist-btn.active {
+  color: #f87171 !important;
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+
+.buyer-layout.dark .product-footer {
+  border-bottom-color: #1e293b !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .marketplace-container {
     padding: 20px;
   }
-
   .marketplace-header {
     flex-direction: column;
     gap: 16px;
   }
-
   .header-actions {
     width: 100%;
     justify-content: flex-start;
   }
-
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
@@ -939,39 +1031,16 @@ const handleLogout = () => {
     margin-left: 0;
     padding: 16px;
   }
-
   .stats-section {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-
-  .stat-card {
-    padding: 16px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-  }
-
   .filter-group-row {
     grid-template-columns: 1fr;
   }
-
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
-  }
-
-  .product-card {
-    border-radius: 8px;
-  }
-
-  .product-details {
-    padding: 12px;
-  }
-
-  .product-name {
-    font-size: 13px;
   }
 }
 
@@ -979,42 +1048,13 @@ const handleLogout = () => {
   .marketplace-container {
     padding: 12px;
   }
-
-  .marketplace-header {
-    padding: 16px;
-  }
-
-  .page-title {
-    font-size: 22px;
-  }
-
   .stats-section {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-
-  .stat-card {
-    padding: 12px;
-  }
-
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-  }
-
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-  }
-
-  .product-details {
-    padding: 10px;
-  }
-
-  .product-footer {
-    margin: 8px 0;
-    padding-bottom: 8px;
   }
 }
 </style>
