@@ -25,7 +25,7 @@
             <Package class="sub-icon" />
             <span>Browse Products</span>
           </router-link>
-          <router-link to="/buyer/marketplace/categories" class="menu-item sub-item" active-class="active">
+          <router-link to="/buyer/categories" class="menu-item sub-item" active-class="active">
             <LayoutGrid class="sub-icon" />
             <span>Categories</span>
           </router-link>
