@@ -3,8 +3,10 @@
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-page">
       <div class="page-header">
-        <h1>Farm Map</h1>
-        <p>Visualize and manage your farm locations and boundaries</p>
+        <div class="header-content">
+          <h1>Farm Map</h1>
+          <p>Visualize and manage your farm locations and boundaries</p>
+        </div>
       </div>
 
       <div class="map-container">
@@ -482,18 +484,59 @@ const handleLogout = async () => {
 }
 
 .page-header {
-  margin-bottom: 20px;
+  background: white;
+  padding: 30px;
+  margin: -20px -20px 30px -20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.header-content {
+  flex: 1;
 }
 
 .page-header h1 {
   font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  transition: color 0.3s ease;
 }
 
 .page-header p {
-  color: #666;
+  margin: 0;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.farmer-layout.light .page-header {
+  background: white;
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.farmer-layout.light .page-header h1 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .page-header h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.light .page-header p {
+  color: #6b7280;
+}
+
+.farmer-layout.dark .page-header p {
+  color: #cbd5e1;
 }
 
 .map-container {

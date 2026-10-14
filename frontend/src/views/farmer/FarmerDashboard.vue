@@ -409,11 +409,27 @@ const handleLogout = async () => {
 }
 
 .dashboard-header-wrapper {
+  background: white;
+  padding: 30px;
+  margin: -32px -32px 30px -32px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 25px;
   gap: 15px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.farmer-layout.light .dashboard-header-wrapper {
+  background: white;
+  border-bottom-color: #e5e7eb;
+}
+
+.farmer-layout.dark .dashboard-header-wrapper {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-header {
@@ -421,9 +437,9 @@ const handleLogout = async () => {
 }
 
 .dashboard-header h1 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin: 0 0 8px 0;
   transition: color 0.3s ease;
 }
 
@@ -432,10 +448,11 @@ const handleLogout = async () => {
 }
 
 .farmer-layout.dark .dashboard-header h1 {
-  color: #ffffff;
+  color: #f1f5f9;
 }
 
 .dashboard-header p {
+  margin: 0;
   font-size: 14px;
   transition: color 0.3s ease;
 }
@@ -445,7 +462,7 @@ const handleLogout = async () => {
 }
 
 .farmer-layout.dark .dashboard-header p {
-  color: #9ca3af;
+  color: #cbd5e1;
 }
 
 .theme-toggle-btn {
