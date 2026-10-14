@@ -628,16 +628,22 @@ const handleLogout = async () => {
   margin-left: 260px;
   flex: 1;
   overflow-y: auto;
-  background-color: #f5f5f5;
-  padding: 20px;
+  background-color: #f0f2f5;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
 .page-header {
+  background: white;
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin: -30px -30px 30px -30px;
   gap: 20px;
 }
 
@@ -654,8 +660,8 @@ const handleLogout = async () => {
 }
 
 .btn-large {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -698,15 +704,15 @@ const handleLogout = async () => {
 }
 
 .stat-icon.active {
-  background-color: #3b82f6;
+  background-color: #10b981;
 }
 
 .stat-icon.inventory {
-  background-color: #f59e0b;
+  background-color: #10b981;
 }
 
 .stat-icon.revenue {
-  background-color: #8b5cf6;
+  background-color: #10b981;
 }
 
 .stat-content h3 {
@@ -1133,6 +1139,280 @@ const handleLogout = async () => {
   border-radius: 4px 0 0 4px;
   font-weight: 600;
   color: #333;
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+
+/* Light Mode (Default) */
+.farmer-layout.light {
+  background-color: #f5f5f5;
+  color: #1f2937;
+}
+
+/* Dark Mode */
+.farmer-layout.dark {
+  background-color: #0b0f17;
+  color: #f3f4f6;
+}
+
+.farmer-page {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.farmer-layout.light .farmer-page {
+  background-color: #f0f2f5;
+}
+
+.farmer-layout.dark .farmer-page {
+  background-color: #0b0f17;
+}
+
+/* Page Header */
+.farmer-layout.light .page-header {
+  background: white;
+  border-bottom-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  color: #f3f4f6;
+  margin: -30px -30px 30px -30px;
+}
+
+.farmer-layout.dark .header-content h1 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .header-content p {
+  color: #cbd5e1;
+}
+
+/* Buttons */
+.farmer-layout.dark .btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.farmer-layout.dark .btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.farmer-layout.dark .btn-secondary {
+  background: #1a2338;
+  color: #cbd5e1;
+  border: 1px solid #2d3f52;
+}
+
+.farmer-layout.dark .btn-secondary:hover {
+  background: #1e293b;
+  border-color: #3d4f63;
+}
+
+/* Stats Cards */
+.farmer-layout.light .stat-card {
+  background: white;
+  color: #1f2937;
+}
+
+.farmer-layout.dark .stat-card {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.farmer-layout.dark .stat-content h3 {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #f1f5f9;
+}
+
+/* Controls Section */
+.farmer-layout.light .controls-section {
+  background: white;
+  border-color: #e5e7eb;
+}
+
+.farmer-layout.dark .controls-section {
+  background: #1a2338;
+  border-color: #2d3f52;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.farmer-layout.dark .search-input,
+.farmer-layout.dark .category-select,
+.farmer-layout.dark .status-select {
+  background: #131b2e;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .search-input:focus,
+.farmer-layout.dark .category-select:focus,
+.farmer-layout.dark .status-select:focus {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+/* Products Section */
+.farmer-layout.light .products-section {
+  background: white;
+}
+
+.farmer-layout.dark .products-section {
+  background: #1a2338;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.farmer-layout.dark .loading-state,
+.farmer-layout.dark .empty-state {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .empty-state i {
+  color: #2d3f52;
+}
+
+.farmer-layout.dark .empty-state h3 {
+  color: #f1f5f9;
+}
+
+/* Product Cards */
+.farmer-layout.light .product-card {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.farmer-layout.dark .product-card {
+  background: #131b2e;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .product-card:hover {
+  border-color: #4ade80;
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.15);
+}
+
+.farmer-layout.dark .product-image-placeholder {
+  background: linear-gradient(135deg, #2d3f52 0%, #1a2338 100%);
+  color: #2d3f52;
+}
+
+.farmer-layout.dark .product-info h3 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .description {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .detail-item .label {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .detail-item .value {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .product-details {
+  border-bottom-color: #2d3f52;
+}
+
+.farmer-layout.dark .inventory-label {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .inventory-bar {
+  background: #2d3f52;
+}
+
+.farmer-layout.dark .btn-edit {
+  background-color: #1e3a5f;
+  color: #60a5fa;
+}
+
+.farmer-layout.dark .btn-edit:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.farmer-layout.dark .btn-delete {
+  background-color: #5f1f1f;
+  color: #f87171;
+}
+
+.farmer-layout.dark .btn-delete:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Modal */
+.farmer-layout.dark .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.farmer-layout.dark .modal-dialog {
+  background-color: #1a2338;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.farmer-layout.dark .modal-header {
+  background-color: #131b2e;
+  border-bottom-color: #2d3f52;
+}
+
+.farmer-layout.dark .modal-header h2 {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .close-btn {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .close-btn:hover {
+  color: #f1f5f9;
+}
+
+.farmer-layout.dark .modal-content {
+  background-color: #1a2338;
+}
+
+/* Form Elements */
+.farmer-layout.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .form-group input,
+.farmer-layout.dark .form-group textarea,
+.farmer-layout.dark .form-group select {
+  background: #131b2e;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .form-group input:focus,
+.farmer-layout.dark .form-group textarea:focus,
+.farmer-layout.dark .form-group select:focus {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+.farmer-layout.dark .currency {
+  background: #131b2e;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .unit-select {
+  background: #131b2e;
+  border-color: #2d3f52;
+  color: #cbd5e1;
+}
+
+.farmer-layout.dark .error-text {
+  color: #f87171;
 }
 
 .input-with-currency input {
