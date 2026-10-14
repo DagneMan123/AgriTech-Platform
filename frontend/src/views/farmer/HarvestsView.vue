@@ -534,28 +534,33 @@ const handleLogout = async () => {
 
 /* Header */
 .page-header {
+  background: white;
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin: -30px -30px 30px -30px;
   gap: 20px;
 }
 
 .header-content h1 {
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
-  margin: 0 0 5px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px 0;
 }
 
 .header-content p {
-  color: #666;
+  color: #6b7280;
+  font-size: 14px;
   margin: 0;
 }
 
 .btn-large {
-  padding: 12px 24px;
-  font-size: 16px;
+  padding: 10px 16px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -1539,8 +1544,18 @@ const handleLogout = async () => {
   color: #333;
 }
 
+/* Page Header Dark Mode */
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom: 1px solid #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 .farmer-layout.dark .header-content h1 {
   color: #f1f5f9;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
 }
 
 .farmer-layout.light .header-content p {
@@ -1549,6 +1564,8 @@ const handleLogout = async () => {
 
 .farmer-layout.dark .header-content p {
   color: #cbd5e1;
+  font-size: 14px;
+  margin: 0;
 }
 
 /* Modal Overlay */
