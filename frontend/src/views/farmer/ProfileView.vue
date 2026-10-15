@@ -407,6 +407,14 @@ const handleLogout = async () => {
   background-color: #2563eb;
 }
 
+.dark .btn-edit-photo {
+  background-color: #1d4ed8;
+}
+
+.dark .btn-edit-photo:hover {
+  background-color: #1e40af;
+}
+
 .two-column-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -475,6 +483,16 @@ const handleLogout = async () => {
   border-color: #2d3f52;
 }
 
+.info-group input::placeholder,
+.info-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+.dark .info-group input::placeholder,
+.dark .info-group textarea::placeholder {
+  color: #6b7280;
+}
+
 .info-group input:disabled {
   background-color: #f3f4f6;
   cursor: not-allowed;
@@ -482,6 +500,7 @@ const handleLogout = async () => {
 
 .dark .info-group input:disabled {
   background-color: #0f1620;
+  color: #94a3b8;
   cursor: not-allowed;
 }
 
@@ -629,6 +648,10 @@ const handleLogout = async () => {
   cursor: not-allowed;
 }
 
+.dark .btn-primary:disabled {
+  background-color: #4b5563;
+}
+
 .btn-secondary {
   background-color: #6b7280;
   color: white;
@@ -644,6 +667,14 @@ const handleLogout = async () => {
   background-color: #4b5563;
 }
 
+.dark .btn-secondary {
+  background-color: #4b5563;
+}
+
+.dark .btn-secondary:hover {
+  background-color: #374151;
+}
+
 .btn-danger {
   background-color: #ef4444;
   color: white;
@@ -657,6 +688,14 @@ const handleLogout = async () => {
 
 .btn-danger:hover {
   background-color: #dc2626;
+}
+
+.dark .btn-danger {
+  background-color: #991b1b;
+}
+
+.dark .btn-danger:hover {
+  background-color: #7f1d1d;
 }
 
 @media (max-width: 768px) {
