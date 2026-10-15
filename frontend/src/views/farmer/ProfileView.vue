@@ -268,7 +268,7 @@ const handleLogout = async () => {
   flex: 1;
   overflow-y: auto;
   background-color: #f5f5f5;
-  padding: 20px;
+  padding: 0;
   transition: background-color 0.3s ease;
 }
 
@@ -277,27 +277,46 @@ const handleLogout = async () => {
 }
 
 .page-header {
+  background: white;
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
   margin-bottom: 30px;
+}
+
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .page-header h1 {
   font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
   transition: color 0.3s ease;
 }
 
-.dark .page-header h1 {
+.farmer-layout.light .page-header h1 {
+  color: #1f2937;
+}
+
+.farmer-layout.dark .page-header h1 {
   color: #f1f5f9;
 }
 
 .page-header p {
-  color: #666;
+  margin: 0;
+  font-size: 14px;
   transition: color 0.3s ease;
 }
 
-.dark .page-header p {
+.farmer-layout.light .page-header p {
+  color: #6b7280;
+}
+
+.farmer-layout.dark .page-header p {
   color: #cbd5e1;
 }
 
