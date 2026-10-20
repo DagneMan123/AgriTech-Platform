@@ -9,14 +9,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('farms', function (Blueprint $table) {
-            $table->string('address')->nullable(); // አስፈላጊ ከሆነ null እንዲሆን ማድረግ ይቻላል
+            // address የሚለው ኮሎን ከሌለ ብቻ እንዲጨምር ማድረግ
+            if (!Schema::hasColumn('farms', 'address')) {
+                $table->string('address')->nullable();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('farms', function (Blueprint $table) {
-            $table->dropColumn('address');
+            if (Schema::hasColumn('farms', 'address')) {
+                $table->dropColumn('address');
+            }
         });
     }
 };

@@ -9,57 +9,34 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Ensure composite index on (email, is_active) exists for fast login queries
+        // 1. Ensure composite index on (email, is_active) exists for fast login queries
         Schema::table('users', function (Blueprint $table) {
-            // Check if composite index already exists to avoid errors
             $indexName = 'users_email_is_active_index';
             
-            try {
-                // Get all indexes for the users table
-                $indexes = DB::select("SHOW INDEX FROM users");
-                $hasIndex = false;
-                
-                foreach ($indexes as $index) {
-                    if ($index->Key_name === $indexName) {
-                        $hasIndex = true;
-                        break;
-                    }
-                }
-                
-                if (!$hasIndex) {
-                    // Create composite index on email and is_active for fast login queries
-                    $table->index(['email', 'is_active'], $indexName);
-                }
-            } catch (\Exception $e) {
-                // If index creation fails, continue anyway
-                \Illuminate\Support\Facades\Log::warning('Could not verify login index: ' . $e->getMessage());
+            // Check if index already exists in PostgreSQL
+            $exists = collect(DB::select(
+                "SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = ?", 
+                [$indexName]
+            ))->isNotEmpty();
+
+            if (!$exists) {
+                $table->index(['email', 'is_active'], $indexName);
             }
         });
 
-        // Ensure single index on is_active for future queries filtering by status
+        // 2. Ensure single index on is_active for future queries filtering by status
         Schema::table('users', function (Blueprint $table) {
-            try {
-                $indexes = DB::select("SHOW INDEX FROM users");
-                $hasIndex = false;
-                
-                foreach ($indexes as $index) {
-                    if ($index->Key_name === 'users_is_active_index') {
-                        $hasIndex = true;
-                        break;
-                    }
-                }
-                
-                if (!$hasIndex) {
-                    $table->index('is_active', 'users_is_active_index');
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Could not create is_active index: ' . $e->getMessage());
+            $indexName = 'users_is_active_index';
+
+            $exists = collect(DB::select(
+                "SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = ?", 
+                [$indexName]
+            ))->isNotEmpty();
+
+            if (!$exists) {
+                $table->index('is_active', $indexName);
             }
         });
-
-        // Add database connection pooling hint (application level)
-        // This improves connection reuse for faster queries
-        $this->comment('✅ Login performance indexes have been optimized');
     }
 
     public function down(): void
@@ -69,13 +46,13 @@ return new class extends Migration
             try {
                 $table->dropIndex('users_email_is_active_index');
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Could not drop composite index: ' . $e->getMessage());
+                // Ignore if index doesn't exist
             }
             
             try {
                 $table->dropIndex('users_is_active_index');
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('Could not drop is_active index: ' . $e->getMessage());
+                // Ignore if index doesn't exist
             }
         });
     }

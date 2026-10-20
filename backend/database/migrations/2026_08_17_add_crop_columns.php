@@ -9,10 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Check if crops table exists
+        // Check if crops table exists and drop it using CASCADE to handle foreign key dependencies
         if (Schema::hasTable('crops')) {
-            // Drop the existing crops table to recreate it properly
-            Schema::dropIfExists('crops');
+            DB::statement('DROP TABLE IF EXISTS crops CASCADE;');
         }
 
         // Create crops table with all required columns
@@ -37,6 +36,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('crops');
+        DB::statement('DROP TABLE IF EXISTS crops CASCADE;');
     }
 };
