@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <!-- Farm Details Modal -->
+    <!-- Farm Details Modal (Professional & Modern Layout) -->
     <div v-if="showDetailsModal" class="modal-overlay" @click="closeDetailsModal">
       <div class="modal-dialog" @click.stop>
         <div class="modal-header">
@@ -53,53 +53,57 @@
         </div>
         <div class="modal-content">
           <div id="detail-map" class="detail-map"></div>
+          
           <div class="detail-info">
-            <h3>Farm Information</h3>
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="label">Address:</span>
-                <span class="value">{{ selectedFarm?.address }}</span>
+            <h3 class="section-title">Farm Information</h3>
+            
+            <div class="info-cards">
+              <div class="info-card">
+                <span class="label">Region</span>
+                <span class="value">{{ selectedFarm?.region || 'N/A' }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Zone:</span>
+              <div class="info-card">
+                <span class="label">Zone</span>
                 <span class="value">{{ selectedFarm?.zone || 'N/A' }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Woreda:</span>
+              <div class="info-card">
+                <span class="label">Woreda</span>
                 <span class="value">{{ selectedFarm?.woreda || 'N/A' }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Kebele:</span>
+              <div class="info-card">
+                <span class="label">Kebele</span>
                 <span class="value">{{ selectedFarm?.kebele || 'N/A' }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Size:</span>
-                <span class="value">{{ selectedFarm?.size_hectares }} hectares</span>
+              <div class="info-card">
+                <span class="label">Address</span>
+                <span class="value">{{ selectedFarm?.address || 'N/A' }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Farm Type:</span>
-                <span class="value">{{ capitalizeFirstLetter(selectedFarm?.farm_type) }}</span>
+              <div class="info-card">
+                <span class="label">Size</span>
+                <span class="value badge-size">{{ selectedFarm?.size_hectares }} ha</span>
               </div>
-              <div class="info-item">
-                <span class="label">Region:</span>
-                <span class="value">{{ selectedFarm?.region }}</span>
+              <div class="info-card">
+                <span class="label">Farm Type</span>
+                <span class="value badge-type">{{ capitalizeFirstLetter(selectedFarm?.farm_type) }}</span>
               </div>
-              <div class="info-item">
-                <span class="label">Active Crops:</span>
+              <div class="info-card">
+                <span class="label">Active Crops</span>
                 <span class="value">{{ selectedFarm?.crops_count || 0 }}</span>
               </div>
             </div>
-            <div v-if="selectedFarm?.description" class="description">
-              <h4>Description</h4>
-              <p>{{ selectedFarm.description }}</p>
+
+            <div v-if="selectedFarm?.description" class="extra-block">
+              <h4 class="sub-title">Description</h4>
+              <p class="desc-text">{{ selectedFarm.description }}</p>
             </div>
-            <div class="coordinates-info">
-              <h4>GPS Coordinates</h4>
-              <p v-if="selectedFarm?.latitude && selectedFarm?.longitude">
-                Latitude: {{ selectedFarm.latitude.toFixed(6) }}<br>
-                Longitude: {{ selectedFarm.longitude.toFixed(6) }}
+
+            <div class="extra-block">
+              <h4 class="sub-title">GPS Coordinates</h4>
+              <p v-if="selectedFarm?.latitude && selectedFarm?.longitude" class="coords-text">
+                <span><strong>Lat:</strong> {{ selectedFarm.latitude.toFixed(6) }}</span>
+                <span><strong>Lng:</strong> {{ selectedFarm.longitude.toFixed(6) }}</span>
               </p>
-              <p v-else style="color: #999;">Not available</p>
+              <p v-else class="no-coords">Not available</p>
             </div>
           </div>
         </div>
@@ -136,7 +140,6 @@ const downloadingMap = ref(false)
 const retryCount = ref(0)
 const maxRetries = 3
 
-// Use 'any' type to prevent TypeScript validation errors on mapInstance methods
 const mapInstance = ref<any>(null)
 let detailMap: any = null
 
@@ -166,7 +169,6 @@ const fetchFarms = async () => {
     error.value = null
     retryCount.value = 0
 
-    // Attempt to fetch with retry logic
     await fetchFarmsWithRetry()
 
     if (!mapInstance.value) {
@@ -176,7 +178,6 @@ const fetchFarms = async () => {
   } catch (err: any) {
     console.error('Error fetching farms:', err)
     
-    // Provide specific error messages
     if (err.code === 'ECONNABORTED') {
       error.value = 'Request timed out. The server is taking too long to respond. Please check your connection and try again.'
     } else if (err.response?.status === 401) {
@@ -197,12 +198,11 @@ const fetchFarms = async () => {
 }
 
 const fetchFarmsWithRetry = async (): Promise<void> => {
-  const baseDelay = 1000 // Start with 1 second
+  const baseDelay = 1000
   
   while (retryCount.value <= maxRetries) {
     try {
       const response = await apiClient.get('/farmer/farms', {
-        // Specific timeout for this request
         timeout: 30000,
       })
       farms.value = Array.isArray(response.data.data) ? response.data.data : []
@@ -210,7 +210,6 @@ const fetchFarmsWithRetry = async (): Promise<void> => {
     } catch (err: any) {
       retryCount.value++
       
-      // Check if error is retryable
       const isTimeout = err.code === 'ECONNABORTED' || err.message === 'timeout of 30000ms exceeded'
       const isNetworkError = !err.response && err.code !== 'ECONNABORTED'
       const isRetryableStatus = [408, 429, 500, 502, 503, 504].includes(err.response?.status)
@@ -218,7 +217,7 @@ const fetchFarmsWithRetry = async (): Promise<void> => {
       const shouldRetry = (isTimeout || isNetworkError || isRetryableStatus) && retryCount.value <= maxRetries
       
       if (shouldRetry) {
-        const delay = baseDelay * Math.pow(2, retryCount.value - 1) // Exponential backoff
+        const delay = baseDelay * Math.pow(2, retryCount.value - 1)
         console.log(`Retry attempt ${retryCount.value}/${maxRetries} after ${delay}ms delay`)
         await new Promise(resolve => setTimeout(resolve, delay))
       } else {
@@ -359,8 +358,6 @@ const zoomToSelectedFarm = () => {
 
   if (mapInstance.value) {
     mapInstance.value.setView([farm.latitude, farm.longitude], 14)
-  } else {
-    alert('Map is not ready. Please try again.')
   }
 }
 
@@ -470,6 +467,7 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+/* Page & Layout Styles */
 .farmer-layout {
   display: flex;
   height: 100vh;
@@ -512,33 +510,6 @@ const handleLogout = async () => {
   transition: color 0.3s ease;
 }
 
-.farmer-layout.light .page-header {
-  background: white;
-  border-bottom-color: #e5e7eb;
-}
-
-.farmer-layout.dark .page-header {
-  background: #131b2e;
-  border-bottom-color: #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.farmer-layout.light .page-header h1 {
-  color: #1f2937;
-}
-
-.farmer-layout.dark .page-header h1 {
-  color: #f1f5f9;
-}
-
-.farmer-layout.light .page-header p {
-  color: #6b7280;
-}
-
-.farmer-layout.dark .page-header p {
-  color: #cbd5e1;
-}
-
 .map-container {
   display: flex;
   gap: 20px;
@@ -558,12 +529,6 @@ const handleLogout = async () => {
   width: 100%;
   height: 100%;
   border-radius: 8px;
-}
-
-#detail-map {
-  width: 100%;
-  height: 100%;
-  border-radius: 4px;
 }
 
 .map-loading,
@@ -595,13 +560,17 @@ const handleLogout = async () => {
   margin: 0 0 15px 0;
 }
 
+/* =========================================================
+   Modal Base & Professional Layout
+   ========================================================= */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -609,48 +578,52 @@ const handleLogout = async () => {
 }
 
 .modal-dialog {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 900px;
+  max-width: 950px;
   max-height: 85vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  background-color: #f8fafc;
 }
 
 .modal-header h2 {
   margin: 0;
-  color: #333;
+  color: #1e293b;
   font-size: 18px;
+  font-weight: 700;
 }
 
 .close-btn {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
-  color: #666;
-  padding: 0;
+  color: #64748b;
   width: 32px;
   height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 }
 
 .close-btn:hover {
-  color: #333;
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
 .modal-content {
@@ -661,152 +634,137 @@ const handleLogout = async () => {
   padding: 20px;
 }
 
+/* Detail Map Container */
 .detail-map {
-  flex: 1;
-  border-radius: 4px;
-  min-height: 300px;
+  flex: 1.4;
+  border-radius: 8px;
+  min-height: 380px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
+/* Detail Info Panel (Card-based Layout) */
 .detail-info {
-  width: 280px;
+  flex: 1;
+  min-width: 300px;
   overflow-y: auto;
-  padding-right: 10px;
-}
-
-.detail-info h3 {
-  margin: 0 0 15px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.info-item {
+  padding: 4px 12px 10px 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
 }
 
-.info-item .label {
-  font-size: 12px;
+/* Scrollbar ማስወገጃ */
+.detail-info::-webkit-scrollbar {
+  display: none;
+}
+.detail-info {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.section-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+/* 2-Column Card Grid System */
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.info-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.info-card:hover {
+  border-color: #cbd5e1;
+}
+
+.info-card .label {
+  font-size: 11px;
   font-weight: 600;
-  color: #666;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.info-item .value {
-  font-size: 14px;
-  color: #333;
-}
-
-.description,
-.coordinates-info {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.description h4,
-.coordinates-info h4 {
-  margin: 0 0 10px 0;
+.info-card .value {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: #1e293b;
+  word-break: break-word;
 }
 
-.description p,
-.coordinates-info p {
+.badge-size {
+  color: #0284c7 !important;
+}
+
+.badge-type {
+  color: #16a34a !important;
+}
+
+/* Description & Coordinates Extra Blocks */
+.extra-block {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.desc-text {
   margin: 0;
   font-size: 13px;
-  color: #555;
+  color: #334155;
   line-height: 1.5;
 }
 
-:deep(.leaflet-popup-content) {
+.coords-text {
+  margin: 0;
   font-size: 12px;
+  color: #334155;
+  display: flex;
+  gap: 12px;
+}
+
+.coords-text strong {
+  color: #0f172a;
+}
+
+.no-coords {
   margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
 }
 
-:deep(.farm-popup) {
-  margin: 0;
-}
-
-:deep(.coordinate-label) {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  text-align: center;
-  font-weight: 600;
-  color: #555;
-}
-
-@media (max-width: 1024px) {
-  .map-container {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 200px);
-  }
-
-  .map-section {
-    height: 400px;
-  }
-
-  .modal-content {
-    flex-direction: column;
-  }
-
-  .detail-info {
-    width: 100%;
-    max-height: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .farmer-page {
-    margin-left: 0;
-    padding: 10px;
-  }
-
-  .page-header h1 {
-    font-size: 20px;
-  }
-
-  .map-section {
-    height: 300px;
-  }
-
-  .modal-dialog {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .modal-content {
-    flex-direction: column;
-    padding: 15px;
-  }
-
-  .detail-info {
-    width: 100%;
-    max-height: 250px;
-  }
-
-  #detail-map {
-    height: 250px;
-  }
-}
-
-/* Dark Mode Styles */
-
-/* Main Layout */
+/* =========================================================
+   Dark Mode Overrides
+   ========================================================= */
 .farmer-layout.dark {
   background-color: #0b0f17;
   color: #f3f4f6;
@@ -817,7 +775,11 @@ const handleLogout = async () => {
   color: #f3f4f6;
 }
 
-/* Page Header */
+.farmer-layout.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+}
+
 .farmer-layout.dark .page-header h1 {
   color: #f1f5f9;
 }
@@ -826,129 +788,93 @@ const handleLogout = async () => {
   color: #cbd5e1;
 }
 
-/* Map Container */
 .farmer-layout.dark .map-container {
   background: #131b2e;
   border: 1px solid #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Map Loading and Error States */
-.farmer-layout.dark .map-loading,
-.farmer-layout.dark .map-error {
-  background: #131b2e;
-  border: 1px solid #1e293b;
-}
-
-.farmer-layout.dark .map-loading {
-  color: #cbd5e1;
-}
-
-.farmer-layout.dark .map-loading p {
-  color: #cbd5e1;
-  margin: 0;
-}
-
-.farmer-layout.dark .retry-info {
-  color: #94a3b8;
-}
-
-.farmer-layout.dark .map-error {
-  background: #7f1d1d;
-  border-color: #b91c1c;
-}
-
-.farmer-layout.dark .map-error p {
-  color: #fca5a5;
-}
-
-/* Modal Overlay */
-.farmer-layout.dark .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-/* Modal Dialog */
 .farmer-layout.dark .modal-dialog {
-  background-color: #131b2e;
-  border: 1px solid #1e293b;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  color: #f3f4f6;
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
 }
 
-/* Modal Header */
 .farmer-layout.dark .modal-header {
-  background-color: #1a2338;
-  border-bottom: 1px solid #2d3f52;
-  color: #f3f4f6;
+  background-color: #1f2937;
+  border-bottom-color: #374151;
 }
 
 .farmer-layout.dark .modal-header h2 {
-  color: #f1f5f9;
+  color: #f9fafb;
 }
 
-/* Close Button */
 .farmer-layout.dark .close-btn {
-  color: #94a3b8;
+  color: #9ca3af;
 }
 
 .farmer-layout.dark .close-btn:hover {
-  color: #cbd5e1;
+  background-color: #374151;
+  color: #ffffff;
 }
 
-/* Detail Info */
-.farmer-layout.dark .detail-info {
-  background-color: #1a2338;
-  border-left: 1px solid #2d3f52;
-  padding-right: 10px;
+.farmer-layout.dark .section-title {
+  color: #f9fafb;
 }
 
-.farmer-layout.dark .detail-info h3 {
-  color: #f1f5f9;
+.farmer-layout.dark .info-card,
+.farmer-layout.dark .extra-block {
+  background-color: #1f2937;
+  border-color: #374151;
 }
 
-.farmer-layout.dark .detail-info h4 {
-  color: #cbd5e1;
+.farmer-layout.dark .info-card:hover {
+  border-color: #4b5563;
 }
 
-/* Info Items */
-.farmer-layout.dark .info-item .label {
-  color: #94a3b8;
+.farmer-layout.dark .info-card .label {
+  color: #9ca3af;
 }
 
-.farmer-layout.dark .info-item .value {
-  color: #f1f5f9;
+.farmer-layout.dark .info-card .value {
+  color: #f3f4f6;
 }
 
-/* Description and Coordinates */
-.farmer-layout.dark .description,
-.farmer-layout.dark .coordinates-info {
-  border-top: 1px solid #2d3f52;
+.farmer-layout.dark .sub-title {
+  color: #9ca3af;
 }
 
-.farmer-layout.dark .description p,
-.farmer-layout.dark .coordinates-info p {
-  color: #cbd5e1;
+.farmer-layout.dark .desc-text,
+.farmer-layout.dark .coords-text {
+  color: #e5e7eb;
 }
 
-/* Leaflet Popup Coordinate Labels */
-:deep(.farmer-layout.dark .coordinate-label) {
-  background: rgba(19, 27, 46, 0.95) !important;
-  border: 1px solid #2d3f52 !important;
-  color: #cbd5e1 !important;
+.farmer-layout.dark .coords-text strong {
+  color: #f9fafb;
 }
 
-:deep(.farmer-layout.dark .leaflet-popup-content-wrapper) {
-  background: #1a2338 !important;
-  border: 1px solid #2d3f52 !important;
-  border-radius: 4px;
+/* Responsive Handling */
+@media (max-width: 1024px) {
+  .map-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 200px);
+  }
+
+  .map-section {
+    height: 400px;
+  }
 }
 
-:deep(.farmer-layout.dark .leaflet-popup-content) {
-  color: #f1f5f9 !important;
-}
-
-:deep(.farmer-layout.dark .leaflet-popup-tip) {
-  background: #1a2338 !important;
-  border-top-color: #2d3f52 !important;
+@media (max-width: 768px) {
+  .modal-content {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .detail-map {
+    min-height: 250px;
+  }
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
