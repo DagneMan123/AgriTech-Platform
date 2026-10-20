@@ -69,33 +69,6 @@
       >
         {{ props.downloadingMap ? 'Downloading...' : 'Download Map' }}
       </button>
-      <button 
-        class="btn btn-secondary"
-        @click="handleRefresh"
-      >
-        Refresh
-      </button>
-    </div>
-
-    <div class="info-section">
-      <h3>Selected Farm Info</h3>
-      <div v-if="selectedFarm" class="farm-info">
-        <p><strong>Name:</strong> {{ selectedFarm.name }}</p>
-        <p><strong>Size:</strong> {{ selectedFarm.size_hectares }} hectares</p>
-        <p><strong>Type:</strong> {{ capitalizeFirstLetter(selectedFarm.farm_type) }}</p>
-        <p><strong>Region:</strong> {{ selectedFarm.region }}</p>
-        <p v-if="selectedFarm.latitude && selectedFarm.longitude">
-          <strong>Coordinates:</strong><br>
-          Lat: {{ selectedFarm.latitude.toFixed(6) }}<br>
-          Lng: {{ selectedFarm.longitude.toFixed(6) }}
-        </p>
-        <p><strong>Address:</strong> {{ selectedFarm.address }}</p>
-        <p v-if="selectedFarm.woreda"><strong>Woreda:</strong> {{ selectedFarm.woreda }}</p>
-        <p><strong>Crops:</strong> {{ selectedFarm.crops_count || 0 }}</p>
-      </div>
-      <div v-else class="empty-info">
-        <p>Select a farm to view details</p>
-      </div>
     </div>
   </div>
 </template>
@@ -142,7 +115,6 @@ interface Emits {
   (e: 'zoom-to-farm'): void
   (e: 'view-details'): void
   (e: 'download-map'): void
-  (e: 'refresh'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -183,15 +155,6 @@ const mapType = computed({
   set: (value) => emit('update:mapType', value)
 })
 
-const selectedFarm = computed(() => {
-  return props.farms.find(f => f.id === props.selectedFarmId)
-})
-
-const capitalizeFirstLetter = (string: string) => {
-  if (!string) return ''
-  return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
 const handleFarmChange = () => {
   emit('update:selectedFarmId', selectedFarmId.value)
 }
@@ -216,10 +179,6 @@ const handleViewDetails = () => {
 
 const handleDownloadMap = () => {
   emit('download-map')
-}
-
-const handleRefresh = () => {
-  emit('refresh')
 }
 </script>
 
@@ -354,36 +313,6 @@ const handleRefresh = () => {
   background-color: #2563eb;
 }
 
-.info-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.farm-info,
-.empty-info {
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.farm-info p {
-  margin: 6px 0;
-  color: #555;
-}
-
-.farm-info strong {
-  color: #333;
-  display: inline-block;
-  min-width: 70px;
-}
-
-.empty-info {
-  color: #999;
-  text-align: center;
-  padding: 20px 10px;
-  font-style: italic;
-}
-
 @media (max-width: 1024px) {
   .map-controls {
     width: 100%;
@@ -394,7 +323,6 @@ const handleRefresh = () => {
 }
 
 /* Dark Mode Styles */
-
 .map-controls.dark {
   background: #131b2e;
   border-right-color: #1e293b;
@@ -409,7 +337,6 @@ const handleRefresh = () => {
   color: #cbd5e1;
 }
 
-/* Form Select - Dark Mode */
 .map-controls.dark .form-select {
   background-color: #1a2338;
   color: #f3f4f6;
@@ -426,7 +353,6 @@ const handleRefresh = () => {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
-/* Checkboxes and Radio Buttons - Dark Mode */
 .map-controls.dark .checkbox-group label,
 .map-controls.dark .radio-group label {
   color: #cbd5e1;
@@ -437,12 +363,6 @@ const handleRefresh = () => {
   color: #f1f5f9;
 }
 
-.map-controls.dark .checkbox-group input,
-.map-controls.dark .radio-group input {
-  accent-color: #10b981;
-}
-
-/* Buttons - Dark Mode */
 .map-controls.dark .btn-primary {
   background-color: #10b981;
   color: white;
@@ -480,24 +400,6 @@ const handleRefresh = () => {
   background-color: #2563eb;
 }
 
-/* Info Section - Dark Mode */
-.map-controls.dark .info-section {
-  border-top-color: #2d3f52;
-}
-
-.map-controls.dark .farm-info p {
-  color: #cbd5e1;
-}
-
-.map-controls.dark .farm-info strong {
-  color: #f1f5f9;
-}
-
-.map-controls.dark .empty-info {
-  color: #64748b;
-}
-
-/* Responsive Dark Mode */
 @media (max-width: 1024px) {
   .map-controls.dark {
     border-right: none;
