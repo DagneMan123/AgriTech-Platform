@@ -7,7 +7,6 @@
           <h1>My Farms</h1>
           <p>Manage and view all your farms</p>
         </div>
-        <!-- Add New Farm Button moved to Header for a professional layout -->
         <button class="btn-primary btn-add-farm" @click="openAddFarmDialog">
           + Add New Farm
         </button>
@@ -49,8 +48,69 @@
             </div>
             <div class="farm-actions">
               <button class="btn-small btn-edit" @click="editFarm(farm)">Edit</button>
-              <button class="btn-small btn-view">View Details</button>
+              <!-- View Details button now works on click -->
+              <button class="btn-small btn-view" @click="viewFarmDetails(farm)">View Details</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Farm Details Modal -->
+    <div v-if="showDetailsModal" class="modal-overlay" @click="closeDetailsModal">
+      <div class="modal-dialog details-dialog" @click.stop>
+        <div class="modal-header">
+          <h2>{{ selectedFarmDetails?.name }} - Details</h2>
+          <button class="close-btn" @click="closeDetailsModal">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="info-cards">
+            <div class="info-card">
+              <span class="label">Region</span>
+              <span class="value">{{ selectedFarmDetails?.region || 'N/A' }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Zone</span>
+              <span class="value">{{ selectedFarmDetails?.zone || 'N/A' }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Woreda</span>
+              <span class="value">{{ selectedFarmDetails?.woreda || 'N/A' }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Kebele</span>
+              <span class="value">{{ selectedFarmDetails?.kebele || 'N/A' }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Address</span>
+              <span class="value">{{ selectedFarmDetails?.address || 'N/A' }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Size</span>
+              <span class="value badge-size">{{ selectedFarmDetails?.size_hectares }} ha</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Farm Type</span>
+              <span class="value badge-type">{{ capitalizeFirstLetter(selectedFarmDetails?.farm_type) }}</span>
+            </div>
+            <div class="info-card">
+              <span class="label">Active Crops</span>
+              <span class="value">{{ selectedFarmDetails?.crops_count || 0 }}</span>
+            </div>
+          </div>
+
+          <div v-if="selectedFarmDetails?.description" class="extra-block">
+            <h4 class="sub-title">Description</h4>
+            <p class="desc-text">{{ selectedFarmDetails.description }}</p>
+          </div>
+
+          <div class="extra-block">
+            <h4 class="sub-title">GPS Coordinates</h4>
+            <p v-if="selectedFarmDetails?.latitude && selectedFarmDetails?.longitude" class="coords-text">
+              <span><strong>Lat:</strong> {{ selectedFarmDetails.latitude }}</span>
+              <span><strong>Lng:</strong> {{ selectedFarmDetails.longitude }}</span>
+            </p>
+            <p v-else class="no-coords">Not available</p>
           </div>
         </div>
       </div>
@@ -241,6 +301,8 @@ const farms = ref([])
 const loading = ref(true)
 const error = ref(null)
 const showAddFarmModal = ref(false)
+const showDetailsModal = ref(false)
+const selectedFarmDetails = ref(null)
 const submitting = ref(false)
 const isEditingFarm = ref(false)
 const editingFarmId = ref(null)
@@ -288,6 +350,18 @@ const fetchFarms = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// Open View Details Modal
+const viewFarmDetails = (farm) => {
+  selectedFarmDetails.value = farm
+  showDetailsModal.value = true
+}
+
+// Close View Details Modal
+const closeDetailsModal = () => {
+  showDetailsModal.value = false
+  selectedFarmDetails.value = null
 }
 
 // Open add farm dialog
@@ -665,6 +739,7 @@ const handleLogout = async () => {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -679,6 +754,10 @@ const handleLogout = async () => {
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.details-dialog {
+  max-width: 650px;
 }
 
 .modal-header {
@@ -716,6 +795,83 @@ const handleLogout = async () => {
 
 .modal-content {
   padding: 25px;
+}
+
+/* View Details Cards Styles */
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.info-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-card .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.info-card .value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.badge-size {
+  color: #0284c7 !important;
+}
+
+.badge-type {
+  color: #16a34a !important;
+}
+
+.extra-block {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.sub-title {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.desc-text {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.coords-text {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  display: flex;
+  gap: 16px;
+}
+
+.no-coords {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 /* Form Styles */
@@ -820,6 +976,10 @@ const handleLogout = async () => {
   }
 
   .farms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-cards {
     grid-template-columns: 1fr;
   }
 
@@ -966,6 +1126,23 @@ const handleLogout = async () => {
 
 .farmer-layout.dark .close-btn:hover {
   color: #cbd5e1;
+}
+
+.farmer-layout.dark .info-card,
+.farmer-layout.dark .extra-block {
+  background-color: #1a2338;
+  border-color: #2d3f52;
+}
+
+.farmer-layout.dark .info-card .label,
+.farmer-layout.dark .sub-title {
+  color: #94a3b8;
+}
+
+.farmer-layout.dark .info-card .value,
+.farmer-layout.dark .desc-text,
+.farmer-layout.dark .coords-text {
+  color: #f1f5f9;
 }
 
 .farmer-layout.dark .form-group label {
