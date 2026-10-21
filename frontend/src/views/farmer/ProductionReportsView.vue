@@ -9,152 +9,168 @@
           <p>Monitor crop yields, growth cycles, and productivity metrics</p>
         </div>
 
-        <div class="controls">
-          <input v-model="filters.search" type="text" placeholder="Search by crop..." class="search-input" />
-          <select v-model="filters.crop" class="filter-select">
-            <option value="">All Crops</option>
-            <option value="tomato">Tomatoes</option>
-            <option value="lettuce">Lettuce</option>
-            <option value="carrot">Carrots</option>
-            <option value="pepper">Peppers</option>
-          </select>
-          <button @click="generateReport" class="btn-generate">Generate Report</button>
-        </div>
+        <div class="page-content-wrapper">
+          <!-- Modern Dark/Light Styled Filter Card Container -->
+          <div class="filters-card">
+            <div class="search-input-wrapper">
+              <input 
+                v-model="filters.search" 
+                type="text" 
+                placeholder="Search by crop..." 
+                class="dark-input" 
+              />
+            </div>
 
-        <div class="summary-cards">
-          <div class="summary-card">
-            <h4>Total Yield This Season</h4>
-            <p class="amount">8,450 kg</p>
-            <span class="change positive">+15% vs last season</span>
-          </div>
-          <div class="summary-card">
-            <h4>Average Yield Per Crop</h4>
-            <p class="amount">1,056 kg</p>
-            <span class="change">per crop</span>
-          </div>
-          <div class="summary-card">
-            <h4>Crops In Progress</h4>
-            <p class="amount">8</p>
-            <span class="change">active cycles</span>
-          </div>
-          <div class="summary-card">
-            <h4>Harvested This Month</h4>
-            <p class="amount">1,240 kg</p>
-            <span class="change">4 crops</span>
-          </div>
-        </div>
+            <div class="select-wrapper">
+              <select v-model="filters.crop" class="dark-select">
+                <option value="">All Crops</option>
+                <option value="tomato">Tomatoes</option>
+                <option value="lettuce">Lettuce</option>
+                <option value="carrot">Carrots</option>
+                <option value="pepper">Peppers</option>
+              </select>
+            </div>
 
-        <div class="reports-section">
-          <div class="production-table">
-            <h2>Crop Production Details</h2>
-            <div class="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Crop</th>
-                    <th>Farm</th>
-                    <th>Planted</th>
-                    <th>Expected Yield</th>
-                    <th>Current Status</th>
-                    <th>Growth %</th>
-                    <th>Days to Harvest</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Tomatoes</td>
-                    <td>Main Farm</td>
-                    <td>Jan 15</td>
-                    <td>1,500 kg</td>
-                    <td><span class="status-badge growing">Growing</span></td>
-                    <td>75%</td>
-                    <td>20 days</td>
-                  </tr>
-                  <tr>
-                    <td>Lettuce</td>
-                    <td>North Plot</td>
-                    <td>Feb 01</td>
-                    <td>800 kg</td>
-                    <td><span class="status-badge growing">Growing</span></td>
-                    <td>60%</td>
-                    <td>35 days</td>
-                  </tr>
-                  <tr>
-                    <td>Carrots</td>
-                    <td>Main Farm</td>
-                    <td>Dec 15</td>
-                    <td>2,000 kg</td>
-                    <td><span class="status-badge ready">Ready</span></td>
-                    <td>100%</td>
-                    <td>Harvest now</td>
-                  </tr>
-                  <tr>
-                    <td>Peppers</td>
-                    <td>South Plot</td>
-                    <td>Jan 20</td>
-                    <td>1,200 kg</td>
-                    <td><span class="status-badge growing">Growing</span></td>
-                    <td>55%</td>
-                    <td>45 days</td>
-                  </tr>
-                </tbody>
-              </table>
+            <button @click="generateReport" class="btn-generate">
+              Generate Report
+            </button>
+          </div>
+
+          <div class="summary-cards">
+            <div class="summary-card">
+              <h4>Total Yield This Season</h4>
+              <p class="amount">8,450 kg</p>
+              <span class="change positive">+15% vs last season</span>
+            </div>
+            <div class="summary-card">
+              <h4>Average Yield Per Crop</h4>
+              <p class="amount">1,056 kg</p>
+              <span class="change">per crop</span>
+            </div>
+            <div class="summary-card">
+              <h4>Crops In Progress</h4>
+              <p class="amount">8</p>
+              <span class="change">active cycles</span>
+            </div>
+            <div class="summary-card">
+              <h4>Harvested This Month</h4>
+              <p class="amount">1,240 kg</p>
+              <span class="change">4 crops</span>
             </div>
           </div>
 
-          <div class="production-table">
-            <h2>Recent Harvests</h2>
-            <div class="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Crop</th>
-                    <th>Farm</th>
-                    <th>Harvest Date</th>
-                    <th>Yield</th>
-                    <th>Quality Grade</th>
-                    <th>Sold Amount</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Lettuce</td>
-                    <td>North Plot</td>
-                    <td>Mar 10</td>
-                    <td>750 kg</td>
-                    <td><span class="grade-a">Grade A</span></td>
-                    <td>650 kg</td>
-                    <td>$1,950</td>
-                  </tr>
-                  <tr>
-                    <td>Spinach</td>
-                    <td>West Plot</td>
-                    <td>Mar 05</td>
-                    <td>420 kg</td>
-                    <td><span class="grade-a">Grade A</span></td>
-                    <td>400 kg</td>
-                    <td>$1,200</td>
-                  </tr>
-                  <tr>
-                    <td>Tomatoes</td>
-                    <td>Main Farm</td>
-                    <td>Feb 28</td>
-                    <td>1,200 kg</td>
-                    <td><span class="grade-b">Grade B</span></td>
-                    <td>1,000 kg</td>
-                    <td>$2,500</td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="reports-section">
+            <div class="production-table">
+              <h2>Crop Production Details</h2>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Crop</th>
+                      <th>Farm</th>
+                      <th>Planted</th>
+                      <th>Expected Yield</th>
+                      <th>Current Status</th>
+                      <th>Growth %</th>
+                      <th>Days to Harvest</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Tomatoes</td>
+                      <td>Main Farm</td>
+                      <td>Jan 15</td>
+                      <td>1,500 kg</td>
+                      <td><span class="status-badge growing">Growing</span></td>
+                      <td>75%</td>
+                      <td>20 days</td>
+                    </tr>
+                    <tr>
+                      <td>Lettuce</td>
+                      <td>North Plot</td>
+                      <td>Feb 01</td>
+                      <td>800 kg</td>
+                      <td><span class="status-badge growing">Growing</span></td>
+                      <td>60%</td>
+                      <td>35 days</td>
+                    </tr>
+                    <tr>
+                      <td>Carrots</td>
+                      <td>Main Farm</td>
+                      <td>Dec 15</td>
+                      <td>2,000 kg</td>
+                      <td><span class="status-badge ready">Ready</span></td>
+                      <td>100%</td>
+                      <td>Harvest now</td>
+                    </tr>
+                    <tr>
+                      <td>Peppers</td>
+                      <td>South Plot</td>
+                      <td>Jan 20</td>
+                      <td>1,200 kg</td>
+                      <td><span class="status-badge growing">Growing</span></td>
+                      <td>55%</td>
+                      <td>45 days</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="production-table">
+              <h2>Recent Harvests</h2>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Crop</th>
+                      <th>Farm</th>
+                      <th>Harvest Date</th>
+                      <th>Yield</th>
+                      <th>Quality Grade</th>
+                      <th>Sold Amount</th>
+                      <th>Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Lettuce</td>
+                      <td>North Plot</td>
+                      <td>Mar 10</td>
+                      <td>750 kg</td>
+                      <td><span class="grade-a">Grade A</span></td>
+                      <td>650 kg</td>
+                      <td>$1,950</td>
+                    </tr>
+                    <tr>
+                      <td>Spinach</td>
+                      <td>West Plot</td>
+                      <td>Mar 05</td>
+                      <td>420 kg</td>
+                      <td><span class="grade-a">Grade A</span></td>
+                      <td>400 kg</td>
+                      <td>$1,200</td>
+                    </tr>
+                    <tr>
+                      <td>Tomatoes</td>
+                      <td>Main Farm</td>
+                      <td>Feb 28</td>
+                      <td>1,200 kg</td>
+                      <td><span class="grade-b">Grade B</span></td>
+                      <td>1,000 kg</td>
+                      <td>$2,500</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="chart-section">
-          <h2>Production Trends</h2>
-          <div class="chart-placeholder">
-            <p>Crop yield and production trends over time</p>
+          <div class="chart-section">
+            <h2>Production Trends</h2>
+            <div class="chart-placeholder">
+              <p>Crop yield and production trends over time</p>
+            </div>
           </div>
         </div>
       </div>
@@ -194,16 +210,16 @@ const handleLogout = async () => {
   min-height: 100vh;
 }
 
-.farmer-layout.dark {
-  background: #0b0f17;
-}
-
 .farmer-page {
   margin-left: 260px;
   flex: 1;
   background-color: #f9fafb;
   min-height: 100vh;
   transition: background-color 0.3s ease;
+}
+
+.farmer-layout.dark {
+  background: #0b0f17;
 }
 
 .farmer-layout.dark .farmer-page {
@@ -258,46 +274,93 @@ const handleLogout = async () => {
   color: #cbd5e1;
 }
 
-.controls {
-  padding: 30px;
-  display: flex;
-  gap: 12px;
-  margin-bottom: 0;
-  flex-wrap: wrap;
+.page-content-wrapper {
+  padding: 0 30px 30px 30px;
 }
 
-.search-input,
-.filter-select {
-  padding: 10px 14px;
+/* =========================================================
+   Filter Card Container & Input Styling
+   ========================================================= */
+.filters-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.farmer-layout.dark .filters-card {
+  background-color: #131b2e;
+  border-color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.search-input-wrapper {
+  flex: 1;
+}
+
+.dark-input,
+.dark-select {
+  width: 100%;
+  background-color: #f9fafb;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
-  background: white;
   color: #1f2937;
-  transition: all 0.3s ease;
-}
-
-.dark .search-input,
-.dark .filter-select {
-  background: #0f1620;
-  border-color: #2d3f52;
-  color: #f1f5f9;
-}
-
-.dark .search-input:focus,
-.dark .filter-select:focus {
+  font-size: 14px;
+  padding: 10px 14px;
   outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.farmer-layout.dark .dark-input,
+.farmer-layout.dark .dark-select {
+  background-color: #1a2338;
+  border-color: #2d3f52;
+  color: #f3f4f6;
+}
+
+.dark-input::placeholder {
+  color: #9ca3af;
+}
+
+.farmer-layout.dark .dark-input::placeholder {
+  color: #94a3b8;
+}
+
+.dark-input:hover,
+.dark-select:hover {
+  border-color: #9ca3af;
+}
+
+.farmer-layout.dark .dark-input:hover,
+.farmer-layout.dark .dark-select:hover {
+  border-color: #475569;
+}
+
+.dark-input:focus,
+.dark-select:focus {
   border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
-.search-input {
-  flex: 1;
-  min-width: 200px;
+.select-wrapper {
+  width: 180px;
+  flex-shrink: 0;
 }
 
-.filter-select {
-  min-width: 120px;
+.dark-select {
+  cursor: pointer;
+}
+
+.farmer-layout.dark .dark-select option {
+  background-color: #1a2338;
+  color: #f3f4f6;
 }
 
 .btn-generate {
@@ -309,13 +372,17 @@ const handleLogout = async () => {
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: background 0.3s;
+  white-space: nowrap;
+  transition: background 0.3s, transform 0.1s;
 }
 
 .btn-generate:hover {
   background: #059669;
 }
 
+/* =========================================================
+   Summary Cards Styling
+   ========================================================= */
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -326,13 +393,15 @@ const handleLogout = async () => {
 .summary-card {
   background: white;
   padding: 20px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
-.dark .summary-card {
-  background: #1a2338;
+.farmer-layout.dark .summary-card {
+  background: #131b2e;
+  border-color: #1e293b;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -342,10 +411,9 @@ const handleLogout = async () => {
   text-transform: uppercase;
   margin: 0 0 10px 0;
   font-weight: 600;
-  transition: color 0.3s ease;
 }
 
-.dark .summary-card h4 {
+.farmer-layout.dark .summary-card h4 {
   color: #cbd5e1;
 }
 
@@ -354,20 +422,18 @@ const handleLogout = async () => {
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 8px 0;
-  transition: color 0.3s ease;
 }
 
-.dark .summary-card .amount {
+.farmer-layout.dark .summary-card .amount {
   color: #f1f5f9;
 }
 
 .summary-card .change {
   font-size: 12px;
   color: #9ca3af;
-  transition: color 0.3s ease;
 }
 
-.dark .summary-card .change {
+.farmer-layout.dark .summary-card .change {
   color: #94a3b8;
 }
 
@@ -375,10 +441,13 @@ const handleLogout = async () => {
   color: #059669;
 }
 
-.dark .summary-card .change.positive {
+.farmer-layout.dark .summary-card .change.positive {
   color: #10b981;
 }
 
+/* =========================================================
+   Reports Section & Tables Styling
+   ========================================================= */
 .reports-section {
   display: flex;
   flex-direction: column;
@@ -388,14 +457,16 @@ const handleLogout = async () => {
 
 .production-table {
   background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
-.dark .production-table {
-  background: #1a2338;
+.farmer-layout.dark .production-table {
+  background: #131b2e;
+  border-color: #1e293b;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -405,12 +476,11 @@ const handleLogout = async () => {
   margin: 0;
   font-size: 18px;
   color: #1f2937;
-  transition: all 0.3s ease;
 }
 
-.dark .production-table h2 {
+.farmer-layout.dark .production-table h2 {
   color: #f1f5f9;
-  border-bottom-color: #2d3f52;
+  border-bottom-color: #1e293b;
 }
 
 .table-responsive {
@@ -426,11 +496,10 @@ const handleLogout = async () => {
 
 .production-table thead {
   background: #f9fafb;
-  transition: background-color 0.3s ease;
 }
 
-.dark .production-table thead {
-  background: #0f1620;
+.farmer-layout.dark .production-table thead {
+  background: #1a2338;
 }
 
 .production-table th {
@@ -441,12 +510,11 @@ const handleLogout = async () => {
   font-size: 13px;
   text-transform: uppercase;
   border-bottom: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
 }
 
-.dark .production-table th {
+.farmer-layout.dark .production-table th {
   color: #cbd5e1;
-  border-bottom-color: #2d3f52;
+  border-bottom-color: #1e293b;
 }
 
 .production-table td {
@@ -454,19 +522,18 @@ const handleLogout = async () => {
   border-bottom: 1px solid #f3f4f6;
   font-size: 14px;
   color: #1f2937;
-  transition: all 0.3s ease;
 }
 
-.dark .production-table td {
+.farmer-layout.dark .production-table td {
   color: #f1f5f9;
-  border-bottom-color: #2d3f52;
+  border-bottom-color: #1e293b;
 }
 
 .production-table tbody tr:hover {
   background: #f9fafb;
 }
 
-.dark .production-table tbody tr:hover {
+.farmer-layout.dark .production-table tbody tr:hover {
   background: rgba(45, 63, 82, 0.5);
 }
 
@@ -476,7 +543,6 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
 }
 
 .status-badge.growing {
@@ -484,9 +550,9 @@ const handleLogout = async () => {
   color: #1e40af;
 }
 
-.dark .status-badge.growing {
+.farmer-layout.dark .status-badge.growing {
   background: #1e3a8a;
-  color: #3b82f6;
+  color: #60a5fa;
 }
 
 .status-badge.ready {
@@ -494,9 +560,9 @@ const handleLogout = async () => {
   color: #065f46;
 }
 
-.dark .status-badge.ready {
+.farmer-layout.dark .status-badge.ready {
   background: #064e3b;
-  color: #10b981;
+  color: #34d399;
 }
 
 .grade-a {
@@ -507,12 +573,11 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
 }
 
-.dark .grade-a {
+.farmer-layout.dark .grade-a {
   background: #064e3b;
-  color: #10b981;
+  color: #34d399;
 }
 
 .grade-b {
@@ -523,24 +588,27 @@ const handleLogout = async () => {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
 }
 
-.dark .grade-b {
-  background: #92400e;
-  color: #fbbf24;
+.farmer-layout.dark .grade-b {
+  background: #7c2d12;
+  color: #fdba74;
 }
 
+/* =========================================================
+   Chart Section Styling
+   ========================================================= */
 .chart-section {
   background: white;
+  border: 1px solid #e5e7eb;
   padding: 24px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.dark .chart-section {
-  background: #1a2338;
+.farmer-layout.dark .chart-section {
+  background: #131b2e;
+  border-color: #1e293b;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -548,10 +616,9 @@ const handleLogout = async () => {
   font-size: 18px;
   margin: 0 0 20px 0;
   color: #1f2937;
-  transition: color 0.3s ease;
 }
 
-.dark .chart-section h2 {
+.farmer-layout.dark .chart-section h2 {
   color: #f1f5f9;
 }
 
@@ -562,22 +629,39 @@ const handleLogout = async () => {
   padding: 60px 20px;
   text-align: center;
   color: #9ca3af;
-  min-height: 300px;
+  min-height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
 }
 
-.dark .chart-placeholder {
-  background: #0f1620;
+.farmer-layout.dark .chart-placeholder {
+  background: #1a2338;
   border-color: #2d3f52;
   color: #94a3b8;
 }
 
+/* Responsive Handling */
 @media (max-width: 768px) {
   .farmer-page {
     margin-left: 0;
+  }
+
+  .page-content-wrapper {
+    padding: 0 16px 20px 16px;
+  }
+
+  .filters-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .select-wrapper {
+    width: 100%;
+  }
+
+  .btn-generate {
+    width: 100%;
   }
 }
 </style>
