@@ -7,12 +7,15 @@
           <h1>My Farms</h1>
           <p>Manage and view all your farms</p>
         </div>
+        <!-- Add New Farm Button moved to Header for a professional layout -->
+        <button class="btn-primary btn-add-farm" @click="openAddFarmDialog">
+          + Add New Farm
+        </button>
       </div>
 
       <div class="content-section">
         <div class="section-header">
           <h2>Farm List</h2>
-          <button class="btn-primary" @click="openAddFarmDialog">+ Add New Farm</button>
         </div>
 
         <div v-if="error" class="error-alert">
@@ -271,7 +274,6 @@ const fetchFarms = async () => {
     error.value = null
     const response = await apiClient.get('/farmer/farms')
     const data = response.data
-    // Backend now returns data directly as array, not nested
     farms.value = Array.isArray(data.data) ? data.data : []
   } catch (err) {
     console.error('Error fetching farms:', err)
@@ -362,60 +364,33 @@ const submitFarmForm = async () => {
       longitude: farmForm.value.longitude ? parseFloat(farmForm.value.longitude) : null,
     }
 
-    console.log('Submitting payload:', JSON.stringify(payload, null, 2))
-
     const url = isEditingFarm.value
       ? `/farmer/farms/${editingFarmId.value}`
       : '/farmer/farms'
 
     const method = isEditingFarm.value ? 'put' : 'post'
 
-    const response = await apiClient[method](url, payload)
-    const data = response.data
+    await apiClient[method](url, payload)
 
-    console.log('Farm submission successful:', data)
-
-    // Success
     showAddFarmModal.value = false
     resetForm()
     await fetchFarms()
-
-    // Show success message
-    const message = isEditingFarm.value ? 'Farm updated successfully!' : 'Farm created successfully!'
-    console.log(message)
   } catch (error) {
-    console.error('Error submitting farm form - Full error object:', error)
-    console.error('Error response data:', error.response?.data)
-    console.error('Error response status:', error.response?.status)
-    console.error('Error message:', error.message)
-    
+    console.error('Error submitting farm form:', error)
     const responseData = error.response?.data
     const statusCode = error.response?.status
 
-    console.log('=== Detailed Error Response ===')
-    console.log('Status code:', statusCode)
-    console.log('Response data:', JSON.stringify(responseData, null, 2))
-
-    // Handle validation errors (422)
     if (statusCode === 422) {
-      // Extract field-specific errors if present
       if (responseData?.errors && typeof responseData.errors === 'object') {
-        // Convert array errors to first error message per field
         const fieldErrors = {}
         for (const [field, messages] of Object.entries(responseData.errors)) {
           fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages
         }
         formErrors.value = fieldErrors
-        console.log('Extracted field errors:', fieldErrors)
       }
-      
-      // Set general error message
       formSubmitError.value = responseData?.message || 'Please check the form for errors and try again'
-      console.log('Form error message:', formSubmitError.value)
     } else {
-      // Handle other HTTP errors
       formSubmitError.value = responseData?.message || error.message || 'An error occurred while saving the farm. Please try again.'
-      console.log('Non-422 error:', formSubmitError.value)
     }
   } finally {
     submitting.value = false
@@ -451,7 +426,7 @@ const handleLogout = async () => {
 
 .page-header {
   background: white;
-  padding: 30px;
+  padding: 25px 30px;
   margin: -20px -20px 30px -20px;
   display: flex;
   justify-content: space-between;
@@ -468,7 +443,7 @@ const handleLogout = async () => {
 .page-header h1 {
   font-size: 28px;
   font-weight: 800;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   transition: color 0.3s ease;
 }
 
@@ -505,6 +480,16 @@ const handleLogout = async () => {
   color: #cbd5e1;
 }
 
+/* Professional Add Farm Button in Header */
+.btn-add-farm {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+  white-space: nowrap;
+}
+
 .content-section {
   background: white;
   border-radius: 8px;
@@ -513,9 +498,6 @@ const handleLogout = async () => {
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 25px;
 }
 
@@ -523,6 +505,7 @@ const handleLogout = async () => {
   font-size: 20px;
   font-weight: bold;
   color: #333;
+  margin: 0;
 }
 
 .btn-primary {
@@ -822,22 +805,22 @@ const handleLogout = async () => {
     margin-left: 0;
   }
 
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .btn-add-farm {
+    width: 100%;
+  }
+
   .page-header h1 {
     font-size: 20px;
   }
 
   .farms-grid {
     grid-template-columns: 1fr;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .btn-primary {
-    width: 100%;
   }
 
   .modal-dialog {
@@ -859,8 +842,6 @@ const handleLogout = async () => {
 }
 
 /* Dark Mode Styles */
-
-/* Main Layout */
 .farmer-layout.dark {
   background-color: #0b0f17;
   color: #f3f4f6;
@@ -871,7 +852,6 @@ const handleLogout = async () => {
   color: #f3f4f6;
 }
 
-/* Content Section */
 .farmer-layout.dark .content-section {
   background: #131b2e;
   border: 1px solid #1e293b;
@@ -879,12 +859,10 @@ const handleLogout = async () => {
   color: #f3f4f6;
 }
 
-/* Section Header */
 .farmer-layout.dark .section-header h2 {
   color: #f1f5f9;
 }
 
-/* Primary Button */
 .farmer-layout.dark .btn-primary {
   background-color: #10b981;
 }
@@ -897,7 +875,6 @@ const handleLogout = async () => {
   background-color: #4b5563;
 }
 
-/* Secondary Button */
 .farmer-layout.dark .btn-secondary {
   background-color: #4b5563;
 }
@@ -906,20 +883,17 @@ const handleLogout = async () => {
   background-color: #5a6e82;
 }
 
-/* Loading and Empty States */
 .farmer-layout.dark .loading-message,
 .farmer-layout.dark .empty-state {
   color: #cbd5e1;
 }
 
-/* Error Alert */
 .farmer-layout.dark .error-alert {
   background-color: #7f1d1d;
   border-color: #b91c1c;
   color: #fca5a5;
 }
 
-/* Farms Grid */
 .farmer-layout.dark .farm-card {
   background-color: #1a2338;
   border: 1px solid #2d3f52;
@@ -932,23 +906,19 @@ const handleLogout = async () => {
   background-color: #1f2d42;
 }
 
-/* Farm Card Header */
 .farmer-layout.dark .farm-header h3 {
   color: #f1f5f9;
 }
 
-/* Badge */
 .farmer-layout.dark .badge {
   background-color: #1e3a8a;
   color: #60a5fa;
 }
 
-/* Farm Details */
 .farmer-layout.dark .farm-details p {
   color: #cbd5e1;
 }
 
-/* Button Edit */
 .farmer-layout.dark .btn-edit {
   background-color: #1e3a8a;
   color: #60a5fa;
@@ -959,7 +929,6 @@ const handleLogout = async () => {
   color: white;
 }
 
-/* Button View */
 .farmer-layout.dark .btn-view {
   background-color: #5b21b6;
   color: #c4b5fd;
@@ -970,12 +939,10 @@ const handleLogout = async () => {
   color: white;
 }
 
-/* Modal Overlay */
 .farmer-layout.dark .modal-overlay {
   background-color: rgba(0, 0, 0, 0.7);
 }
 
-/* Modal Dialog */
 .farmer-layout.dark .modal-dialog {
   background-color: #131b2e;
   border: 1px solid #1e293b;
@@ -983,7 +950,6 @@ const handleLogout = async () => {
   color: #f3f4f6;
 }
 
-/* Modal Header */
 .farmer-layout.dark .modal-header {
   background-color: #1a2338;
   border-bottom: 1px solid #2d3f52;
@@ -994,7 +960,6 @@ const handleLogout = async () => {
   color: #f1f5f9;
 }
 
-/* Close Button */
 .farmer-layout.dark .close-btn {
   color: #94a3b8;
 }
@@ -1003,7 +968,6 @@ const handleLogout = async () => {
   color: #cbd5e1;
 }
 
-/* Form Group */
 .farmer-layout.dark .form-group label {
   color: #cbd5e1;
 }
@@ -1016,12 +980,6 @@ const handleLogout = async () => {
   border-color: #2d3f52;
 }
 
-.farmer-layout.dark .form-group input::placeholder,
-.farmer-layout.dark .form-group textarea::placeholder,
-.farmer-layout.dark .form-group select::placeholder {
-  color: #64748b;
-}
-
 .farmer-layout.dark .form-group input:focus,
 .farmer-layout.dark .form-group textarea:focus,
 .farmer-layout.dark .form-group select:focus {
@@ -1030,7 +988,6 @@ const handleLogout = async () => {
   background-color: #1a2338;
 }
 
-/* Coordinates Section */
 .farmer-layout.dark .coordinates-section {
   border-top: 1px solid #2d3f52;
 }
@@ -1039,12 +996,10 @@ const handleLogout = async () => {
   color: #cbd5e1;
 }
 
-/* Error Text */
 .farmer-layout.dark .error-text {
   color: #f87171;
 }
 
-/* Form Actions */
 .farmer-layout.dark .form-actions {
   border-top: 1px solid #2d3f52;
 }

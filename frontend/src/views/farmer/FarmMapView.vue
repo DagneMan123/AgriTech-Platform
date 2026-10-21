@@ -762,9 +762,7 @@ const handleLogout = async () => {
   font-style: italic;
 }
 
-/* =========================================================
-   Dark Mode Overrides
-   ========================================================= */
+
 .farmer-layout.dark {
   background-color: #0b0f17;
   color: #f3f4f6;
