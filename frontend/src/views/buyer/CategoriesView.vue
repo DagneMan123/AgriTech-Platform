@@ -1,18 +1,11 @@
 <template>
   <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-800']">
-    
-    <!-- Sidebar Container (Responsive) -->
     <div :class="['fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full']">
       <BuyerSidebar @logout="handleLogout" />
     </div>
-
-    <!-- Mobile Backdrop -->
     <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
-
-    <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section (Matching Farmer Dashboard) -->
       <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Product Categories</h1>
@@ -20,24 +13,6 @@
         </div>
         <div class="flex items-center gap-3 flex-shrink-0 flex-wrap">
           <!-- Sort Dropdown -->
-          <select 
-            v-model="sortBy"
-            :class="['px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-100 border-slate-300 text-slate-700']"
-          >
-            <option value="name">Sort by: Name (A-Z)</option>
-            <option value="products">Sort by: Most Products</option>
-          </select>
-
-          <!-- Search Category Input -->
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search category..."
-              :class="['pl-9 pr-4 py-2 border rounded-lg text-xs focus:outline-none focus:border-blue-500 w-44 sm:w-60', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-100 border-slate-300 text-slate-700']"
-            />
-            <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400"></i>
-          </div>
         </div>
       </div>
 
