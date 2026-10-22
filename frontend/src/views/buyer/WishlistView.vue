@@ -33,40 +33,6 @@
         </div>
 
         <div class="flex items-center gap-3 flex-wrap">
-          <!-- Clear All Wishlist Items Button -->
-          <button 
-            v-if="wishlistItems.length > 0"
-            @click="clearAllWishlist" 
-            :class="['px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-[#0b0f19] border-red-500/40 text-red-400 hover:bg-red-500/10' : 'bg-white border-red-200 text-red-600 hover:bg-red-50']"
-          >
-            <i class="fas fa-trash-alt"></i> Clear All
-          </button>
-
-          <!-- Search Input -->
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search wishlist..."
-              :class="['pl-9 pr-4 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-blue-500 w-44 sm:w-60', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100 placeholder:text-slate-500' : 'bg-white border-blue-200 text-slate-800 placeholder:text-slate-400']"
-            />
-            <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400"></i>
-          </div>
-
-          <!-- Dark/Light Mode Toggle Button -->
-          <button 
-            @click="toggleDarkMode" 
-            type="button"
-            :class="[
-              'flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-300 cursor-pointer shadow-sm focus:outline-none',
-              darkMode 
-                ? 'bg-[#0b0f19] border-blue-500/40 text-amber-400 hover:bg-slate-800' 
-                : 'bg-white border-blue-200 text-amber-500 hover:bg-slate-50'
-            ]"
-            :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-          >
-            <span class="text-base select-none">{{ darkMode ? '🌙' : '☀️' }}</span>
-          </button>
         </div>
       </header>
 
