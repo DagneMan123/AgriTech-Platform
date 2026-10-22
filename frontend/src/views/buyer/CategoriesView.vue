@@ -12,31 +12,17 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section -->
-      <header :class="['flex flex-wrap justify-between items-center gap-4 mb-6 p-6 rounded-2xl border transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 shadow-sm' : 'bg-white border-blue-200/80 shadow-sm']">
-        <div class="flex items-center gap-3">
-          <!-- Mobile Sidebar Hamburger Toggle Button -->
-          <button 
-            @click="sidebarOpen = !sidebarOpen" 
-            :class="['lg:hidden p-2.5 rounded-xl border transition-colors cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
-            aria-label="Toggle Navigation Menu"
-          >
-            <i class="fas" :class="sidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
-          </button>
-
-          <div>
-            <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight flex items-center gap-3">
-              <i class="fas fa-th-large text-blue-500"></i> Product Categories
-            </h1>
-            <p :class="['text-sm mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Browse and explore agricultural products by specialized category</p>
-          </div>
+      <!-- Header Section (Matching Farmer Dashboard) -->
+      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+        <div class="flex-1">
+          <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Product Categories</h1>
+          <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and explore agricultural products by specialized category</p>
         </div>
-
-        <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-3 flex-shrink-0 flex-wrap">
           <!-- Sort Dropdown -->
           <select 
             v-model="sortBy"
-            :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']"
+            :class="['px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-100 border-slate-300 text-slate-700']"
           >
             <option value="name">Sort by: Name (A-Z)</option>
             <option value="products">Sort by: Most Products</option>
@@ -48,12 +34,12 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search category..."
-              :class="['pl-9 pr-4 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 w-44 sm:w-60', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']"
+              :class="['pl-9 pr-4 py-2 border rounded-lg text-xs focus:outline-none focus:border-blue-500 w-44 sm:w-60', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-slate-100 border-slate-300 text-slate-700']"
             />
             <i class="fas fa-search absolute left-3 top-2.5 text-xs text-slate-400"></i>
           </div>
         </div>
-      </header>
+      </div>
 
       <!-- Quick Summary Stats Grid -->
       <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
