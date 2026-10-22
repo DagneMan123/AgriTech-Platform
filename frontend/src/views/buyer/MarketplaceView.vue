@@ -12,35 +12,23 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section (Border changed to Blue) -->
-      <header :class="['flex flex-wrap justify-between items-center gap-4 mb-6 p-6 rounded-2xl border transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 shadow-sm' : 'bg-white border-blue-200/80 shadow-sm']">
-        <div class="flex items-center gap-3">
-          <!-- Mobile Sidebar Hamburger Toggle Button -->
-          <button 
-            @click="sidebarOpen = !sidebarOpen" 
-            :class="['lg:hidden p-2.5 rounded-xl border transition-colors cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
-            aria-label="Toggle Navigation Menu"
-          >
-            <i class="fas" :class="sidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
-          </button>
-
-          <div>
-            <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">Marketplace</h1>
-            <p :class="['text-sm mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Browse and discover fresh agricultural products</p>
-          </div>
+      <!-- Header Section (Matching Farmer Portal Full Width) -->
+      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+        <div class="flex-1">
+          <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Marketplace</h1>
+          <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and discover fresh agricultural products</p>
         </div>
-
-        <div class="flex items-center gap-3">
-          <!-- Filters & Refresh Action Buttons -->
-          <button @click="showFilters = !showFilters" :class="['px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <!-- Filters Button -->
+          <button @click="showFilters = !showFilters" :class="['px-4 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']">
             <i class="fas fa-sliders-h"></i> Filters
           </button>
-          <button @click="refreshProducts" :class="['px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
+          <!-- Refresh Button -->
+          <button @click="refreshProducts" :class="['px-4 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']">
             <i class="fas fa-sync-alt"></i> Refresh
           </button>
-
         </div>
-      </header>
+      </div>
 
       <!-- Summary Statistics Grid (Cards Border changed to Blue) -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Marketplace summary statistics">
