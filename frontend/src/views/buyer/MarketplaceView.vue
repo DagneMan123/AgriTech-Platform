@@ -211,6 +211,18 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
+// Product Interface Type Definition to fix implicit 'any' error on 'p'
+interface Product {
+  id: number
+  name: string
+  farmer_name?: string
+  category?: string
+  price?: number
+  original_price?: number
+  image?: string
+  rating?: number
+}
+
 const router = useRouter()
 const marketplaceStore = useMarketplaceStore()
 const buyerStore = useBuyerStore()
@@ -242,11 +254,11 @@ onMounted(async () => {
   }
 })
 
-const safeProducts = computed(() => {
+const safeProducts = computed<Product[]>(() => {
   const raw = marketplaceStore.products
-  if (Array.isArray(raw)) return raw
+  if (Array.isArray(raw)) return raw as Product[]
   if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) {
-    return (raw as any).data
+    return (raw as any).data as Product[]
   }
   return []
 })
@@ -317,7 +329,7 @@ const viewProduct = (id: number) => {
   router.push(`/app/buyer/products/${id}`)
 }
 
-const addToCart = async (product: any) => {
+const addToCart = async (product: Product) => {
   try {
     await buyerStore.addToCart({
       product_id: product.id,
@@ -329,7 +341,7 @@ const addToCart = async (product: any) => {
   }
 }
 
-const toggleWishlist = async (product: any) => {
+const toggleWishlist = async (product: Product) => {
   try {
     await buyerStore.addToWishlist({ product_id: product.id })
   } catch (error) {

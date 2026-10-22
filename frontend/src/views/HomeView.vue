@@ -185,7 +185,7 @@
               >
             </div>
             <div>
-              <h3 class="text-4xl font-bold mb-8" :style="{ color: colors.textHeading }">Why AgriConnect?</h3>
+              <h3 class="text-4xl font-bold mb-8" :style="{ color: colors.textHeading }">Why AgriTech?</h3>
               <div class="space-y-6">
                 <!-- Increased Income -->
                 <div class="flex gap-4">
@@ -400,7 +400,7 @@
       >
         <div class="max-w-4xl mx-auto px-4 text-center">
           <h3 class="text-5xl font-bold mb-4 text-white">Ready to Transform Agriculture?</h3>
-          <p class="text-2xl mb-4 text-white">Join thousands of farmers, buyers, and businesses already using AgriConnect</p>
+          <p class="text-2xl mb-4 text-white">Join thousands of farmers, buyers, and businesses already using AgriTech</p>
           <p class="text-lg mb-10 max-w-2xl mx-auto text-white">Start growing your business today with our comprehensive platform built for the agricultural ecosystem</p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
@@ -432,7 +432,7 @@
               <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <span class="text-white font-bold text-lg">A</span>
               </div>
-              <span class="font-bold" :style="{ color: colors.textHeading }">AgriConnect</span>
+              <span class="font-bold" :style="{ color: colors.textHeading }">AgriTech</span>
             </div>
             <p class="text-sm" :style="{ color: colors.textMuted }">Connecting farmers with markets for sustainable agriculture.</p>
           </div>
@@ -474,7 +474,7 @@
           class="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
           :style="{ borderTopColor: colors.border }"
         >
-          <p class="text-sm" :style="{ color: colors.textMuted }">2026 AgriConnect. All rights reserved.</p>
+          <p class="text-sm" :style="{ color: colors.textMuted }">2026 AgriTech. All rights reserved.</p>
           <div class="flex space-x-6">
             <a href="#" class="transition hover:opacity-80" :style="{ color: colors.textMuted }">Twitter</a>
             <a href="#" class="transition hover:opacity-80" :style="{ color: colors.textMuted }">Facebook</a>
@@ -534,7 +534,7 @@ onMounted(() => {
 
 <style scoped>
 /* Animations */
-@keyframes fadeInUp {
+@keyframes fadeInUp { 
   from {
     opacity: 0;
     transform: translateY(30px);
