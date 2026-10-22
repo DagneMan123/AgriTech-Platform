@@ -12,41 +12,23 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section -->
-      <header class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div class="flex items-center gap-3">
-          <!-- Mobile Sidebar Hamburger Toggle Button -->
-          <button 
-            @click="sidebarOpen = !sidebarOpen" 
-            :class="['lg:hidden p-2.5 rounded-xl border transition-colors cursor-pointer', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50']"
-            aria-label="Toggle Navigation Menu"
-          >
-            <i class="fas" :class="sidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
-          </button>
-
-          <div>
-            <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">Buyer Dashboard</h1>
-            <p :class="['text-sm mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Manage your orders, deliveries, and purchases</p>
+      <!-- Header Section (Matching Farmer Portal Header - Responsive) -->
+      <div :class="['border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[30px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-1">
+            <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Buyer Dashboard</h1>
+            <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Manage your orders, deliveries, and purchases</p>
           </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <!-- Circular Dark/Light Mode Toggle Button -->
-          <button 
-            @click="toggleDarkMode" 
-            type="button"
-            :class="[
-              'flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-300 cursor-pointer shadow-sm focus:outline-none',
-              darkMode 
-                ? 'bg-[#131b2e] border-slate-700/80 text-amber-400 hover:bg-slate-800' 
-                : 'bg-white border-slate-200 text-amber-500 hover:bg-slate-50'
-            ]"
+          <button
+            @click="toggleDarkMode"
+            :class="['w-[42px] h-[42px] rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer flex-shrink-0', darkMode ? 'bg-[#131b2e] border-slate-700 text-amber-400 hover:bg-slate-800 hover:border-emerald-500' : 'bg-white border-slate-300 text-amber-500 hover:bg-slate-50 hover:border-emerald-500']"
             :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
           >
-            <span class="text-base select-none">{{ darkMode ? '🌙' : '☀️' }}</span>
+            <span class="text-xl select-none">{{ darkMode ? '☀️' : '🌙' }}</span>
           </button>
         </div>
-      </header>
+      </div>
 
       <!-- Error Message Banner -->
       <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl mb-6 text-sm font-medium" role="alert">
