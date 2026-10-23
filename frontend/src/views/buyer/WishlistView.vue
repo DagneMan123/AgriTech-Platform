@@ -12,7 +12,7 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section (Matching Farmer Dashboard) -->
+      <!-- Header Section -->
       <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">My Wishlist</h1>
@@ -170,12 +170,8 @@ const loading = ref(false)
 const sidebarOpen = ref(false)
 const searchQuery = ref('')
 
-// Professional Fallback Sample Data
-const wishlistItems = ref([
-  { id: 101, product_id: 1, name: 'Organic Teff (White)', farmer_name: 'Debre Zeit Cooperative', price: 6500, in_stock: true, image: '' },
-  { id: 102, product_id: 2, name: 'Fresh Avocado (Has)', farmer_name: 'Jimma Integrated Farm', price: 120, in_stock: true, image: '' },
-  { id: 103, product_id: 3, name: 'Red Kidney Beans', farmer_name: 'Hawassa Seed Enterprise', price: 4200, in_stock: false, image: '' }
-])
+// ሳምፕል ዳታው ሙሉ በሙሉ ተወግዷል፤ አሁን የሚጀምረው በባዶ አርሬ (Empty Array) ነው
+const wishlistItems = ref([])
 
 const darkMode = computed(() => themeStore.isDark)
 const toggleDarkMode = () => themeStore.toggleTheme()
@@ -192,7 +188,7 @@ const fetchWishlist = async () => {
     if (response.ok) {
       const data = await response.json()
       const resData = Array.isArray(data) ? data : (data.data || [])
-      if (resData.length > 0) wishlistItems.value = resData
+      wishlistItems.value = resData
     }
   } catch (err) {
     console.error('Error fetching wishlist:', err)
@@ -217,13 +213,20 @@ const filteredWishlist = computed(() => {
   )
 })
 
-const removeFromWishlist = (id) => {
-  wishlistItems.value = wishlistItems.value.filter(item => item.id !== id)
-}
-
-const clearAllWishlist = () => {
-  if (confirm('Are you sure you want to clear your wishlist?')) {
-    wishlistItems.value = []
+const removeFromWishlist = async (id) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/buyer/wishlist/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${auth.token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    if (response.ok) {
+      wishlistItems.value = wishlistItems.value.filter(item => item.id !== id)
+    }
+  } catch (err) {
+    console.error('Error removing from wishlist:', err)
   }
 }
 
