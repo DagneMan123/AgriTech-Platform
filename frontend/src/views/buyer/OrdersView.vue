@@ -12,11 +12,11 @@
           <p class="page-subtitle">Track and manage your purchases seamlessly</p>
         </div>
         <div class="header-actions">
-         
+          
         </div>
       </div>
 
-      <!-- Stats Section (Placed First) -->
+      <!-- Stats Section -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon total">
@@ -56,9 +56,9 @@
         </div>
       </div>
 
-      <!-- Filters Section (Placed Below Stats Cards) -->
+      <!-- Filters Section (Without Apply/Clear Buttons - Auto Applies) -->
       <div class="filter-section">
-        <div class="filter-grid">
+        <div class="filter-grid-3">
           <div class="filter-group">
             <label>Status:</label>
             <select v-model="selectedStatus" class="filter-select">
@@ -88,10 +88,6 @@
               <option value="highest-amount">Highest Amount</option>
               <option value="lowest-amount">Lowest Amount</option>
             </select>
-          </div>
-          <div class="filter-actions">
-            <button @click="applyFilters" class="btn-primary">Apply Filters</button>
-            <button @click="clearFilters" class="btn-secondary">Clear Filters</button>
           </div>
         </div>
       </div>
@@ -220,7 +216,7 @@
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
 const buyerStore = useBuyerStore()
@@ -240,6 +236,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load orders:', error)
   }
+})
+
+// Reset pagination when filters change
+watch([selectedStatus, selectedDateRange, sortBy], () => {
+  currentPage.value = 1
 })
 
 // Computed properties with safe Array check
@@ -332,17 +333,6 @@ const formatStatus = (status: string) => {
 const isStatusReached = (checkStatus: string, orderStatus: string) => {
   const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
   return statusOrder.indexOf(orderStatus) >= statusOrder.indexOf(checkStatus)
-}
-
-const applyFilters = () => {
-  currentPage.value = 1
-}
-
-const clearFilters = () => {
-  selectedStatus.value = ''
-  selectedDateRange.value = ''
-  sortBy.value = 'newest'
-  currentPage.value = 1
 }
 
 const refreshOrders = async () => {
@@ -492,7 +482,7 @@ const handleLogout = async () => {
   font-weight: 500;
 }
 
-/* Filter Section (Placed Below Stats Cards) */
+/* Filter Section (3 Columns Layout without buttons) */
 .filter-section {
   background: #111827;
   border: 1px solid #1f2937;
@@ -502,11 +492,10 @@ const handleLogout = async () => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
-.filter-grid {
+.filter-grid-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr) auto;
-  gap: 16px;
-  align-items: flex-end;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 
 .filter-group {
@@ -538,26 +527,6 @@ const handleLogout = async () => {
   border-color: #6366f1;
   outline: none;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.filter-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  height: 42px;
-}
-
-.filter-actions button {
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
 }
 
 .empty-state {
@@ -904,13 +873,8 @@ const handleLogout = async () => {
   .orders-container {
     padding: 25px 15px;
   }
-  .filter-grid {
+  .filter-grid-3 {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .filter-actions {
-    grid-column: span 2;
-    height: auto;
-    justify-content: flex-start;
   }
 }
 
@@ -928,15 +892,8 @@ const handleLogout = async () => {
   .header-actions button {
     flex: 1;
   }
-  .filter-grid {
+  .filter-grid-3 {
     grid-template-columns: 1fr;
-  }
-  .filter-actions {
-    grid-column: span 1;
-    width: 100%;
-  }
-  .filter-actions button {
-    flex: 1;
   }
 }
 </style>
