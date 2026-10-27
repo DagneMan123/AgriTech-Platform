@@ -12,16 +12,11 @@
           <p class="page-subtitle">Track and manage your purchases seamlessly</p>
         </div>
         <div class="header-actions">
-          <button @click="showFilters = !showFilters" class="btn-secondary">
-            <i class="fas fa-sliders-h"></i> Filters
-          </button>
-          <button @click="refreshOrders" class="btn-secondary">
-            <i class="fas fa-sync-alt"></i> Refresh
-          </button>
+         
         </div>
       </div>
 
-      <!-- Stats Section -->
+      <!-- Stats Section (Placed First) -->
       <div class="stats-section">
         <div class="stat-card">
           <div class="stat-icon total">
@@ -61,8 +56,8 @@
         </div>
       </div>
 
-      <!-- Filters Section (Now Placed Below the Stats Cards) -->
-      <div v-if="showFilters" class="filter-section">
+      <!-- Filters Section (Placed Below Stats Cards) -->
+      <div class="filter-section">
         <div class="filter-grid">
           <div class="filter-group">
             <label>Status:</label>
@@ -233,7 +228,6 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 // State
-const showFilters = ref(false)
 const selectedStatus = ref('')
 const selectedDateRange = ref('')
 const sortBy = ref('newest')
@@ -349,7 +343,6 @@ const clearFilters = () => {
   selectedDateRange.value = ''
   sortBy.value = 'newest'
   currentPage.value = 1
-  showFilters.value = false
 }
 
 const refreshOrders = async () => {
@@ -434,6 +427,11 @@ const handleLogout = async () => {
   gap: 12px;
 }
 
+.header-actions button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .stats-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -494,35 +492,7 @@ const handleLogout = async () => {
   font-weight: 500;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  background: #111827;
-  border-radius: 14px;
-  border: 2px dashed #374151;
-  margin: 30px 0;
-}
-
-.empty-icon {
-  font-size: 56px;
-  color: #4b5563;
-  margin-bottom: 16px;
-}
-
-.empty-state h2 {
-  font-size: 22px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 6px 0;
-}
-
-.empty-state p {
-  font-size: 15px;
-  color: #9ca3af;
-  margin: 0 0 20px 0;
-}
-
-/* Professional Filter Grid Layout (Placed Below Stats) */
+/* Filter Section (Placed Below Stats Cards) */
 .filter-section {
   background: #111827;
   border: 1px solid #1f2937;
@@ -588,6 +558,34 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: #111827;
+  border-radius: 14px;
+  border: 2px dashed #374151;
+  margin: 30px 0;
+}
+
+.empty-icon {
+  font-size: 56px;
+  color: #4b5563;
+  margin-bottom: 16px;
+}
+
+.empty-state h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.empty-state p {
+  font-size: 15px;
+  color: #9ca3af;
+  margin: 0 0 20px 0;
 }
 
 .orders-list {
