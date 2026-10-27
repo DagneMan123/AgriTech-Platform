@@ -9,7 +9,7 @@
       <div class="orders-header">
         <div>
           <h1 class="page-title">My Orders</h1>
-          <p class="page-subtitle">Track and manage your purchases</p>
+          <p class="page-subtitle">Track and manage your purchases seamlessly</p>
         </div>
         <div class="header-actions">
           <button @click="showFilters = !showFilters" class="btn-secondary">
@@ -62,7 +62,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="buyerStore.orders.length === 0" class="empty-state">
+      <div v-if="totalOrders === 0" class="empty-state">
         <div class="empty-icon">
           <i class="fas fa-inbox"></i>
         </div>
@@ -114,7 +114,7 @@
       </div>
 
       <!-- Orders List -->
-      <div v-if="buyerStore.orders.length > 0" class="orders-list">
+      <div v-if="filteredAndSortedOrders.length > 0" class="orders-list">
         <div v-for="order in filteredAndSortedOrders" :key="order.id" class="order-card">
           <!-- Order Header -->
           <div class="order-header">
@@ -208,12 +208,12 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="buyerStore.orders.length > 0" class="pagination">
-        <button :disabled="currentPage === 1" class="btn-pagination">
+      <div v-if="totalOrders > 0" class="pagination">
+        <button :disabled="currentPage === 1" @click="currentPage--" class="btn-pagination">
           <i class="fas fa-chevron-left"></i> Previous
         </button>
         <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button :disabled="currentPage === totalPages" class="btn-pagination">
+        <button :disabled="currentPage === totalPages" @click="currentPage++" class="btn-pagination">
           Next <i class="fas fa-chevron-right"></i>
         </button>
       </div>
@@ -248,40 +248,40 @@ onMounted(async () => {
   }
 })
 
-// Computed properties
-const filteredAndSortedOrders = computed(() => {
-  let orders = [...buyerStore.orders]
+// Computed properties with safe Array check
+const ordersArray = computed(() => {
+  return Array.isArray(buyerStore.orders) ? buyerStore.orders : []
+})
 
-  // Filter by status
+const filteredAndSortedOrders = computed(() => {
+  let orders = [...ordersArray.value]
+
   if (selectedStatus.value) {
-    orders = orders.filter(o => o.status === selectedStatus.value)
+    orders = orders.filter(o => o && o.status === selectedStatus.value)
   }
 
-  // Filter by date range
   if (selectedDateRange.value) {
-    const now = new Date()
     const createdDate = new Date()
     switch (selectedDateRange.value) {
       case 'today':
         createdDate.setHours(0, 0, 0, 0)
-        orders = orders.filter(o => new Date(o.created_at) >= createdDate)
+        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
         break
       case 'week':
         createdDate.setDate(createdDate.getDate() - 7)
-        orders = orders.filter(o => new Date(o.created_at) >= createdDate)
+        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
         break
       case 'month':
         createdDate.setDate(createdDate.getDate() - 30)
-        orders = orders.filter(o => new Date(o.created_at) >= createdDate)
+        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
         break
       case 'year':
         createdDate.setFullYear(createdDate.getFullYear() - 1)
-        orders = orders.filter(o => new Date(o.created_at) >= createdDate)
+        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
         break
     }
   }
 
-  // Sort
   switch (sortBy.value) {
     case 'oldest':
       orders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -301,11 +301,11 @@ const filteredAndSortedOrders = computed(() => {
   return orders.slice((currentPage.value - 1) * itemsPerPage, currentPage.value * itemsPerPage)
 })
 
-const totalOrders = computed(() => buyerStore.orders.length)
-const pendingOrders = computed(() => buyerStore.orders.filter(o => o.status === 'pending').length)
-const shippedOrders = computed(() => buyerStore.orders.filter(o => o.status === 'shipped').length)
-const deliveredOrders = computed(() => buyerStore.orders.filter(o => o.status === 'delivered').length)
-const totalPages = computed(() => Math.ceil(buyerStore.orders.length / itemsPerPage))
+const totalOrders = computed(() => ordersArray.value.length)
+const pendingOrders = computed(() => ordersArray.value.filter(o => o?.status === 'pending').length)
+const shippedOrders = computed(() => ordersArray.value.filter(o => o?.status === 'shipped').length)
+const deliveredOrders = computed(() => ordersArray.value.filter(o => o?.status === 'delivered').length)
+const totalPages = computed(() => Math.ceil(totalOrders.value / itemsPerPage) || 1)
 
 // Methods
 const formatDate = (date: string | null) => {
@@ -342,7 +342,6 @@ const isStatusReached = (checkStatus: string, orderStatus: string) => {
 
 const applyFilters = () => {
   currentPage.value = 1
-  console.log('Filters applied')
 }
 
 const clearFilters = () => {
@@ -372,7 +371,6 @@ const leaveReview = (orderId: number) => {
 const cancelOrder = async (orderId: number) => {
   if (confirm('Are you sure you want to cancel this order?')) {
     try {
-      // API call to cancel order
       console.log('Cancelling order:', orderId)
       await buyerStore.fetchOrders()
     } catch (error) {
@@ -382,7 +380,6 @@ const cancelOrder = async (orderId: number) => {
 }
 
 const contactSupport = (orderId: number) => {
-  // Open support ticket
   console.log('Contacting support for order:', orderId)
 }
 
@@ -390,44 +387,45 @@ const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
-
 </script>
 
 <style scoped>
-/* Layout */
 .buyer-layout {
   display: flex;
   height: 100vh;
+  background-color: #0b0f19;
+  color: #f3f4f6;
+  font-family: 'Inter', sans-serif;
 }
 
 .orders-container {
   margin-left: 260px;
   flex: 1;
   overflow-y: auto;
-  background-color: #f5f5f5;
+  background-color: #0b0f19;
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 40px 30px;
 }
 
-/* Header */
 .orders-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
   gap: 20px;
 }
 
 .page-title {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
 }
 
 .page-subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 15px;
+  color: #9ca3af;
   margin: 0;
 }
 
@@ -436,56 +434,46 @@ const handleLogout = async () => {
   gap: 12px;
 }
 
-/* Stats Section */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 22px;
   display: flex;
   gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  border-color: #374151;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   color: white;
   flex-shrink: 0;
 }
 
-.stat-icon.total {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.stat-icon.pending {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.stat-icon.shipped {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.stat-icon.delivered {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
+.stat-icon.total { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+.stat-icon.pending { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.stat-icon.shipped { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+.stat-icon.delivered { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 
 .stat-content {
   display: flex;
@@ -494,53 +482,53 @@ const handleLogout = async () => {
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  color: #1f2937;
+  color: #ffffff;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 2px;
+  font-weight: 500;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 80px 20px;
-  background: white;
-  border-radius: 12px;
-  border: 2px dashed #d1d5db;
-  margin: 40px 0;
+  background: #111827;
+  border-radius: 14px;
+  border: 2px dashed #374151;
+  margin: 30px 0;
 }
 
 .empty-icon {
-  font-size: 64px;
-  color: #d1d5db;
-  margin-bottom: 20px;
+  font-size: 56px;
+  color: #4b5563;
+  margin-bottom: 16px;
 }
 
 .empty-state h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+  color: #ffffff;
+  margin: 0 0 6px 0;
 }
 
 .empty-state p {
-  font-size: 16px;
-  color: #6b7280;
-  margin: 0 0 24px 0;
+  font-size: 15px;
+  color: #9ca3af;
+  margin: 0 0 20px 0;
 }
 
-/* Filter Section */
 .filter-section {
-  background: white;
-  border-radius: 12px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
   padding: 24px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
 .filter-group-row {
@@ -557,26 +545,27 @@ const handleLogout = async () => {
 }
 
 .filter-group label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #d1d5db;
 }
 
 .filter-select {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 10px 14px;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
   font-size: 14px;
-  background: white;
+  color: #f3f4f6;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .filter-select:hover,
 .filter-select:focus {
-  border-color: #3b82f6;
+  border-color: #6366f1;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .filter-actions {
@@ -584,7 +573,6 @@ const handleLogout = async () => {
   gap: 12px;
 }
 
-/* Orders List */
 .orders-list {
   display: flex;
   flex-direction: column;
@@ -592,26 +580,27 @@ const handleLogout = async () => {
 }
 
 .order-card {
-  background: white;
-  border-radius: 12px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
-  border-left: 4px solid #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  border-left: 4px solid #6366f1;
 }
 
 .order-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: #374151;
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
 }
 
-/* Order Header */
 .order-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(to right, #f9fafb, #ffffff);
+  padding: 18px 24px;
+  border-bottom: 1px solid #1f2937;
+  background: #161e2e;
 }
 
 .order-title {
@@ -621,71 +610,51 @@ const handleLogout = async () => {
 }
 
 .order-id {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  color: #1f2937;
+  color: #ffffff;
   margin: 0;
 }
 
 .order-date {
   font-size: 13px;
-  color: #6b7280;
+  color: #9ca3af;
   margin: 0;
 }
 
 .order-status {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .status-badge {
   display: inline-block;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-confirmed {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-shipped {
-  background: #e9d5ff;
-  color: #6b21a8;
-}
-
-.status-delivered {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-cancelled {
-  background: #fee2e2;
-  color: #991b1b;
-}
+.status-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.status-confirmed { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.status-shipped { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.status-delivered { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 
 .progress-indicator {
-  color: #9ca3af;
-  font-size: 14px;
+  color: #6b7280;
+  font-size: 13px;
 }
 
-/* Order Summary */
 .order-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 18px 24px;
+  border-bottom: 1px solid #1f2937;
 }
 
 .summary-item {
@@ -695,36 +664,36 @@ const handleLogout = async () => {
 }
 
 .summary-item .label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .summary-item .value {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: #f3f4f6;
 }
 
 .summary-item .amount {
-  font-size: 18px;
-  color: #10b981;
+  font-size: 16px;
+  color: #34d399;
 }
 
-/* Items Preview */
 .items-preview {
-  padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  padding: 14px 24px;
+  border-bottom: 1px solid #1f2937;
+  background: #0d1322;
 }
 
 .preview-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .items-list {
@@ -737,12 +706,12 @@ const handleLogout = async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  padding: 5px 10px;
+  background: #1f2937;
+  border: 1px solid #374151;
   border-radius: 6px;
-  font-size: 13px;
-  color: #374151;
+  font-size: 12px;
+  color: #e5e7eb;
 }
 
 .item-name {
@@ -754,19 +723,17 @@ const handleLogout = async () => {
 }
 
 .more-items {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #6b7280;
+  background: #111827;
+  color: #9ca3af;
 }
 
-/* Order Timeline */
 .order-timeline {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  padding: 18px 24px;
+  border-bottom: 1px solid #1f2937;
+  background: #0d1322;
   overflow-x: auto;
   gap: 4px;
 }
@@ -775,9 +742,9 @@ const handleLogout = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
-  opacity: 0.4;
+  opacity: 0.35;
   transition: all 0.3s;
 }
 
@@ -786,49 +753,46 @@ const handleLogout = async () => {
 }
 
 .timeline-dot {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: #e5e7eb;
-  border: 3px solid white;
-  transition: all 0.3s;
+  background: #374151;
+  border: 3px solid #111827;
 }
 
 .timeline-item.active .timeline-dot {
-  background: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
 .timeline-label {
   font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   white-space: nowrap;
-  text-align: center;
 }
 
 .timeline-line {
   flex: 1;
   height: 2px;
-  background: #e5e7eb;
-  margin: 8px 0;
+  background: #374151;
+  margin: 6px 0;
   min-width: 20px;
 }
 
-/* Order Actions */
 .order-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
-  padding: 20px 24px;
+  padding: 18px 24px;
 }
 
 .btn-action {
-  padding: 10px 16px;
+  padding: 9px 14px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
@@ -839,63 +803,66 @@ const handleLogout = async () => {
 }
 
 .btn-primary {
-  background: #3b82f6;
+  background: #6366f1;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #4f46e5;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .btn-secondary {
-  background: #f0f0f0;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
 }
 
 .btn-secondary:hover {
-  background: #e5e7eb;
+  background: #374151;
+  border-color: #4b5563;
 }
 
 .btn-danger {
-  background: #fee2e2;
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .btn-danger:hover {
-  background: #fecaca;
+  background: rgba(239, 68, 68, 0.25);
 }
 
 .btn-outline {
-  background: white;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #9ca3af;
+  border: 1px solid #374151;
 }
 
 .btn-outline:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #1f2937;
+  color: #ffffff;
+  border-color: #4b5563;
 }
 
-/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  margin-top: 40px;
-  padding: 20px;
+  gap: 16px;
+  margin-top: 35px;
+  padding: 10px;
 }
 
 .btn-pagination {
-  padding: 10px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #1f2937;
+  padding: 8px 14px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #111827;
+  color: #f3f4f6;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.3s;
   display: flex;
   align-items: center;
@@ -903,152 +870,40 @@ const handleLogout = async () => {
 }
 
 .btn-pagination:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: #1f2937;
+  border-color: #4b5563;
 }
 
 .btn-pagination:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .page-info {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 600;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .orders-container {
-    padding: 30px 15px;
-  }
-
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .order-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .order-actions {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 25px 15px;
   }
 }
 
 @media (max-width: 768px) {
   .orders-container {
     margin-left: 0;
-    padding: 20px 15px;
+    padding: 20px 12px;
   }
-
   .orders-header {
     flex-direction: column;
   }
-
   .header-actions {
     width: 100%;
   }
-
   .header-actions button {
     flex: 1;
-  }
-
-  .page-title {
-    font-size: 28px;
-  }
-
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .stat-card {
-    padding: 16px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 22px;
-  }
-
-  .filter-group-row {
-    grid-template-columns: 1fr;
-  }
-
-  .order-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .order-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .order-timeline {
-    overflow-x: auto;
-    padding: 16px;
-    gap: 2px;
-  }
-
-  .order-actions {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 480px) {
-  .orders-container {
-    padding: 16px 12px;
-  }
-
-  .page-title {
-    font-size: 24px;
-  }
-
-  .stats-section {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-card {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .order-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .order-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-group-row {
-    grid-template-columns: 1fr;
-  }
-
-  .order-timeline {
-    flex-wrap: wrap;
-  }
-
-  .timeline-line {
-    display: none;
-  }
-
-  .btn-action {
-    padding: 8px 12px;
-    font-size: 12px;
   }
 }
 </style>
