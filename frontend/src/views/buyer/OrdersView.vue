@@ -61,21 +61,9 @@
         </div>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="totalOrders === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-inbox"></i>
-        </div>
-        <h2>No orders yet</h2>
-        <p>Start shopping to see your orders here</p>
-        <router-link to="/buyer/marketplace" class="btn-primary">
-          <i class="fas fa-shopping-bag"></i> Continue Shopping
-        </router-link>
-      </div>
-
-      <!-- Filters Section -->
+      <!-- Filters Section (Now Placed Below the Stats Cards) -->
       <div v-if="showFilters" class="filter-section">
-        <div class="filter-group-row">
+        <div class="filter-grid">
           <div class="filter-group">
             <label>Status:</label>
             <select v-model="selectedStatus" class="filter-select">
@@ -106,11 +94,23 @@
               <option value="lowest-amount">Lowest Amount</option>
             </select>
           </div>
+          <div class="filter-actions">
+            <button @click="applyFilters" class="btn-primary">Apply Filters</button>
+            <button @click="clearFilters" class="btn-secondary">Clear Filters</button>
+          </div>
         </div>
-        <div class="filter-actions">
-          <button @click="applyFilters" class="btn-primary">Apply Filters</button>
-          <button @click="clearFilters" class="btn-secondary">Clear Filters</button>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="totalOrders === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-inbox"></i>
         </div>
+        <h2>No orders yet</h2>
+        <p>Start shopping to see your orders here</p>
+        <router-link to="/buyer/marketplace" class="btn-primary">
+          <i class="fas fa-shopping-bag"></i> Continue Shopping
+        </router-link>
       </div>
 
       <!-- Orders List -->
@@ -438,7 +438,7 @@ const handleLogout = async () => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
@@ -522,20 +522,21 @@ const handleLogout = async () => {
   margin: 0 0 20px 0;
 }
 
+/* Professional Filter Grid Layout (Placed Below Stats) */
 .filter-section {
   background: #111827;
   border: 1px solid #1f2937;
   border-radius: 14px;
   padding: 24px;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 
-.filter-group-row {
+.filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr) auto;
   gap: 16px;
-  margin-bottom: 20px;
+  align-items: flex-end;
 }
 
 .filter-group {
@@ -551,6 +552,7 @@ const handleLogout = async () => {
 }
 
 .filter-select {
+  width: 100%;
   padding: 10px 14px;
   background: #1f2937;
   border: 1px solid #374151;
@@ -570,7 +572,22 @@ const handleLogout = async () => {
 
 .filter-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  align-items: center;
+  height: 42px;
+}
+
+.filter-actions button {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .orders-list {
@@ -889,6 +906,14 @@ const handleLogout = async () => {
   .orders-container {
     padding: 25px 15px;
   }
+  .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .filter-actions {
+    grid-column: span 2;
+    height: auto;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -903,6 +928,16 @@ const handleLogout = async () => {
     width: 100%;
   }
   .header-actions button {
+    flex: 1;
+  }
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .filter-actions {
+    grid-column: span 1;
+    width: 100%;
+  }
+  .filter-actions button {
     flex: 1;
   }
 }
