@@ -45,13 +45,7 @@
 
           <!-- Header Right Actions (All Buttons Blue) -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <router-link
-              to="/buyer/contracts"
-              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
-            >
-              <Plus class="w-4 h-4" />
-              <span>Propose New Agreement</span>
-            </router-link>
+            
           </div>
         </div>
       </div>

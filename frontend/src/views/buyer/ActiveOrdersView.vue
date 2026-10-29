@@ -437,7 +437,7 @@
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t font-black text-sm">
                     <span>Total Amount:</span>
-                    <span class="text-base text-emerald-500">
+                    <span class="text-base text-blue-500">
                       ETB {{ formatNumber(order.total_amount || order.grand_total || 0) }}
                     </span>
                   </div>
@@ -717,7 +717,7 @@
             </div>
             <div class="flex justify-between items-center pt-2 border-t font-black text-sm">
               <span>Grand Total:</span>
-              <span class="text-base text-emerald-500">
+              <span class="text-base text-blue-500">
                 ETB {{ formatNumber(activeOrderForDetails.total_amount || activeOrderForDetails.grand_total || 0) }}
               </span>
             </div>
@@ -891,7 +891,6 @@ const darkMode = computed(() => themeStore.isDark)
 
 const sidebarOpen = ref(false)
 const loading = ref(false)
-const refreshing = ref(false)
 
 // Search & Filter State
 const searchQuery = ref('')
