@@ -50,12 +50,12 @@
 
       <!-- ── Stats Overview ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivered Orders</h3>
             <p class="text-2xl font-black">{{ deliveredCount }}</p>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <CheckCircle2 class="w-6 h-6" />
           </div>
         </article>
@@ -63,7 +63,7 @@
         <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Lifetime Spent</h3>
-            <p class="text-xl lg:text-2xl font-black text-emerald-500">ETB {{ formatNumber(totalDeliveredSpent) }}</p>
+            <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(totalDeliveredSpent) }}</p>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <BadgeDollarSign class="w-6 h-6" />
@@ -178,7 +178,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
-  Menu, History, Clock, Store, CheckCircle2, BadgeDollarSign,
+  Menu, History, CheckCircle2, BadgeDollarSign,
   Package, XCircle, Search, Repeat, Star
 } from 'lucide-vue-next'
 

@@ -52,12 +52,12 @@
           </div>
         </article>
 
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-emerald-500' : 'bg-white border-blue-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-blue-500' : 'bg-white border-blue-200 text-slate-900 !border-l-blue-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivered</h3>
-            <p class="text-xl font-black">{{ deliveredOrders }}</p>
+            <p class="text-xl font-black text-blue-500">{{ deliveredOrders }}</p>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <i class="fas fa-check-circle"></i>
           </div>
         </article>

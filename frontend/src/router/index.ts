@@ -66,6 +66,7 @@ const BuyerActiveOrdersView = () => import('@/views/buyer/ActiveOrdersView.vue')
 const BuyerOrderHistoryView = () => import('@/views/buyer/OrderHistoryView.vue')
 const BuyerReturnsView = () => import('@/views/buyer/ReturnsView.vue')
 const BuyerContractsView = () => import('@/views/buyer/ContractsView.vue')
+const BuyerContractAgreementsView = () => import('@/views/buyer/ContractAgreementsView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
 const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
 const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
@@ -432,7 +433,9 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'contracts/agreements',
-        redirect: { name: 'buyer-contracts' }
+        name: 'buyer-contract-agreements',
+        component: BuyerContractAgreementsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Contract Agreements' }
       },
       {
         path: 'contracts/milestones',

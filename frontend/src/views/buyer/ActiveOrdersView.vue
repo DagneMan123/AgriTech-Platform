@@ -26,8 +26,8 @@
             </button>
             <div>
               <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                   Live Fulfillment
                 </span>
                 <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
@@ -91,15 +91,15 @@
         </article>
 
         <!-- Total In-Flight Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In-Flight Value</h3>
-            <p class="text-xl lg:text-2xl font-black text-emerald-500">ETB {{ formatNumber(stats.totalValue) }}</p>
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+            <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(stats.totalValue) }}</p>
+            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
               <ShieldCheck class="w-3 h-3 inline" /> Escrow secured
             </span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <BadgeDollarSign class="w-6 h-6" />
           </div>
         </article>
@@ -173,7 +173,7 @@
 
       <!-- ── Loading State ── -->
       <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="w-10 h-10 border-4 border-slate-300 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
         <p :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-700']">Loading active orders from database...</p>
         <p :class="['text-xs mt-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Retrieving real-time statuses and tracking coordinates</p>
       </div>
@@ -285,7 +285,7 @@
 
                 <!-- 5 Steps -->
                 <div
-                  v-for="(step, idx) in fulfillmentSteps"
+                  v-for="(step) in fulfillmentSteps"
                   :key="step.key"
                   class="flex flex-col items-center text-center relative z-10"
                 >
@@ -568,7 +568,7 @@
               <a
                 v-if="activeOrderForTracking.delivery?.driver_phone || activeOrderForTracking.driver_phone"
                 :href="'tel:' + (activeOrderForTracking.delivery?.driver_phone || activeOrderForTracking.driver_phone)"
-                class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1"
+                class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm shadow-blue-600/30"
               >
                 <Phone class="w-3 h-3" />
                 <span>Call Driver</span>
@@ -735,7 +735,7 @@
           </button>
           <button
             @click="detailsModalOpen = false"
-            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-600/30"
           >
             Done
           </button>
@@ -855,7 +855,7 @@
           </button>
           <button
             @click="sendMessageToSeller"
-            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
           >
             <Send class="w-3.5 h-3.5" />
             <span>Send Message</span>
@@ -875,9 +875,9 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
-  Menu, RefreshCw, ListOrdered, Store, Clock, Truck, PackageCheck,
+  Menu,  Clock, Truck, PackageCheck,
   BadgeDollarSign, ShieldCheck, Search, PackageOpen,
-  ShoppingBag, Check, Package, MapPin, User, Calendar, Navigation,
+   Check, Package, MapPin, User, Calendar, Navigation,
   FileText, Phone, XCircle, AlertTriangle, ReceiptText, Printer,
   Warehouse, MessageSquare, Send
 } from 'lucide-vue-next'
@@ -939,18 +939,7 @@ const loadOrdersData = async () => {
   }
 }
 
-const refreshOrders = async () => {
-  refreshing.value = true
-  try {
-    await buyerStore.fetchOrders()
-  } catch (err) {
-    console.warn('Refresh error:', err)
-  } finally {
-    setTimeout(() => {
-      refreshing.value = false
-    }, 500)
-  }
-}
+
 
 // Master Raw Orders fetched exclusively from Database / Store
 const rawOrders = computed(() => {
