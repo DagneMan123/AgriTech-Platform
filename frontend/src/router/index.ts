@@ -64,6 +64,7 @@ const BuyerCartView = () => import('@/views/buyer/CartView.vue')
 const BuyerOrdersView = () => import('@/views/buyer/OrdersView.vue')
 const BuyerActiveOrdersView = () => import('@/views/buyer/ActiveOrdersView.vue')
 const BuyerOrderHistoryView = () => import('@/views/buyer/OrderHistoryView.vue')
+const BuyerReturnsView = () => import('@/views/buyer/ReturnsView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
 const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
 const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
@@ -415,6 +416,12 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-order-history',
         component: BuyerOrderHistoryView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Order History' }
+      },
+      {
+        path: 'returns',
+        name: 'buyer-returns',
+        component: BuyerReturnsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Returns & Refunds' }
       },
       {
         path: 'wishlist',

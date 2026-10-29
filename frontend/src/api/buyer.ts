@@ -56,6 +56,12 @@ export const buyerAPI = {
   getMarketplace: (page?: number, limit?: number) => 
     apiClient.get('/buyer/marketplace', { params: { page, limit } }),
 
+  // Returns & Refunds
+  getReturns: () => apiClient.get('/buyer/returns'),
+  createReturn: (data: any) => apiClient.post('/buyer/returns', data),
+  getReturn: (id: number) => apiClient.get('/buyer/returns/' + id),
+  cancelReturn: (id: number) => apiClient.post('/buyer/returns/' + id + '/cancel'),
+
   // Dashboard
   getDashboard: () => apiClient.get('/buyer/dashboard'),
 }

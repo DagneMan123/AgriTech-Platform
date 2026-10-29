@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\Buyer\ReviewController;
 use App\Http\Controllers\Api\Buyer\WishlistController;
 use App\Http\Controllers\Api\Buyer\MarketplaceController;
 use App\Http\Controllers\Api\Buyer\DashboardController as BuyerDashboardController;
+use App\Http\Controllers\Api\Buyer\ReturnController as BuyerReturnController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -621,6 +622,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::apiResource('/reviews', ReviewController::class);
 
             Route::apiResource('/wishlist', WishlistController::class);
+            Route::apiResource('/returns', BuyerReturnController::class);
+            Route::post('/returns/{id}/cancel', [BuyerReturnController::class, 'cancel']);
 
             Route::get('/marketplace', [
                 MarketplaceController::class,

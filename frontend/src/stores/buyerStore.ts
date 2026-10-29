@@ -6,6 +6,7 @@ export const useBuyerStore = defineStore('buyer', () => {
   const cart = ref<any[]>([])
   const orders = ref<any[]>([])
   const wishlist = ref<any[]>([])
+  const returns = ref<any[]>([])
   const dashboard = ref<any>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -87,6 +88,48 @@ export const useBuyerStore = defineStore('buyer', () => {
     }
   }
 
+  // Returns & Refunds
+  const fetchReturns = async () => {
+    loading.value = true
+    try {
+      const response = await buyerAPI.getReturns()
+      returns.value = response.data.data || response.data
+      return returns.value
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch returns'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const createReturn = async (data: any) => {
+    try {
+      const response = await buyerAPI.createReturn(data)
+      const newRet = response.data.data || response.data
+      returns.value.unshift(newRet)
+      return newRet
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to submit return request'
+      throw err
+    }
+  }
+
+  const cancelReturn = async (id: number) => {
+    try {
+      const response = await buyerAPI.cancelReturn(id)
+      const updated = response.data.data || response.data
+      const index = returns.value.findIndex(r => r.id === id)
+      if (index > -1) {
+        returns.value[index] = updated
+      }
+      return updated
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to cancel return request'
+      throw err
+    }
+  }
+
   // Wishlist
   const fetchWishlist = async () => {
     loading.value = true
@@ -143,6 +186,7 @@ export const useBuyerStore = defineStore('buyer', () => {
     cart,
     orders,
     wishlist,
+    returns,
     dashboard,
     loading,
     error,
@@ -152,6 +196,9 @@ export const useBuyerStore = defineStore('buyer', () => {
     checkout,
     fetchOrders,
     cancelOrder,
+    fetchReturns,
+    createReturn,
+    cancelReturn,
     fetchWishlist,
     addToWishlist,
     removeFromWishlist,
