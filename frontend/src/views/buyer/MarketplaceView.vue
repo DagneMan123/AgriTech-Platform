@@ -24,9 +24,7 @@
             <i class="fas fa-sliders-h"></i> Filters
           </button>
           <!-- Refresh Button -->
-          <button @click="refreshProducts" :class="['px-4 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']">
-            <i class="fas fa-sync-alt"></i> Refresh
-          </button>
+         
         </div>
       </div>
 
@@ -302,16 +300,7 @@ const clearFilters = () => {
   handleSearch()
 }
 
-const refreshProducts = async () => {
-  loading.value = true
-  try {
-    await marketplaceStore.fetchProducts()
-  } catch (error) {
-    console.error('Failed to refresh products:', error)
-  } finally {
-    loading.value = false
-  }
-}
+
 
 const viewProduct = (id: number) => {
   router.push(`/app/buyer/products/${id}`)
