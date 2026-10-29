@@ -361,7 +361,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
-  Plus, CreditCard, TrendingUp, DollarSign, CheckCircle, Smartphone, Bank, Edit, Trash2,
+  Plus, CreditCard, TrendingUp, DollarSign, CheckCircle, Smartphone, Landmark as Bank, Edit, Trash2,
   ShoppingCart, Send, RotateCcw, Calendar, X, Download
 } from 'lucide-vue-next'
 

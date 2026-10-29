@@ -63,12 +63,12 @@
         </article>
       </section>
 
-      <!-- ── Filters ── -->
+      <!-- ── Filters (Matched size with Marketplace screenshot) ── -->
       <div :class="['rounded-xl border p-5 mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="flex flex-col gap-2">
             <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Status</label>
-            <select v-model="selectedStatus" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
+            <select v-model="selectedStatus" :class="['w-full px-3 py-2 rounded-xl text-xs border transition-all outline-none cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500']">
               <option value="">All Status</option>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
@@ -79,7 +79,7 @@
           </div>
           <div class="flex flex-col gap-2">
             <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Date Range</label>
-            <select v-model="selectedDateRange" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
+            <select v-model="selectedDateRange" :class="['w-full px-3 py-2 rounded-xl text-xs border transition-all outline-none cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500']">
               <option value="">All Time</option>
               <option value="today">Today</option>
               <option value="week">Last 7 Days</option>
@@ -89,7 +89,7 @@
           </div>
           <div class="flex flex-col gap-2">
             <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Sort By</label>
-            <select v-model="sortBy" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
+            <select v-model="sortBy" :class="['w-full px-3 py-2 rounded-xl text-xs border transition-all outline-none cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100 focus:border-blue-500' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500']">
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="highest-amount">Highest Amount</option>
@@ -311,8 +311,6 @@ const statusBadgeClass = (status: string) => {
     delivered: 'bg-emerald-500/15 text-emerald-400',
     cancelled: 'bg-red-500/15 text-red-400',
   }
-  // light-mode overrides via inline style would need extra logic;
-  // badge colours are readable on both themes as-is
   return map[status] || 'bg-slate-500/15 text-slate-400'
 }
 

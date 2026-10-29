@@ -62,6 +62,8 @@ const BuyerDashboardView = () => import('@/views/buyer/BuyerDashboard.vue')
 const BuyerMarketplaceView = () => import('@/views/buyer/MarketplaceView.vue')
 const BuyerCartView = () => import('@/views/buyer/CartView.vue')
 const BuyerOrdersView = () => import('@/views/buyer/OrdersView.vue')
+const BuyerActiveOrdersView = () => import('@/views/buyer/ActiveOrdersView.vue')
+const BuyerOrderHistoryView = () => import('@/views/buyer/OrderHistoryView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
 const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
 const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
@@ -401,6 +403,18 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-orders',
         component: BuyerOrdersView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'My Orders' }
+      },
+      {
+        path: 'orders/active',
+        name: 'buyer-active-orders',
+        component: BuyerActiveOrdersView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Active Orders' }
+      },
+      {
+        path: 'orders/history',
+        name: 'buyer-order-history',
+        component: BuyerOrderHistoryView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Order History' }
       },
       {
         path: 'wishlist',

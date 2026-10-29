@@ -13,26 +13,11 @@ export default defineConfig({
     // Optimize chunk sizes for faster loading
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['vue', 'vue-router', 'pinia', 'axios'],
-          'auth': ['./src/views/auth'],
-          'admin': ['./src/views/admin'],
-          'farmer': ['./src/views/farmer'],
-          'buyer': ['./src/views/buyer'],
-          'supplier': ['./src/views/supplier'],
-          'transport': ['./src/views/transport'],
-          'expert': ['./src/views/expert'],
-          'financial': ['./src/views/financial'],
-          'cooperative': ['./src/views/cooperative']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'
+          }
         }
-      }
-    },
-    // Optimize minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
       }
     },
     // Target modern browsers for smaller bundles
@@ -42,7 +27,7 @@ export default defineConfig({
     // Optimize source maps
     sourcemap: false,
     // Increase chunk size warning limit
-    chunkSizeWarningLimit: 500
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 5173,

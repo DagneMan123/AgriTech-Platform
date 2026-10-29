@@ -46,7 +46,7 @@
           <component :is="expandedSections.orders ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.orders" class="section-items">
-          <router-link to="/buyer/orders" class="menu-item sub-item" active-class="active">
+          <router-link to="/buyer/orders" class="menu-item sub-item" exact-active-class="active">
             <ShoppingBag class="sub-icon" />
             <span>My Orders</span>
           </router-link>
