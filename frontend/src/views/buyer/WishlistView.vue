@@ -227,7 +227,7 @@ const removeFromWishlist = async (id) => {
     }
   } catch (err) {
     console.error('Error removing from wishlist:', err)
-  }
+m  }
 }
 
 const viewProduct = (productId) => {

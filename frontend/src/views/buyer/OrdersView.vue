@@ -1,67 +1,74 @@
 <template>
-  <div class="buyer-layout">
-    <!-- Sidebar -->
-    <BuyerSidebar @logout="handleLogout" />
+  <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-800']">
 
-    <!-- Main Content -->
-    <div class="orders-container">
-      <!-- Header Section -->
-      <div class="orders-header">
-        <div>
-          <h1 class="page-title">My Orders</h1>
-          <p class="page-subtitle">Track and manage your purchases seamlessly</p>
-        </div>
-        <div class="header-actions">
-          
+    <!-- Sidebar -->
+    <div :class="['fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full']">
+      <BuyerSidebar @logout="handleLogout" />
+    </div>
+
+    <!-- Mobile Backdrop -->
+    <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
+
+      <!-- ── Header ── -->
+      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+        <div class="flex-1">
+          <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">My Orders</h1>
+          <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Track and manage your purchases seamlessly</p>
         </div>
       </div>
 
-      <!-- Stats Section -->
-      <div class="stats-section">
-        <div class="stat-card">
-          <div class="stat-icon total">
+      <!-- ── Stats Cards ── -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-indigo-500' : 'bg-white border-blue-200 text-slate-900 !border-l-indigo-600']">
+          <div>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Orders</h3>
+            <p class="text-xl font-black">{{ totalOrders }}</p>
+          </div>
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600']">
             <i class="fas fa-shopping-bag"></i>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalOrders }}</div>
-            <div class="stat-label">Total Orders</div>
+        </article>
+
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-amber-500' : 'bg-white border-blue-200 text-slate-900 !border-l-amber-600']">
+          <div>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Pending</h3>
+            <p class="text-xl font-black">{{ pendingOrders }}</p>
           </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon pending">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600']">
             <i class="fas fa-clock"></i>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ pendingOrders }}</div>
-            <div class="stat-label">Pending</div>
+        </article>
+
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-sky-500' : 'bg-white border-blue-200 text-slate-900 !border-l-sky-600']">
+          <div>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In Transit</h3>
+            <p class="text-xl font-black">{{ shippedOrders }}</p>
           </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon shipped">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-sky-500/10 text-sky-400' : 'bg-sky-50 text-sky-600']">
             <i class="fas fa-box"></i>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ shippedOrders }}</div>
-            <div class="stat-label">In Transit</div>
+        </article>
+
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-emerald-500' : 'bg-white border-blue-200 text-slate-900 !border-l-emerald-600']">
+          <div>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivered</h3>
+            <p class="text-xl font-black">{{ deliveredOrders }}</p>
           </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon delivered">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <i class="fas fa-check-circle"></i>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ deliveredOrders }}</div>
-            <div class="stat-label">Delivered</div>
-          </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      <!-- Filters Section (Without Apply/Clear Buttons - Auto Applies) -->
-      <div class="filter-section">
-        <div class="filter-grid-3">
-          <div class="filter-group">
-            <label>Status:</label>
-            <select v-model="selectedStatus" class="filter-select">
+      <!-- ── Filters ── -->
+      <div :class="['rounded-xl border p-5 mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="flex flex-col gap-2">
+            <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Status</label>
+            <select v-model="selectedStatus" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
               <option value="">All Status</option>
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
@@ -70,9 +77,9 @@
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label>Date Range:</label>
-            <select v-model="selectedDateRange" class="filter-select">
+          <div class="flex flex-col gap-2">
+            <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Date Range</label>
+            <select v-model="selectedDateRange" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
               <option value="">All Time</option>
               <option value="today">Today</option>
               <option value="week">Last 7 Days</option>
@@ -80,9 +87,9 @@
               <option value="year">This Year</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label>Sort by:</label>
-            <select v-model="sortBy" class="filter-select">
+          <div class="flex flex-col gap-2">
+            <label :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Sort By</label>
+            <select v-model="sortBy" :class="['w-full px-3 py-2.5 rounded-lg text-sm border transition-all outline-none', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-200 focus:border-blue-400' : 'bg-slate-50 border-blue-200 text-slate-800 focus:border-blue-400']">
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="highest-amount">Highest Amount</option>
@@ -92,123 +99,127 @@
         </div>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="totalOrders === 0" class="empty-state">
-        <div class="empty-icon">
+      <!-- ── Empty State ── -->
+      <div v-if="totalOrders === 0" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-400']">
           <i class="fas fa-inbox"></i>
         </div>
-        <h2>No orders yet</h2>
-        <p>Start shopping to see your orders here</p>
-        <router-link to="/buyer/marketplace" class="btn-primary">
-          <i class="fas fa-shopping-bag"></i> Continue Shopping
+        <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">No orders yet</h3>
+        <p :class="['text-xs max-w-sm mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">Start shopping to see your orders here</p>
+        <router-link to="/buyer/marketplace" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all">
+          <i class="fas fa-shopping-bag mr-1"></i> Continue Shopping
         </router-link>
       </div>
 
-      <!-- Orders List -->
-      <div v-if="filteredAndSortedOrders.length > 0" class="orders-list">
-        <div v-for="order in filteredAndSortedOrders" :key="order.id" class="order-card">
+      <!-- ── Orders List ── -->
+      <div v-if="filteredAndSortedOrders.length > 0" class="flex flex-col gap-4">
+        <div
+          v-for="order in filteredAndSortedOrders"
+          :key="order.id"
+          :class="['rounded-2xl border overflow-hidden transition-all hover:shadow-lg', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-900']"
+          style="border-left-width: 4px; border-left-color: #6366f1;"
+        >
           <!-- Order Header -->
-          <div class="order-header">
-            <div class="order-title">
-              <h3 class="order-id">Order #{{ order.id }}</h3>
-              <p class="order-date">{{ formatDate(order.created_at) }}</p>
+          <div :class="['flex justify-between items-center px-5 py-4 border-b', darkMode ? 'bg-[#0f1729] border-blue-500/30' : 'bg-slate-50 border-blue-100']">
+            <div class="flex items-center gap-4">
+              <h3 :class="['text-base font-bold m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ order.id }}</h3>
+              <p :class="['text-xs m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ formatDate(order.created_at) }}</p>
             </div>
-            <div class="order-status">
-              <span :class="['status-badge', `status-${order.status}`]">
+            <div class="flex items-center gap-2">
+              <span :class="['inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide', statusBadgeClass(order.status)]">
                 {{ formatStatus(order.status) }}
-              </span>
-              <span v-if="order.status !== 'delivered'" class="progress-indicator">
-                <i class="fas fa-arrow-right"></i>
               </span>
             </div>
           </div>
 
-          <!-- Order Summary -->
-          <div class="order-summary">
-            <div class="summary-item">
-              <span class="label">Items:</span>
-              <span class="value">{{ order.items_count || 0 }} item(s)</span>
+          <!-- Order Summary Row -->
+          <div :class="['grid grid-cols-2 sm:grid-cols-4 gap-4 px-5 py-4 border-b', darkMode ? 'border-blue-500/20' : 'border-blue-100']">
+            <div class="flex flex-col gap-1">
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Items</span>
+              <span :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-800']">{{ order.items_count || 0 }} item(s)</span>
             </div>
-            <div class="summary-item">
-              <span class="label">From:</span>
-              <span class="value">{{ order.supplier_name || 'Supplier' }}</span>
+            <div class="flex flex-col gap-1">
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">From</span>
+              <span :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-800']">{{ order.supplier_name || 'Supplier' }}</span>
             </div>
-            <div class="summary-item">
-              <span class="label">Est. Delivery:</span>
-              <span class="value">{{ formatDate(order.estimated_delivery) || 'Pending' }}</span>
+            <div class="flex flex-col gap-1">
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Est. Delivery</span>
+              <span :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-800']">{{ formatDate(order.estimated_delivery) || 'Pending' }}</span>
             </div>
-            <div class="summary-item">
-              <span class="label">Amount:</span>
-              <span class="value amount">Ksh {{ formatNumber(order.total_amount) }}</span>
+            <div class="flex flex-col gap-1">
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Amount</span>
+              <span class="text-sm font-black text-emerald-500">Ksh {{ formatNumber(order.total_amount) }}</span>
             </div>
           </div>
 
           <!-- Items Preview -->
-          <div v-if="order.items && order.items.length > 0" class="items-preview">
-            <div class="preview-title">Items:</div>
-            <div class="items-list">
-              <div v-for="(item, index) in order.items.slice(0, 3)" :key="index" class="item">
-                <span class="item-name">{{ item.product_name }}</span>
-                <span class="item-qty">x{{ item.quantity }}</span>
-              </div>
-              <div v-if="order.items.length > 3" class="item more-items">
+          <div v-if="order.items && order.items.length > 0" :class="['px-5 py-3 border-b', darkMode ? 'border-blue-500/20 bg-[#0b0f19]/40' : 'border-blue-100 bg-slate-50']">
+            <span :class="['text-[10px] font-bold uppercase tracking-wider mr-3', darkMode ? 'text-slate-400' : 'text-slate-500']">Items:</span>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <span
+                v-for="(item, index) in order.items.slice(0, 3)"
+                :key="index"
+                :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border', darkMode ? 'bg-[#131b2e] border-blue-500/30 text-slate-300' : 'bg-white border-blue-200 text-slate-700']"
+              >
+                {{ item.product_name }} <span :class="['opacity-60', darkMode ? 'text-slate-400' : 'text-slate-500']">×{{ item.quantity }}</span>
+              </span>
+              <span v-if="order.items.length > 3" :class="['inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium border', darkMode ? 'bg-[#131b2e] border-blue-500/30 text-slate-400' : 'bg-white border-blue-200 text-slate-500']">
                 +{{ order.items.length - 3 }} more
-              </div>
+              </span>
             </div>
           </div>
 
           <!-- Order Timeline -->
-          <div class="order-timeline">
-            <div :class="['timeline-item', { active: isStatusReached('pending', order.status) }]">
-              <div class="timeline-dot"></div>
-              <div class="timeline-label">Order Placed</div>
-            </div>
-            <div class="timeline-line"></div>
-            <div :class="['timeline-item', { active: isStatusReached('confirmed', order.status) }]">
-              <div class="timeline-dot"></div>
-              <div class="timeline-label">Confirmed</div>
-            </div>
-            <div class="timeline-line"></div>
-            <div :class="['timeline-item', { active: isStatusReached('shipped', order.status) }]">
-              <div class="timeline-dot"></div>
-              <div class="timeline-label">Shipped</div>
-            </div>
-            <div class="timeline-line"></div>
-            <div :class="['timeline-item', { active: isStatusReached('delivered', order.status) }]">
-              <div class="timeline-dot"></div>
-              <div class="timeline-label">Delivered</div>
+          <div :class="['px-5 py-4 border-b', darkMode ? 'border-blue-500/20 bg-[#0b0f19]/40' : 'border-blue-100 bg-slate-50']">
+            <div class="flex items-center gap-0">
+              <template v-for="(step, idx) in timelineSteps" :key="step.status">
+                <div class="flex flex-col items-center gap-1.5 flex-shrink-0">
+                  <div :class="['w-5 h-5 rounded-full border-2 transition-all', isStatusReached(step.status, order.status) ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_0_3px_rgba(99,102,241,0.2)]' : darkMode ? 'bg-slate-700 border-slate-600' : 'bg-slate-200 border-slate-300']"></div>
+                  <span :class="['text-[10px] font-semibold whitespace-nowrap', isStatusReached(step.status, order.status) ? (darkMode ? 'text-slate-200' : 'text-slate-700') : (darkMode ? 'text-slate-500' : 'text-slate-400')]">{{ step.label }}</span>
+                </div>
+                <div v-if="idx < timelineSteps.length - 1" :class="['flex-1 h-0.5 mb-4 min-w-[16px]', darkMode ? 'bg-slate-700' : 'bg-slate-200']"></div>
+              </template>
             </div>
           </div>
 
           <!-- Order Actions -->
-          <div class="order-actions">
-            <button @click="viewOrderDetails(order.id)" class="btn-action btn-primary">
-              <i class="fas fa-eye"></i> View Details
+          <div class="flex flex-wrap gap-2 px-5 py-4">
+            <button @click="viewOrderDetails(order.id)" class="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+              <i class="fas fa-eye text-[10px]"></i> View Details
             </button>
-            <button v-if="order.status === 'delivered'" @click="leaveReview(order.id)" class="btn-action btn-secondary">
-              <i class="fas fa-star"></i> Leave Review
+            <button v-if="order.status === 'delivered'" @click="leaveReview(order.id)" :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
+              <i class="fas fa-star text-[10px]"></i> Leave Review
             </button>
-            <button v-if="order.status === 'pending'" @click="cancelOrder(order.id)" class="btn-action btn-danger">
-              <i class="fas fa-times"></i> Cancel
+            <button v-if="order.status === 'pending'" @click="cancelOrder(order.id)" class="flex items-center gap-1.5 px-3 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer">
+              <i class="fas fa-times text-[10px]"></i> Cancel
             </button>
-            <button @click="contactSupport(order.id)" class="btn-action btn-outline">
-              <i class="fas fa-headset"></i> Support
+            <button @click="contactSupport(order.id)" :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-transparent border-blue-500/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200' : 'bg-transparent border-blue-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700']">
+              <i class="fas fa-headset text-[10px]"></i> Support
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="totalOrders > 0" class="pagination">
-        <button :disabled="currentPage === 1" @click="currentPage--" class="btn-pagination">
+      <!-- ── Pagination ── -->
+      <div v-if="totalOrders > 0" class="flex justify-center items-center gap-4 mt-8 pb-4">
+        <button
+          :disabled="currentPage === 1"
+          @click="currentPage--"
+          :class="['flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border transition-all', currentPage === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
+        >
           <i class="fas fa-chevron-left"></i> Previous
         </button>
-        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button :disabled="currentPage === totalPages" @click="currentPage++" class="btn-pagination">
+        <span :class="['text-xs font-bold', darkMode ? 'text-slate-400' : 'text-slate-500']">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          :disabled="currentPage === totalPages"
+          @click="currentPage++"
+          :class="['flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border transition-all', currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
+        >
           Next <i class="fas fa-chevron-right"></i>
         </button>
       </div>
-    </div>
+
+    </main>
   </div>
 </template>
 
@@ -216,21 +227,33 @@
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { onMounted, computed, ref, watch } from 'vue'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const themeStore = useThemeStore()
 
-// State
+const darkMode = computed(() => themeStore.isDark)
+
+const sidebarOpen = ref(false)
 const selectedStatus = ref('')
 const selectedDateRange = ref('')
 const sortBy = ref('newest')
 const currentPage = ref(1)
 const itemsPerPage = 10
 
+const timelineSteps = [
+  { status: 'pending',   label: 'Order Placed' },
+  { status: 'confirmed', label: 'Confirmed'    },
+  { status: 'shipped',   label: 'Shipped'      },
+  { status: 'delivered', label: 'Delivered'    },
+]
+
 onMounted(async () => {
+  themeStore.initializeTheme()
   try {
     await buyerStore.fetchOrders()
   } catch (error) {
@@ -238,12 +261,10 @@ onMounted(async () => {
   }
 })
 
-// Reset pagination when filters change
 watch([selectedStatus, selectedDateRange, sortBy], () => {
   currentPage.value = 1
 })
 
-// Computed properties with safe Array check
 const ordersArray = computed(() => {
   return Array.isArray(buyerStore.orders) ? buyerStore.orders : []
 })
@@ -256,105 +277,74 @@ const filteredAndSortedOrders = computed(() => {
   }
 
   if (selectedDateRange.value) {
-    const createdDate = new Date()
+    const cutoff = new Date()
     switch (selectedDateRange.value) {
-      case 'today':
-        createdDate.setHours(0, 0, 0, 0)
-        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
-        break
-      case 'week':
-        createdDate.setDate(createdDate.getDate() - 7)
-        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
-        break
-      case 'month':
-        createdDate.setDate(createdDate.getDate() - 30)
-        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
-        break
-      case 'year':
-        createdDate.setFullYear(createdDate.getFullYear() - 1)
-        orders = orders.filter(o => o && new Date(o.created_at) >= createdDate)
-        break
+      case 'today':  cutoff.setHours(0, 0, 0, 0); break
+      case 'week':   cutoff.setDate(cutoff.getDate() - 7); break
+      case 'month':  cutoff.setDate(cutoff.getDate() - 30); break
+      case 'year':   cutoff.setFullYear(cutoff.getFullYear() - 1); break
     }
+    orders = orders.filter(o => o && new Date(o.created_at) >= cutoff)
   }
 
   switch (sortBy.value) {
-    case 'oldest':
-      orders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      break
-    case 'highest-amount':
-      orders.sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0))
-      break
-    case 'lowest-amount':
-      orders.sort((a, b) => (a.total_amount || 0) - (b.total_amount || 0))
-      break
-    case 'newest':
-    default:
-      orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      break
+    case 'oldest':         orders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()); break
+    case 'highest-amount': orders.sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0)); break
+    case 'lowest-amount':  orders.sort((a, b) => (a.total_amount || 0) - (b.total_amount || 0)); break
+    default:               orders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break
   }
 
   return orders.slice((currentPage.value - 1) * itemsPerPage, currentPage.value * itemsPerPage)
 })
 
-const totalOrders = computed(() => ordersArray.value.length)
-const pendingOrders = computed(() => ordersArray.value.filter(o => o?.status === 'pending').length)
-const shippedOrders = computed(() => ordersArray.value.filter(o => o?.status === 'shipped').length)
-const deliveredOrders = computed(() => ordersArray.value.filter(o => o?.status === 'delivered').length)
-const totalPages = computed(() => Math.ceil(totalOrders.value / itemsPerPage) || 1)
+const totalOrders    = computed(() => ordersArray.value.length)
+const pendingOrders  = computed(() => ordersArray.value.filter(o => o?.status === 'pending').length)
+const shippedOrders  = computed(() => ordersArray.value.filter(o => o?.status === 'shipped').length)
+const deliveredOrders= computed(() => ordersArray.value.filter(o => o?.status === 'delivered').length)
+const totalPages     = computed(() => Math.ceil(totalOrders.value / itemsPerPage) || 1)
 
-// Methods
+const statusBadgeClass = (status: string) => {
+  const map: Record<string, string> = {
+    pending:   'bg-amber-500/15 text-amber-400',
+    confirmed: 'bg-blue-500/15 text-blue-400',
+    shipped:   'bg-purple-500/15 text-purple-400',
+    delivered: 'bg-emerald-500/15 text-emerald-400',
+    cancelled: 'bg-red-500/15 text-red-400',
+  }
+  // light-mode overrides via inline style would need extra logic;
+  // badge colours are readable on both themes as-is
+  return map[status] || 'bg-slate-500/15 text-slate-400'
+}
+
 const formatDate = (date: string | null) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(num || 0)
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0)
 }
 
 const formatStatus = (status: string) => {
   const map: Record<string, string> = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    shipped: 'In Transit',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled'
+    pending: 'Pending', confirmed: 'Confirmed', shipped: 'In Transit',
+    delivered: 'Delivered', cancelled: 'Cancelled',
   }
   return map[status] || status
 }
 
 const isStatusReached = (checkStatus: string, orderStatus: string) => {
-  const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
-  return statusOrder.indexOf(orderStatus) >= statusOrder.indexOf(checkStatus)
+  const order = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
+  return order.indexOf(orderStatus) >= order.indexOf(checkStatus)
 }
 
-const refreshOrders = async () => {
-  try {
-    await buyerStore.fetchOrders()
-  } catch (error) {
-    console.error('Failed to refresh orders:', error)
-  }
-}
-
-const viewOrderDetails = (orderId: number) => {
-  router.push(`/buyer/orders/${orderId}`)
-}
-
-const leaveReview = (orderId: number) => {
-  router.push(`/buyer/reviews?order_id=${orderId}`)
-}
+const viewOrderDetails = (orderId: number) => router.push(`/buyer/orders/${orderId}`)
+const leaveReview      = (orderId: number) => router.push(`/buyer/reviews?order_id=${orderId}`)
+const contactSupport   = (orderId: number) => console.log('Contacting support for order:', orderId)
 
 const cancelOrder = async (orderId: number) => {
   if (confirm('Are you sure you want to cancel this order?')) {
     try {
-      console.log('Cancelling order:', orderId)
       await buyerStore.fetchOrders()
     } catch (error) {
       console.error('Failed to cancel order:', error)
@@ -362,538 +352,8 @@ const cancelOrder = async (orderId: number) => {
   }
 }
 
-const contactSupport = (orderId: number) => {
-  console.log('Contacting support for order:', orderId)
-}
-
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
 </script>
-
-<style scoped>
-.buyer-layout {
-  display: flex;
-  height: 100vh;
-  background-color: #0b0f19;
-  color: #f3f4f6;
-  font-family: 'Inter', sans-serif;
-}
-
-.orders-container {
-  margin-left: 260px;
-  flex: 1;
-  overflow-y: auto;
-  background-color: #0b0f19;
-  min-height: 100vh;
-  padding: 40px 30px;
-}
-
-.orders-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 35px;
-  gap: 20px;
-}
-
-.page-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.5px;
-}
-
-.page-subtitle {
-  font-size: 15px;
-  color: #9ca3af;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.header-actions button:focus {
-  outline: none;
-  box-shadow: none;
-}
-
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 22px;
-  display: flex;
-  gap: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  border-color: #374151;
-  transform: translateY(-3px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-
-.stat-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-  flex-shrink: 0;
-}
-
-.stat-icon.total { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-.stat-icon.pending { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-.stat-icon.shipped { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-.stat-icon.delivered { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #9ca3af;
-  margin-top: 2px;
-  font-weight: 500;
-}
-
-/* Filter Section (3 Columns Layout without buttons) */
-.filter-section {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-}
-
-.filter-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #d1d5db;
-}
-
-.filter-select {
-  width: 100%;
-  padding: 10px 14px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #f3f4f6;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.filter-select:hover,
-.filter-select:focus {
-  border-color: #6366f1;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  background: #111827;
-  border-radius: 14px;
-  border: 2px dashed #374151;
-  margin: 30px 0;
-}
-
-.empty-icon {
-  font-size: 56px;
-  color: #4b5563;
-  margin-bottom: 16px;
-}
-
-.empty-state h2 {
-  font-size: 22px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 6px 0;
-}
-
-.empty-state p {
-  font-size: 15px;
-  color: #9ca3af;
-  margin: 0 0 20px 0;
-}
-
-.orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.order-card {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  border-left: 4px solid #6366f1;
-}
-
-.order-card:hover {
-  border-color: #374151;
-  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 24px;
-  border-bottom: 1px solid #1f2937;
-  background: #161e2e;
-}
-
-.order-title {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.order-id {
-  font-size: 17px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
-}
-
-.order-date {
-  font-size: 13px;
-  color: #9ca3af;
-  margin: 0;
-}
-
-.order-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-.status-confirmed { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-.status-shipped { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
-.status-delivered { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-.status-cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-
-.progress-indicator {
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.order-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  padding: 18px 24px;
-  border-bottom: 1px solid #1f2937;
-}
-
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.summary-item .label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.summary-item .value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #f3f4f6;
-}
-
-.summary-item .amount {
-  font-size: 16px;
-  color: #34d399;
-}
-
-.items-preview {
-  padding: 14px 24px;
-  border-bottom: 1px solid #1f2937;
-  background: #0d1322;
-}
-
-.preview-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.items-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #e5e7eb;
-}
-
-.item-name {
-  font-weight: 500;
-}
-
-.item-qty {
-  color: #9ca3af;
-}
-
-.more-items {
-  background: #111827;
-  color: #9ca3af;
-}
-
-.order-timeline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 24px;
-  border-bottom: 1px solid #1f2937;
-  background: #0d1322;
-  overflow-x: auto;
-  gap: 4px;
-}
-
-.timeline-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  opacity: 0.35;
-  transition: all 0.3s;
-}
-
-.timeline-item.active {
-  opacity: 1;
-}
-
-.timeline-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #374151;
-  border: 3px solid #111827;
-}
-
-.timeline-item.active .timeline-dot {
-  background: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-}
-
-.timeline-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
-  white-space: nowrap;
-}
-
-.timeline-line {
-  flex: 1;
-  height: 2px;
-  background: #374151;
-  margin: 6px 0;
-  min-width: 20px;
-}
-
-.order-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  padding: 18px 24px;
-}
-
-.btn-action {
-  padding: 9px 14px;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.btn-primary {
-  background: #6366f1;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #4f46e5;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.btn-secondary {
-  background: #1f2937;
-  color: #f3f4f6;
-  border: 1px solid #374151;
-}
-
-.btn-secondary:hover {
-  background: #374151;
-  border-color: #4b5563;
-}
-
-.btn-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.25);
-}
-
-.btn-outline {
-  background: transparent;
-  color: #9ca3af;
-  border: 1px solid #374151;
-}
-
-.btn-outline:hover {
-  background: #1f2937;
-  color: #ffffff;
-  border-color: #4b5563;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 35px;
-  padding: 10px;
-}
-
-.btn-pagination {
-  padding: 8px 14px;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  background: #111827;
-  color: #f3f4f6;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-pagination:hover:not(:disabled) {
-  background: #1f2937;
-  border-color: #4b5563;
-}
-
-.btn-pagination:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
-  color: #9ca3af;
-  font-weight: 600;
-}
-
-@media (max-width: 1024px) {
-  .orders-container {
-    padding: 25px 15px;
-  }
-  .filter-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .orders-container {
-    margin-left: 0;
-    padding: 20px 12px;
-  }
-  .orders-header {
-    flex-direction: column;
-  }
-  .header-actions {
-    width: 100%;
-  }
-  .header-actions button {
-    flex: 1;
-  }
-  .filter-grid-3 {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
