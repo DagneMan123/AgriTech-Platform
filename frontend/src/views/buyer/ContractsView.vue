@@ -3,7 +3,7 @@
 
     <!-- Sidebar Container (Responsive) -->
     <div :class="['fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full']">
-      <BuyerSidebar @logout="handleLogout" />
+      <BuyerSidebar />
     </div>
 
     <!-- Mobile Backdrop -->
@@ -26,7 +26,7 @@
             </button>
             <div>
               <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
                   <Handshake class="w-3.5 h-3.5" />
                   Contract Farming
                 </span>
@@ -43,15 +43,33 @@
             </div>
           </div>
 
-          <!-- Header Right Actions -->
+          <!-- Header Right Actions (All Buttons Blue) -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               @click="openCreateModal"
-              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/30 cursor-pointer"
+              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
             >
               <Plus class="w-4 h-4" />
               <span>New Direct Contract</span>
             </button>
+
+            <button
+              @click="refreshData"
+              :disabled="refreshing"
+              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
+              title="Refresh Contracts"
+            >
+              <RefreshCw :class="['w-3.5 h-3.5', refreshing ? 'animate-spin text-blue-500' : '']" />
+              <span>Refresh</span>
+            </button>
+
+            <router-link
+              to="/buyer/marketplace"
+              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
+            >
+              <ShoppingBag class="w-3.5 h-3.5 text-blue-500" />
+              <span>Marketplace</span>
+            </router-link>
           </div>
         </div>
       </div>
@@ -71,13 +89,13 @@
         </article>
 
         <!-- Active Production -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
             <p :class="['text-xs font-medium uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Active Production</p>
             <h3 class="text-2xl font-black mt-1 mb-0">{{ stats.active }}</h3>
-            <p class="text-[11px] text-emerald-500 font-semibold mt-0.5 mb-0">Growing &amp; in-progress</p>
+            <p class="text-[11px] text-blue-500 font-semibold mt-0.5 mb-0">Growing &amp; in-progress</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
             <Sprout class="w-5 h-5" />
           </div>
         </article>
@@ -118,7 +136,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search by contract number, crop, or farmer..."
-              :class="['w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-100 placeholder-slate-500 focus:border-emerald-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600']"
+              :class="['w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600']"
             />
           </div>
 
@@ -130,10 +148,10 @@
                 v-for="filter in statusFilters"
                 :key="filter.value"
                 @click="activeStatusFilter = filter.value"
-                :class="['px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5', activeStatusFilter === filter.value ? 'bg-emerald-600 text-white shadow-xs' : darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900']"
+                :class="['px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5', activeStatusFilter === filter.value ? 'bg-blue-600 text-white shadow-xs' : darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900']"
               >
                 <span>{{ filter.label }}</span>
-                <span :class="['text-[10px] px-1.5 py-0.2 rounded-full', activeStatusFilter === filter.value ? 'bg-emerald-800 text-white' : darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700']">
+                <span :class="['text-[10px] px-1.5 py-0.2 rounded-full', activeStatusFilter === filter.value ? 'bg-blue-800 text-white' : darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700']">
                   {{ filter.count }}
                 </span>
               </button>
@@ -159,7 +177,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="py-20 flex flex-col items-center justify-center space-y-3">
-        <div class="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <div class="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         <p :class="['text-xs font-semibold', darkMode ? 'text-slate-400' : 'text-slate-500']">
           Fetching contracts from database...
         </p>
@@ -170,7 +188,7 @@
         v-else-if="filteredContracts.length === 0"
         :class="['p-12 text-center rounded-2xl border transition-all my-4', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']"
       >
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
           <Handshake class="w-8 h-8" />
         </div>
         <h3 :class="['text-base font-extrabold m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">
@@ -192,7 +210,7 @@
           </button>
           <button
             @click="openCreateModal"
-            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
           >
             <Plus class="w-4 h-4" />
             <span>Create First Direct Contract</span>
@@ -210,12 +228,12 @@
           <!-- Card Top Bar: Contract #, Title, and Status -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-700/30">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                 <FileText class="w-5 h-5" />
               </div>
               <div>
                 <div class="flex items-center gap-2">
-                  <span class="font-mono text-xs font-extrabold text-emerald-500">
+                  <span class="font-mono text-xs font-extrabold text-blue-500">
                     {{ contract.contract_number }}
                   </span>
                   <span :class="['text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider', getStatusBadgeStyle(contract.status)]">
@@ -232,13 +250,13 @@
             <div class="flex items-center gap-3 sm:text-right">
               <div>
                 <span :class="['text-[11px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Contract Value</span>
-                <span class="text-base lg:text-lg font-black text-emerald-500">
+                <span class="text-base lg:text-lg font-black text-blue-500">
                   ETB {{ formatNumber(contract.total_amount) }}
                 </span>
               </div>
               <button
                 @click="viewContractDetails(contract)"
-                class="px-3 py-1.5 bg-emerald-600/10 hover:bg-emerald-600 hover:text-white text-emerald-500 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                class="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600 hover:text-white text-blue-500 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <span>Agreement</span>
                 <ChevronRight class="w-3.5 h-3.5" />
@@ -252,7 +270,7 @@
             <!-- 1. Farmer / Cooperative -->
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex items-center gap-1.5 text-slate-400 mb-1">
-                <User class="w-3.5 h-3.5 text-emerald-500" />
+                <User class="w-3.5 h-3.5 text-blue-500" />
                 <span class="font-bold uppercase text-[10px]">Contracted Farmer</span>
               </div>
               <p :class="['font-extrabold text-xs m-0 truncate', darkMode ? 'text-slate-100' : 'text-slate-900']">
@@ -276,7 +294,7 @@
               <p :class="['font-extrabold text-xs m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 {{ contract.crop_type }} {{ contract.variety ? `(${contract.variety})` : '' }}
               </p>
-              <p :class="['text-[11px] font-semibold m-0 mt-0.5 text-amber-500 flex items-center gap-1']">
+              <p class="text-[11px] font-semibold m-0 mt-0.5 text-amber-500 flex items-center gap-1">
                 <Scale class="w-3 h-3" />
                 <span>{{ formatNumber(contract.quantity) }} {{ contract.unit || 'Quintals' }}</span>
               </p>
@@ -297,7 +315,7 @@
               <p :class="['text-[11px] m-0 mt-0.5 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']" :title="contract.payment_terms">
                 {{ contract.payment_terms || 'Escrow milestone disbursement' }}
               </p>
-              <span class="inline-flex items-center gap-1 text-[10px] text-emerald-500 font-semibold mt-1">
+              <span class="inline-flex items-center gap-1 text-[10px] text-blue-500 font-semibold mt-1">
                 <ShieldCheck class="w-3 h-3" /> Escrow Protected
               </span>
             </div>
@@ -311,7 +329,7 @@
               <p :class="['font-extrabold text-xs m-0 flex items-center justify-between', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 <span>Start: {{ formatDate(contract.start_date) }}</span>
               </p>
-              <p :class="['text-[11px] font-bold text-blue-500 m-0 mt-0.5']">
+              <p class="text-[11px] font-bold text-blue-500 m-0 mt-0.5">
                 Due: {{ formatDate(contract.delivery_date) }}
               </p>
               <p :class="['text-[10px] m-0 mt-0.5 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']" :title="contract.delivery_location">
@@ -327,7 +345,7 @@
               <span :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 Production &amp; Escrow Milestones
               </span>
-              <span class="text-[11px] font-semibold text-emerald-500">
+              <span class="text-[11px] font-semibold text-blue-500">
                 {{ getCompletedMilestonesCount(contract) }} of 4 Milestones Settled
               </span>
             </div>
@@ -349,7 +367,7 @@
             </div>
           </div>
 
-          <!-- Card Footer Actions -->
+          <!-- Card Footer Actions (All Blue) -->
           <div :class="['mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-2', darkMode ? 'border-slate-800' : 'border-slate-200']">
             <div class="flex items-center gap-2 text-slate-400 text-xs">
               <Clock class="w-3.5 h-3.5" />
@@ -367,9 +385,9 @@
 
               <button
                 @click="viewContractDetails(contract)"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 transition-all flex items-center gap-1.5 cursor-pointer"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shadow-blue-600/30"
               >
-                <FileCheck class="w-3.5 h-3.5 text-emerald-400" />
+                <FileCheck class="w-3.5 h-3.5" />
                 <span>Full Agreement</span>
               </button>
             </div>
@@ -393,7 +411,7 @@
         <!-- Modal Header -->
         <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <Handshake class="w-5 h-5" />
             </div>
             <div>
@@ -417,7 +435,7 @@
               type="text"
               required
               placeholder="e.g. 2026/27 First Grade Teff Supply Agreement"
-              :class="['w-full px-3 py-2 rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl border focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
             />
           </div>
 
@@ -528,10 +546,10 @@
           </div>
 
           <!-- Calculated Total Amount Banner -->
-          <div :class="['p-3 rounded-xl border flex items-center justify-between', darkMode ? 'bg-emerald-950/30 border-emerald-800/50' : 'bg-emerald-50 border-emerald-200']">
+          <div :class="['p-3 rounded-xl border flex items-center justify-between', darkMode ? 'bg-blue-950/30 border-blue-800/50' : 'bg-blue-50 border-blue-200']">
             <div>
-              <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">Computed Total Contract Value:</span>
-              <p class="text-base font-black text-emerald-600 dark:text-emerald-400 m-0">
+              <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 block">Computed Total Contract Value:</span>
+              <p class="text-base font-black text-blue-600 dark:text-blue-400 m-0">
                 ETB {{ formatNumber(computedTotal) }}
               </p>
             </div>
@@ -609,7 +627,7 @@
             />
           </div>
 
-          <!-- Modal Action Footer -->
+          <!-- Modal Action Footer (All Blue) -->
           <div :class="['pt-4 border-t flex justify-end gap-2 shrink-0', darkMode ? 'border-slate-800' : 'border-slate-200']">
             <button
               type="button"
@@ -621,7 +639,7 @@
             <button
               type="submit"
               :disabled="submitting"
-              class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/30"
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
             >
               <span v-if="submitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <span>Send Contract Proposal</span>
@@ -644,12 +662,12 @@
         <!-- Modal Header -->
         <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <FileCheck class="w-5 h-5" />
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="font-mono text-xs font-black text-emerald-500">{{ activeContract.contract_number }}</span>
+                <span class="font-mono text-xs font-black text-blue-500">{{ activeContract.contract_number }}</span>
                 <span :class="['text-[10px] px-2 py-0.5 rounded-full font-bold uppercase', getStatusBadgeStyle(activeContract.status)]">
                   {{ formatStatusLabel(activeContract.status) }}
                 </span>
@@ -667,7 +685,7 @@
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <span class="text-[10px] text-slate-400 block">Total Value</span>
-              <span class="text-sm font-black text-emerald-500">ETB {{ formatNumber(activeContract.total_amount) }}</span>
+              <span class="text-sm font-black text-blue-500">ETB {{ formatNumber(activeContract.total_amount) }}</span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <span class="text-[10px] text-slate-400 block">Quantity</span>
@@ -717,7 +735,7 @@
               >
                 <div class="flex items-center gap-3">
                   <div
-                    :class="['w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs', milestone.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300']"
+                    :class="['w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs', milestone.status === 'completed' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300']"
                   >
                     <Check v-if="milestone.status === 'completed'" class="w-4 h-4" />
                     <span v-else>{{ idx + 1 }}</span>
@@ -729,10 +747,10 @@
                 </div>
 
                 <div class="text-right shrink-0">
-                  <span class="font-extrabold text-xs block text-emerald-500">
+                  <span class="font-extrabold text-xs block text-blue-500">
                     ETB {{ formatNumber(milestone.payout_amount) }}
                   </span>
-                  <span :class="['text-[10px] uppercase font-bold px-2 py-0.5 rounded-full', milestone.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400']">
+                  <span :class="['text-[10px] uppercase font-bold px-2 py-0.5 rounded-full', milestone.status === 'completed' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-500/20 text-slate-400']">
                     {{ milestone.status }}
                   </span>
                 </div>
@@ -765,19 +783,73 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
   Menu, Handshake, FileText, Plus, RefreshCw, ShoppingBag, Clock,
-  CheckCircle2, BadgeDollarSign, ShieldCheck, Search, Check,
+  BadgeDollarSign, ShieldCheck, Search, Check, ChevronRight,
   Calendar, MapPin, User, Scale, FileCheck, Sprout
 } from 'lucide-vue-next'
 
-const router = useRouter()
-const authStore = useAuthStore()
+interface ContractFarmerUser {
+  name?: string
+  phone?: string
+  email?: string
+}
+
+interface ContractFarmer {
+  id: number
+  user_id: number
+  farm_name?: string
+  region?: string
+  zone?: string
+  woreda?: string
+  farm_type?: string
+  average_rating?: number
+  user?: ContractFarmerUser
+}
+
+interface ContractMilestoneItem {
+  id?: number
+  contract_id?: number
+  title: string
+  description?: string
+  due_date?: string
+  status: string
+  payout_percentage: number
+  payout_amount: number
+  payout_status?: string
+}
+
+interface ContractItem {
+  id: number
+  contract_number: string
+  buyer_id: number
+  farmer_id: number
+  title: string
+  crop_type: string
+  variety?: string
+  quantity: number
+  unit: string
+  unit_price: number
+  total_amount: number
+  advance_payment?: number
+  currency?: string
+  start_date: string
+  delivery_date: string
+  delivery_location?: string
+  quality_specifications?: string
+  status: string
+  payment_terms?: string
+  terms_and_conditions?: string
+  farmer_notes?: string
+  created_at: string
+  cancellation_reason?: string
+  farmer?: ContractFarmer
+  milestones?: ContractMilestoneItem[]
+}
+
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
 
@@ -794,7 +866,7 @@ const sortBy = ref('newest')
 
 const createModalOpen = ref(false)
 const detailsModalOpen = ref(false)
-const activeContract = ref<any>(null)
+const activeContract = ref<ContractItem | null>(null)
 
 // Form state
 const contractForm = ref({
@@ -857,18 +929,18 @@ const refreshData = async () => {
 }
 
 // Master Contracts List (Strictly Live Database)
-const rawContracts = computed(() => {
+const rawContracts = computed<ContractItem[]>(() => {
   const c = buyerStore.contracts
-  if (Array.isArray(c)) return c
-  if (c && Array.isArray((c as any).data)) return (c as any).data
+  if (Array.isArray(c)) return c as ContractItem[]
+  if (c && Array.isArray((c as any).data)) return (c as any).data as ContractItem[]
   return []
 })
 
 // Available Farmers from Database
-const availableFarmers = computed(() => {
+const availableFarmers = computed<ContractFarmer[]>(() => {
   const f = buyerStore.contractFarmers
-  if (Array.isArray(f)) return f
-  if (f && Array.isArray((f as any).data)) return (f as any).data
+  if (Array.isArray(f)) return f as ContractFarmer[]
+  if (f && Array.isArray((f as any).data)) return (f as any).data as ContractFarmer[]
   return []
 })
 
@@ -884,13 +956,13 @@ const stats = computed(() => {
     }
   }
 
-  const list = rawContracts.value
+  const list: ContractItem[] = rawContracts.value
   const total = list.length
-  const active = list.filter(c => ['active', 'in_progress'].includes((c.status || '').toLowerCase())).length
-  const pending = list.filter(c => ['proposed', 'draft'].includes((c.status || '').toLowerCase())).length
+  const active = list.filter((c: ContractItem) => ['active', 'in_progress'].includes((c.status || '').toLowerCase())).length
+  const pending = list.filter((c: ContractItem) => ['proposed', 'draft'].includes((c.status || '').toLowerCase())).length
   const totalValue = list
-    .filter(c => (c.status || '').toLowerCase() !== 'cancelled')
-    .reduce((sum, c) => sum + Number(c.total_amount || 0), 0)
+    .filter((c: ContractItem) => (c.status || '').toLowerCase() !== 'cancelled')
+    .reduce((sum: number, c: ContractItem) => sum + Number(c.total_amount || 0), 0)
 
   return { total, active, pending, totalValue }
 })
@@ -901,44 +973,44 @@ const statusFilters = computed(() => [
   {
     label: 'Active Production',
     value: 'active',
-    count: rawContracts.value.filter(c => ['active', 'in_progress'].includes((c.status || '').toLowerCase())).length
+    count: rawContracts.value.filter((c: ContractItem) => ['active', 'in_progress'].includes((c.status || '').toLowerCase())).length
   },
   {
     label: 'Pending Signature',
     value: 'proposed',
-    count: rawContracts.value.filter(c => ['proposed', 'draft'].includes((c.status || '').toLowerCase())).length
+    count: rawContracts.value.filter((c: ContractItem) => ['proposed', 'draft'].includes((c.status || '').toLowerCase())).length
   },
   {
     label: 'Completed',
     value: 'completed',
-    count: rawContracts.value.filter(c => (c.status || '').toLowerCase() === 'completed').length
+    count: rawContracts.value.filter((c: ContractItem) => (c.status || '').toLowerCase() === 'completed').length
   },
   {
     label: 'Cancelled',
     value: 'cancelled',
-    count: rawContracts.value.filter(c => (c.status || '').toLowerCase() === 'cancelled').length
+    count: rawContracts.value.filter((c: ContractItem) => (c.status || '').toLowerCase() === 'cancelled').length
   }
 ])
 
 // Filtered and Sorted Contracts
-const filteredContracts = computed(() => {
-  let list = [...rawContracts.value]
+const filteredContracts = computed<ContractItem[]>(() => {
+  let list: ContractItem[] = [...rawContracts.value]
 
   // Status Filter
   if (activeStatusFilter.value) {
     if (activeStatusFilter.value === 'active') {
-      list = list.filter(c => ['active', 'in_progress'].includes((c.status || '').toLowerCase()))
+      list = list.filter((c: ContractItem) => ['active', 'in_progress'].includes((c.status || '').toLowerCase()))
     } else if (activeStatusFilter.value === 'proposed') {
-      list = list.filter(c => ['proposed', 'draft'].includes((c.status || '').toLowerCase()))
+      list = list.filter((c: ContractItem) => ['proposed', 'draft'].includes((c.status || '').toLowerCase()))
     } else {
-      list = list.filter(c => (c.status || '').toLowerCase() === activeStatusFilter.value)
+      list = list.filter((c: ContractItem) => (c.status || '').toLowerCase() === activeStatusFilter.value)
     }
   }
 
   // Search Filter
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    list = list.filter(c =>
+    list = list.filter((c: ContractItem) =>
       (c.contract_number || '').toLowerCase().includes(q) ||
       (c.title || '').toLowerCase().includes(q) ||
       (c.crop_type || '').toLowerCase().includes(q) ||
@@ -950,20 +1022,20 @@ const filteredContracts = computed(() => {
   // Sort
   switch (sortBy.value) {
     case 'oldest':
-      list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      list.sort((a: ContractItem, b: ContractItem) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       break
     case 'highest_value':
-      list.sort((a, b) => Number(b.total_amount || 0) - Number(a.total_amount || 0))
+      list.sort((a: ContractItem, b: ContractItem) => Number(b.total_amount || 0) - Number(a.total_amount || 0))
       break
     case 'lowest_value':
-      list.sort((a, b) => Number(a.total_amount || 0) - Number(b.total_amount || 0))
+      list.sort((a: ContractItem, b: ContractItem) => Number(a.total_amount || 0) - Number(b.total_amount || 0))
       break
     case 'delivery_date':
-      list.sort((a, b) => new Date(a.delivery_date || 0).getTime() - new Date(b.delivery_date || 0).getTime())
+      list.sort((a: ContractItem, b: ContractItem) => new Date(a.delivery_date || 0).getTime() - new Date(b.delivery_date || 0).getTime())
       break
     case 'newest':
     default:
-      list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      list.sort((a: ContractItem, b: ContractItem) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       break
   }
 
@@ -985,7 +1057,7 @@ const computedAdvance = computed(() => {
 const openCreateModal = () => {
   contractForm.value = {
     title: '',
-    farmer_id: availableFarmers.value[0]?.id || '',
+    farmer_id: availableFarmers.value[0]?.id ? String(availableFarmers.value[0].id) : '',
     crop_type: 'Teff',
     variety: 'Magna',
     quantity: 100,
@@ -1052,7 +1124,7 @@ const cancelContract = async (id: number) => {
   }
 }
 
-const viewContractDetails = (contract: any) => {
+const viewContractDetails = (contract: ContractItem) => {
   activeContract.value = contract
   detailsModalOpen.value = true
 }
@@ -1066,9 +1138,9 @@ const resetFilters = () => {
 // Helpers
 const getStatusBadgeStyle = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (['active', 'in_progress'].includes(norm)) return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+  if (['active', 'in_progress'].includes(norm)) return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
   if (['proposed', 'draft'].includes(norm)) return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-  if (norm === 'completed') return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+  if (norm === 'completed') return 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
   if (norm === 'cancelled') return 'bg-red-500/15 text-red-400 border border-red-500/30'
   return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
 }
@@ -1083,25 +1155,25 @@ const formatStatusLabel = (status: string) => {
 }
 
 // Milestones Helper
-const getCompletedMilestonesCount = (contract: any) => {
+const getCompletedMilestonesCount = (contract: ContractItem) => {
   if (!contract.milestones || contract.milestones.length === 0) {
     const norm = (contract.status || '').toLowerCase()
     if (norm === 'completed') return 4
     if (['active', 'in_progress'].includes(norm)) return 1
     return 0
   }
-  return contract.milestones.filter((m: any) => m.status === 'completed').length
+  return contract.milestones.filter((m: ContractMilestoneItem) => m.status === 'completed').length
 }
 
-const isStageCompleted = (contract: any, _stageKey: string, stageIdx: number) => {
+const isStageCompleted = (contract: ContractItem, _stageKey: string, stageIdx: number) => {
   const completedCount = getCompletedMilestonesCount(contract)
   return completedCount > stageIdx
 }
 
-const getStageStyle = (contract: any, _stageKey: string, stageIdx: number) => {
+const getStageStyle = (contract: ContractItem, _stageKey: string, stageIdx: number) => {
   const completedCount = getCompletedMilestonesCount(contract)
   if (completedCount > stageIdx) {
-    return darkMode.value ? 'bg-emerald-950/20 border-emerald-800 text-emerald-400' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+    return darkMode.value ? 'bg-blue-950/20 border-blue-800 text-blue-400' : 'bg-blue-50 border-blue-300 text-blue-800'
   }
   if (completedCount === stageIdx && ['active', 'in_progress'].includes((contract.status || '').toLowerCase())) {
     return darkMode.value ? 'bg-amber-950/20 border-amber-800 text-amber-400' : 'bg-amber-50 border-amber-300 text-amber-800'
@@ -1109,10 +1181,10 @@ const getStageStyle = (contract: any, _stageKey: string, stageIdx: number) => {
   return darkMode.value ? 'bg-[#1a233a] border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
 }
 
-const getStageIconBadge = (contract: any, _stageKey: string, stageIdx: number) => {
+const getStageIconBadge = (contract: ContractItem, _stageKey: string, stageIdx: number) => {
   const completedCount = getCompletedMilestonesCount(contract)
   if (completedCount > stageIdx) {
-    return 'bg-emerald-500 text-white'
+    return 'bg-blue-600 text-white'
   }
   if (completedCount === stageIdx && ['active', 'in_progress'].includes((contract.status || '').toLowerCase())) {
     return 'bg-amber-500 text-white animate-pulse'
@@ -1148,11 +1220,6 @@ const formatDateTime = (dateStr: string | null) => {
 
 const formatNumber = (num: number) => {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0)
-}
-
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
 }
 </script>
 

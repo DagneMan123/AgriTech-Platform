@@ -216,7 +216,7 @@
   </aside>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -238,7 +238,7 @@ const checkDarkMode = () => {
   isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
 }
 
-let observer = null
+let observer: any = null
 
 onMounted(() => {
   window.addEventListener('storage', checkDarkMode)
@@ -267,7 +267,7 @@ const expandedSections = ref({
   account: false
 })
 
-const toggleSection = (section) => {
+const toggleSection = (section: any) => {
   expandedSections.value[section] = !expandedSections.value[section]
 }
 

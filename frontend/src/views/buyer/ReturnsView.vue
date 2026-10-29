@@ -47,11 +47,29 @@
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
               @click="openRequestModal"
-              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/30 cursor-pointer"
+              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
             >
               <Plus class="w-4 h-4" />
               <span>File Return Claim</span>
             </button>
+
+            <button
+              @click="refreshData"
+              :disabled="refreshing"
+              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
+              title="Refresh Returns"
+            >
+              <RefreshCw :class="['w-3.5 h-3.5', refreshing ? 'animate-spin text-blue-500' : '']" />
+              <span>Refresh</span>
+            </button>
+
+            <router-link
+              to="/buyer/marketplace"
+              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
+            >
+              <ShoppingBag class="w-3.5 h-3.5 text-blue-500" />
+              <span>Marketplace</span>
+            </router-link>
           </div>
         </div>
       </div>
@@ -95,15 +113,15 @@
         </article>
 
         <!-- Refunded Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Refunded Value</h3>
-            <p class="text-xl lg:text-2xl font-black text-emerald-500">ETB {{ formatNumber(stats.refundedAmount) }}</p>
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+            <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(stats.refundedAmount) }}</p>
+            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
               <ShieldCheck class="w-3 h-3 inline" /> Returned to wallet
             </span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <BadgeDollarSign class="w-6 h-6" />
           </div>
         </article>
@@ -176,7 +194,7 @@
 
       <!-- ── Loading State ── -->
       <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="w-10 h-10 border-4 border-slate-300 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
         <p :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-700']">Loading returns &amp; refund claims...</p>
         <p :class="['text-xs mt-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Fetching records from database</p>
       </div>
@@ -209,8 +227,13 @@
           >
             Clear Filters
           </button>
-          
-         
+          <button
+            @click="openRequestModal"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
+          >
+            <Plus class="w-4 h-4" />
+            <span>File Return Claim</span>
+          </button>
         </div>
       </div>
 
@@ -252,7 +275,7 @@
                 <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: getStatusColor(item.status) }"></span>
                 {{ formatStatusLabel(item.status) }}
               </span>
-              <span class="text-sm font-black text-emerald-500">
+              <span class="text-sm font-black text-blue-500">
                 ETB {{ formatNumber(item.amount) }}
               </span>
             </div>
@@ -263,7 +286,7 @@
             <div class="grid grid-cols-4 gap-2 relative">
               <div class="absolute top-4 left-[12%] right-[12%] h-1 bg-slate-200 dark:bg-slate-700 -z-0"></div>
               <div
-                class="absolute top-4 left-[12%] h-1 bg-emerald-500 transition-all duration-500 -z-0"
+                class="absolute top-4 left-[12%] h-1 bg-blue-600 transition-all duration-500 -z-0"
                 :style="{ width: getResolutionPercentage(item.status) }"
               ></div>
 
@@ -276,7 +299,7 @@
                   :class="[
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm',
                     isResolutionCompleted(item.status, step.key)
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-blue-600 text-white'
                       : isResolutionCurrent(item.status, step.key)
                         ? 'bg-blue-600 text-white ring-4 ring-blue-500/30'
                         : darkMode
@@ -334,7 +357,7 @@
             <div :class="['md:col-span-4 flex flex-col justify-between p-4 rounded-xl border', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div>
                 <p class="text-[10px] uppercase font-bold text-slate-400 m-0">Claim Amount</p>
-                <p class="text-xl font-black text-emerald-500 m-0 mb-2">ETB {{ formatNumber(item.amount) }}</p>
+                <p class="text-xl font-black text-blue-500 m-0 mb-2">ETB {{ formatNumber(item.amount) }}</p>
                 <p class="text-[11px] text-slate-400 m-0">
                   Method: <span class="font-semibold text-slate-200">Escrow Reversal</span>
                 </p>
@@ -451,7 +474,7 @@
               step="0.01"
               required
               placeholder="e.g. 15000"
-              :class="['w-full p-2.5 rounded-xl border outline-none font-bold', darkMode ? 'bg-[#0f172a] border-slate-700 text-emerald-400' : 'bg-slate-50 border-slate-300 text-emerald-600']"
+              :class="['w-full p-2.5 rounded-xl border outline-none font-bold', darkMode ? 'bg-[#0f172a] border-slate-700 text-blue-400' : 'bg-slate-50 border-slate-300 text-blue-600']"
             />
           </div>
 
@@ -487,7 +510,7 @@
             <button
               type="submit"
               :disabled="submitting"
-              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
             >
               <span v-if="submitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <span>Submit Return Claim</span>
@@ -509,7 +532,7 @@
       >
         <div class="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <FileCheck class="w-4 h-4" />
             </div>
             <div>
@@ -533,7 +556,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Claim Amount:</span>
-            <span class="font-black text-emerald-500">ETB {{ formatNumber(activeClaimForDetails.amount) }}</span>
+            <span class="font-black text-blue-500">ETB {{ formatNumber(activeClaimForDetails.amount) }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Filed On:</span>
@@ -578,6 +601,24 @@ import {
   UploadCloud, FileCheck
 } from 'lucide-vue-next'
 
+interface ReturnClaim {
+  id: number
+  refund_number?: string
+  order_id: number
+  amount: number | string
+  status: string
+  reason?: string
+  admin_notes?: string
+  created_at: string
+  order?: {
+    id: number
+    order_number?: string
+    grand_total?: number
+    items?: any[]
+    order_items?: any[]
+  }
+}
+
 const router = useRouter()
 const authStore = useAuthStore()
 const buyerStore = useBuyerStore()
@@ -596,7 +637,7 @@ const sortBy = ref('newest')
 
 const requestModalOpen = ref(false)
 const detailsModalOpen = ref(false)
-const activeClaimForDetails = ref<any>(null)
+const activeClaimForDetails = ref<ReturnClaim | null>(null)
 
 const claimForm = ref({
   order_id: '',
@@ -644,10 +685,10 @@ const refreshData = async () => {
 }
 
 // Master returns raw list from Database / Store
-const rawReturns = computed(() => {
+const rawReturns = computed<ReturnClaim[]>(() => {
   const r = buyerStore.returns
-  if (Array.isArray(r)) return r
-  if (r && Array.isArray((r as any).data)) return (r as any).data
+  if (Array.isArray(r)) return r as ReturnClaim[]
+  if (r && Array.isArray((r as any).data)) return (r as any).data as ReturnClaim[]
   return []
 })
 
@@ -664,11 +705,11 @@ const eligibleOrders = computed(() => {
 const stats = computed(() => {
   const list = rawReturns.value
   const total = list.length
-  const underReview = list.filter(r => (r.status || '').toLowerCase() === 'requested').length
-  const approved = list.filter(r => (r.status || '').toLowerCase() === 'approved').length
+  const underReview = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'requested').length
+  const approved = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'approved').length
   const refundedAmount = list
-    .filter(r => (r.status || '').toLowerCase() === 'completed')
-    .reduce((sum, r) => sum + Number(r.amount || 0), 0)
+    .filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'completed')
+    .reduce((sum: number, r: ReturnClaim) => sum + Number(r.amount || 0), 0)
 
   return { total, underReview, approved, refundedAmount }
 })
@@ -679,36 +720,36 @@ const statusFilters = computed(() => [
   {
     label: 'Under Review',
     value: 'requested',
-    count: rawReturns.value.filter(r => (r.status || '').toLowerCase() === 'requested').length
+    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'requested').length
   },
   {
     label: 'Approved',
     value: 'approved',
-    count: rawReturns.value.filter(r => (r.status || '').toLowerCase() === 'approved').length
+    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'approved').length
   },
   {
     label: 'Completed',
     value: 'completed',
-    count: rawReturns.value.filter(r => (r.status || '').toLowerCase() === 'completed').length
+    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'completed').length
   },
   {
     label: 'Rejected',
     value: 'rejected',
-    count: rawReturns.value.filter(r => (r.status || '').toLowerCase() === 'rejected').length
+    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'rejected').length
   }
 ])
 
 // Filtered and Sorted
-const filteredReturns = computed(() => {
+const filteredReturns = computed<ReturnClaim[]>(() => {
   let list = [...rawReturns.value]
 
   if (activeStatusFilter.value) {
-    list = list.filter(r => (r.status || '').toLowerCase() === activeStatusFilter.value)
+    list = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === activeStatusFilter.value)
   }
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    list = list.filter(r =>
+    list = list.filter((r: ReturnClaim) =>
       (r.refund_number || ('RET-' + r.id)).toLowerCase().includes(q) ||
       (r.reason || '').toLowerCase().includes(q) ||
       (r.order?.order_number || ('ORD-' + r.order_id)).toLowerCase().includes(q)
@@ -717,17 +758,17 @@ const filteredReturns = computed(() => {
 
   switch (sortBy.value) {
     case 'oldest':
-      list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      list.sort((a: ReturnClaim, b: ReturnClaim) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       break
     case 'highest-amount':
-      list.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0))
+      list.sort((a: ReturnClaim, b: ReturnClaim) => Number(b.amount || 0) - Number(a.amount || 0))
       break
     case 'lowest-amount':
-      list.sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0))
+      list.sort((a: ReturnClaim, b: ReturnClaim) => Number(a.amount || 0) - Number(b.amount || 0))
       break
     case 'newest':
     default:
-      list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      list.sort((a: ReturnClaim, b: ReturnClaim) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       break
   }
 
@@ -746,7 +787,7 @@ const openRequestModal = () => {
 }
 
 const onOrderSelected = () => {
-  const selected = eligibleOrders.value.find(o => String(o.id) === String(claimForm.value.order_id))
+  const selected = eligibleOrders.value.find((o: any) => String(o.id) === String(claimForm.value.order_id))
   if (selected) {
     claimForm.value.amount = Number(selected.total_amount || selected.grand_total || 0)
   }
@@ -785,7 +826,7 @@ const cancelReturnRequest = async (id: number) => {
   }
 }
 
-const openDetailsModal = (item: any) => {
+const openDetailsModal = (item: ReturnClaim) => {
   activeClaimForDetails.value = item
   detailsModalOpen.value = true
 }
@@ -870,8 +911,8 @@ const formatDateTime = (dateStr: string | null) => {
   }
 }
 
-const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0)
+const formatNumber = (num: number | string | undefined | null) => {
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(num || 0))
 }
 
 const handleLogout = async () => {
