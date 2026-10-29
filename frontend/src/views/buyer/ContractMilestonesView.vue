@@ -499,7 +499,7 @@ const darkMode = computed(() => themeStore.isDark)
 
 const sidebarOpen = ref(false)
 const loading = ref(false)
-const refreshing = ref(false)
+
 
 const searchQuery = ref('')
 const activeStatusFilter = ref('')

@@ -68,6 +68,7 @@ const BuyerReturnsView = () => import('@/views/buyer/ReturnsView.vue')
 const BuyerContractsView = () => import('@/views/buyer/ContractsView.vue')
 const BuyerContractAgreementsView = () => import('@/views/buyer/ContractAgreementsView.vue')
 const BuyerContractMilestonesView = () => import('@/views/buyer/ContractMilestonesView.vue')
+const BuyerDeliveryTrackingView = () => import('@/views/buyer/DeliveryTrackingView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
 const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
 const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
@@ -443,6 +444,12 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-contract-milestones',
         component: BuyerContractMilestonesView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Milestone Tracking' }
+      },
+      {
+        path: 'delivery/tracking',
+        name: 'buyer-delivery-tracking',
+        component: BuyerDeliveryTrackingView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Delivery Tracking' }
       },
       {
         path: 'wishlist',

@@ -65,6 +65,9 @@ export const buyerAPI = {
   // Dashboard
   getDashboard: () => apiClient.get('/buyer/dashboard'),
 
+  // Delivery & Tracking
+  getDeliveryTracking: (params?: any) => apiClient.get('/buyer/dashboard/delivery-tracking', { params }),
+
   // Direct Contracts & Contract Farming
   getContracts: (params?: any) => apiClient.get('/buyer/contracts', { params }),
   getContractFarmers: () => apiClient.get('/buyer/contracts/farmers'),
