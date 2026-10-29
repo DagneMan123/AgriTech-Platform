@@ -90,4 +90,9 @@ class User extends Authenticatable
     {
         return $this->role === 'financial';
     }
+
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class, 'buyer_id');
+    }
 }

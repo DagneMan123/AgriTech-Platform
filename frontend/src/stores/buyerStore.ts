@@ -7,6 +7,9 @@ export const useBuyerStore = defineStore('buyer', () => {
   const orders = ref<any[]>([])
   const wishlist = ref<any[]>([])
   const returns = ref<any[]>([])
+  const contracts = ref<any[]>([])
+  const contractStats = ref<any>(null)
+  const contractFarmers = ref<any[]>([])
   const dashboard = ref<any>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -182,11 +185,69 @@ export const useBuyerStore = defineStore('buyer', () => {
     }
   }
 
+  // Direct Contracts
+  const fetchContracts = async (params?: any) => {
+    loading.value = true
+    try {
+      const response = await buyerAPI.getContracts(params)
+      contracts.value = response.data.data?.data || response.data.data || response.data
+      if (response.data.stats) {
+        contractStats.value = response.data.stats
+      }
+      return contracts.value
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch contracts'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchContractFarmers = async () => {
+    try {
+      const response = await buyerAPI.getContractFarmers()
+      contractFarmers.value = response.data.data || response.data
+      return contractFarmers.value
+    } catch (err: any) {
+      console.error('Failed to fetch contract farmers:', err)
+      return []
+    }
+  }
+
+  const createContract = async (data: any) => {
+    loading.value = true
+    try {
+      const response = await buyerAPI.createContract(data)
+      const newContract = response.data.data || response.data
+      contracts.value.unshift(newContract)
+      return newContract
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to create contract'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const cancelContract = async (id: number, reason?: string) => {
+    try {
+      const response = await buyerAPI.cancelContract(id, reason)
+      await fetchContracts()
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to cancel contract'
+      throw err
+    }
+  }
+
   return {
     cart,
     orders,
     wishlist,
     returns,
+    contracts,
+    contractStats,
+    contractFarmers,
     dashboard,
     loading,
     error,
@@ -199,6 +260,10 @@ export const useBuyerStore = defineStore('buyer', () => {
     fetchReturns,
     createReturn,
     cancelReturn,
+    fetchContracts,
+    fetchContractFarmers,
+    createContract,
+    cancelContract,
     fetchWishlist,
     addToWishlist,
     removeFromWishlist,

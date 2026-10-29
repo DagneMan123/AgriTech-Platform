@@ -64,4 +64,11 @@ export const buyerAPI = {
 
   // Dashboard
   getDashboard: () => apiClient.get('/buyer/dashboard'),
+
+  // Direct Contracts & Contract Farming
+  getContracts: (params?: any) => apiClient.get('/buyer/contracts', { params }),
+  getContractFarmers: () => apiClient.get('/buyer/contracts/farmers'),
+  createContract: (data: any) => apiClient.post('/buyer/contracts', data),
+  getContract: (id: number) => apiClient.get('/buyer/contracts/' + id),
+  cancelContract: (id: number, reason?: string) => apiClient.post('/buyer/contracts/' + id + '/cancel', { reason }),
 }
