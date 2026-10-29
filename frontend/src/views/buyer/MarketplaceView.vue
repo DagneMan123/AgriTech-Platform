@@ -12,23 +12,18 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section (Matching Farmer Portal Full Width) -->
+      <!-- Header Section -->
       <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Marketplace</h1>
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and discover fresh agricultural products</p>
         </div>
         <div class="flex items-center gap-3 flex-shrink-0">
-          <!-- Filters Button -->
-          <button @click="showFilters = !showFilters" :class="['px-4 py-2 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-2', darkMode ? 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']">
-            <i class="fas fa-sliders-h"></i> Filters
-          </button>
-          <!-- Refresh Button -->
-         
+          <!-- Refresh Button placeholder if needed -->
         </div>
       </div>
 
-      <!-- Summary Statistics Grid (Cards Border changed to Blue) -->
+      <!-- Summary Statistics Grid -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Marketplace summary statistics">
         <article
           v-for="card in summaryCards"
@@ -46,8 +41,8 @@
         </article>
       </section>
 
-      <!-- Filters Section Panel (Border changed to Blue) -->
-      <section v-if="showFilters" :class="['rounded-2xl border p-5 mb-6 shadow-sm', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+      <!-- Filters Section Panel (Always Visible) -->
+      <section :class="['rounded-2xl border p-5 mb-6 shadow-sm', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div class="flex flex-col gap-1.5">
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Search:</label>
@@ -89,10 +84,6 @@
               <option value="popular">Most Popular</option>
             </select>
           </div>
-        </div>
-        <div class="flex justify-end gap-2">
-          <button @click="applyFilters" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">Apply Filters</button>
-          <button @click="clearFilters" :class="['px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">Clear Filters</button>
         </div>
       </section>
 
@@ -168,7 +159,7 @@
         </div>
       </section>
 
-      <!-- Empty State (Border changed to Blue) -->
+      <!-- Empty State -->
       <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
         <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600']">
           <i class="fas fa-box-open"></i>
@@ -197,7 +188,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 
-// Product Interface Type Definition to fix implicit 'any' error on 'p'
 interface Product {
   id: number
   name: string
@@ -216,7 +206,6 @@ const authStore = useAuthStore()
 const themeStore = useThemeStore()
 
 const loading = ref(false)
-const showFilters = ref(false)
 const searchQuery = ref('')
 const selectedCategory = ref('')
 const priceRange = ref('')
@@ -224,9 +213,6 @@ const sortBy = ref('newest')
 const sidebarOpen = ref(false)
 
 const darkMode = computed(() => themeStore.isDark)
-const toggleDarkMode = () => {
-  themeStore.toggleTheme()
-}
 
 onMounted(async () => {
   themeStore.initializeTheme()
@@ -299,8 +285,6 @@ const clearFilters = () => {
   sortBy.value = 'newest'
   handleSearch()
 }
-
-
 
 const viewProduct = (id: number) => {
   router.push(`/app/buyer/products/${id}`)
