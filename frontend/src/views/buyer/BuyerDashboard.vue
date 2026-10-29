@@ -19,14 +19,22 @@
             <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Buyer Dashboard</h1>
             <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Manage your orders, deliveries, and purchases</p>
           </div>
-          <button
-            @click="toggleDarkMode"
-            :class="['w-[42px] h-[42px] rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer flex-shrink-0', darkMode ? 'bg-[#131b2e] border-slate-700 text-amber-400 hover:bg-slate-800 hover:border-emerald-500' : 'bg-white border-slate-300 text-amber-500 hover:bg-slate-50 hover:border-emerald-500']"
-            :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-            :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-          >
-            <span class="text-xl select-none">{{ darkMode ? '☀️' : '🌙' }}</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <router-link
+              to="/buyer/marketplace"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-600/30 flex items-center gap-1.5"
+            >
+              <i class="fas fa-shopping-cart"></i>
+              <span>Marketplace</span>
+            </router-link>
+            <router-link
+              to="/buyer/orders/active"
+              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
+            >
+              <i class="fas fa-clock text-blue-500"></i>
+              <span>Active Orders</span>
+            </router-link>
+          </div>
         </div>
       </div>
 
@@ -132,7 +140,7 @@
               <p :class="['text-xs max-w-sm mb-5', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 You haven't placed any agricultural orders yet, or no orders match your selected filter.
               </p>
-              <router-link to="/marketplace" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+              <router-link to="/buyer/marketplace" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-600/30">
                 <i class="fas fa-shopping-cart"></i> Browse Marketplace
               </router-link>
             </div>

@@ -52,24 +52,6 @@
               <Plus class="w-4 h-4" />
               <span>New Direct Contract</span>
             </button>
-
-            <button
-              @click="refreshData"
-              :disabled="refreshing"
-              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
-              title="Refresh Contracts"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', refreshing ? 'animate-spin text-emerald-500' : '']" />
-              <span>Refresh</span>
-            </button>
-
-            <router-link
-              to="/buyer/marketplace"
-              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
-            >
-              <ShoppingBag class="w-3.5 h-3.5 text-blue-500" />
-              <span>Marketplace</span>
-            </router-link>
           </div>
         </div>
       </div>

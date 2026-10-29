@@ -44,21 +44,6 @@
 
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <router-link
-              to="/buyer/orders/active"
-              class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30"
-            >
-              <Clock class="w-3.5 h-3.5" />
-              <span>Active Orders</span>
-            </router-link>
-
-            <router-link
-              to="/buyer/marketplace"
-              class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/30"
-            >
-              <Store class="w-3.5 h-3.5" />
-              <span>Marketplace</span>
-            </router-link>
           </div>
         </div>
       </div>

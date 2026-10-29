@@ -45,31 +45,9 @@
 
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button
-              @click="refreshOrders"
-              :disabled="refreshing"
-              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-2 transition-all cursor-pointer', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
-              title="Refresh Orders"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', refreshing ? 'animate-spin text-emerald-500' : '']" />
-              <span>Refresh</span>
-            </button>
 
-            <router-link
-              to="/buyer/orders"
-              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
-            >
-              <ListOrdered class="w-3.5 h-3.5 text-blue-500" />
-              <span>All Orders</span>
-            </router-link>
-
-            <router-link
-              to="/buyer/marketplace"
-              class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/30"
-            >
-              <Store class="w-3.5 h-3.5" />
-              <span>Marketplace</span>
-            </router-link>
+            
+            
           </div>
         </div>
       </div>
@@ -228,19 +206,8 @@
           >
             Clear Filters
           </button>
-          <router-link
-            to="/buyer/marketplace"
-            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-          >
-            <ShoppingBag class="w-4 h-4" />
-            <span>Shop Marketplace</span>
-          </router-link>
-          <router-link
-            to="/buyer/orders"
-            :class="['px-4 py-2 rounded-xl text-xs font-bold border transition-all', darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100']"
-          >
-            View Order History
-          </router-link>
+  
+          
         </div>
       </div>
 
