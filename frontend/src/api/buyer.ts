@@ -67,6 +67,11 @@ export const buyerAPI = {
 
   // Delivery & Tracking
   getDeliveryTracking: (params?: any) => apiClient.get('/buyer/dashboard/delivery-tracking', { params }),
+  getDeliveryAddresses: () => apiClient.get('/buyer/delivery-addresses'),
+  createDeliveryAddress: (data: any) => apiClient.post('/buyer/delivery-addresses', data),
+  updateDeliveryAddress: (id: number | string, data: any) => apiClient.put(`/buyer/delivery-addresses/${id}`, data),
+  deleteDeliveryAddress: (id: number | string) => apiClient.delete(`/buyer/delivery-addresses/${id}`),
+  setDefaultDeliveryAddress: (id: number | string) => apiClient.post(`/buyer/delivery-addresses/${id}/default`),
 
   // Direct Contracts & Contract Farming
   getContracts: (params?: any) => apiClient.get('/buyer/contracts', { params }),

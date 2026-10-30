@@ -217,8 +217,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, Store, Package, LayoutGrid, 
@@ -230,6 +230,7 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
@@ -270,6 +271,31 @@ const expandedSections = ref({
 const toggleSection = (section: any) => {
   expandedSections.value[section] = !expandedSections.value[section]
 }
+
+const autoExpandSection = () => {
+  if (!route) return
+  const path = route.path || ''
+  const name = String(route.name || '')
+  if (path.includes('/buyer/delivery') || path.includes('/buyer/transport') || name.includes('delivery') || name.includes('transport')) {
+    expandedSections.value.logistics = true
+  }
+  if (path.includes('/buyer/orders') || path.includes('/buyer/returns') || name.includes('orders') || name.includes('returns')) {
+    expandedSections.value.orders = true
+  }
+  if (path.includes('/buyer/contracts') || name.includes('contract')) {
+    expandedSections.value.contracts = true
+  }
+  if (path.includes('/buyer/payments') || name.includes('payment')) {
+    expandedSections.value.payments = true
+  }
+  if (path.includes('/buyer/profile') || path.includes('/buyer/reviews') || name.includes('profile') || name.includes('reviews')) {
+    expandedSections.value.account = true
+  }
+}
+
+watch(() => route.path, () => {
+  autoExpandSection()
+}, { immediate: true })
 
 const handleLogout = async () => {
   await auth.logout()

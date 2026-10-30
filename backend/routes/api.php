@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\Buyer\MarketplaceController;
 use App\Http\Controllers\Api\Buyer\DashboardController as BuyerDashboardController;
 use App\Http\Controllers\Api\Buyer\ReturnController as BuyerReturnController;
 use App\Http\Controllers\Api\Buyer\ContractController as BuyerContractController;
+use App\Http\Controllers\Api\Buyer\DeliveryAddressController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -628,6 +629,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/contracts/farmers', [BuyerContractController::class, 'farmers']);
             Route::apiResource('/contracts', BuyerContractController::class);
             Route::post('/contracts/{id}/cancel', [BuyerContractController::class, 'cancel']);
+
+            Route::apiResource('/delivery-addresses', DeliveryAddressController::class);
+            Route::post('/delivery-addresses/{id}/default', [DeliveryAddressController::class, 'setDefault']);
 
             Route::get('/marketplace', [
                 MarketplaceController::class,
