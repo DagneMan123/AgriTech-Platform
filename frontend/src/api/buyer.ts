@@ -40,6 +40,11 @@ export const buyerAPI = {
   setDefaultPaymentMethod: (id: number | string) => apiClient.post(`/buyer/payment-methods/${id}/default`),
   getPaymentTransactions: () => apiClient.get('/buyer/payment-methods/transactions'),
 
+  // Chapa Payment Gateway (Telebirr, CBE Birr, Awash, Cards)
+  initializeChapaPayment: (data: any) => apiClient.post('/buyer/chapa/initialize', data),
+  verifyChapaPayment: (txRef: string) => apiClient.get(`/buyer/chapa/verify/${txRef}`),
+  getChapaBanks: () => apiClient.get('/buyer/chapa/banks'),
+
   // Reviews
   getReviews: () => apiClient.get('/buyer/reviews'),
   

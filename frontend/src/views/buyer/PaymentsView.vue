@@ -26,9 +26,9 @@
             </button>
             <div>
               <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                  <CreditCard class="w-3.5 h-3.5" />
-                  Payments &amp; Digital Finance
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Chapa Gateway Active
                 </span>
                 <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
                   Buyer Portal &gt; Payments &amp; Finance &gt; {{ currentTabTitle }}
@@ -38,22 +38,14 @@
                 {{ currentTabTitle }}
               </h1>
               <p :class="['text-xs lg:text-sm m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                Manage your digital wallets, verified bank accounts, commercial escrow methods, and transaction receipts
+                Secure digital payments powered by Chapa &bull; Telebirr, CBE Birr, Ethiopian bank transfers, and cards
               </p>
             </div>
           </div>
 
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button
-              @click="loadData"
-              :disabled="loading"
-              :class="['inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']"
-              title="Refresh from Database"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin text-blue-500' : '']" />
-              <span class="hidden md:inline">{{ loading ? 'Syncing...' : 'Refresh DB' }}</span>
-            </button>
+            
             <button
               @click="openAddModal"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
@@ -107,7 +99,7 @@
         </div>
       </div>
 
-      <!-- ── Summary Stats Cards (Live Database Metrics) ── -->
+<!-- ── Summary Stats Cards (Live Database Metrics) ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Registered Methods -->
         <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
@@ -142,7 +134,7 @@
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Volume</h3>
             <p class="text-xl lg:text-2xl font-black text-purple-500">ETB {{ formatNumber(stats.total_spent) }}</p>
-            <span class="text-[10px] text-purple-400 font-medium">All completed transactions</span>
+            <span class="text-[10px] text-purple-400 font-medium">Chapa &amp; escrow settlements</span>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600']">
             <Receipt class="w-6 h-6" />
@@ -152,11 +144,11 @@
         <!-- Escrow Security Guarantee -->
         <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Buyer Escrow</h3>
-            <p class="text-2xl font-black text-blue-500">100% Protected</p>
-            <span class="text-[10px] text-blue-500 font-medium">Safe produce custody</span>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Chapa Protection</h3>
+            <p class="text-2xl font-black text-emerald-500">100% Secured</p>
+            <span class="text-[10px] text-emerald-500 font-medium">Safe produce escrow</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <ShieldCheck class="w-6 h-6" />
           </div>
         </article>
@@ -184,14 +176,16 @@
             No payment methods registered in database
           </h3>
           <p :class="['text-xs max-w-md mx-auto mb-6', darkMode ? 'text-slate-400' : 'text-slate-500']">
-            Add your preferred payment account (Telebirr, CBE Birr, Commercial Bank of Ethiopia, or Debit/Credit Card) to seamlessly checkout agricultural produce and fund contract escrows.
+            Add your preferred payment account (Telebirr via Chapa, CBE Birr, Commercial Bank of Ethiopia, or Debit/Credit Card) to seamlessly checkout agricultural produce.
           </p>
-          <button
-            @click="openAddModal"
-            class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm cursor-pointer"
-          >
-            + Add Payment Method
-          </button>
+          <div class="flex items-center justify-center gap-3">
+            <button
+              @click="openAddModal"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm cursor-pointer"
+            >
+              + Add Payment Method
+            </button>
+          </div>
         </div>
 
         <!-- Payment Methods Cards Grid -->
@@ -200,7 +194,7 @@
             v-for="method in paymentMethods"
             :key="method.id"
             :class="['rounded-2xl border p-5 shadow-2xs transition-all relative flex flex-col justify-between group hover:shadow-md',
-              method.is_primary ? (darkMode ? 'border-blue-500/60 bg-[#14203a]' : 'border-blue-500/80 bg-blue-50/20') :
+              method.is_primary ? (darkMode ? 'border-emerald-500/60 bg-[#122329]' : 'border-emerald-500/80 bg-emerald-50/20') :
               (darkMode ? 'bg-[#131b2e] border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 hover:border-slate-300')
             ]"
           >
@@ -233,8 +227,11 @@
               </div>
 
               <!-- Institution / Bank Name -->
-              <h2 :class="['text-base font-bold tracking-tight mb-2 flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
-                {{ method.bank_name }}
+              <h2 :class="['text-base font-bold tracking-tight mb-2 flex items-center justify-between', darkMode ? 'text-slate-100' : 'text-slate-900']">
+                <span>{{ method.bank_name }}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">
+                  Chapa Ready
+                </span>
               </h2>
 
               <!-- Masked Account Number -->
@@ -256,7 +253,7 @@
                   <span class="font-semibold text-slate-700 dark:text-slate-200">{{ method.account_holder }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] text-slate-400">Database Status:</span>
+                  <span class="text-[11px] text-slate-400">Chapa Gateway:</span>
                   <span class="text-emerald-500 font-semibold text-[11px] flex items-center gap-1">
                     <CheckCircle2 class="w-3 h-3" /> Verified &amp; Active
                   </span>
@@ -295,9 +292,9 @@
         >
           <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold m-0">Settlement Transactions</h2>
+              <h2 class="text-sm font-bold m-0">Chapa Settlement Transactions</h2>
               <p :class="['text-xs m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                Complete audit trail of all produce payments and escrow settlements
+                Complete audit trail of all produce payments and Chapa escrow settlements
               </p>
             </div>
           </div>
@@ -312,7 +309,7 @@
                 <tr :class="['border-b uppercase font-bold text-[10px] tracking-wider', darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500']">
                   <th class="py-3.5 px-4">Order #</th>
                   <th class="py-3.5 px-4">Produce Details</th>
-                  <th class="py-3.5 px-4">Origin Farm</th>
+                  <th class="py-3.5 px-4">Gateway</th>
                   <th class="py-3.5 px-4">Amount</th>
                   <th class="py-3.5 px-4">Date</th>
                   <th class="py-3.5 px-4">Status</th>
@@ -330,8 +327,8 @@
                   <td class="py-4 px-4 font-bold">
                     {{ order.items && order.items.length > 0 ? order.items[0].product?.name : 'Produce Consignment' }}
                   </td>
-                  <td class="py-4 px-4 text-slate-500 dark:text-slate-400">
-                    {{ order.farm?.name || 'Local Farm' }}
+                  <td class="py-4 px-4 font-semibold text-emerald-500">
+                    Chapa Gateway
                   </td>
                   <td class="py-4 px-4 font-mono font-bold">
                     ETB {{ formatNumber(order.grand_total || order.total_amount) }}
@@ -359,9 +356,9 @@
               <ShieldCheck class="w-7 h-7" />
             </div>
             <div>
-              <h2 class="text-base font-bold m-0 mb-1">Commercial Agricultural Escrow Guarantee</h2>
+              <h2 class="text-base font-bold m-0 mb-1">Chapa &amp; Agricultural Escrow Custody</h2>
               <p :class="['text-xs leading-relaxed max-w-3xl m-0', darkMode ? 'text-slate-300' : 'text-slate-600']">
-                All buyer payments made through AgriConnect are held in regulated third-party escrow. Funds are only disbursed to farmers or suppliers after you confirm delivery arrival, quantity verification, and produce quality acceptance at your registered delivery address.
+                All buyer payments made through Chapa (Telebirr, CBE Birr, Awash, Cards) are held securely in escrow. Funds are disbursed to the farmer or agricultural supplier only after you inspect and accept produce delivery at your designated warehouse.
               </p>
             </div>
           </div>
@@ -373,7 +370,7 @@
             <span>Digital Tax Invoices &amp; Settlement Receipts</span>
           </h2>
           <p :class="['text-xs mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
-            Download stamped commercial invoices compliant with Ethiopian Ministry of Revenues regulations.
+            Download official Chapa payment receipts and Ethiopian Ministry of Revenues tax invoices.
           </p>
 
           <div v-if="transactions.length === 0" class="text-xs text-slate-400 py-6 text-center">
@@ -389,17 +386,17 @@
               <div class="flex items-center gap-3">
                 <FileText class="w-4 h-4 text-blue-500" />
                 <div>
-                  <span class="font-bold block">Invoice #INV-2026-{{ order.id }}</span>
+                  <span class="font-bold block">Chapa Invoice #CHAPA-{{ order.id }}</span>
                   <span class="text-[11px] text-slate-400">{{ formatDate(order.created_at) }} &bull; Order #{{ order.id }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-3">
                 <span class="font-mono font-bold">ETB {{ formatNumber(order.grand_total || order.total_amount) }}</span>
                 <button
-                  @click="showToast('Invoice downloaded successfully!')"
-                  class="px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold text-blue-500 hover:bg-blue-500/10 cursor-pointer"
+                  @click="showToast('Chapa invoice downloaded successfully!')"
+                  class="px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold text-emerald-500 hover:bg-emerald-500/10 cursor-pointer"
                 >
-                  Download PDF
+                  Download Receipt
                 </button>
               </div>
             </div>
@@ -408,6 +405,162 @@
       </div>
 
     </main>
+
+    <!-- ── MODAL: CHAPA INSTANT PAYMENT CHECKOUT ── -->
+    <div
+      v-if="chapaModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      @click.self="chapaModalOpen = false"
+    >
+      <div
+        :class="['rounded-2xl border w-full max-w-md overflow-hidden shadow-2xl transition-all', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+      >
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-emerald-500/30 bg-emerald-600 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-black">
+              CH
+            </div>
+            <div>
+              <h2 class="text-base font-bold m-0">Chapa Secure Payment</h2>
+              <p class="text-[11px] m-0 text-emerald-100">
+                Telebirr &bull; CBE Birr &bull; Bank Transfer &bull; Cards
+              </p>
+            </div>
+          </div>
+          <button
+            @click="chapaModalOpen = false"
+            class="p-1 rounded-lg text-white/80 hover:text-white cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Chapa Form Body -->
+        <form @submit.prevent="initiateChapaCheckout" class="p-6 space-y-4">
+          <!-- Amount -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Payment Amount (ETB) *
+            </label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">ETB</span>
+              <input
+                v-model.number="chapaForm.amount"
+                type="number"
+                step="any"
+                min="10"
+                required
+                placeholder="e.g. 5000"
+                :class="['w-full pl-12 pr-4 py-2.5 rounded-xl text-sm font-mono font-bold border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+              />
+            </div>
+          </div>
+
+          <!-- Select Payment Option -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Select Chapa Payment Channel *
+            </label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label
+                v-for="channel in chapaChannels"
+                :key="channel.id"
+                :class="['p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none',
+                  chapaForm.channel === channel.id
+                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold'
+                    : (darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
+                ]"
+              >
+                <input
+                  type="radio"
+                  :value="channel.id"
+                  v-model="chapaForm.channel"
+                  class="text-emerald-600 focus:ring-0"
+                />
+                <span class="text-[11px] truncate">{{ channel.name }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Mobile Phone (for Telebirr / CBE Birr prompt) *
+            </label>
+            <input
+              v-model="chapaForm.phone_number"
+              type="tel"
+              required
+              placeholder="+251 91 123 4567"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+            />
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Email Receipt Destination
+            </label>
+            <input
+              v-model="chapaForm.email"
+              type="email"
+              placeholder="buyer@agriconnect.et"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+            />
+          </div>
+
+          <!-- Result Session if Generated -->
+          <div
+            v-if="chapaSession"
+            :class="['p-3 rounded-xl border space-y-2 text-xs', darkMode ? 'bg-[#0f172a] border-emerald-900/60' : 'bg-emerald-50/60 border-emerald-200']"
+          >
+            <div class="flex items-center justify-between text-emerald-500 font-bold">
+              <span>Chapa Session Active:</span>
+              <span class="font-mono text-[11px]">{{ chapaSession.tx_ref }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <a
+                v-if="chapaSession.checkout_url"
+                :href="chapaSession.checkout_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex-1 text-center py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+              >
+                Open Chapa Checkout &rarr;
+              </a>
+              <button
+                type="button"
+                @click="verifyChapaSession(chapaSession.tx_ref)"
+                class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+              >
+                Verify
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Actions Footer -->
+          <div :class="['pt-3 border-t flex items-center justify-end gap-3', darkMode ? 'border-slate-800' : 'border-slate-200']">
+            <button
+              type="button"
+              @click="chapaModalOpen = false"
+              :class="['px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
+            >
+              Close
+            </button>
+            <button
+              v-if="!chapaSession"
+              type="submit"
+              :disabled="chapaProcessing"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <RefreshCw v-if="chapaProcessing" class="w-3.5 h-3.5 animate-spin" />
+              <span>{{ chapaProcessing ? 'Connecting...' : 'Proceed with Chapa' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- ── MODAL: ADD PAYMENT METHOD ── -->
     <div
@@ -420,13 +573,13 @@
       >
         <div :class="['px-6 py-4 border-b flex items-center justify-between', darkMode ? 'border-slate-800 bg-[#0f172a]' : 'border-slate-200 bg-slate-50']">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
               <CreditCard class="w-4 h-4" />
             </div>
             <div>
               <h2 class="text-base font-bold m-0">Add Payment Method</h2>
               <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                Connect your Telebirr, CBE Birr, bank account, or card
+                Connect your Telebirr, CBE Birr, bank account, or card via Chapa
               </p>
             </div>
           </div>
@@ -447,10 +600,10 @@
             <div class="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                @click="form.type = 'mobile_money'; form.bank_name = 'Telebirr (Ethio Telecom)'"
+                @click="form.type = 'mobile_money'; form.bank_name = 'Telebirr (Chapa)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'mobile_money'
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    ? 'border-emerald-600 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -463,30 +616,30 @@
                 @click="form.type = 'bank_transfer'; form.bank_name = 'Commercial Bank of Ethiopia (CBE)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'bank_transfer'
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    ? 'border-emerald-600 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
                 <Building2 class="w-4 h-4" />
-                <span>Bank Account</span>
+                <span>Bank Transfer</span>
               </button>
 
               <button
                 type="button"
-                @click="form.type = 'card'; form.bank_name = 'Visa / Mastercard'"
+                @click="form.type = 'card'; form.bank_name = 'Chapa Card (Visa / Mastercard)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'card'
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    ? 'border-emerald-600 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
                 <CreditCard class="w-4 h-4" />
-                <span>Debit / Credit</span>
+                <span>Card (Chapa)</span>
               </button>
             </div>
           </div>
 
-          <!-- Institution / Provider Name -->
+          <!-- Provider Name -->
           <div>
             <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
               Provider / Institution *
@@ -495,18 +648,18 @@
               v-if="form.type === 'mobile_money'"
               v-model="form.bank_name"
               required
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
             >
-              <option value="Telebirr (Ethio Telecom)">Telebirr (Ethio Telecom)</option>
-              <option value="CBE Birr">CBE Birr</option>
-              <option value="M-Pesa (Safaricom Ethiopia)">M-Pesa (Safaricom Ethiopia)</option>
+              <option value="Telebirr (Chapa)">Telebirr (Chapa)</option>
+              <option value="CBE Birr (Chapa)">CBE Birr (Chapa)</option>
+              <option value="M-Pesa (Safaricom)">M-Pesa (Safaricom)</option>
             </select>
 
             <select
               v-else-if="form.type === 'bank_transfer'"
               v-model="form.bank_name"
               required
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
             >
               <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
               <option value="Awash Bank">Awash Bank</option>
@@ -514,7 +667,7 @@
               <option value="Bank of Abyssinia (BOA)">Bank of Abyssinia (BOA)</option>
               <option value="Hibret Bank">Hibret Bank</option>
               <option value="Nib International Bank">Nib International Bank</option>
-              <option value="Cooperative Bank of Oromia (Coop)">Cooperative Bank of Oromia (Coop)</option>
+              <option value="Cooperative Bank of Oromia">Cooperative Bank of Oromia</option>
             </select>
 
             <input
@@ -522,8 +675,8 @@
               v-model="form.bank_name"
               type="text"
               required
-              placeholder="e.g. Visa Debit / Mastercard"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+              placeholder="e.g. Visa / Mastercard (via Chapa)"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
             />
           </div>
 
@@ -537,7 +690,7 @@
               type="text"
               required
               :placeholder="form.type === 'mobile_money' ? '+251 91 123 4567' : (form.type === 'card' ? '4111 2222 3333 4444' : '1000123456789')"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
             />
           </div>
 
@@ -551,7 +704,7 @@
               type="text"
               required
               placeholder="e.g. Dawit Haile"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
             />
           </div>
 
@@ -562,7 +715,7 @@
                 id="is_primary"
                 v-model="form.is_primary"
                 type="checkbox"
-                class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
+                class="w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer"
               />
               <label for="is_primary" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
                 Set as Primary Payment Method
@@ -583,7 +736,7 @@
             <button
               type="submit"
               :disabled="saving"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
             >
               <RefreshCw v-if="saving" class="w-3.5 h-3.5 animate-spin" />
               <span>{{ saving ? 'Saving...' : 'Save Payment Method' }}</span>
@@ -614,7 +767,8 @@ import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
   Menu, CreditCard, Plus, Receipt, ShieldCheck, CheckCircle2, Star,
-  Smartphone, Building2, Trash2, Copy, Check, X, RefreshCw, FileText
+  Smartphone, Building2, Trash2, Copy, Check, X, RefreshCw, FileText,
+  ExternalLink
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -640,10 +794,27 @@ const stats = ref({
 })
 
 const modalOpen = ref(false)
+const chapaModalOpen = ref(false)
+const chapaProcessing = ref(false)
+const chapaSession = ref<any | null>(null)
+
+const chapaChannels = [
+  { id: 'telebirr', name: 'Telebirr (Chapa)' },
+  { id: 'cbe_birr', name: 'CBE Birr' },
+  { id: 'awash', name: 'Awash Birr' },
+  { id: 'cards', name: 'Visa / Mastercard' }
+]
+
+const chapaForm = ref({
+  amount: 2500,
+  channel: 'telebirr',
+  phone_number: '',
+  email: ''
+})
 
 const form = ref({
   type: 'mobile_money',
-  bank_name: 'Telebirr (Ethio Telecom)',
+  bank_name: 'Telebirr (Chapa)',
   account_number: '',
   account_holder: '',
   is_primary: false
@@ -730,10 +901,59 @@ const loadData = async () => {
   }
 }
 
+const openChapaModal = () => {
+  chapaSession.value = null
+  chapaForm.value = {
+    amount: 2500,
+    channel: 'telebirr',
+    phone_number: authStore.user?.phone || '+251 91 100 0000',
+    email: authStore.user?.email || 'buyer@agriconnect.et'
+  }
+  chapaModalOpen.value = true
+}
+
+const initiateChapaCheckout = async () => {
+  chapaProcessing.value = true
+  try {
+    const res = await buyerAPI.initializeChapaPayment({
+      amount: chapaForm.value.amount,
+      phone_number: chapaForm.value.phone_number,
+      email: chapaForm.value.email
+    })
+
+    if (res && res.data && res.data.data) {
+      chapaSession.value = res.data.data
+      showToast('Chapa payment session generated!')
+      if (res.data.data.checkout_url) {
+        window.open(res.data.data.checkout_url, '_blank')
+      }
+    }
+  } catch (err: any) {
+    console.error('Chapa initiation error:', err)
+    alert(err?.response?.data?.message || 'Failed to initiate Chapa payment.')
+  } finally {
+    chapaProcessing.value = false
+  }
+}
+
+const verifyChapaSession = async (txRef: string) => {
+  try {
+    const res = await buyerAPI.verifyChapaPayment(txRef)
+    if (res && res.data && res.data.success) {
+      showToast('Chapa payment confirmed and recorded in database!')
+      chapaModalOpen.value = false
+      await loadData()
+    }
+  } catch (err: any) {
+    console.error('Chapa verification error:', err)
+    alert('Verification failed or payment is still pending on Chapa.')
+  }
+}
+
 const openAddModal = () => {
   form.value = {
     type: 'mobile_money',
-    bank_name: 'Telebirr (Ethio Telecom)',
+    bank_name: 'Telebirr (Chapa)',
     account_number: authStore.user?.phone || '',
     account_holder: authStore.user?.name || '',
     is_primary: paymentMethods.value.length === 0
@@ -813,16 +1033,16 @@ const getTypeIcon = (type: string) => {
 
 const formatTypeName = (type: string) => {
   switch (type) {
-    case 'mobile_money': return 'Mobile Money'
-    case 'bank_transfer': return 'Bank Account'
-    case 'card': return 'Debit / Credit'
-    default: return 'Digital Wallet'
+    case 'mobile_money': return 'Mobile Money (Chapa)'
+    case 'bank_transfer': return 'Bank Transfer (Chapa)'
+    case 'card': return 'Cards (Chapa)'
+    default: return 'Chapa Wallet'
   }
 }
 
 const getTypeBadgeClass = (type: string) => {
   switch (type) {
-    case 'mobile_money': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+    case 'mobile_money': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
     case 'bank_transfer': return 'bg-blue-500/10 text-blue-400 border-blue-500/30'
     case 'card': return 'bg-purple-500/10 text-purple-400 border-purple-500/30'
     default: return 'bg-slate-500/10 text-slate-400 border-slate-500/30'

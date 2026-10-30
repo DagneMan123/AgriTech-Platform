@@ -77,6 +77,12 @@ return [
         'base_url' => env('TELEBIRR_BASE_URL', 'https://telebirr.ericsson.net'),
     ],
 
+    'chapa' => [
+        'secret_key' => env('CHAPA_SECRET_KEY', 'CHASECK_TEST-v1-agriconnect'),
+        'public_key' => env('CHAPA_PUBLIC_KEY', 'CHAPUBK_TEST-v1-agriconnect'),
+        'base_url' => env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'),
+    ],
+
     // Email Configuration
     'email' => [
         'noreply' => env('MAIL_FROM_ADDRESS', 'noreply@agritech.local'),

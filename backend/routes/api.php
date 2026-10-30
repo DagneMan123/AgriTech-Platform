@@ -45,6 +45,7 @@ use App\Http\Controllers\Api\Buyer\ContractController as BuyerContractController
 use App\Http\Controllers\Api\Buyer\DeliveryAddressController;
 use App\Http\Controllers\Api\Buyer\TransportCoordinationController;
 use App\Http\Controllers\Api\Buyer\PaymentMethodController;
+use App\Http\Controllers\Api\Buyer\ChapaPaymentController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -645,6 +646,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
             Route::post('/payment-methods/{id}/default', [PaymentMethodController::class, 'setDefault']);
             Route::get('/payment-methods/transactions', [PaymentMethodController::class, 'transactions']);
+
+            // Chapa Ethiopian Payment Gateway
+            Route::post('/chapa/initialize', [ChapaPaymentController::class, 'initialize']);
+            Route::get('/chapa/verify/{tx_ref}', [ChapaPaymentController::class, 'verify']);
+            Route::get('/chapa/banks', [ChapaPaymentController::class, 'banks']);
 
             Route::get('/marketplace', [
                 MarketplaceController::class,
