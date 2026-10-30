@@ -12,28 +12,36 @@
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section (Matching Farmer Portal Header - Responsive) -->
-      <div :class="['border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[30px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="flex justify-between items-start gap-4">
-          <div class="flex-1">
-            <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Buyer Dashboard</h1>
-            <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Manage your orders, deliveries, and purchases</p>
+      <!-- Header Section with Emoji Theme Toggle -->
+      <div :class="['border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[24px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <!-- Mobile Menu Toggle Button -->
+            <button
+              @click="sidebarOpen = !sidebarOpen"
+              class="lg:hidden p-2 rounded-xl border transition-all text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              <i class="fas fa-bars text-lg"></i>
+            </button>
+            <div>
+              <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 mb-1 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Buyer Dashboard</h1>
+              <p :class="['text-xs lg:text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Manage your orders, deliveries, and purchases</p>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <router-link
-              to="/buyer/marketplace"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-600/30 flex items-center gap-1.5"
-            >
-              <i class="fas fa-shopping-cart"></i>
-              <span>Marketplace</span>
-            </router-link>
-            <router-link
-              to="/buyer/orders/active"
-              :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all', darkMode ? 'bg-[#1a233a] border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-2xs']"
-            >
-              <i class="fas fa-clock text-blue-500"></i>
-              <span>Active Orders</span>
-            </router-link>
+
+          <!-- Header Right Actions (Emoji Theme Toggle) -->
+          <div class="flex items-center gap-3">
+            <div class="theme-toggle-corner">
+              <button 
+                type="button" 
+                class="icon-theme-btn w-11 h-11 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-sm bg-white dark:bg-[#0b0f19] border-slate-300 dark:border-slate-700 hover:scale-105" 
+                @click="toggleDarkMode" 
+                :title="!darkMode ? 'Switch to Dark' : 'Switch to Light'"
+              >
+                <span class="theme-icon text-lg">{{ !darkMode ? '☀️' : '🌙' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -129,7 +137,7 @@
               </tbody>
             </table>
 
-            <!-- English Professional Empty State -->
+            <!-- Empty State -->
             <div v-else class="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-slate-700/80 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600']">
                 <i class="fas fa-box-open"></i>
@@ -212,7 +220,6 @@
 
         <!-- Top Row Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- 1. Monthly Spending Trend -->
           <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
             <h3 :class="['font-bold text-sm mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">📈 Monthly Spending Trend</h3>
             <div class="relative h-[280px] w-full">
@@ -220,7 +227,6 @@
             </div>
           </div>
 
-          <!-- 2. Order Status Distribution -->
           <div :class="['border rounded-2xl p-5 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800/80' : 'bg-white border-slate-200/80']">
             <h3 :class="['font-bold text-sm mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">🍩 Order Status Distribution</h3>
             <div class="relative h-[280px] w-full">
@@ -262,12 +268,10 @@ const loading = ref(false)
 const error = ref('')
 const sidebarOpen = ref(false)
 
-// Chart refs
 const spendingTrendChart = ref(null)
 const statusChart = ref(null)
 const categoryChart = ref(null)
 
-// Chart instances
 let spendingChart = null
 let orderStatusChart = null
 let purchaseCategoryChart = null
@@ -278,7 +282,6 @@ const toggleDarkMode = () => {
   themeStore.toggleTheme()
 }
 
-// Load Chart.js from CDN
 const loadChartJS = () => {
   return new Promise((resolve, reject) => {
     if (window.Chart) {
@@ -293,7 +296,6 @@ const loadChartJS = () => {
   })
 }
 
-// Initialize all charts
 const initializeCharts = async () => {
   await loadChartJS()
   await nextTick()
@@ -303,7 +305,6 @@ const initializeCharts = async () => {
   createCategoryChart()
 }
 
-// 1. Monthly Spending Trend Chart (የተስተካከለው Y-axis ሎጂክ)
 const createSpendingTrendChart = () => {
   if (!spendingTrendChart.value) return
   try {
@@ -311,8 +312,6 @@ const createSpendingTrendChart = () => {
     const ctx = spendingTrendChart.value.getContext('2d')
     
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    
-    // ከ Backend የሚመጣውን Real Data መጠቀም ወይም አነስተኛ ወጪዎችንም (ለምሳሌ 500) ማካተት
     const rawData = dashboard.value?.spending_by_month || []
     const spendingData = rawData.length > 0 
       ? rawData.map(item => Number(item.spent) || 0)
@@ -350,15 +349,15 @@ const createSpendingTrendChart = () => {
             ticks: { color: darkMode.value ? '#94a3b8' : '#64748b' }
           },
           y: {
-            beginAtZero: true, // 💡 Y-axis ከ 0 ETB እንዲጀምር ያደርጋል
+            beginAtZero: true,
             grid: { color: darkMode.value ? '#1e293b' : '#f1f5f9' },
             ticks: {
               color: darkMode.value ? '#94a3b8' : '#64748b',
               callback: function(value) {
                 if (value >= 1000) {
-                  return (value / 1000) + 'k' // 1,000 እና ከዚያ በላይ ሲሆን 1k, 2k... ያደርጋል
+                  return (value / 1000) + 'k'
                 }
-                return value // ከ 1,000 በታች ከሆነ (ለምሳሌ 500) ቁጥሩን ቀጥታ ያሳያል
+                return value
               }
             }
           }
@@ -370,7 +369,6 @@ const createSpendingTrendChart = () => {
   }
 }
 
-// 2. Order Status Distribution Chart
 const createOrderStatusChart = () => {
   if (!statusChart.value) return
   try {
@@ -400,7 +398,6 @@ const createOrderStatusChart = () => {
   }
 }
 
-// 3. Purchases by Category Chart
 const createCategoryChart = () => {
   if (!categoryChart.value) return
   try {
@@ -495,3 +492,13 @@ const handleLogout = async () => { await auth.logout(); router.push('/login'); }
 const viewOrder = (order) => router.push(`/buyer/orders/${order.id}`)
 const trackDelivery = (delivery) => router.push(`/buyer/deliveries/${delivery.id}/track`)
 </script>
+
+<style scoped>
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>
