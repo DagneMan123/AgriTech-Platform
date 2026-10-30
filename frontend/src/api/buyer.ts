@@ -73,6 +73,12 @@ export const buyerAPI = {
   deleteDeliveryAddress: (id: number | string) => apiClient.delete(`/buyer/delivery-addresses/${id}`),
   setDefaultDeliveryAddress: (id: number | string) => apiClient.post(`/buyer/delivery-addresses/${id}/default`),
 
+  // Transport Coordination
+  getTransportCoordination: () => apiClient.get('/buyer/transport/coordination'),
+  createTransportCoordination: (data: any) => apiClient.post('/buyer/transport/coordination', data),
+  cancelTransportCoordination: (id: number | string) => apiClient.post(`/buyer/transport/coordination/${id}/cancel`),
+  getAvailableTransporters: () => apiClient.get('/buyer/transport/transporters'),
+
   // Direct Contracts & Contract Farming
   getContracts: (params?: any) => apiClient.get('/buyer/contracts', { params }),
   getContractFarmers: () => apiClient.get('/buyer/contracts/farmers'),

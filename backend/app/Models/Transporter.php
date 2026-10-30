@@ -10,7 +10,7 @@ class Transporter extends Model
 {
     use HasFactory;
 
-    protected $table = 'transporter_profiles';
+    protected $table = 'transporters';
 
     protected $fillable = [
         'user_id',

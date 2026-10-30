@@ -70,6 +70,7 @@ const BuyerContractAgreementsView = () => import('@/views/buyer/ContractAgreemen
 const BuyerContractMilestonesView = () => import('@/views/buyer/ContractMilestonesView.vue')
 const BuyerDeliveryTrackingView = () => import('@/views/buyer/DeliveryTrackingView.vue')
 const BuyerDeliveryAddressesView = () => import('@/views/buyer/DeliveryAddressesView.vue')
+const BuyerTransportCoordinationView = () => import('@/views/buyer/TransportCoordinationView.vue')
 const BuyerWishlistView = () => import('@/views/buyer/WishlistView.vue')
 const BuyerCategoriesView = () => import('@/views/buyer/CategoriesView.vue')
 const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
@@ -457,6 +458,12 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-delivery-addresses',
         component: BuyerDeliveryAddressesView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Delivery Addresses' }
+      },
+      {
+        path: 'transport',
+        name: 'buyer-transport',
+        component: BuyerTransportCoordinationView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Transport Coordination' }
       },
       {
         path: 'wishlist',

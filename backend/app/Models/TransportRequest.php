@@ -10,8 +10,10 @@ class TransportRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'buyer_id',
         'farmer_id',
         'product_id',
+        'product_name',
         'quantity',
         'unit',
         'pickup_location',
@@ -38,6 +40,11 @@ class TransportRequest extends Model
     ];
 
     protected $appends = ['status_label'];
+
+    public function buyer()
+    {
+        return $this->belongsTo(User::class, 'buyer_id');
+    }
 
     public function farmer()
     {
