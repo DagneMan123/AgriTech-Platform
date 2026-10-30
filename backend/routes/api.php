@@ -44,6 +44,7 @@ use App\Http\Controllers\Api\Buyer\ReturnController as BuyerReturnController;
 use App\Http\Controllers\Api\Buyer\ContractController as BuyerContractController;
 use App\Http\Controllers\Api\Buyer\DeliveryAddressController;
 use App\Http\Controllers\Api\Buyer\TransportCoordinationController;
+use App\Http\Controllers\Api\Buyer\PaymentMethodController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -638,6 +639,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/transport/coordination', [TransportCoordinationController::class, 'store']);
             Route::post('/transport/coordination/{id}/cancel', [TransportCoordinationController::class, 'cancel']);
             Route::get('/transport/transporters', [TransportCoordinationController::class, 'transporters']);
+
+            Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+            Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
+            Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
+            Route::post('/payment-methods/{id}/default', [PaymentMethodController::class, 'setDefault']);
+            Route::get('/payment-methods/transactions', [PaymentMethodController::class, 'transactions']);
 
             Route::get('/marketplace', [
                 MarketplaceController::class,

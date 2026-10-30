@@ -1,5 +1,4 @@
 <?php
-// app/Models/PaymentMethod.php
 
 namespace App\Models;
 
@@ -10,21 +9,25 @@ class PaymentMethod extends Model
 {
     use HasFactory;
 
+    protected $table = 'payment_methods';
+
     protected $fillable = [
-        'name',
-        'code',
-        'description',
-        'configuration',
+        'user_id',
+        'type',
+        'account_number',
+        'account_holder',
+        'bank_name',
+        'is_primary',
         'is_active'
     ];
 
     protected $casts = [
-        'configuration' => 'array',
+        'is_primary' => 'boolean',
         'is_active' => 'boolean'
     ];
 
-    public function payments()
+    public function user()
     {
-        return $this->hasMany(Payment::class);
+        return $this->belongsTo(User::class);
     }
 }

@@ -484,6 +484,24 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Payment Methods' }
       },
       {
+        path: 'payments/methods',
+        name: 'buyer-payments-methods',
+        component: BuyerPaymentsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Payment Methods' }
+      },
+      {
+        path: 'payments/history',
+        name: 'buyer-payments-history',
+        component: BuyerPaymentsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Transaction History' }
+      },
+      {
+        path: 'payments/escrow',
+        name: 'buyer-payments-escrow',
+        component: BuyerPaymentsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Escrow & Invoices' }
+      },
+      {
         path: 'reviews',
         name: 'buyer-reviews',
         component: BuyerReviewsView,

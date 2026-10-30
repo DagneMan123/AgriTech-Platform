@@ -33,6 +33,13 @@ export const buyerAPI = {
   
   verifyPayment: (id: number) => apiClient.post(`/buyer/payments/${id}/verify`),
 
+  // Payment Methods
+  getPaymentMethods: () => apiClient.get('/buyer/payment-methods'),
+  createPaymentMethod: (data: any) => apiClient.post('/buyer/payment-methods', data),
+  deletePaymentMethod: (id: number | string) => apiClient.delete(`/buyer/payment-methods/${id}`),
+  setDefaultPaymentMethod: (id: number | string) => apiClient.post(`/buyer/payment-methods/${id}/default`),
+  getPaymentTransactions: () => apiClient.get('/buyer/payment-methods/transactions'),
+
   // Reviews
   getReviews: () => apiClient.get('/buyer/reviews'),
   
