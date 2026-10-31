@@ -55,48 +55,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Navigation Tabs -->
-        <div class="flex items-center gap-2 mt-6 border-b border-slate-200 dark:border-slate-800 -mb-[24px]">
-          <button
-            @click="switchTab('methods')"
-            :class="['px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'methods'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            ]"
-          >
-            <CreditCard class="w-4 h-4" />
-            <span>Payment Methods</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-slate-800 font-mono">
-              {{ paymentMethods.length }}
-            </span>
-          </button>
-
-          <button
-            @click="switchTab('history')"
-            :class="['px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'history'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            ]"
-          >
-            <Receipt class="w-4 h-4" />
-            <span>Transaction History</span>
-          </button>
-
-          <button
-            @click="switchTab('escrow')"
-            :class="['px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'escrow'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            ]"
-          >
-            <ShieldCheck class="w-4 h-4" />
-            <span>Escrow &amp; Invoices</span>
-          </button>
-        </div>
       </div>
 
 <!-- ── Summary Stats Cards (Live Database Metrics) ── -->
@@ -403,162 +361,6 @@
 
     </main>
 
-    <!-- ── MODAL: CHAPA INSTANT PAYMENT CHECKOUT ── -->
-    <div
-      v-if="chapaModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
-      @click.self="chapaModalOpen = false"
-    >
-      <div
-        :class="['rounded-2xl border w-full max-w-md overflow-hidden shadow-2xl transition-all', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
-      >
-        <!-- Modal Header -->
-        <div class="px-6 py-4 border-b border-blue-500/30 bg-blue-600 text-white flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-black">
-              CH
-            </div>
-            <div>
-              <h2 class="text-base font-bold m-0">Chapa Secure Payment</h2>
-              <p class="text-[11px] m-0 text-blue-100">
-                Telebirr &bull; CBE Birr &bull; Bank Transfer &bull; Cards
-              </p>
-            </div>
-          </div>
-          <button
-            @click="chapaModalOpen = false"
-            class="p-1 rounded-lg text-white/80 hover:text-white cursor-pointer"
-          >
-            <X class="w-5 h-5" />
-          </button>
-        </div>
-
-        <!-- Chapa Form Body -->
-        <form @submit.prevent="initiateChapaCheckout" class="p-6 space-y-4">
-          <!-- Amount -->
-          <div>
-            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-              Payment Amount (ETB) *
-            </label>
-            <div class="relative">
-              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-xs text-slate-400">ETB</span>
-              <input
-                v-model.number="chapaForm.amount"
-                type="number"
-                step="any"
-                min="10"
-                required
-                placeholder="e.g. 5000"
-                :class="['w-full pl-12 pr-4 py-2.5 rounded-xl text-sm font-mono font-bold border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-              />
-            </div>
-          </div>
-
-          <!-- Select Payment Option -->
-          <div>
-            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-              Select Chapa Payment Channel *
-            </label>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <label
-                v-for="channel in chapaChannels"
-                :key="channel.id"
-                :class="['p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none',
-                  chapaForm.channel === channel.id
-                    ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
-                    : (darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
-                ]"
-              >
-                <input
-                  type="radio"
-                  :value="channel.id"
-                  v-model="chapaForm.channel"
-                  class="text-blue-600 focus:ring-0"
-                />
-                <span class="text-[11px] truncate">{{ channel.name }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Phone Number -->
-          <div>
-            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-              Mobile Phone (for Telebirr / CBE Birr prompt) *
-            </label>
-            <input
-              v-model="chapaForm.phone_number"
-              type="tel"
-              required
-              placeholder="+251 91 123 4567"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-            />
-          </div>
-
-          <!-- Email -->
-          <div>
-            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-              Email Receipt Destination
-            </label>
-            <input
-              v-model="chapaForm.email"
-              type="email"
-              placeholder="buyer@agriconnect.et"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-            />
-          </div>
-
-          <!-- Result Session if Generated -->
-          <div
-            v-if="chapaSession"
-            :class="['p-3 rounded-xl border space-y-2 text-xs', darkMode ? 'bg-[#0f172a] border-blue-900/60' : 'bg-blue-50/60 border-blue-200']"
-          >
-            <div class="flex items-center justify-between text-blue-500 font-bold">
-              <span>Chapa Session Active:</span>
-              <span class="font-mono text-[11px]">{{ chapaSession.tx_ref }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <a
-                v-if="chapaSession.checkout_url"
-                :href="chapaSession.checkout_url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex-1 text-center py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
-              >
-                Open Chapa Checkout &rarr;
-              </a>
-              <button
-                type="button"
-                @click="verifyChapaSession(chapaSession.tx_ref)"
-                class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
-              >
-                Verify
-              </button>
-            </div>
-          </div>
-
-          <!-- Modal Actions Footer -->
-          <div :class="['pt-3 border-t flex items-center justify-end gap-3', darkMode ? 'border-slate-800' : 'border-slate-200']">
-            <button
-              type="button"
-              @click="chapaModalOpen = false"
-              :class="['px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
-            >
-              Close
-            </button>
-            <button
-              v-if="!chapaSession"
-              type="submit"
-              :disabled="chapaProcessing"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <RefreshCw v-if="chapaProcessing" class="w-3.5 h-3.5 animate-spin" />
-              <span>{{ chapaProcessing ? 'Connecting...' : 'Proceed with Chapa' }}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- ── MODAL: ADD PAYMENT METHOD ── -->
     <div
       v-if="modalOpen"
@@ -576,7 +378,7 @@
             <div>
               <h2 class="text-base font-bold m-0">Add Payment Method</h2>
               <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                Connect your Telebirr, CBE Birr, bank account, or card via Chapa
+                Save your Telebirr, CBE Birr, bank account, or card for future checkouts
               </p>
             </div>
           </div>
@@ -600,7 +402,7 @@
                 @click="form.type = 'mobile_money'; form.bank_name = 'Telebirr (Ethio Telecom)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'mobile_money'
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -613,7 +415,7 @@
                 @click="form.type = 'bank_transfer'; form.bank_name = 'Commercial Bank of Ethiopia (CBE)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'bank_transfer'
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -623,10 +425,10 @@
 
               <button
                 type="button"
-                @click="form.type = 'card'; form.bank_name = 'Chapa Ethiopian Gateway (Telebirr/CBE/Cards)'"
+                @click="form.type = 'card'; form.bank_name = 'Chapa Card (Visa / Mastercard)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1 relative overflow-hidden',
                   form.type === 'card'
-                    ? 'border-blue-500 bg-blue-500/15 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500/30'
+                    ? 'border-blue-500 bg-blue-500/15 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500/30 font-bold'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -639,249 +441,115 @@
             </div>
           </div>
 
-          <!-- ── CATEGORY 1 & 2: MANUAL MOBILE MONEY OR BANK TRANSFER ── -->
-          <template v-if="form.type !== 'card'">
-            <!-- Provider Name -->
-            <div>
-              <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                Provider / Institution *
-              </label>
-              <select
-                v-if="form.type === 'mobile_money'"
-                v-model="form.bank_name"
-                required
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-              >
-                <option value="Telebirr (Ethio Telecom)">Telebirr (Ethio Telecom)</option>
-                <option value="CBE Birr (Commercial Bank of Ethiopia)">CBE Birr (Commercial Bank of Ethiopia)</option>
-                <option value="M-Pesa (Safaricom Ethiopia)">M-Pesa (Safaricom Ethiopia)</option>
-              </select>
+          <!-- Provider / Institution Name -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              {{ form.type === 'card' ? 'Card Brand / Channel *' : (form.type === 'mobile_money' ? 'Mobile Money Provider *' : 'Bank Institution *') }}
+            </label>
+            <select
+              v-if="form.type === 'mobile_money'"
+              v-model="form.bank_name"
+              required
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+            >
+              <option value="Telebirr (Ethio Telecom)">Telebirr (Ethio Telecom)</option>
+              <option value="CBE Birr (Commercial Bank of Ethiopia)">CBE Birr (Commercial Bank of Ethiopia)</option>
+              <option value="M-Pesa (Safaricom Ethiopia)">M-Pesa (Safaricom Ethiopia)</option>
+            </select>
 
-              <select
-                v-else
-                v-model="form.bank_name"
-                required
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-              >
-                <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
-                <option value="Awash Bank">Awash Bank</option>
-                <option value="Dashen Bank">Dashen Bank</option>
-                <option value="Bank of Abyssinia (BOA)">Bank of Abyssinia (BOA)</option>
-                <option value="Hibret Bank">Hibret Bank</option>
-                <option value="Nib International Bank">Nib International Bank</option>
-                <option value="Cooperative Bank of Oromia">Cooperative Bank of Oromia</option>
-              </select>
-            </div>
+            <select
+              v-else-if="form.type === 'bank_transfer'"
+              v-model="form.bank_name"
+              required
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+            >
+              <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
+              <option value="Awash Bank">Awash Bank</option>
+              <option value="Dashen Bank">Dashen Bank</option>
+              <option value="Bank of Abyssinia (BOA)">Bank of Abyssinia (BOA)</option>
+              <option value="Hibret Bank">Hibret Bank</option>
+              <option value="Nib International Bank">Nib International Bank</option>
+              <option value="Cooperative Bank of Oromia">Cooperative Bank of Oromia</option>
+            </select>
 
-            <!-- Account / Phone Number -->
-            <div>
-              <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                {{ form.type === 'mobile_money' ? 'Registered Mobile Phone Number *' : 'Bank Account Number *' }}
-              </label>
+            <select
+              v-else
+              v-model="form.bank_name"
+              required
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+            >
+              <option value="Chapa Card (Visa / Mastercard)">Chapa Card (Visa / Mastercard)</option>
+              <option value="Visa Card (Chapa)">Visa Card (Chapa)</option>
+              <option value="Mastercard (Chapa)">Mastercard (Chapa)</option>
+              <option value="Telebirr (Chapa)">Telebirr (Chapa)</option>
+              <option value="CBE Birr (Chapa)">CBE Birr (Chapa)</option>
+              <option value="Awash Birr (Chapa)">Awash Birr (Chapa)</option>
+            </select>
+          </div>
+
+          <!-- Account / Card / Phone Identifier -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              {{ form.type === 'card' ? 'Card / Account Identifier *' : (form.type === 'mobile_money' ? 'Registered Mobile Phone Number *' : 'Bank Account Number *') }}
+            </label>
+            <input
+              v-model="form.account_number"
+              type="text"
+              required
+              :placeholder="form.type === 'card' ? '•••• •••• •••• 1234 or Phone' : (form.type === 'mobile_money' ? '+251 91 123 4567' : '1000123456789')"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+            />
+          </div>
+
+          <!-- Account Holder Full Name -->
+          <div>
+            <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              {{ form.type === 'card' ? 'Cardholder Full Name *' : 'Account Holder Full Name *' }}
+            </label>
+            <input
+              v-model="form.account_holder"
+              type="text"
+              required
+              placeholder="e.g. Dawit Haile"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+            />
+          </div>
+
+          <!-- Set as Primary Checkbox -->
+          <div :class="['p-3 rounded-xl border flex items-center justify-between', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+            <div class="flex items-center gap-2.5">
               <input
-                v-model="form.account_number"
-                type="text"
-                required
-                :placeholder="form.type === 'mobile_money' ? '+251 91 123 4567' : '1000123456789'"
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
+                id="is_primary"
+                v-model="form.is_primary"
+                type="checkbox"
+                class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
               />
-            </div>
-
-            <!-- Account Holder Full Name -->
-            <div>
-              <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                Account Holder Full Name *
+              <label for="is_primary" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
+                Set as Primary Payment Method
               </label>
-              <input
-                v-model="form.account_holder"
-                type="text"
-                required
-                placeholder="e.g. Dawit Haile"
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-              />
             </div>
+            <Star v-if="form.is_primary" class="w-5 h-5 text-amber-500 fill-current" />
+          </div>
 
-            <!-- Set as Primary Checkbox -->
-            <div :class="['p-3 rounded-xl border flex items-center justify-between', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <div class="flex items-center gap-2.5">
-                <input
-                  id="is_primary"
-                  v-model="form.is_primary"
-                  type="checkbox"
-                  class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
-                />
-                <label for="is_primary" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
-                  Set as Primary Payment Method
-                </label>
-              </div>
-              <Star v-if="form.is_primary" class="w-5 h-5 text-amber-500 fill-current" />
-            </div>
-
-            <!-- Footer Actions -->
-            <div :class="['pt-4 border-t flex items-center justify-end gap-3', darkMode ? 'border-slate-800' : 'border-slate-200']">
-              <button
-                type="button"
-                @click="modalOpen = false"
-                :class="['px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="saving"
-                class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                <RefreshCw v-if="saving" class="w-3.5 h-3.5 animate-spin" />
-                <span>{{ saving ? 'Saving...' : 'Save Payment Method' }}</span>
-              </button>
-            </div>
-          </template>
-
-          <!-- ── CATEGORY 3: PROFESSIONAL CHAPA PAYMENT GATEWAY INTEGRATION ── -->
-          <template v-else>
-            <div class="space-y-4">
-              <!-- Official Chapa Brand Card -->
-              <div :class="['rounded-2xl border p-4 transition-all relative overflow-hidden', darkMode ? 'bg-gradient-to-br from-blue-950/60 via-[#131b2e] to-[#0f172a] border-blue-700/50' : 'bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border-blue-300/80']">
-                <div class="flex items-start gap-3.5 mb-3">
-                  <div class="w-12 h-12 rounded-xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shrink-0 shadow-md">
-                    CH
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                      <h4 :class="['text-sm font-black m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">
-                        Chapa Ethiopian Payment Gateway
-                      </h4>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                        PCI-DSS CERTIFIED
-                      </span>
-                    </div>
-                    <p :class="['text-xs leading-relaxed m-0', darkMode ? 'text-slate-300' : 'text-slate-600']">
-                      Connect your account securely through Chapa's official gateway. No raw 16-digit card numbers required—authenticate seamlessly with <strong>Telebirr</strong>, <strong>CBE Birr</strong>, <strong>Awash</strong>, or <strong>Cards</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Channels Badges -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-blue-500/20 text-[11px] font-semibold text-center">
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
-                    ⚡ Telebirr
-                  </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
-                    🏛 CBE Birr
-                  </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
-                    💳 Cards (Visa/MC)
-                  </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
-                    🏦 Awash &amp; Banks
-                  </div>
-                </div>
-              </div>
-
-              <!-- Channel Preference Radio -->
-              <div>
-                <label :class="['block text-xs font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                  Preferred Default Chapa Channel *
-                </label>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                  <label
-                    v-for="ch in chapaChannels"
-                    :key="ch.id"
-                    :class="['p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none',
-                      chapaForm.channel === ch.id
-                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
-                        : (darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
-                    ]"
-                  >
-                    <input
-                      type="radio"
-                      :value="ch.id"
-                      v-model="chapaForm.channel"
-                      class="text-blue-600 focus:ring-0"
-                    />
-                    <span class="text-[11px] truncate">{{ ch.name }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Buyer Contact Info for Chapa Connection -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Telebirr / Mobile Phone *
-                  </label>
-                  <input
-                    v-model="chapaBuyerPhone"
-                    type="tel"
-                    required
-                    placeholder="+251 91 123 4567"
-                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-                  />
-                </div>
-                <div>
-                  <label :class="['block text-xs font-bold mb-1', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Receipt Email Address *
-                  </label>
-                  <input
-                    v-model="chapaBuyerEmail"
-                    type="email"
-                    required
-                    placeholder="buyer@agriconnect.et"
-                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
-                  />
-                </div>
-              </div>
-
-              <!-- Set as Primary Checkbox -->
-              <div :class="['p-3 rounded-xl border flex items-center justify-between', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <div class="flex items-center gap-2.5">
-                  <input
-                    id="is_primary_chapa"
-                    v-model="form.is_primary"
-                    type="checkbox"
-                    class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
-                  />
-                  <label for="is_primary_chapa" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
-                    Set Chapa as Primary Payment Method
-                  </label>
-                </div>
-                <Star v-if="form.is_primary" class="w-5 h-5 text-amber-500 fill-current" />
-              </div>
-
-              <!-- Footer with Connect Chapa Button -->
-              <div :class="['pt-4 border-t flex items-center justify-between gap-3', darkMode ? 'border-slate-800' : 'border-slate-200']">
-                <button
-                  type="button"
-                  @click="modalOpen = false"
-                  :class="['px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
-                >
-                  Cancel
-                </button>
-
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    @click="connectChapaPayment(true)"
-                    :disabled="connectingChapa"
-                    class="px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-2 transform active:scale-95"
-                  >
-                    <RefreshCw v-if="connectingChapa" class="w-3.5 h-3.5 animate-spin" />
-                    <ShieldCheck v-else class="w-3.5 h-3.5" />
-                    <span>{{ connectingChapa ? 'Connecting...' : 'Connect Chapa & Open Checkout' }}</span>
-                    <ExternalLink class="w-3 h-3 ml-0.5" />
-                  </button>
-                  <button
-                    type="button"
-                    @click="connectChapaPayment(false)"
-                    :disabled="connectingChapa"
-                    :class="['px-4 py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer', darkMode ? 'border-blue-600/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100']"
-                  >
-                    Save Chapa Method
-                  </button>
-                </div>
-              </div>
-            </div>
-          </template></form>
+          <!-- Footer Actions -->
+          <div :class="['pt-4 border-t flex items-center justify-end gap-3', darkMode ? 'border-slate-800' : 'border-slate-200']">
+            <button
+              type="button"
+              @click="modalOpen = false"
+              :class="['px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="saving"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <RefreshCw v-if="saving" class="w-3.5 h-3.5 animate-spin" />
+              <span>{{ saving ? 'Saving...' : 'Save Payment Method' }}</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -906,8 +574,7 @@ import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
   Menu, CreditCard, Plus, Receipt, ShieldCheck, CheckCircle2, Star,
-  Smartphone, Building2, Trash2, Copy, Check, X, RefreshCw, FileText,
-  ExternalLink
+  Smartphone, Building2, Trash2, Copy, Check, X, RefreshCw, FileText
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -933,31 +600,10 @@ const stats = ref({
 })
 
 const modalOpen = ref(false)
-const chapaModalOpen = ref(false)
-const chapaProcessing = ref(false)
-const chapaSession = ref<any | null>(null)
-
-const chapaChannels = [
-  { id: 'telebirr', name: 'Telebirr (Chapa)' },
-  { id: 'cbe_birr', name: 'CBE Birr' },
-  { id: 'awash', name: 'Awash Birr' },
-  { id: 'cards', name: 'Visa / Mastercard' }
-]
-
-const chapaBuyerPhone = ref('0911000000')
-const chapaBuyerEmail = ref('aydenfudagne@gmail.com')
-const connectingChapa = ref(false)
-
-const chapaForm = ref({
-  amount: 100,
-  channel: 'telebirr',
-  phone_number: '0911000000',
-  email: 'aydenfudagne@gmail.com'
-})
 
 const form = ref({
   type: 'mobile_money',
-  bank_name: 'Telebirr (Chapa)',
+  bank_name: 'Telebirr (Ethio Telecom)',
   account_number: '',
   account_holder: '',
   is_primary: false
@@ -1062,123 +708,8 @@ const loadData = async () => {
   }
 }
 
-const openChapaModal = () => {
-  chapaSession.value = null
-  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
-  const userEmail = (authStore.user?.email && !authStore.user.email.includes('agriconnect.et')) ? authStore.user.email : 'aydenfudagne@gmail.com'
-  chapaForm.value = {
-    amount: 100,
-    channel: 'telebirr',
-    phone_number: userPhone,
-    email: userEmail
-  }
-  chapaModalOpen.value = true
-}
-
-const initiateChapaCheckout = async () => {
-  chapaProcessing.value = true
-  try {
-    const cleanPhone = (chapaForm.value.phone_number || '0911000000').replace(/[^0-9+]/g, '')
-    const cleanEmail = (chapaForm.value.email && !chapaForm.value.email.includes('agriconnect.et')) 
-      ? chapaForm.value.email 
-      : 'aydenfudagne@gmail.com'
-
-    const res = await buyerAPI.initializeChapaPayment({
-      amount: chapaForm.value.amount,
-      phone_number: cleanPhone,
-      email: cleanEmail,
-      channel: chapaForm.value.channel
-    })
-
-    if (res && res.data && res.data.data) {
-      chapaSession.value = res.data.data
-      showToast('Chapa payment session generated!')
-      await loadData()
-    }
-  } catch (err: any) {
-    console.error('Chapa initiation error:', err)
-    alert(err?.response?.data?.message || 'Failed to initiate Chapa payment.')
-  } finally {
-    chapaProcessing.value = false
-  }
-}
-
-const verifyChapaSession = async (txRef: string) => {
-  try {
-    const res = await buyerAPI.verifyChapaPayment(txRef)
-    if (res && res.data && res.data.success) {
-      showToast('Chapa payment confirmed and card set in database!')
-      chapaModalOpen.value = false
-      await loadData()
-    }
-  } catch (err: any) {
-    console.error('Chapa verification error:', err)
-    alert('Verification failed or payment is still pending on Chapa.')
-  }
-}
-
-const connectChapaPayment = async (openCheckout = true) => {
-  connectingChapa.value = true
-  try {
-    const channelName = chapaChannels.find(c => c.id === chapaForm.value.channel)?.name || 'Chapa'
-    const cleanPhone = (chapaBuyerPhone.value || authStore.user?.phone || '0911000000').replace(/[^0-9+]/g, '')
-    const cleanEmail = (chapaBuyerEmail.value && !chapaBuyerEmail.value.includes('agriconnect.et')) 
-      ? chapaBuyerEmail.value 
-      : (authStore.user?.email && !authStore.user.email.includes('agriconnect.et') ? authStore.user.email : 'aydenfudagne@gmail.com')
-
-    const displayName = chapaForm.value.channel === 'cards' 
-      ? 'Chapa Card (Visa / Mastercard)' 
-      : (channelName.includes('Chapa') ? channelName : `${channelName} (Chapa)`)
-
-    // Save Chapa Payment Method card to database so it immediately appears on the Payment Methods page!
-    await buyerAPI.createPaymentMethod({
-      type: chapaForm.value.channel === 'cards' ? 'card' : 'mobile_money',
-      bank_name: displayName,
-      account_number: cleanPhone,
-      account_holder: authStore.user?.name || 'Sample Buyer',
-      is_primary: true
-    })
-
-    // Call Chapa API to initialize payment session and redirect to the Chapa Secure Payment modal
-    if (openCheckout) {
-      const res = await buyerAPI.initializeChapaPayment({
-        amount: 100,
-        phone_number: cleanPhone,
-        email: cleanEmail,
-        channel: chapaForm.value.channel
-      })
-      if (res?.data?.data) {
-        chapaSession.value = res.data.data
-      }
-      chapaForm.value = {
-        amount: 100,
-        channel: chapaForm.value.channel,
-        phone_number: cleanPhone,
-        email: cleanEmail
-      }
-      modalOpen.value = false
-      chapaModalOpen.value = true
-      showToast('Chapa payment session generated & card saved!')
-      await loadData()
-      return
-    }
-
-    modalOpen.value = false
-    showToast('Chapa card set on payment methods page successfully!')
-    await loadData()
-  } catch (err: any) {
-    console.error('Failed to connect Chapa:', err)
-    alert(err?.response?.data?.message || 'Failed to connect with Chapa Gateway.')
-  } finally {
-    connectingChapa.value = false
-  }
-}
-
 const openAddModal = () => {
   const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
-  const userEmail = (authStore.user?.email && !authStore.user.email.includes('agriconnect.et')) ? authStore.user.email : 'aydenfudagne@gmail.com'
-  chapaBuyerPhone.value = userPhone
-  chapaBuyerEmail.value = userEmail
   form.value = {
     type: 'mobile_money',
     bank_name: 'Telebirr (Ethio Telecom)',
