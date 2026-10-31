@@ -267,7 +267,7 @@
                 <button
                   v-if="method.bank_name?.includes('Chapa') || method.type === 'card'"
                   @click="openChapaModal"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer"
                 >
                   <ShieldCheck class="w-3.5 h-3.5" />
                   <span>Pay with Chapa</span>
@@ -426,14 +426,14 @@
         :class="['rounded-2xl border w-full max-w-md overflow-hidden shadow-2xl transition-all', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Header -->
-        <div class="px-6 py-4 border-b border-emerald-500/30 bg-emerald-600 text-white flex items-center justify-between">
+        <div class="px-6 py-4 border-b border-blue-500/30 bg-blue-600 text-white flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-black">
               CH
             </div>
             <div>
               <h2 class="text-base font-bold m-0">Chapa Secure Payment</h2>
-              <p class="text-[11px] m-0 text-emerald-100">
+              <p class="text-[11px] m-0 text-blue-100">
                 Telebirr &bull; CBE Birr &bull; Bank Transfer &bull; Cards
               </p>
             </div>
@@ -462,7 +462,7 @@
                 min="10"
                 required
                 placeholder="e.g. 5000"
-                :class="['w-full pl-12 pr-4 py-2.5 rounded-xl text-sm font-mono font-bold border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                :class="['w-full pl-12 pr-4 py-2.5 rounded-xl text-sm font-mono font-bold border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
               />
             </div>
           </div>
@@ -478,7 +478,7 @@
                 :key="channel.id"
                 :class="['p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none',
                   chapaForm.channel === channel.id
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold'
+                    ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
                     : (darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -486,7 +486,7 @@
                   type="radio"
                   :value="channel.id"
                   v-model="chapaForm.channel"
-                  class="text-emerald-600 focus:ring-0"
+                  class="text-blue-600 focus:ring-0"
                 />
                 <span class="text-[11px] truncate">{{ channel.name }}</span>
               </label>
@@ -503,7 +503,7 @@
               type="tel"
               required
               placeholder="+251 91 123 4567"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
             />
           </div>
 
@@ -516,16 +516,16 @@
               v-model="chapaForm.email"
               type="email"
               placeholder="buyer@agriconnect.et"
-              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+              :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
             />
           </div>
 
           <!-- Result Session if Generated -->
           <div
             v-if="chapaSession"
-            :class="['p-3 rounded-xl border space-y-2 text-xs', darkMode ? 'bg-[#0f172a] border-emerald-900/60' : 'bg-emerald-50/60 border-emerald-200']"
+            :class="['p-3 rounded-xl border space-y-2 text-xs', darkMode ? 'bg-[#0f172a] border-blue-900/60' : 'bg-blue-50/60 border-blue-200']"
           >
-            <div class="flex items-center justify-between text-emerald-500 font-bold">
+            <div class="flex items-center justify-between text-blue-500 font-bold">
               <span>Chapa Session Active:</span>
               <span class="font-mono text-[11px]">{{ chapaSession.tx_ref }}</span>
             </div>
@@ -535,7 +535,7 @@
                 :href="chapaSession.checkout_url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="flex-1 text-center py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                class="flex-1 text-center py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
               >
                 Open Chapa Checkout &rarr;
               </a>
@@ -562,7 +562,7 @@
               v-if="!chapaSession"
               type="submit"
               :disabled="chapaProcessing"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+              class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
             >
               <RefreshCw v-if="chapaProcessing" class="w-3.5 h-3.5 animate-spin" />
               <span>{{ chapaProcessing ? 'Connecting...' : 'Proceed with Chapa' }}</span>
@@ -583,7 +583,7 @@
       >
         <div :class="['px-6 py-4 border-b flex items-center justify-between', darkMode ? 'border-slate-800 bg-[#0f172a]' : 'border-slate-200 bg-slate-50']">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <CreditCard class="w-4 h-4" />
             </div>
             <div>
@@ -613,7 +613,7 @@
                 @click="form.type = 'mobile_money'; form.bank_name = 'Telebirr (Ethio Telecom)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'mobile_money'
-                    ? 'border-emerald-600 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -626,7 +626,7 @@
                 @click="form.type = 'bank_transfer'; form.bank_name = 'Commercial Bank of Ethiopia (CBE)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1',
                   form.type === 'bank_transfer'
-                    ? 'border-emerald-600 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
@@ -639,12 +639,12 @@
                 @click="form.type = 'card'; form.bank_name = 'Chapa Ethiopian Gateway (Telebirr/CBE/Cards)'"
                 :class="['p-2.5 rounded-xl border text-center text-xs font-semibold cursor-pointer transition-all flex flex-col items-center gap-1 relative overflow-hidden',
                   form.type === 'card'
-                    ? 'border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30'
+                    ? 'border-blue-500 bg-blue-500/15 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500/30'
                     : (darkMode ? 'border-slate-700 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                 ]"
               >
                 <div class="flex items-center gap-1">
-                  <div class="w-4 h-4 rounded bg-emerald-600 text-white font-black text-[9px] flex items-center justify-center">CH</div>
+                  <div class="w-4 h-4 rounded bg-blue-600 text-white font-black text-[9px] flex items-center justify-center">CH</div>
                   <CreditCard class="w-3.5 h-3.5" />
                 </div>
                 <span>Card (Chapa)</span>
@@ -663,7 +663,7 @@
                 v-if="form.type === 'mobile_money'"
                 v-model="form.bank_name"
                 required
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
               >
                 <option value="Telebirr (Ethio Telecom)">Telebirr (Ethio Telecom)</option>
                 <option value="CBE Birr (Commercial Bank of Ethiopia)">CBE Birr (Commercial Bank of Ethiopia)</option>
@@ -674,7 +674,7 @@
                 v-else
                 v-model="form.bank_name"
                 required
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
               >
                 <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
                 <option value="Awash Bank">Awash Bank</option>
@@ -696,7 +696,7 @@
                 type="text"
                 required
                 :placeholder="form.type === 'mobile_money' ? '+251 91 123 4567' : '1000123456789'"
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
               />
             </div>
 
@@ -710,7 +710,7 @@
                 type="text"
                 required
                 placeholder="e.g. Dawit Haile"
-                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
               />
             </div>
 
@@ -721,7 +721,7 @@
                   id="is_primary"
                   v-model="form.is_primary"
                   type="checkbox"
-                  class="w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer"
+                  class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
                 />
                 <label for="is_primary" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
                   Set as Primary Payment Method
@@ -742,7 +742,7 @@
               <button
                 type="submit"
                 :disabled="saving"
-                class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <RefreshCw v-if="saving" class="w-3.5 h-3.5 animate-spin" />
                 <span>{{ saving ? 'Saving...' : 'Save Payment Method' }}</span>
@@ -754,9 +754,9 @@
           <template v-else>
             <div class="space-y-4">
               <!-- Official Chapa Brand Card -->
-              <div :class="['rounded-2xl border p-4 transition-all relative overflow-hidden', darkMode ? 'bg-gradient-to-br from-emerald-950/60 via-[#131b2e] to-[#0f172a] border-emerald-700/50' : 'bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border-emerald-300/80']">
+              <div :class="['rounded-2xl border p-4 transition-all relative overflow-hidden', darkMode ? 'bg-gradient-to-br from-blue-950/60 via-[#131b2e] to-[#0f172a] border-blue-700/50' : 'bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border-blue-300/80']">
                 <div class="flex items-start gap-3.5 mb-3">
-                  <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center shrink-0 shadow-md">
+                  <div class="w-12 h-12 rounded-xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shrink-0 shadow-md">
                     CH
                   </div>
                   <div class="flex-1">
@@ -764,7 +764,7 @@
                       <h4 :class="['text-sm font-black m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">
                         Chapa Ethiopian Payment Gateway
                       </h4>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                         PCI-DSS CERTIFIED
                       </span>
                     </div>
@@ -775,17 +775,17 @@
                 </div>
 
                 <!-- Channels Badges -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-emerald-500/20 text-[11px] font-semibold text-center">
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800']">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-blue-500/20 text-[11px] font-semibold text-center">
+                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
                     ⚡ Telebirr
                   </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800']">
+                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
                     🏛 CBE Birr
                   </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800']">
+                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
                     💳 Cards (Visa/MC)
                   </div>
-                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800']">
+                  <div :class="['p-2 rounded-lg border', darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']">
                     🏦 Awash &amp; Banks
                   </div>
                 </div>
@@ -802,7 +802,7 @@
                     :key="ch.id"
                     :class="['p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all select-none',
                       chapaForm.channel === ch.id
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold'
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
                         : (darkMode ? 'border-slate-800 bg-[#0f172a] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600')
                     ]"
                   >
@@ -810,7 +810,7 @@
                       type="radio"
                       :value="ch.id"
                       v-model="chapaForm.channel"
-                      class="text-emerald-600 focus:ring-0"
+                      class="text-blue-600 focus:ring-0"
                     />
                     <span class="text-[11px] truncate">{{ ch.name }}</span>
                   </label>
@@ -828,7 +828,7 @@
                     type="tel"
                     required
                     placeholder="+251 91 123 4567"
-                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
                   />
                 </div>
                 <div>
@@ -840,7 +840,7 @@
                     type="email"
                     required
                     placeholder="buyer@agriconnect.et"
-                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-emerald-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-emerald-500 text-slate-900']"
+                    :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-[#0f172a] border-slate-700 focus:border-blue-500 text-slate-100' : 'bg-slate-50 border-slate-300 focus:border-blue-500 text-slate-900']"
                   />
                 </div>
               </div>
@@ -852,7 +852,7 @@
                     id="is_primary_chapa"
                     v-model="form.is_primary"
                     type="checkbox"
-                    class="w-4 h-4 rounded text-emerald-600 focus:ring-0 cursor-pointer"
+                    class="w-4 h-4 rounded text-blue-600 focus:ring-0 cursor-pointer"
                   />
                   <label for="is_primary_chapa" :class="['text-xs font-bold cursor-pointer block', darkMode ? 'text-slate-200' : 'text-slate-800']">
                     Set Chapa as Primary Payment Method
@@ -876,7 +876,7 @@
                     type="button"
                     @click="connectChapaPayment(true)"
                     :disabled="connectingChapa"
-                    class="px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-2 transform active:scale-95"
+                    class="px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all cursor-pointer flex items-center gap-2 transform active:scale-95"
                   >
                     <RefreshCw v-if="connectingChapa" class="w-3.5 h-3.5 animate-spin" />
                     <ShieldCheck v-else class="w-3.5 h-3.5" />
@@ -887,7 +887,7 @@
                     type="button"
                     @click="connectChapaPayment(false)"
                     :disabled="connectingChapa"
-                    :class="['px-4 py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer', darkMode ? 'border-emerald-600/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100']"
+                    :class="['px-4 py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer', darkMode ? 'border-blue-600/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100']"
                   >
                     Save Chapa Method
                   </button>
