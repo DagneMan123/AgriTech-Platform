@@ -53,6 +53,7 @@
               <CheckCheck class="w-4 h-4" />
               <span>Mark All as Read</span>
             </button>
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -324,6 +325,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, Bell, CheckCheck, AlertCircle, X, Search,
   ShoppingBag, ShieldCheck, Mail, Clock, Truck,

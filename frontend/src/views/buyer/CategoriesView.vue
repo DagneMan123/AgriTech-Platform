@@ -12,7 +12,7 @@
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and explore agricultural products by specialized category</p>
         </div>
         <div class="flex items-center gap-3 flex-shrink-0 flex-wrap">
-          <!-- Sort Dropdown -->
+          <BuyerHeaderNav />
         </div>
       </div>
 
@@ -156,6 +156,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const router = useRouter()
 const auth = useAuthStore()

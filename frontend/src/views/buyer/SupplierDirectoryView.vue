@@ -51,6 +51,7 @@
               <Store class="w-4 h-4" />
               <span>Produce Marketplace</span>
             </router-link>
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -767,6 +768,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, Building2, Search, RefreshCw, Store, MapPin, Phone, Mail,
   Star, ShieldCheck, CheckCircle2, AlertCircle, X, Grid3X3, Table,

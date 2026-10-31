@@ -194,10 +194,6 @@
           <component :is="expandedSections.account ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.account" class="section-items">
-          <router-link to="/buyer/notifications" class="menu-item sub-item" active-class="active">
-            <Bell class="sub-icon" />
-            <span>Notifications</span>
-          </router-link>
           <router-link to="/buyer/messages" class="menu-item sub-item" active-class="active">
             <Mail class="sub-icon" />
             <span>Messages</span>
@@ -225,7 +221,7 @@ import {
   Heart, ShoppingCart, ShoppingBag, Clock, History, RotateCcw, Handshake, 
   FileText, FileSignature, CheckSquare, Truck, MapPin, BookUser, Send, 
   Banknote, CreditCard, Receipt, ShieldCheck, CloudSun, BarChart3, Building2, 
-  PieChart, FileSpreadsheet, BarChart2, UserCog, Bell, Mail, 
+  PieChart, FileSpreadsheet, BarChart2, UserCog, Mail, 
   User, LogOut 
 } from 'lucide-vue-next'
 

@@ -30,18 +30,9 @@
             </div>
           </div>
 
-          <!-- Header Right Actions (Emoji Theme Toggle) -->
+          <!-- Header Right Actions (Notification Bell & Profile Avatar) -->
           <div class="flex items-center gap-3">
-            <div class="theme-toggle-corner">
-              <button 
-                type="button" 
-                class="icon-theme-btn w-11 h-11 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-sm bg-white dark:bg-[#0b0f19] border-slate-300 dark:border-slate-700 hover:scale-105" 
-                @click="toggleDarkMode" 
-                :title="!darkMode ? 'Switch to Dark' : 'Switch to Light'"
-              >
-                <span class="theme-icon text-lg">{{ !darkMode ? '☀️' : '🌙' }}</span>
-              </button>
-            </div>
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -254,6 +245,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useRouter } from 'vue-router'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const auth = useAuthStore()
 const themeStore = useThemeStore()

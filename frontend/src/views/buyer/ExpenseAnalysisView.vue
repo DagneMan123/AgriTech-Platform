@@ -62,6 +62,8 @@
               <Printer class="w-4 h-4" />
               <span>Print Audit</span>
             </button>
+
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -490,6 +492,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, BarChart2, Download, Printer, AlertCircle, X,
   DollarSign, ShoppingBag, Truck, PiggyBank, Search, Calendar,

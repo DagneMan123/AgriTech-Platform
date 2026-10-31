@@ -52,6 +52,7 @@
               <Plus class="w-4 h-4" />
               <span>New Direct Contract</span>
             </button>
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -768,6 +769,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, Handshake, FileText, Plus,  Clock,
   BadgeDollarSign, ShieldCheck, Search, Check, ChevronRight,

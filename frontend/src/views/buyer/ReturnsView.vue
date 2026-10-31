@@ -52,9 +52,7 @@
               <Plus class="w-4 h-4" />
               <span>File Return Claim</span>
             </button>
-
-
-            
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -580,6 +578,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, RotateCcw, Plus,  Clock, CheckCircle2,
   BadgeDollarSign, ShieldCheck, Search, Check, FileText, XCircle,

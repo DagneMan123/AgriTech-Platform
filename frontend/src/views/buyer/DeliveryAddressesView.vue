@@ -61,6 +61,7 @@
               <Plus class="w-4 h-4" />
               <span>Add New Address</span>
             </button>
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -989,6 +990,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, BookUser, Plus, Warehouse, Store, Factory, Snowflake, Building2,
   Tractor, Star, Truck, Navigation, Search, LayoutGrid, List, Copy, Edit3,

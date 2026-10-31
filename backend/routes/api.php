@@ -1053,6 +1053,16 @@ Route::middleware('auth:sanctum')->group(function () {
             'index'
         ]);
 
+        Route::get('/unread', [
+            NotificationController::class,
+            'unread'
+        ]);
+
+        Route::get('/count', [
+            NotificationController::class,
+            'count'
+        ]);
+
         Route::get('/{id}', [
             NotificationController::class,
             'show'

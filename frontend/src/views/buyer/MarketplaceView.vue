@@ -19,7 +19,7 @@
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and discover fresh agricultural products</p>
         </div>
         <div class="flex items-center gap-3 flex-shrink-0">
-          <!-- Refresh Button placeholder if needed -->
+          <BuyerHeaderNav />
         </div>
       </div>
 
@@ -187,6 +187,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 interface Product {
   id: number

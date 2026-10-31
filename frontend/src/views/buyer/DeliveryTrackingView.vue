@@ -45,7 +45,7 @@
 
           <!-- Header Right Actions (All Buttons Blue) -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-
+            <BuyerHeaderNav />
           </div>
         </div>
       </div>
@@ -510,6 +510,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, Truck,  Store, CheckCircle2,
   Clock, BadgeDollarSign, ShieldCheck, Search, Navigation,

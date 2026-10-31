@@ -15,6 +15,7 @@
           <button @click="continueShopping" class="btn-secondary">
             <i class="fas fa-arrow-left"></i> Continue Shopping
           </button>
+          <BuyerHeaderNav />
         </div>
       </div>
 
@@ -271,6 +272,7 @@ import { useRouter } from 'vue-router'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 // Constants
 const SHIPPING = {

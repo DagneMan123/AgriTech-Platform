@@ -18,6 +18,7 @@
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">My Orders</h1>
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Track and manage your purchases seamlessly</p>
         </div>
+        <BuyerHeaderNav />
       </div>
 
       <!-- ── Stats Cards ── -->
@@ -230,6 +231,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { onMounted, computed, ref, watch } from 'vue'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()

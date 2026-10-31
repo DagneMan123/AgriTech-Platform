@@ -43,6 +43,11 @@
               </p>
             </div>
           </div>
+
+          <!-- Header Right Actions -->
+          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <BuyerHeaderNav />
+          </div>
         </div>
       </div>
 
@@ -649,6 +654,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, BarChart3, TrendingUp, TrendingDown, Minus, Search,
   RefreshCw, Store, MapPin, Building2, Calendar, Grid3X3, Table, Info,

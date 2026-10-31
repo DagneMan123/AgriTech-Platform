@@ -2,9 +2,12 @@
   <div class="buyer-layout">
     <BuyerSidebar @logout="handleLogout" />
     <div class="buyer-page">
-      <div class="page-header">
-        <h1>Reviews</h1>
-        <p>Your product reviews and ratings</p>
+      <div class="page-header flex justify-between items-center">
+        <div>
+          <h1>Reviews</h1>
+          <p>Your product reviews and ratings</p>
+        </div>
+        <BuyerHeaderNav />
       </div>
 
       <div class="content-section">
@@ -70,6 +73,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
+import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
