@@ -78,6 +78,7 @@ const BuyerReviewsView = () => import('@/views/buyer/ReviewsView.vue')
 const BuyerProfileView = () => import('@/views/buyer/ProfileView.vue')
 const BuyerMarketPricesView = () => import('@/views/buyer/MarketPricesView.vue')
 const BuyerSupplierDirectoryView = () => import('@/views/buyer/SupplierDirectoryView.vue')
+const BuyerPurchaseReportsView = () => import('@/views/buyer/PurchaseReportsView.vue')
 
 const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
 const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
@@ -538,6 +539,18 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-suppliers-alias',
         component: BuyerSupplierDirectoryView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Supplier Directory' }
+      },
+      {
+        path: 'reports/purchases',
+        name: 'buyer-purchase-reports',
+        component: BuyerPurchaseReportsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Purchase Reports' }
+      },
+      {
+        path: 'reports/expenses',
+        name: 'buyer-expense-analysis',
+        component: BuyerPurchaseReportsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Expense Analysis' }
       }
     ]
   },

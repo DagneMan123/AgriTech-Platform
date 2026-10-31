@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\Buyer\TransportCoordinationController;
 use App\Http\Controllers\Api\Buyer\PaymentMethodController;
 use App\Http\Controllers\Api\Buyer\ChapaPaymentController;
 use App\Http\Controllers\Api\Buyer\SupplierDirectoryController;
+use App\Http\Controllers\Api\Buyer\PurchaseReportController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -674,6 +675,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/suppliers', [SupplierDirectoryController::class, 'index']);
             Route::get('/suppliers/{id}', [SupplierDirectoryController::class, 'show']);
             Route::post('/suppliers/{id}/contact', [SupplierDirectoryController::class, 'contact']);
+
+            // Purchase Reports & Expense Analysis
+            Route::get('/reports/purchases', [PurchaseReportController::class, 'index']);
+            Route::get('/reports/expenses', [PurchaseReportController::class, 'expenses']);
         });
 
 

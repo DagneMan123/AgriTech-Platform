@@ -106,4 +106,8 @@ export const buyerAPI = {
   getSuppliers: (params?: any) => apiClient.get('/buyer/suppliers', { params }),
   getSupplier: (id: number | string) => apiClient.get(`/buyer/suppliers/${id}`),
   contactSupplier: (id: number | string, data: any) => apiClient.post(`/buyer/suppliers/${id}/contact`, data),
+
+  // Purchase Reports & Expense Analysis
+  getPurchaseReports: (params?: any) => apiClient.get('/buyer/reports/purchases', { params }),
+  getExpenseAnalysis: (params?: any) => apiClient.get('/buyer/reports/expenses', { params }),
 }
