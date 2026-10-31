@@ -76,6 +76,26 @@
         </div>
       </div>
 
+      <!-- ── DATABASE ERROR BANNER ── -->
+      <div
+        v-if="errorMessage"
+        :class="['p-4 rounded-2xl border mb-6 flex items-start justify-between gap-3', darkMode ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-rose-50 border-rose-200 text-rose-800']"
+      >
+        <div class="flex items-center gap-3">
+          <AlertCircle class="w-5 h-5 text-rose-500 shrink-0" />
+          <div>
+            <div class="text-xs font-bold">Database Error</div>
+            <div class="text-xs opacity-90">{{ errorMessage }}</div>
+          </div>
+        </div>
+        <button
+          @click="loadMarketPrices"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shrink-0 cursor-pointer transition-all"
+        >
+          Retry
+        </button>
+      </div>
+
       <!-- ── KPI METRICS CARDS ── -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- 1. Tracked Commodities -->
@@ -287,9 +307,30 @@
         </div>
       </div>
 
-      <!-- ── EMPTY STATE ── -->
+      <!-- ── EMPTY DATABASE STATE ── -->
       <div
-        v-else-if="filteredPrices.length === 0"
+        v-else-if="!loading && pricesList.length === 0"
+        :class="['p-12 text-center rounded-2xl border my-6', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200 shadow-sm']"
+      >
+        <div class="w-14 h-14 rounded-full bg-slate-500/10 text-slate-500 flex items-center justify-center mx-auto mb-3">
+          <Scale class="w-7 h-7" />
+        </div>
+        <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-100' : 'text-slate-900']">No Market Prices in Database</h3>
+        <p :class="['text-xs max-w-md mx-auto mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
+          There are currently no commodity price records found in the database.
+        </p>
+        <button
+          @click="loadMarketPrices"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer inline-flex items-center gap-1.5"
+        >
+          <RefreshCw class="w-3.5 h-3.5" />
+          <span>Reload from Database</span>
+        </button>
+      </div>
+
+      <!-- ── NO FILTER MATCHES STATE ── -->
+      <div
+        v-else-if="!loading && filteredPrices.length === 0"
         :class="['p-12 text-center rounded-2xl border my-6', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200 shadow-sm']"
       >
         <div class="w-14 h-14 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-3">
@@ -651,6 +692,7 @@ const themeStore = useThemeStore()
 const darkMode = computed(() => themeStore.isDark)
 const sidebarOpen = ref(false)
 const loading = ref(false)
+const errorMessage = ref('')
 const viewMode = ref<'grid' | 'table'>('grid')
 
 // Market Prices dataset
@@ -803,9 +845,10 @@ const relatedTerminalPrices = computed(() => {
   return pricesList.value.filter(p => p.crop_name && p.crop_name.toLowerCase().includes(baseName))
 })
 
-// Load Market Prices
+// Load Market Prices (Strictly from PostgreSQL Database)
 const loadMarketPrices = async () => {
   loading.value = true
+  errorMessage.value = ''
   try {
     const res = await buyerAPI.getMarketPrices()
     if (res?.data?.success && Array.isArray(res.data.data)) {
@@ -814,11 +857,11 @@ const loadMarketPrices = async () => {
       // Extract unique regions and locations if provided or compute
       if (res.data.meta) {
         summaryStats.value = {
-          total: res.data.meta.total || pricesList.value.length,
-          avgPrice: res.data.meta.avg_price || calculateAvgPrice(pricesList.value),
-          increasing: res.data.meta.increasing_count || 0,
-          decreasing: res.data.meta.decreasing_count || 0,
-          stable: res.data.meta.stable_count || 0
+          total: res.data.meta.total ?? pricesList.value.length,
+          avgPrice: res.data.meta.avg_price ?? calculateAvgPrice(pricesList.value),
+          increasing: res.data.meta.increasing_count ?? 0,
+          decreasing: res.data.meta.decreasing_count ?? 0,
+          stable: res.data.meta.stable_count ?? 0
         }
         if (Array.isArray(res.data.meta.regions)) {
           filterRegions.value = res.data.meta.regions
@@ -830,11 +873,19 @@ const loadMarketPrices = async () => {
         computeLocalStats()
       }
     } else {
-      useFallbackData()
+      pricesList.value = []
+      summaryStats.value = { total: 0, avgPrice: 0, increasing: 0, decreasing: 0, stable: 0 }
+      filterRegions.value = []
+      filterLocations.value = []
     }
-  } catch (err) {
-    console.warn('Backend market price endpoint call failed, using fallback data:', err)
-    useFallbackData()
+  } catch (err: any) {
+    console.error('Failed to load market prices from database:', err)
+    pricesList.value = []
+    summaryStats.value = { total: 0, avgPrice: 0, increasing: 0, decreasing: 0, stable: 0 }
+    filterRegions.value = []
+    filterLocations.value = []
+    errorMessage.value = err?.response?.data?.message || 'Failed to fetch commodity market prices from database. Please check your connection and retry.'
+    showToast('Failed to fetch market prices from database')
   } finally {
     loading.value = false
   }
@@ -857,30 +908,6 @@ const computeLocalStats = () => {
   }
   filterRegions.value = Array.from(new Set(pricesList.value.map(p => p.market_region).filter(Boolean)))
   filterLocations.value = Array.from(new Set(pricesList.value.map(p => p.market_location).filter(Boolean)))
-}
-
-// Fallback seed data if backend is offline or empty
-const useFallbackData = () => {
-  const fallback = [
-    { id: 1, crop_name: 'Teff (Magna / White)', market_location: 'Addis Ababa (Merkato)', market_region: 'Addis Ababa', price_per_unit: 11800, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'High urban demand, prime quality from Gojjam' },
-    { id: 2, crop_name: 'Teff (Magna / White)', market_location: 'Adama (Central Hub)', market_region: 'Oromia', price_per_unit: 11200, unit: 'quintal', price_trend: 'stable', price_date: '2026-10-31', notes: 'Steady supply arriving from Arsi' },
-    { id: 3, crop_name: 'Teff (Magna / White)', market_location: 'Bahir Dar Market', market_region: 'Amhara', price_per_unit: 10600, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Local regional wholesale depot' },
-    { id: 4, crop_name: 'Teff (Magna / White)', market_location: 'Hawassa Central', market_region: 'Sidama', price_per_unit: 11400, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Southern distribution transit hub' },
-    { id: 5, crop_name: 'Coffee (Arabica / Sidama Grade 1)', market_location: 'Hawassa Central', market_region: 'Sidama', price_per_unit: 310, unit: 'kg', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Strong export bidding at local ECX-certified terminal' },
-    { id: 6, crop_name: 'Coffee (Arabica / Sidama Grade 1)', market_location: 'Addis Ababa (Merkato)', market_region: 'Addis Ababa', price_per_unit: 345, unit: 'kg', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Premium washed grade specialty lots' },
-    { id: 7, crop_name: 'Wheat (Milling White)', market_location: 'Adama (Central Hub)', market_region: 'Oromia', price_per_unit: 5400, unit: 'quintal', price_trend: 'stable', price_date: '2026-10-31', notes: 'Major flour mills securing monthly grain contracts' },
-    { id: 8, crop_name: 'Wheat (Milling White)', market_location: 'Addis Ababa (Merkato)', market_region: 'Addis Ababa', price_per_unit: 5800, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'High urban bakery and mill demand' },
-    { id: 9, crop_name: 'Maize (White Corn)', market_location: 'Shashemene Depot', market_region: 'Oromia', price_per_unit: 3800, unit: 'quintal', price_trend: 'decreasing', price_date: '2026-10-31', notes: 'High production zone with competitive bulk rates' },
-    { id: 10, crop_name: 'Red Kidney Beans (Haricot)', market_location: 'Hawassa Central', market_region: 'Sidama', price_per_unit: 6800, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'High regional export demand to neighboring countries' },
-    { id: 11, crop_name: 'Sesame (Humera White)', market_location: 'Gondar Wholesale Hub', market_region: 'Amhara', price_per_unit: 14200, unit: 'quintal', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Export quality lots aggregation hub' },
-    { id: 12, crop_name: 'Soybeans (Non-GMO)', market_location: 'Bishoftu Terminal', market_region: 'Oromia', price_per_unit: 4900, unit: 'quintal', price_trend: 'stable', price_date: '2026-10-31', notes: 'Active edible oil processors buying directly' },
-    { id: 13, crop_name: 'Red Onions (Local Shallot)', market_location: 'Addis Ababa (Merkato)', market_region: 'Addis Ababa', price_per_unit: 72, unit: 'kg', price_trend: 'decreasing', price_date: '2026-10-31', notes: 'Meki & Ziway peak harvest arriving on daily trucks' },
-    { id: 14, crop_name: 'Tomatoes (Plum Commercial)', market_location: 'Addis Ababa (Merkato)', market_region: 'Addis Ababa', price_per_unit: 45, unit: 'kg', price_trend: 'increasing', price_date: '2026-10-31', notes: 'Supply dip from Rift Valley greenhouse clusters' },
-    { id: 15, crop_name: 'Potatoes (Kulfo Seed/Table)', market_location: 'Shashemene Depot', market_region: 'Oromia', price_per_unit: 34, unit: 'kg', price_trend: 'stable', price_date: '2026-10-31', notes: 'Ample supply from highland farmers' },
-    { id: 16, crop_name: 'Chickpeas (Desi Type)', market_location: 'Gondar Wholesale Hub', market_region: 'Amhara', price_per_unit: 7800, unit: 'quintal', price_trend: 'stable', price_date: '2026-10-31', notes: 'Steady demand for local processing and distribution' }
-  ]
-  pricesList.value = fallback
-  computeLocalStats()
 }
 
 // Helpers
