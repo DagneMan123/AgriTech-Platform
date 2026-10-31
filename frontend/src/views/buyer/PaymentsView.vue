@@ -957,15 +957,15 @@ const chapaChannels = [
   { id: 'cards', name: 'Visa / Mastercard' }
 ]
 
-const chapaBuyerPhone = ref(authStore.user?.phone || '+251 91 123 4567')
-const chapaBuyerEmail = ref(authStore.user?.email || 'buyer@agriconnect.et')
+const chapaBuyerPhone = ref('0911000000')
+const chapaBuyerEmail = ref('aydenfudagne@gmail.com')
 const connectingChapa = ref(false)
 
 const chapaForm = ref({
-  amount: 2500,
+  amount: 100,
   channel: 'telebirr',
-  phone_number: '',
-  email: ''
+  phone_number: '0911000000',
+  email: 'aydenfudagne@gmail.com'
 })
 
 const form = ref({
@@ -1059,11 +1059,13 @@ const loadData = async () => {
 
 const openChapaModal = () => {
   chapaSession.value = null
+  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
+  const userEmail = (authStore.user?.email && !authStore.user.email.includes('agriconnect.et')) ? authStore.user.email : 'aydenfudagne@gmail.com'
   chapaForm.value = {
-    amount: 2500,
+    amount: 100,
     channel: 'telebirr',
-    phone_number: authStore.user?.phone || '+251 91 100 0000',
-    email: authStore.user?.email || 'buyer@agriconnect.et'
+    phone_number: userPhone,
+    email: userEmail
   }
   chapaModalOpen.value = true
 }
@@ -1071,10 +1073,16 @@ const openChapaModal = () => {
 const initiateChapaCheckout = async () => {
   chapaProcessing.value = true
   try {
+    const cleanPhone = (chapaForm.value.phone_number || '0911000000').replace(/[^0-9+]/g, '')
+    const cleanEmail = (chapaForm.value.email && !chapaForm.value.email.includes('agriconnect.et')) 
+      ? chapaForm.value.email 
+      : 'aydenfudagne@gmail.com'
+
     const res = await buyerAPI.initializeChapaPayment({
       amount: chapaForm.value.amount,
-      phone_number: chapaForm.value.phone_number,
-      email: chapaForm.value.email
+      phone_number: cleanPhone,
+      email: cleanEmail,
+      channel: chapaForm.value.channel
     })
 
     if (res && res.data && res.data.data) {
@@ -1110,12 +1118,16 @@ const connectChapaPayment = async (openCheckout = true) => {
   connectingChapa.value = true
   try {
     const channelName = chapaChannels.find(c => c.id === chapaForm.value.channel)?.name || 'Chapa Official Gateway'
-    
+    const cleanPhone = (chapaBuyerPhone.value || authStore.user?.phone || '0911000000').replace(/[^0-9+]/g, '')
+    const cleanEmail = (chapaBuyerEmail.value && !chapaBuyerEmail.value.includes('agriconnect.et')) 
+      ? chapaBuyerEmail.value 
+      : (authStore.user?.email && !authStore.user.email.includes('agriconnect.et') ? authStore.user.email : 'aydenfudagne@gmail.com')
+
     // 1. Call Chapa API to initialize payment session
     const res = await buyerAPI.initializeChapaPayment({
       amount: 100,
-      phone_number: chapaBuyerPhone.value || authStore.user?.phone || '+251 91 100 0000',
-      email: chapaBuyerEmail.value || authStore.user?.email || 'buyer@agriconnect.et',
+      phone_number: cleanPhone,
+      email: cleanEmail,
       channel: chapaForm.value.channel
     })
 
@@ -1126,7 +1138,7 @@ const connectChapaPayment = async (openCheckout = true) => {
     await buyerAPI.createPaymentMethod({
       type: 'card',
       bank_name: 'Chapa Gateway (' + channelName + ')',
-      account_number: 'CHAPA-' + (chapaBuyerPhone.value ? chapaBuyerPhone.value.replace(/\s+/g, '') : 'LIVE'),
+      account_number: 'CHAPA-' + cleanPhone,
       account_holder: authStore.user?.name || 'AgriConnect Verified Buyer',
       is_primary: form.value.is_primary
     })
@@ -1137,9 +1149,15 @@ const connectChapaPayment = async (openCheckout = true) => {
 
     // 3. Open original Chapa checkout if requested
     if (openCheckout && checkoutUrl) {
-      window.open(checkoutUrl, '_blank')
+      chapaSession.value = res?.data?.data || null
+      chapaModalOpen.value = true
+      try {
+        window.open(checkoutUrl, '_blank')
+      } catch (e) {
+        console.warn('Popup blocked, modal fallback opened', e)
+      }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to connect Chapa:', err)
     alert(err?.response?.data?.message || 'Failed to connect with Chapa Gateway.')
   } finally {
@@ -1148,12 +1166,14 @@ const connectChapaPayment = async (openCheckout = true) => {
 }
 
 const openAddModal = () => {
-  chapaBuyerPhone.value = authStore.user?.phone || '+251 91 123 4567'
-  chapaBuyerEmail.value = authStore.user?.email || 'buyer@agriconnect.et'
+  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
+  const userEmail = (authStore.user?.email && !authStore.user.email.includes('agriconnect.et')) ? authStore.user.email : 'aydenfudagne@gmail.com'
+  chapaBuyerPhone.value = userPhone
+  chapaBuyerEmail.value = userEmail
   form.value = {
     type: 'mobile_money',
-    bank_name: 'Telebirr (Chapa)',
-    account_number: authStore.user?.phone || '',
+    bank_name: 'Telebirr (Ethio Telecom)',
+    account_number: userPhone,
     account_holder: authStore.user?.name || '',
     is_primary: paymentMethods.value.length === 0
   }

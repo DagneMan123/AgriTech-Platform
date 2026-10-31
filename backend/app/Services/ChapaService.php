@@ -13,8 +13,8 @@ class ChapaService
 
     public function __construct()
     {
-        $this->secretKey = config('services.chapa.secret_key', env('CHAPA_SECRET_KEY', 'CHASECK_TEST-sample-key'));
-        $this->publicKey = config('services.chapa.public_key', env('CHAPA_PUBLIC_KEY', 'CHAPUBK_TEST-sample-key'));
+        $this->secretKey = config('services.chapa.secret_key', env('CHAPA_SECRET_KEY', 'CHASECK_TEST-YpDEoSk7pikyWErZn6q4enzQuJ6CD7Wo'));
+        $this->publicKey = config('services.chapa.public_key', env('CHAPA_PUBLIC_KEY', 'CHAPUBK_TEST-8eXf0uVQ0Cppi22Q9dFrvBDB5K2dTShv'));
         $this->baseUrl = config('services.chapa.base_url', env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'));
     }
 
@@ -26,54 +26,84 @@ class ChapaService
         $txRef = $data['tx_ref'] ?? ('AGRI-CHAPA-' . time() . '-' . rand(1000, 9999));
         $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
 
+        // 1. Sanitize Email: Chapa strictly validates email formats & MX domains
+        $rawEmail = trim($data['email'] ?? '');
+        if (empty($rawEmail) || !filter_var($rawEmail, FILTER_VALIDATE_EMAIL) || str_ends_with($rawEmail, '@agriconnect.et') || str_ends_with($rawEmail, '.local')) {
+            $rawEmail = env('MAIL_FROM_ADDRESS', 'aydenfudagne@gmail.com');
+        }
+
+        // 2. Sanitize Phone: Chapa rejects numbers with spaces or special characters
+        $rawPhone = trim($data['phone_number'] ?? '');
+        $cleanPhone = preg_replace('/[^0-9+]/', '', $rawPhone);
+        if (empty($cleanPhone) || strlen(preg_replace('/[^0-9]/', '', $cleanPhone)) < 9) {
+            $cleanPhone = '0911000000';
+        }
+
+        // 3. Split Name
+        $firstName = preg_replace('/[^a-zA-Z0-9\s]/', '', trim($data['first_name'] ?? 'Ayden'));
+        $lastName = preg_replace('/[^a-zA-Z0-9\s]/', '', trim($data['last_name'] ?? 'Buyer'));
+        if (empty($firstName)) $firstName = 'Ayden';
+        if (empty($lastName)) $lastName = 'Buyer';
+        $firstName = substr($firstName, 0, 30);
+        $lastName = substr($lastName, 0, 30);
+
         $payload = [
             'amount' => (string)($data['amount'] ?? 100),
             'currency' => $data['currency'] ?? 'ETB',
-            'email' => $data['email'] ?? 'buyer@agriconnect.et',
-            'first_name' => $data['first_name'] ?? 'Agricultural',
-            'last_name' => $data['last_name'] ?? 'Buyer',
-            'phone_number' => $data['phone_number'] ?? '0911000000',
+            'email' => $rawEmail,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'phone_number' => $cleanPhone,
             'tx_ref' => $txRef,
             'callback_url' => $data['callback_url'] ?? url('/api/buyer/chapa/callback'),
             'return_url' => $data['return_url'] ?? ($frontendUrl . '/buyer/payments/history?tx_ref=' . $txRef),
             'customization' => [
-                'title' => 'AgriConnect Ethiopian Produce Escrow',
-                'description' => 'Guaranteed payment via Chapa (Telebirr, CBE Birr, Cards)'
+                'title' => 'AgriConnect',
+                'description' => 'Produce Escrow Payment'
             ]
         ];
 
         try {
             $response = Http::withToken($this->secretKey)
-                ->timeout(10)
+                ->timeout(15)
                 ->post($this->baseUrl . '/transaction/initialize', $payload);
 
             if ($response->successful()) {
                 $body = $response->json();
-                return [
-                    'success' => true,
-                    'tx_ref' => $txRef,
-                    'checkout_url' => $body['data']['checkout_url'] ?? null,
-                    'raw' => $body
-                ];
+                $checkoutUrl = $body['data']['checkout_url'] ?? null;
+                if ($checkoutUrl) {
+                    Log::info('Chapa hosted checkout created successfully: ' . $checkoutUrl);
+                    return [
+                        'success' => true,
+                        'tx_ref' => $txRef,
+                        'checkout_url' => $checkoutUrl,
+                        'raw' => $body
+                    ];
+                }
             }
-        } catch (\Throwable $e) {
-            Log::warning('Chapa API live call skipped or timed out: ' . $e->getMessage());
-        }
 
-        // Development fallback / sandbox URL
-        return [
-            'success' => true,
-            'tx_ref' => $txRef,
-            'checkout_url' => 'https://checkout.chapa.co/checkout/payment/' . $txRef,
-            'message' => 'Chapa payment session initiated successfully',
-            'data' => [
-                'checkout_url' => 'https://checkout.chapa.co/checkout/payment/' . $txRef,
+            // Log detailed response if failed
+            $body = $response->json();
+            $errorMessage = is_array($body['message'] ?? null) 
+                ? json_encode($body['message']) 
+                : ($body['message'] ?? 'Chapa rejected transaction with HTTP ' . $response->status());
+            Log::error('Chapa API initialize error: ' . $errorMessage . ' | Payload: ' . json_encode($payload));
+
+            return [
+                'success' => false,
                 'tx_ref' => $txRef,
-                'amount' => $payload['amount'],
-                'currency' => 'ETB',
-                'provider' => 'Chapa Ethiopian Gateway'
-            ]
-        ];
+                'message' => 'Chapa API: ' . $errorMessage,
+                'checkout_url' => null
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Chapa API exception: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'tx_ref' => $txRef,
+                'message' => 'Failed to reach Chapa payment server: ' . $e->getMessage(),
+                'checkout_url' => null
+            ];
+        }
     }
 
     /**
@@ -83,7 +113,7 @@ class ChapaService
     {
         try {
             $response = Http::withToken($this->secretKey)
-                ->timeout(10)
+                ->timeout(15)
                 ->get($this->baseUrl . '/transaction/verify/' . $txRef);
 
             if ($response->successful()) {
