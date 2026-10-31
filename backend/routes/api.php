@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\Buyer\PaymentMethodController;
 use App\Http\Controllers\Api\Buyer\ChapaPaymentController;
 use App\Http\Controllers\Api\Buyer\SupplierDirectoryController;
 use App\Http\Controllers\Api\Buyer\PurchaseReportController;
+use App\Http\Controllers\Api\Buyer\BuyerMessageController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -679,6 +680,16 @@ Route::middleware('auth:sanctum')->group(function () {
             // Purchase Reports & Expense Analysis
             Route::get('/reports/purchases', [PurchaseReportController::class, 'index']);
             Route::get('/reports/expenses', [PurchaseReportController::class, 'expenses']);
+
+            // Messages & Conversations
+            Route::get('/messages/conversations', [BuyerMessageController::class, 'conversations']);
+            Route::get('/messages/conversations/{id}', [BuyerMessageController::class, 'messages']);
+            Route::post('/messages/conversations/{id}/reply', [BuyerMessageController::class, 'sendMessage']);
+            Route::post('/messages/start', [BuyerMessageController::class, 'startConversation']);
+            Route::get('/messages/contacts', [BuyerMessageController::class, 'contacts']);
+
+            // Password Change
+            Route::post('/profile/password', [BuyerController::class, 'updatePassword']);
         });
 
 

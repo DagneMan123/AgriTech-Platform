@@ -80,6 +80,8 @@ const BuyerMarketPricesView = () => import('@/views/buyer/MarketPricesView.vue')
 const BuyerSupplierDirectoryView = () => import('@/views/buyer/SupplierDirectoryView.vue')
 const BuyerPurchaseReportsView = () => import('@/views/buyer/PurchaseReportsView.vue')
 const BuyerExpenseAnalysisView = () => import('@/views/buyer/ExpenseAnalysisView.vue')
+const BuyerNotificationsView = () => import('@/views/buyer/NotificationsView.vue')
+const BuyerMessagesView = () => import('@/views/buyer/MessagesView.vue')
 
 const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
 const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
@@ -552,6 +554,18 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-expense-analysis',
         component: BuyerExpenseAnalysisView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Expense Analysis' }
+      },
+      {
+        path: 'notifications',
+        name: 'buyer-notifications',
+        component: BuyerNotificationsView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Notifications' }
+      },
+      {
+        path: 'messages',
+        name: 'buyer-messages',
+        component: BuyerMessagesView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Messages' }
       }
     ]
   },

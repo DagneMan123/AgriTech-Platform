@@ -13,15 +13,14 @@ class Message extends Model
     protected $fillable = [
         'conversation_id',
         'sender_id',
-        'receiver_id',
         'message',
-        'images',
+        'attachment_path',
         'is_read',
-        'read_at'
+        'read_at',
+        'message_type'
     ];
 
     protected $casts = [
-        'images' => 'array',
         'is_read' => 'boolean',
         'read_at' => 'datetime'
     ];
@@ -33,9 +32,5 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
-    }
-    public function receiver()
-    {
-        return $this->belongsTo(User::class, 'receiver_id');
     }
 }

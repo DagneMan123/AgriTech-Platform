@@ -34,7 +34,7 @@
               </div>
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 <FileSpreadsheet class="w-7 h-7 text-blue-500" />
-                Purchase Reports &amp; Expense Analysis
+                Purchase Reports 
               </h1>
               <p :class="['text-xs lg:text-sm m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
                 Audit procurement expenditure, produce volume, commodity breakdowns, and supplier fulfillment across your Ethiopian agricultural purchases

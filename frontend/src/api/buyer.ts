@@ -110,4 +110,19 @@ export const buyerAPI = {
   // Purchase Reports & Expense Analysis
   getPurchaseReports: (params?: any) => apiClient.get('/buyer/reports/purchases', { params }),
   getExpenseAnalysis: (params?: any) => apiClient.get('/buyer/reports/expenses', { params }),
+
+  // Notifications
+  getNotifications: () => apiClient.get('/notifications'),
+  markNotificationRead: (id: number | string) => apiClient.post(`/notifications/${id}/read`),
+  markAllNotificationsRead: () => apiClient.post('/notifications/read-all'),
+
+  // Messages & Direct Inquiries
+  getConversations: () => apiClient.get('/buyer/messages/conversations'),
+  getMessages: (conversationId: number | string) => apiClient.get(`/buyer/messages/conversations/${conversationId}`),
+  sendMessage: (conversationId: number | string, data: any) => apiClient.post(`/buyer/messages/conversations/${conversationId}/reply`, data),
+  startConversation: (data: any) => apiClient.post('/buyer/messages/start', data),
+  getMessageContacts: () => apiClient.get('/buyer/messages/contacts'),
+
+  // Password Update
+  updatePassword: (data: any) => apiClient.post('/buyer/profile/password', data),
 }
