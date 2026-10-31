@@ -47,6 +47,7 @@ class Product extends Model
         'unit',
         'image',
         'harvest_id',
+        'farmer_name',
     ];
 
     public function getQuantityAvailableAttribute()
@@ -76,6 +77,18 @@ class Product extends Model
         return $this->crop_id;
     }
 
+    public function getFarmerNameAttribute()
+    {
+        if ($this->relationLoaded('farmer') && $this->farmer) {
+            return $this->farmer->farm_name ?: ($this->farmer->user->name ?? 'Local Farmer');
+        }
+        $farmer = $this->farmer;
+        if ($farmer) {
+            return $farmer->farm_name ?: ($farmer->user->name ?? 'Local Farmer');
+        }
+        return 'Local Farmer';
+    }
+
     public function farmer()
     {
         return $this->belongsTo(Farmer::class);
@@ -98,7 +111,7 @@ class Product extends Model
 
     public function reviews()
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(ProductReview::class);
     }
 
     public function cartItems()

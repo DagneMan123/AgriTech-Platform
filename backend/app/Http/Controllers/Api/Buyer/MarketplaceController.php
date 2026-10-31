@@ -14,53 +14,66 @@ class MarketplaceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::where('status', 'active');
+        $query = Product::whereIn('status', ['active', 'available']);
 
         // Search
-        if ($request->has('search')) {
-            $search = $request->search;
+        if ($request->filled('search') || $request->filled('q')) {
+            $search = $request->search ?? $request->q;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhere('description', 'like', "%$search%");
+                $q->where('name', 'ilike', "%$search%")
+                    ->orWhere('description', 'ilike', "%$search%")
+                    ->orWhere('category', 'ilike', "%$search%");
             });
         }
 
         // Filter by category
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
+        if ($request->filled('category')) {
+            $category = $request->category;
+            $query->where(function ($q) use ($category) {
+                $q->where('category', 'ilike', $category)
+                    ->orWhere('category', 'ilike', "%$category%");
+            });
         }
 
         // Filter by price range
-        if ($request->has('min_price') && $request->has('max_price')) {
+        if ($request->filled('min_price') && $request->filled('max_price')) {
             $query->whereBetween('price', [
-                $request->min_price,
-                $request->max_price,
+                (float) $request->min_price,
+                (float) $request->max_price,
             ]);
+        } elseif ($request->filled('min_price')) {
+            $query->where('price', '>=', (float) $request->min_price);
+        } elseif ($request->filled('max_price')) {
+            $query->where('price', '<=', (float) $request->max_price);
         }
 
-        // Filter by seller
-        if ($request->has('seller_id')) {
-            $query->where('seller_id', $request->seller_id);
+        // Filter by seller/farmer
+        if ($request->filled('farmer_id')) {
+            $query->where('farmer_id', $request->farmer_id);
+        } elseif ($request->filled('seller_id')) {
+            $query->where('farmer_id', $request->seller_id);
         }
 
         // Sort
         $sort = $request->get('sort', 'newest');
         switch ($sort) {
             case 'price_low':
+            case 'price-low':
                 $query->orderBy('price', 'asc');
                 break;
             case 'price_high':
+            case 'price-high':
                 $query->orderBy('price', 'desc');
                 break;
             case 'popular':
-                $query->withCount('reviews')->orderBy('reviews_count', 'desc');
+                $query->orderBy('views_count', 'desc');
                 break;
             default:
                 $query->latest();
         }
 
-        $products = $query->with('images', 'reviews')
-            ->paginate($request->get('limit', 20));
+        $products = $query->with(['farmer.user', 'reviews'])
+            ->paginate($request->get('limit', 24));
 
         return response()->json([
             'success' => true,
@@ -69,13 +82,30 @@ class MarketplaceController extends Controller
     }
 
     /**
+     * Search products
+     */
+    public function search(Request $request)
+    {
+        return $this->index($request);
+    }
+
+    /**
      * Get product details
      */
-    public function show(Product $product)
+    public function show($id)
     {
+        $product = Product::with(['farmer.user', 'reviews'])->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $product->load('images', 'reviews', 'seller'),
+            'data' => $product,
         ]);
     }
 
@@ -84,11 +114,10 @@ class MarketplaceController extends Controller
      */
     public function featured()
     {
-        $products = Product::where('status', 'active')
-            ->where('featured', true)
-            ->latest()
+        $products = Product::whereIn('status', ['active', 'available'])
+            ->orderBy('views_count', 'desc')
             ->limit(12)
-            ->with('images')
+            ->with(['farmer.user'])
             ->get();
 
         return response()->json([
@@ -102,11 +131,10 @@ class MarketplaceController extends Controller
      */
     public function trending()
     {
-        $products = Product::where('status', 'active')
-            ->withCount('orders')
-            ->orderBy('orders_count', 'desc')
+        $products = Product::whereIn('status', ['active', 'available'])
+            ->orderBy('views_count', 'desc')
             ->limit(12)
-            ->with('images')
+            ->with(['farmer.user'])
             ->get();
 
         return response()->json([
@@ -120,9 +148,9 @@ class MarketplaceController extends Controller
      */
     public function byCategory(Request $request, string $category)
     {
-        $products = Product::where('status', 'active')
-            ->where('category', $category)
-            ->with('images', 'reviews')
+        $products = Product::whereIn('status', ['active', 'available'])
+            ->where('category', 'ilike', "%$category%")
+            ->with(['farmer.user', 'reviews'])
             ->paginate($request->get('limit', 20));
 
         return response()->json([
@@ -134,13 +162,21 @@ class MarketplaceController extends Controller
     /**
      * Get similar products
      */
-    public function similar(Product $product)
+    public function similar($id)
     {
-        $similar = Product::where('status', 'active')
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+            ]);
+        }
+
+        $similar = Product::whereIn('status', ['active', 'available'])
             ->where('category', $product->category)
             ->where('id', '!=', $product->id)
             ->limit(6)
-            ->with('images')
+            ->with(['farmer.user'])
             ->get();
 
         return response()->json([
@@ -160,7 +196,7 @@ class MarketplaceController extends Controller
         ]);
 
         $products = Product::whereIn('id', $validated['product_ids'])
-            ->with('images', 'reviews')
+            ->with(['farmer.user', 'reviews'])
             ->get();
 
         return response()->json([
@@ -174,10 +210,19 @@ class MarketplaceController extends Controller
      */
     public function categories()
     {
-        $categories = Category::whereNull('parent_id')
-            ->with('subcategories')
-            ->withCount('products')
-            ->get();
+        $distinctCategories = Product::whereIn('status', ['active', 'available'])
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category');
+
+        $categories = $distinctCategories->map(function ($cat, $index) {
+            return [
+                'id' => $index + 1,
+                'name' => ucfirst($cat),
+                'slug' => strtolower(str_replace(' ', '-', $cat)),
+                'products_count' => Product::whereIn('status', ['active', 'available'])->where('category', $cat)->count(),
+            ];
+        });
 
         return response()->json([
             'success' => true,
@@ -190,14 +235,14 @@ class MarketplaceController extends Controller
      */
     public function priceRange()
     {
-        $minPrice = Product::where('status', 'active')->min('price');
-        $maxPrice = Product::where('status', 'active')->max('price');
+        $minPrice = Product::whereIn('status', ['active', 'available'])->min('price');
+        $maxPrice = Product::whereIn('status', ['active', 'available'])->max('price');
 
         return response()->json([
             'success' => true,
             'data' => [
-                'min' => $minPrice ?? 0,
-                'max' => $maxPrice ?? 0,
+                'min' => (float)($minPrice ?? 0),
+                'max' => (float)($maxPrice ?? 0),
             ],
         ]);
     }

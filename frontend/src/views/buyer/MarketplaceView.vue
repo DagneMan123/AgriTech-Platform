@@ -69,10 +69,10 @@
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Price Range:</label>
             <select v-model="priceRange" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="">All Prices</option>
-              <option value="0-500">Under Ksh 500</option>
-              <option value="500-1000">Ksh 500 - 1,000</option>
-              <option value="1000-5000">Ksh 1,000 - 5,000</option>
-              <option value="5000+">Above Ksh 5,000</option>
+              <option value="0-500">Under ETB 500</option>
+              <option value="500-1000">ETB 500 - 1,000</option>
+              <option value="1000-5000">ETB 1,000 - 5,000</option>
+              <option value="5000+">Above ETB 5,000</option>
             </select>
           </div>
           <div class="flex flex-col gap-1.5">
@@ -141,8 +141,8 @@
 
               <div>
                 <div :class="['flex justify-between items-center mb-3 pt-3 border-t', darkMode ? 'border-blue-500/30' : 'border-slate-100']">
-                  <span class="text-sm font-black text-emerald-500">Ksh {{ formatNumber(product.price || 0) }}</span>
-                  <span v-if="product.original_price" class="text-xs text-slate-400 line-through">Ksh {{ formatNumber(product.original_price) }}</span>
+                  <span class="text-sm font-black text-emerald-500">ETB {{ formatNumber(product.price || 0) }}</span>
+                  <span v-if="product.original_price" class="text-xs text-slate-400 line-through">ETB {{ formatNumber(product.original_price) }}</span>
                 </div>
 
                 <div class="flex gap-2">
@@ -175,6 +175,36 @@
         </button>
       </div>
 
+      <!-- Product Details Modal -->
+      <div v-if="selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" @click="selectedProduct = null">
+        <div :class="['w-full max-w-lg rounded-2xl p-6 shadow-2xl relative transition-all', darkMode ? 'bg-[#131b2e] text-slate-100 border border-slate-700' : 'bg-white text-slate-800 border border-slate-200']" @click.stop>
+          <button @click="selectedProduct = null" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer text-lg">
+            <i class="fas fa-times"></i>
+          </button>
+          <div class="flex gap-4 mb-4">
+            <img v-if="selectedProduct.image" :src="selectedProduct.image" :alt="selectedProduct.name" class="w-24 h-24 object-cover rounded-xl" />
+            <div v-else class="w-24 h-24 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl text-slate-400 text-2xl">
+              <i class="fas fa-image"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold">{{ selectedProduct.name }}</h3>
+              <p class="text-xs text-slate-500 mt-1"><i class="fas fa-store"></i> {{ selectedProduct.farmer_name || 'Local Farmer' }}</p>
+              <p class="text-xs text-emerald-600 font-bold uppercase mt-1">{{ selectedProduct.category }}</p>
+              <p class="text-base font-black text-emerald-500 mt-2">ETB {{ formatNumber(selectedProduct.price || 0) }} / {{ selectedProduct.unit || 'kg' }}</p>
+            </div>
+          </div>
+          <p v-if="selectedProduct.description" :class="['text-xs mb-4 p-3 rounded-xl', darkMode ? 'bg-[#0b0f19] text-slate-300' : 'bg-slate-50 text-slate-600']">{{ selectedProduct.description }}</p>
+          <div class="flex justify-between items-center text-xs text-slate-500 mb-6">
+            <span>Available: <strong class="text-emerald-500">{{ selectedProduct.quantity_available || selectedProduct.quantity || 0 }} {{ selectedProduct.unit || 'kg' }}</strong></span>
+            <span>Grade: <strong>{{ selectedProduct.quality_grade || 'Standard' }}</strong></span>
+          </div>
+          <div class="flex gap-2">
+            <button @click="selectedProduct = null" :class="['flex-1 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-700']">Close</button>
+            <button @click="addToCart(selectedProduct); selectedProduct = null" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-all">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
@@ -198,6 +228,11 @@ interface Product {
   original_price?: number
   image?: string
   rating?: number
+  description?: string
+  quantity_available?: number
+  quantity?: number
+  unit?: string
+  quality_grade?: string
 }
 
 const router = useRouter()
@@ -212,6 +247,7 @@ const selectedCategory = ref('')
 const priceRange = ref('')
 const sortBy = ref('newest')
 const sidebarOpen = ref(false)
+const selectedProduct = ref<Product | null>(null)
 
 const darkMode = computed(() => themeStore.isDark)
 
@@ -259,14 +295,32 @@ const formatNumber = (num: number) => {
 const handleSearch = async () => {
   loading.value = true
   try {
+    const filters: any = {}
+    if (selectedCategory.value) {
+      filters.category = selectedCategory.value
+    }
+    if (priceRange.value) {
+      if (priceRange.value === '0-500') {
+        filters.min_price = 0
+        filters.max_price = 500
+      } else if (priceRange.value === '500-1000') {
+        filters.min_price = 500
+        filters.max_price = 1000
+      } else if (priceRange.value === '1000-5000') {
+        filters.min_price = 1000
+        filters.max_price = 5000
+      } else if (priceRange.value === '5000+') {
+        filters.min_price = 5000
+      }
+    }
+    if (sortBy.value) {
+      filters.sort = sortBy.value
+    }
+
     if (searchQuery.value) {
-      await marketplaceStore.searchProducts(searchQuery.value, {
-        category: selectedCategory.value
-      })
+      await marketplaceStore.searchProducts(searchQuery.value, filters)
     } else {
-      await marketplaceStore.fetchProducts(1, 12, {
-        category: selectedCategory.value
-      })
+      await marketplaceStore.fetchProducts(1, 24, filters)
     }
   } catch (error) {
     console.error('Search failed:', error)
@@ -288,7 +342,7 @@ const clearFilters = () => {
 }
 
 const viewProduct = (id: number) => {
-  router.push(`/app/buyer/products/${id}`)
+  selectedProduct.value = safeProducts.value.find(p => p.id === id) || null
 }
 
 const addToCart = async (product: Product) => {
