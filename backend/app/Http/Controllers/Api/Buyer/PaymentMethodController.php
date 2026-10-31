@@ -24,26 +24,13 @@ class PaymentMethodController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // If the buyer has no payment method registered in the database yet,
-        // create their primary Telebirr / CBE Birr account based on their verified phone
-        if ($methods->isEmpty() && $user->phone) {
-            $defaultMethod = PaymentMethod::create([
-                'user_id' => $user->id,
-                'type' => 'mobile_money',
-                'account_number' => $user->phone,
-                'account_holder' => $user->name,
-                'bank_name' => 'Telebirr (Ethio Telecom)',
-                'is_primary' => true,
-                'is_active' => true,
-            ]);
-
-            $methods = collect([$defaultMethod]);
-        }
-
-        // Live database metrics
-        $paymentsQuery = Payment::whereHas('order', fn($q) => $q->where('buyer_id', $user->id));
+        // Live database metrics: sum direct Chapa payments & escrow orders
+        $paymentsQuery = Payment::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('order', fn($oq) => $oq->where('buyer_id', $user->id));
+        })->whereIn('status', ['completed', 'paid']);
         $totalSpent = (float) $paymentsQuery->sum('amount');
-        $completedCount = $paymentsQuery->where('status', 'completed')->count();
+        $completedCount = $paymentsQuery->count();
 
         return response()->json([
             'success' => true,
@@ -160,14 +147,62 @@ class PaymentMethodController extends Controller
     {
         $user = $request->user();
 
+        // 1. Get all Chapa and digital payments for this buyer
+        $payments = Payment::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('order', fn($oq) => $oq->where('buyer_id', $user->id));
+        })
+        ->with('order.items.product')
+        ->latest()
+        ->get()
+        ->map(function ($p) {
+            $item = $p->order?->items?->first()?->product?->name ?? 'Produce Escrow Payment';
+            return [
+                'id' => $p->order_id ?: $p->id,
+                'payment_number' => $p->payment_number,
+                'transaction_id' => $p->transaction_id,
+                'reference' => $p->reference,
+                'produce_name' => $item,
+                'payment_gateway' => ucfirst($p->payment_gateway ?? 'Chapa'),
+                'amount' => (float)$p->amount,
+                'status' => $p->status,
+                'created_at' => $p->created_at,
+                'items' => [
+                    ['product' => ['name' => $item]]
+                ]
+            ];
+        });
+
+        // 2. Get orders that don't have a direct payment record yet
+        $paymentOrderIds = $payments->pluck('id')->filter()->toArray();
         $orders = Order::where('buyer_id', $user->id)
-            ->with(['items.product', 'farm', 'payment'])
+            ->whereNotIn('id', $paymentOrderIds)
+            ->with(['items.product', 'farm'])
             ->latest()
-            ->paginate(20);
+            ->get()
+            ->map(function ($o) {
+                $item = $o->items?->first()?->product?->name ?? 'Produce Consignment';
+                return [
+                    'id' => $o->id,
+                    'payment_number' => 'ORD-' . $o->id,
+                    'transaction_id' => null,
+                    'reference' => null,
+                    'produce_name' => $item,
+                    'payment_gateway' => 'Chapa Gateway',
+                    'amount' => (float)($o->grand_total ?: $o->total_amount),
+                    'status' => $o->status,
+                    'created_at' => $o->created_at,
+                    'items' => [
+                        ['product' => ['name' => $item]]
+                    ]
+                ];
+            });
+
+        $allTransactions = $payments->concat($orders)->sortByDesc('created_at')->values();
 
         return response()->json([
             'success' => true,
-            'data' => $orders
+            'data' => $allTransactions
         ]);
     }
 }

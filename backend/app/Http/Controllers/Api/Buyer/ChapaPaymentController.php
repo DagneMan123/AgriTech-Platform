@@ -56,6 +56,33 @@ class ChapaPaymentController extends Controller
             ]
         ]);
 
+        // Automatically set/update card on payment methods page for this buyer
+        $phoneInput = $request->input('phone_number', $user->phone ?? '0911000000');
+        $channelTitle = match ($channel) {
+            'cbe_birr' => 'CBE Birr (Chapa)',
+            'cards', 'card' => 'Chapa Card (Visa / Mastercard)',
+            'awash' => 'Awash Birr (Chapa)',
+            default => 'Telebirr (Chapa)'
+        };
+        $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
+
+        \App\Models\PaymentMethod::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'bank_name' => $channelTitle,
+            ],
+            [
+                'type' => $methodType,
+                'account_number' => $phoneInput,
+                'account_holder' => $user->name ?: 'Sample Buyer',
+                'is_primary' => true,
+                'is_active' => true,
+            ]
+        );
+        \App\Models\PaymentMethod::where('user_id', $user->id)
+            ->where('bank_name', '!=', $channelTitle)
+            ->update(['is_primary' => false]);
+
         $res = $this->chapa->initializePayment([
             'amount' => $amount,
             'currency' => 'ETB',
@@ -120,6 +147,34 @@ class ChapaPaymentController extends Controller
                         'status' => 'confirmed'
                     ]);
                 }
+
+                // Set the card on the payment methods page for this buyer
+                $channel = $payment->payment_method ?: 'telebirr';
+                $channelTitle = match ($channel) {
+                    'cbe_birr' => 'CBE Birr (Chapa)',
+                    'cards', 'card' => 'Chapa Card (Visa / Mastercard)',
+                    'awash' => 'Awash Birr (Chapa)',
+                    default => 'Telebirr (Chapa)'
+                };
+                $phone = $payment->payment_details['phone'] ?? $user?->phone ?? '0911000000';
+                $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
+
+                \App\Models\PaymentMethod::updateOrCreate(
+                    [
+                        'user_id' => $payment->user_id,
+                        'bank_name' => $channelTitle,
+                    ],
+                    [
+                        'type' => $methodType,
+                        'account_number' => $phone,
+                        'account_holder' => $user?->name ?: 'Sample Buyer',
+                        'is_primary' => true,
+                        'is_active' => true
+                    ]
+                );
+                \App\Models\PaymentMethod::where('user_id', $payment->user_id)
+                    ->where('bank_name', '!=', $channelTitle)
+                    ->update(['is_primary' => false]);
             }
 
             return response()->json([
@@ -176,6 +231,34 @@ class ChapaPaymentController extends Controller
                             'status' => 'confirmed'
                         ]);
                     }
+
+                    // Set the card on the payment methods page
+                    $channel = $payment->payment_method ?: 'telebirr';
+                    $channelTitle = match ($channel) {
+                        'cbe_birr' => 'CBE Birr (Chapa)',
+                        'cards', 'card' => 'Chapa Card (Visa / Mastercard)',
+                        'awash' => 'Awash Birr (Chapa)',
+                        default => 'Telebirr (Chapa)'
+                    };
+                    $phone = $payment->payment_details['phone'] ?? '0911000000';
+                    $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
+
+                    \App\Models\PaymentMethod::updateOrCreate(
+                        [
+                            'user_id' => $payment->user_id,
+                            'bank_name' => $channelTitle,
+                        ],
+                        [
+                            'type' => $methodType,
+                            'account_number' => $phone,
+                            'account_holder' => 'Sample Buyer',
+                            'is_primary' => true,
+                            'is_active' => true,
+                        ]
+                    );
+                    \App\Models\PaymentMethod::where('user_id', $payment->user_id)
+                        ->where('bank_name', '!=', $channelTitle)
+                        ->update(['is_primary' => false]);
                 }
             }
         }

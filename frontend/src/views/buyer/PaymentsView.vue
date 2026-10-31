@@ -319,16 +319,16 @@
                   :class="['transition-colors', darkMode ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50/80']"
                 >
                   <td class="py-4 px-4 font-mono font-bold text-blue-500">
-                    #{{ order.id }}
+                    #{{ order.payment_number || order.transaction_id || order.id }}
                   </td>
                   <td class="py-4 px-4 font-bold">
-                    {{ order.items && order.items.length > 0 ? order.items[0].product?.name : 'Produce Consignment' }}
+                    {{ order.produce_name || (order.items && order.items.length > 0 ? order.items[0].product?.name : 'Produce Escrow Payment') }}
                   </td>
-                  <td class="py-4 px-4 font-semibold text-emerald-500">
-                    Chapa Gateway
+                  <td class="py-4 px-4 font-semibold text-blue-500">
+                    {{ order.payment_gateway || 'Chapa Gateway' }}
                   </td>
                   <td class="py-4 px-4 font-mono font-bold">
-                    ETB {{ formatNumber(order.grand_total || order.total_amount) }}
+                    ETB {{ formatNumber(order.amount || order.grand_total || order.total_amount) }}
                   </td>
                   <td class="py-4 px-4 text-slate-400 text-[11px]">
                     {{ formatDate(order.created_at) }}
@@ -383,15 +383,15 @@
               <div class="flex items-center gap-3">
                 <FileText class="w-4 h-4 text-blue-500" />
                 <div>
-                  <span class="font-bold block">Chapa Invoice #CHAPA-{{ order.id }}</span>
-                  <span class="text-[11px] text-slate-400">{{ formatDate(order.created_at) }} &bull; Order #{{ order.id }}</span>
+                  <span class="font-bold block">Chapa Invoice #{{ order.payment_number || ('CHAPA-' + order.id) }}</span>
+                  <span class="text-[11px] text-slate-400">{{ formatDate(order.created_at) }} &bull; Ref: {{ order.reference || order.transaction_id || ('# ' + order.id) }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-3">
-                <span class="font-mono font-bold">ETB {{ formatNumber(order.grand_total || order.total_amount) }}</span>
+                <span class="font-mono font-bold">ETB {{ formatNumber(order.amount || order.grand_total || order.total_amount) }}</span>
                 <button
                   @click="showToast('Chapa invoice downloaded successfully!')"
-                  class="px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold text-emerald-500 hover:bg-emerald-500/10 cursor-pointer"
+                  class="px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold text-blue-500 hover:bg-blue-500/10 cursor-pointer"
                 >
                   Download Receipt
                 </button>
@@ -1013,9 +1013,24 @@ const switchTab = (tab: 'methods' | 'history' | 'escrow') => {
   }
 }
 
+const handleChapaRedirect = async () => {
+  const txRef = (route.query.tx_ref as string) || (route.query.trx_ref as string)
+  if (txRef) {
+    try {
+      const res = await buyerAPI.verifyChapaPayment(txRef)
+      if (res && res.data && res.data.success) {
+        showToast('Payment verified successfully! Database updated.')
+      }
+    } catch (e) {
+      console.warn('Auto verification on redirect error:', e)
+    }
+  }
+}
+
 onMounted(async () => {
   themeStore.initializeTheme()
   syncTabWithRoute()
+  await handleChapaRedirect()
   await loadData()
 })
 
@@ -1074,7 +1089,8 @@ const initiateChapaCheckout = async () => {
 
     if (res && res.data && res.data.data) {
       chapaSession.value = res.data.data
-      showToast('Chapa payment session generated!')
+      showToast('Chapa payment session generated & card set!')
+      await loadData()
       if (res.data.data.checkout_url) {
         window.open(res.data.data.checkout_url, '_blank')
       }
@@ -1091,7 +1107,7 @@ const verifyChapaSession = async (txRef: string) => {
   try {
     const res = await buyerAPI.verifyChapaPayment(txRef)
     if (res && res.data && res.data.success) {
-      showToast('Chapa payment confirmed and recorded in database!')
+      showToast('Chapa payment confirmed and card set in database!')
       chapaModalOpen.value = false
       await loadData()
     }
@@ -1110,35 +1126,39 @@ const connectChapaPayment = async (openCheckout = true) => {
       ? chapaBuyerEmail.value 
       : (authStore.user?.email && !authStore.user.email.includes('agriconnect.et') ? authStore.user.email : 'aydenfudagne@gmail.com')
 
-    if (!openCheckout) {
-      // User explicitly clicked "Save Chapa Method"
-      await buyerAPI.createPaymentMethod({
-        type: 'card',
-        bank_name: channelName.includes('Chapa') ? channelName : `${channelName} (Chapa)`,
-        account_number: cleanPhone,
-        account_holder: authStore.user?.name || 'Verified Buyer',
-        is_primary: form.value.is_primary
-      })
+    const displayName = chapaForm.value.channel === 'cards' 
+      ? 'Chapa Card (Visa / Mastercard)' 
+      : (channelName.includes('Chapa') ? channelName : `${channelName} (Chapa)`)
 
-      modalOpen.value = false
-      showToast('Payment method saved successfully!')
-      await loadData()
-      return
-    }
-
-    // Call Chapa API to initialize payment session and open checkout
-    const res = await buyerAPI.initializeChapaPayment({
-      amount: 100,
-      phone_number: cleanPhone,
-      email: cleanEmail,
-      channel: chapaForm.value.channel
+    // Save Chapa Payment Method card to database so it immediately appears on the Payment Methods page!
+    await buyerAPI.createPaymentMethod({
+      type: chapaForm.value.channel === 'cards' ? 'card' : 'mobile_money',
+      bank_name: displayName,
+      account_number: cleanPhone,
+      account_holder: authStore.user?.name || 'Sample Buyer',
+      is_primary: true
     })
 
-    const checkoutUrl = res?.data?.data?.checkout_url
-    modalOpen.value = false
+    // Call Chapa API to initialize payment session and open checkout if requested
+    let checkoutUrl = null
+    if (openCheckout) {
+      const res = await buyerAPI.initializeChapaPayment({
+        amount: 100,
+        phone_number: cleanPhone,
+        email: cleanEmail,
+        channel: chapaForm.value.channel
+      })
+      checkoutUrl = res?.data?.data?.checkout_url
+      if (res?.data?.data) {
+        chapaSession.value = res.data.data
+      }
+    }
 
-    if (checkoutUrl) {
-      chapaSession.value = res?.data?.data || null
+    modalOpen.value = false
+    showToast('Chapa card set on payment methods page successfully!')
+    await loadData()
+
+    if (openCheckout && checkoutUrl) {
       chapaModalOpen.value = true
       try {
         window.open(checkoutUrl, '_blank')
