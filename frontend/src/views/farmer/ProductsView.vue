@@ -396,7 +396,10 @@ const fetchProducts = async () => {
   try {
     loading.value = true
     const response = await fetch('/api/farmer/products', {
-      headers: { 'Authorization': `Bearer ${auth.token}` }
+      headers: {
+        'Authorization': `Bearer ${auth.token}`,
+        'Accept': 'application/json'
+      }
     })
     
     if (!response.ok) throw new Error('Failed to fetch products')
@@ -413,7 +416,10 @@ const fetchProducts = async () => {
 const fetchHarvests = async () => {
   try {
     const response = await fetch('/api/farmer/harvests', {
-      headers: { 'Authorization': `Bearer ${auth.token}` }
+      headers: {
+        'Authorization': `Bearer ${auth.token}`,
+        'Accept': 'application/json'
+      }
     })
     
     if (!response.ok) throw new Error('Failed to fetch harvests')
@@ -537,12 +543,17 @@ const submitProductForm = async () => {
       ? `/api/farmer/products/${editingProduct.value.id}`
       : '/api/farmer/products'
     
-    const method = editingProduct.value ? 'POST' : 'POST'
+    if (editingProduct.value) {
+      formData.append('_method', 'PUT')
+    }
+
+    const method = 'POST'
 
     const response = await fetch(url, {
       method,
       headers: {
         'Authorization': `Bearer ${auth.token}`,
+        'Accept': 'application/json',
       },
       body: formData,
     })
@@ -575,7 +586,10 @@ const deleteProduct = async (productId) => {
   try {
     const response = await fetch(`/api/farmer/products/${productId}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${auth.token}` }
+      headers: {
+        'Authorization': `Bearer ${auth.token}`,
+        'Accept': 'application/json'
+      }
     })
 
     if (!response.ok) throw new Error('Failed to delete product')

@@ -95,4 +95,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contract::class, 'buyer_id');
     }
+
+    public function farmer()
+    {
+        return $this->hasOne(Farmer::class);
+    }
 }

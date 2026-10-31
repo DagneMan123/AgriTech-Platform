@@ -13,7 +13,6 @@ class Harvest extends Model
         'crop_id',
         'harvest_date',
         'quantity',
-        'quantity_harvested',
         'unit',
         'quality_grade',
         'notes',

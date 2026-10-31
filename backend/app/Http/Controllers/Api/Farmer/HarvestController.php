@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class HarvestController extends Controller
 {
@@ -15,7 +16,7 @@ class HarvestController extends Controller
     public function index(Request $request)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
 
             $harvests = DB::table('harvests as h')
                 ->join('crops as c', 'h.crop_id', '=', 'c.id')
@@ -26,7 +27,6 @@ class HarvestController extends Controller
                     'h.crop_id',
                     'h.harvest_date',
                     'h.quantity',
-                    'h.quantity_harvested',
                     'h.unit',
                     'h.quality_grade',
                     'h.notes',
@@ -40,7 +40,7 @@ class HarvestController extends Controller
                     'f.name as farm_name'
                 )
                 ->orderBy('h.harvest_date', 'desc')
-                ->limit(20)
+                ->limit(50)
                 ->get();
 
             $data = $harvests->map(function ($h) {
@@ -48,10 +48,10 @@ class HarvestController extends Controller
                     'id' => $h->id,
                     'crop_id' => $h->crop_id,
                     'harvest_date' => $h->harvest_date,
-                    'quantity' => (float) ($h->quantity ?? $h->quantity_harvested ?? 0),
-                    'unit' => $h->unit,
-                    'quality_grade' => $h->quality_grade,
-                    'notes' => $h->notes ?? $h->harvest_notes,
+                    'quantity' => (float) ($h->quantity ?? 0),
+                    'unit' => $h->unit ?? 'kg',
+                    'quality_grade' => $h->quality_grade ?? 'A',
+                    'notes' => $h->notes ?? $h->harvest_notes ?? '',
                     'crop' => [
                         'id' => $h->crop_id_full,
                         'crop_type' => $h->crop_type,
@@ -66,10 +66,10 @@ class HarvestController extends Controller
                 ];
             });
 
-            return response()->json(['success' => true, 'data' => $data->toArray()]);
+            return response()->json(['success' => true, 'data' => $data->values()]);
 
         } catch (\Exception $e) {
-            \Log::error('Harvest index: ' . $e->getMessage());
+            Log::error('Harvest index: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -80,7 +80,7 @@ class HarvestController extends Controller
     public function store(Request $request)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
 
             // Validate that crop belongs to farmer
             $crop = DB::table('crops as c')
@@ -93,16 +93,17 @@ class HarvestController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid crop'], 400);
             }
 
-            // Insert harvest record directly
+            // Insert harvest record directly using correct schema column 'quantity'
             $harvestId = DB::table('harvests')->insertGetId([
                 'crop_id' => $request->input('crop_id'),
                 'harvest_date' => $request->input('harvest_date'),
-                'quantity_harvested' => $request->input('quantity', 0),
+                'quantity' => (float)$request->input('quantity', 0),
                 'unit' => $request->input('unit', 'kg'),
-                'quality_grade' => $request->input('quality_grade'),
+                'quality_grade' => $request->input('quality_grade', 'A'),
+                'notes' => $request->input('notes'),
                 'harvest_notes' => $request->input('notes'),
-                'number_of_workers' => 1, // Default value
-                'storage_method' => 'fresh',
+                'number_of_workers' => $request->input('number_of_workers', 1),
+                'storage_method' => $request->input('storage_method', 'fresh'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -116,7 +117,7 @@ class HarvestController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            \Log::error('Harvest store: ' . $e->getMessage());
+            Log::error('Harvest store: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -127,13 +128,20 @@ class HarvestController extends Controller
     public function show($id)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
 
             $harvest = DB::table('harvests as h')
                 ->join('crops as c', 'h.crop_id', '=', 'c.id')
                 ->join('farms as f', 'c.farm_id', '=', 'f.id')
                 ->where('h.id', $id)
                 ->where('f.farmer_id', $farmerId)
+                ->select(
+                    'h.*',
+                    'c.crop_type',
+                    'c.variety',
+                    'f.id as farm_id',
+                    'f.name as farm_name'
+                )
                 ->first();
 
             if (!$harvest) {
@@ -152,7 +160,7 @@ class HarvestController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
 
             $harvest = DB::table('harvests as h')
                 ->join('crops as c', 'h.crop_id', '=', 'c.id')
@@ -168,8 +176,7 @@ class HarvestController extends Controller
             $updates = [];
             if ($request->has('harvest_date')) $updates['harvest_date'] = $request->input('harvest_date');
             if ($request->has('quantity')) {
-                $updates['quantity'] = $request->input('quantity');
-                $updates['quantity_harvested'] = $request->input('quantity');
+                $updates['quantity'] = (float)$request->input('quantity');
             }
             if ($request->has('unit')) $updates['unit'] = $request->input('unit');
             if ($request->has('quality_grade')) $updates['quality_grade'] = $request->input('quality_grade');
@@ -195,7 +202,7 @@ class HarvestController extends Controller
     public function destroy($id)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
 
             $harvest = DB::table('harvests as h')
                 ->join('crops as c', 'h.crop_id', '=', 'c.id')
@@ -222,7 +229,7 @@ class HarvestController extends Controller
     public function statistics(Request $request)
     {
         try {
-            $farmerId = Auth::id();
+            $farmerId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
             $year = $request->get('year', now()->year);
 
             $stats = DB::table('harvests as h')

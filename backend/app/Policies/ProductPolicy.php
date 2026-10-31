@@ -28,7 +28,14 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): bool
     {
-        return $user->id === $product->farmer_id || $user->id === $product->supplier_id || $user->role === 'admin';
+        if ($user->role === 'admin') {
+            return true;
+        }
+        $farmer = $user->farmer ?? \App\Models\Farmer::where('user_id', $user->id)->first();
+        if ($farmer && $farmer->id === $product->farmer_id) {
+            return true;
+        }
+        return $user->id === $product->farmer_id || (isset($product->supplier_id) && $user->id === $product->supplier_id);
     }
 
     /**
@@ -36,6 +43,13 @@ class ProductPolicy
      */
     public function delete(User $user, Product $product): bool
     {
-        return $user->id === $product->farmer_id || $user->id === $product->supplier_id || $user->role === 'admin';
+        if ($user->role === 'admin') {
+            return true;
+        }
+        $farmer = $user->farmer ?? \App\Models\Farmer::where('user_id', $user->id)->first();
+        if ($farmer && $farmer->id === $product->farmer_id) {
+            return true;
+        }
+        return $user->id === $product->farmer_id || (isset($product->supplier_id) && $user->id === $product->supplier_id);
     }
 }

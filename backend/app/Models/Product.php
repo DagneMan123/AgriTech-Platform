@@ -14,6 +14,8 @@ class Product extends Model
         'farmer_id',
         'crop_id',
         'category_id',
+        'product_category_id',
+        'category',
         'name',
         'description',
         'price',
@@ -39,6 +41,40 @@ class Product extends Model
         'price' => 'decimal:2',
         'quantity' => 'decimal:2'
     ];
+
+    protected $appends = [
+        'quantity_available',
+        'unit',
+        'image',
+        'harvest_id',
+    ];
+
+    public function getQuantityAvailableAttribute()
+    {
+        return (float) ($this->quantity ?? 0);
+    }
+
+    public function getUnitAttribute()
+    {
+        return $this->quantity_unit ?? 'kg';
+    }
+
+    public function getImageAttribute()
+    {
+        if (!empty($this->images) && is_array($this->images) && count($this->images) > 0) {
+            $img = $this->images[0];
+            if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+                return $img;
+            }
+            return asset('storage/' . $img);
+        }
+        return null;
+    }
+
+    public function getHarvestIdAttribute()
+    {
+        return $this->crop_id;
+    }
 
     public function farmer()
     {

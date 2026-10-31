@@ -468,6 +468,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ]);
 
             Route::apiResource('/products', FarmerProductController::class);
+            Route::post('/products/{product}', [FarmerProductController::class, 'update']);
 
             Route::post('/products/{product}/upload-images', [
                 FarmerProductController::class,
