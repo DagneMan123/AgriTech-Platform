@@ -111,7 +111,7 @@
             <span class="text-xs font-semibold text-blue-500">Active Benchmarks</span>
           </div>
           <p :class="['text-[11px] mt-1 m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-            Across 14 major grain, pulse &amp; cash crops
+            {{ summaryStats.total > 0 ? 'Aggregated across ' + summaryStats.total + ' recorded commodities' : 'Awaiting records from database' }}
           </p>
         </div>
 
@@ -173,8 +173,8 @@
             <span :class="['text-2xl lg:text-3xl font-[800]', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ filterLocations.length }}</span>
             <span class="text-xs font-semibold text-purple-500">Regional Centers</span>
           </div>
-          <p :class="['text-[11px] mt-1 m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-            Merkato, Adama, Hawassa, Bahir Dar &amp; Jimma
+          <p :class="['text-[11px] mt-1 m-0 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">
+            {{ filterLocations.length > 0 ? filterLocations.slice(0, 4).join(', ') : 'Awaiting registered trading hubs' }}
           </p>
         </div>
       </div>
@@ -203,7 +203,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search commodity, hub or notes (e.g. Teff, Coffee, Merkato)..."
+              placeholder="Search commodity, market hub or notes..."
               :class="['w-full pl-9 pr-3.5 py-2.5 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder-slate-400 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500']"
             />
           </div>

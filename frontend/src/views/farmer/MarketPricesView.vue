@@ -6,14 +6,14 @@
       <div class="page-header">
         <div class="header-content">
           <h1>Market Prices</h1>
-          <p>Track real-time commodity prices and market trends</p>
+          <p>Real-time commodity market benchmarks from certified agricultural exchange terminals</p>
         </div>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
-        <p>Loading market data...</p>
+        <p>Loading market data from database...</p>
       </div>
 
       <!-- Error State -->
@@ -22,7 +22,7 @@
         <p class="error-message">{{ error }}</p>
         <button @click="fetchMarketData" class="btn-retry">
           <RotateCcw size="16" />
-          Retry
+          Retry Connection
         </button>
       </div>
 
@@ -33,51 +33,70 @@
           <div class="summary-card trending-up">
             <TrendingUp size="20" class="summary-icon" />
             <div>
-              <span class="label">Market Trend</span>
-              <span class="value">Bullish</span>
+              <span class="label">Commodities Tracked</span>
+              <span class="value">{{ products.length }}</span>
             </div>
           </div>
           <div class="summary-card">
             <BarChart3 size="20" class="summary-icon" />
             <div>
-              <span class="label">Avg Price Change</span>
-              <span class="value positive">+2.5%</span>
+              <span class="label">National Avg Benchmark</span>
+              <span class="value positive">ETB {{ formatNumber(summaryStats.avgPrice) }}</span>
             </div>
           </div>
           <div class="summary-card">
             <Calendar size="20" class="summary-icon" />
             <div>
-              <span class="label">Last Updated</span>
-              <span class="value">2 hours ago</span>
+              <span class="label">Price Momentum</span>
+              <span class="value text-sm">{{ summaryStats.increasing }} Up / {{ summaryStats.stable }} Stable / {{ summaryStats.decreasing }} Down</span>
             </div>
           </div>
           <div class="summary-card">
             <MapPin size="20" class="summary-icon" />
             <div>
-              <span class="label">Selected Market</span>
-              <span class="value">Central Region</span>
+              <span class="label">Active Market Hubs</span>
+              <span class="value">{{ availableMarkets.length }} Hubs</span>
             </div>
           </div>
         </div>
 
         <!-- Filters -->
         <div class="filters-bar">
-          <input v-model="searchQuery" type="text" placeholder="Search products..." class="search-input" />
+          <input v-model="searchQuery" type="text" placeholder="Search commodity, hub or region..." class="search-input" />
           <select v-model="selectedMarket" class="filter-select">
             <option value="">All Markets</option>
-            <option value="central">Central Region</option>
-            <option value="north">Northern Region</option>
-            <option value="south">Southern Region</option>
+            <option v-for="m in availableMarkets" :key="m" :value="m">{{ m }}</option>
           </select>
           <select v-model="sortBy" class="filter-select">
             <option value="price-desc">Highest Price</option>
             <option value="price-asc">Lowest Price</option>
-            <option value="change">Price Change</option>
+            <option value="name">Name (A-Z)</option>
           </select>
         </div>
 
+        <!-- Empty State (No records in DB) -->
+        <div v-if="products.length === 0" class="empty-state-card">
+          <BarChart3 size="48" class="empty-icon" />
+          <h3>No Market Prices in Database</h3>
+          <p>There are currently no commodity price records found in the database.</p>
+          <button @click="fetchMarketData" class="btn-retry">
+            <RotateCcw size="16" />
+            Reload from Database
+          </button>
+        </div>
+
+        <!-- No Matching Filter State -->
+        <div v-else-if="filteredProducts.length === 0" class="empty-state-card">
+          <AlertCircle size="48" class="empty-icon text-amber-500" />
+          <h3>No Matching Commodities</h3>
+          <p>No commodity prices match your search criteria. Try clearing your search filter.</p>
+          <button @click="resetFilters" class="btn-retry">
+            Reset Filters
+          </button>
+        </div>
+
         <!-- Price Cards -->
-        <div class="price-grid">
+        <div v-else class="price-grid">
           <div v-for="product in filteredProducts" :key="product.id" class="price-card" @click="selectProduct(product)">
             <div class="card-header">
               <span class="product-name">{{ product.name }}</span>
@@ -85,31 +104,31 @@
             </div>
 
             <div class="price-display">
-              <span class="current-price">${{ product.price }}</span>
-              <span class="price-change" :class="{ positive: product.change > 0, negative: product.change < 0 }">
-                <component :is="product.change > 0 ? TrendingUp : TrendingDown" size="14" />
-                {{ Math.abs(product.change) }}%
+              <span class="current-price">ETB {{ formatNumber(product.price) }}</span>
+              <span class="price-change" :class="getTrendClass(product.trend)">
+                <component :is="getTrendIcon(product.trend)" size="14" />
+                <span class="capitalize">{{ product.trend }}</span>
               </span>
             </div>
 
             <div class="price-details">
               <div class="detail">
-                <span class="label">Previous</span>
-                <span class="value">${{ product.previousPrice }}</span>
+                <span class="label">Region</span>
+                <span class="value">{{ product.region || '—' }}</span>
               </div>
               <div class="detail">
-                <span class="label">High</span>
-                <span class="value">${{ product.high }}</span>
+                <span class="label">Market Hub</span>
+                <span class="value truncate">{{ product.market }}</span>
               </div>
               <div class="detail">
-                <span class="label">Low</span>
-                <span class="value">${{ product.low }}</span>
+                <span class="label">Date</span>
+                <span class="value">{{ formatDate(product.date) }}</span>
               </div>
             </div>
 
-            <div class="market-status">
-              <span class="label">Market</span>
-              <span class="market-badge">{{ product.market }}</span>
+            <div v-if="product.notes" class="market-status">
+              <span class="label">Note</span>
+              <span class="market-badge truncate">{{ product.notes }}</span>
             </div>
           </div>
         </div>
@@ -118,77 +137,60 @@
         <div v-if="selectedProductDetail" class="modal-overlay" @click="selectedProductDetail = null">
           <div class="modal-content" @click.stop>
             <div class="modal-header">
-              <h2>{{ selectedProductDetail.name }} - Price Analysis</h2>
+              <h2>{{ selectedProductDetail.name }} - Price Intelligence</h2>
               <button @click="selectedProductDetail = null" class="btn-close">
                 <X size="20" />
               </button>
             </div>
             <div class="modal-body">
-              <!-- Price Chart -->
-              <div class="chart-section">
-                <h3>7-Day Price Trend</h3>
-                <div class="chart-placeholder">
-                  <BarChart3 size="64" class="chart-icon" />
-                  <p>Interactive price chart</p>
-                </div>
-              </div>
-
               <!-- Detailed Stats -->
               <div class="stats-section">
-                <h3>Detailed Statistics</h3>
+                <h3>Terminal Benchmark Details</h3>
                 <div class="stats-grid">
                   <div class="stat">
-                    <span class="stat-label">Current Price</span>
-                    <span class="stat-value">${{ selectedProductDetail.price }}</span>
+                    <span class="stat-label">Wholesale Price</span>
+                    <span class="stat-value font-bold text-emerald-600">ETB {{ formatNumber(selectedProductDetail.price) }} / {{ selectedProductDetail.unit }}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">24h Change</span>
-                    <span class="stat-value" :class="{ positive: selectedProductDetail.change > 0 }">
-                      {{ selectedProductDetail.change > 0 ? '+' : '' }}{{ selectedProductDetail.change }}%
-                    </span>
+                    <span class="stat-label">Market Location</span>
+                    <span class="stat-value">{{ selectedProductDetail.market }}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">52-Week High</span>
-                    <span class="stat-value">${{ selectedProductDetail.high }}</span>
+                    <span class="stat-label">Region</span>
+                    <span class="stat-value">{{ selectedProductDetail.region || '—' }}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">52-Week Low</span>
-                    <span class="stat-value">${{ selectedProductDetail.low }}</span>
+                    <span class="stat-label">Price Trend</span>
+                    <span class="stat-value capitalize" :class="getTrendClass(selectedProductDetail.trend)">{{ selectedProductDetail.trend }}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">Market Cap</span>
-                    <span class="stat-value">${{ selectedProductDetail.marketCap }}M</span>
+                    <span class="stat-label">Benchmark Date</span>
+                    <span class="stat-value">{{ formatDate(selectedProductDetail.date) }}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">Volume</span>
-                    <span class="stat-value">{{ selectedProductDetail.volume }}</span>
+                    <span class="stat-label">Verification</span>
+                    <span class="stat-value text-emerald-500 font-semibold">ECX Certified</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Market Insights -->
-              <div class="insights-section">
-                <h3>Market Insights</h3>
-                <div v-for="insight in selectedProductDetail.insights" :key="insight.id" class="insight-item" :class="`insight-${insight.type}`">
+              <!-- Market Notes -->
+              <div v-if="selectedProductDetail.notes" class="insights-section">
+                <h3>Market Commentary</h3>
+                <div class="insight-item insight-positive">
                   <Lightbulb size="16" />
-                  <span>{{ insight.text }}</span>
+                  <span>{{ selectedProductDetail.notes }}</span>
                 </div>
               </div>
 
-              <!-- Trading Recommendation -->
-              <div class="recommendation-section" :class="`rec-${selectedProductDetail.recommendation}`">
-                <h3>Market Recommendation</h3>
-                <p>{{ selectedProductDetail.recommendationText }}</p>
-              </div>
-
-              <!-- Markets Listing -->
-              <div class="markets-section">
-                <h3>Available in Markets</h3>
+              <!-- Other Regional Markets for this Crop -->
+              <div class="markets-section" v-if="relatedMarkets.length > 0">
+                <h3>Prices in Other Regional Markets</h3>
                 <div class="markets-list">
-                  <div v-for="market in selectedProductDetail.markets" :key="market.id" class="market-listing">
-                    <span class="market-name">{{ market.name }}</span>
-                    <span class="market-price">${{ market.price }}</span>
-                    <span class="market-status" :class="{ live: market.status === 'live' }">{{ market.status }}</span>
+                  <div v-for="rel in relatedMarkets" :key="rel.id" class="market-listing">
+                    <span class="market-name">{{ rel.market }} ({{ rel.region }})</span>
+                    <span class="market-price">ETB {{ formatNumber(rel.price) }} / {{ rel.unit }}</span>
+                    <span class="market-status live capitalize">{{ rel.trend }}</span>
                   </div>
                 </div>
               </div>
@@ -196,10 +198,6 @@
 
             <div class="modal-footer">
               <button @click="selectedProductDetail = null" class="btn-secondary">Close</button>
-              <button class="btn-primary">
-                <Bell size="16" />
-                Set Price Alert
-              </button>
             </div>
           </div>
         </div>
@@ -214,9 +212,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import apiClient from '@/api/config'
 import {
-  TrendingUp, TrendingDown, BarChart3, AlertCircle, RotateCcw, X, MapPin, Calendar,
-  Lightbulb, Bell
+  TrendingUp, TrendingDown, Minus, BarChart3, AlertCircle, RotateCcw, X, MapPin, Calendar,
+  Lightbulb
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -230,183 +229,125 @@ const selectedMarket = ref('')
 const sortBy = ref('price-desc')
 const selectedProductDetail = ref(null)
 
-const mockProducts = ref([
-  {
-    id: 1,
-    name: 'Tomatoes',
-    price: 45.50,
-    previousPrice: 44.25,
-    change: 2.8,
-    high: 48.75,
-    low: 42.10,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 125,
-    volume: '2.5K tons',
-    insights: [
-      { id: 1, type: 'positive', text: 'Demand increasing due to summer season' },
-      { id: 2, type: 'caution', text: 'Supply slightly reducing, prices expected to hold steady' }
-    ],
-    recommendation: 'buy',
-    recommendationText: 'Good buying opportunity. Prices are expected to rise further due to seasonal demand.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 45.50, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 44.75, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 46.25, status: 'live' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Potatoes',
-    price: 28.75,
-    previousPrice: 30.10,
-    change: -4.5,
-    high: 32.50,
-    low: 26.25,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 98,
-    volume: '3.1K tons',
-    insights: [
-      { id: 1, type: 'caution', text: 'Oversupply in the market currently' },
-      { id: 2, type: 'negative', text: 'Prices declining week-over-week' }
-    ],
-    recommendation: 'hold',
-    recommendationText: 'Wait for stabilization. Market currently oversupplied, avoid selling now.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 28.75, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 29.10, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 27.95, status: 'live' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Corn',
-    price: 36.20,
-    previousPrice: 35.80,
-    change: 1.1,
-    high: 39.50,
-    low: 34.10,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 156,
-    volume: '4.2K tons',
-    insights: [
-      { id: 1, type: 'positive', text: 'Stable demand from processors' },
-      { id: 2, type: 'positive', text: 'Export demand remains strong' }
-    ],
-    recommendation: 'buy',
-    recommendationText: 'Steady market with good fundamentals. Consider buying for export opportunities.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 36.20, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 35.95, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 36.45, status: 'live' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Lettuce',
-    price: 52.10,
-    previousPrice: 48.75,
-    change: 6.9,
-    high: 54.50,
-    low: 45.20,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 67,
-    volume: '1.8K tons',
-    insights: [
-      { id: 1, type: 'positive', text: 'Strong retail demand for fresh produce' },
-      { id: 2, type: 'positive', text: 'Limited supply pushing prices up' }
-    ],
-    recommendation: 'buy',
-    recommendationText: 'Excellent market conditions. Sell at current high prices or hold for further gains.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 52.10, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 51.50, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 52.75, status: 'live' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Wheat',
-    price: 31.45,
-    previousPrice: 31.55,
-    change: -0.3,
-    high: 34.20,
-    low: 29.10,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 198,
-    volume: '5.6K tons',
-    insights: [
-      { id: 1, type: 'caution', text: 'Slightly lower global demand this quarter' },
-      { id: 2, type: 'positive', text: 'Price support from export contracts' }
-    ],
-    recommendation: 'hold',
-    recommendationText: 'Stable with slight weakness. Hold current positions and monitor global trends.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 31.45, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 31.70, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 31.20, status: 'live' }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Beans',
-    price: 42.80,
-    previousPrice: 40.50,
-    change: 5.7,
-    high: 43.50,
-    low: 38.75,
-    unit: 'kg',
-    market: 'Central Region',
-    marketCap: 85,
-    volume: '2.3K tons',
-    insights: [
-      { id: 1, type: 'positive', text: 'Growing demand from food manufacturers' },
-      { id: 2, type: 'positive', text: 'Good crop yields expected' }
-    ],
-    recommendation: 'buy',
-    recommendationText: 'Strong upward trend with good fundamentals. Ideal time for market entry.',
-    markets: [
-      { id: 1, name: 'Central Region Market', price: 42.80, status: 'live' },
-      { id: 2, name: 'Northern Region Market', price: 42.15, status: 'live' },
-      { id: 3, name: 'Southern Region Market', price: 43.45, status: 'live' }
-    ]
+const products = ref([])
+
+const availableMarkets = computed(() => {
+  const markets = products.value.map(p => p.market).filter(Boolean)
+  return Array.from(new Set(markets))
+})
+
+const summaryStats = computed(() => {
+  const total = products.value.length
+  if (total === 0) return { avgPrice: 0, increasing: 0, decreasing: 0, stable: 0 }
+  const sum = products.value.reduce((acc, p) => acc + (parseFloat(p.price) || 0), 0)
+  return {
+    avgPrice: Math.round(sum / total),
+    increasing: products.value.filter(p => p.trend === 'increasing').length,
+    decreasing: products.value.filter(p => p.trend === 'decreasing').length,
+    stable: products.value.filter(p => p.trend === 'stable').length
   }
-])
+})
 
 const filteredProducts = computed(() => {
-  let filtered = mockProducts.value
+  let list = [...products.value]
 
-  if (searchQuery.value) {
-    filtered = filtered.filter(p => p.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.market.toLowerCase().includes(q) ||
+      p.region.toLowerCase().includes(q) ||
+      p.notes.toLowerCase().includes(q)
+    )
   }
 
   if (selectedMarket.value) {
-    filtered = filtered.filter(p => p.market.toLowerCase().includes(selectedMarket.value))
+    list = list.filter(p => p.market.toLowerCase() === selectedMarket.value.toLowerCase())
   }
 
   if (sortBy.value === 'price-desc') {
-    filtered.sort((a, b) => b.price - a.price)
+    list.sort((a, b) => b.price - a.price)
   } else if (sortBy.value === 'price-asc') {
-    filtered.sort((a, b) => a.price - b.price)
-  } else if (sortBy.value === 'change') {
-    filtered.sort((a, b) => b.change - a.change)
+    list.sort((a, b) => a.price - b.price)
+  } else if (sortBy.value === 'name') {
+    list.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  return filtered
+  return list
+})
+
+const relatedMarkets = computed(() => {
+  if (!selectedProductDetail.value) return []
+  const baseName = selectedProductDetail.value.name.split('(')[0].trim().toLowerCase()
+  return products.value.filter(p =>
+    p.id !== selectedProductDetail.value.id &&
+    p.name.toLowerCase().includes(baseName)
+  )
 })
 
 const fetchMarketData = async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 500))
-  loading.value = false
+  error.value = null
+  try {
+    const res = await apiClient.get('/market-prices')
+    if (res?.data?.success && Array.isArray(res.data.data)) {
+      products.value = res.data.data.map(item => ({
+        id: item.id,
+        name: item.crop_name || item.product_name,
+        price: parseFloat(item.price_per_unit || item.price) || 0,
+        unit: item.unit || 'kg',
+        market: item.market_location || item.city || 'General Hub',
+        region: item.market_region || '',
+        trend: item.price_trend || 'stable',
+        date: item.price_date,
+        notes: item.notes || ''
+      }))
+    } else {
+      products.value = []
+    }
+  } catch (err) {
+    console.error('Failed to load market prices from database:', err)
+    error.value = 'Failed to load market prices from database. Please check your connection and retry.'
+    products.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
 const selectProduct = (product) => {
   selectedProductDetail.value = product
+}
+
+const resetFilters = () => {
+  searchQuery.value = ''
+  selectedMarket.value = ''
+  sortBy.value = 'price-desc'
+}
+
+const formatNumber = (num) => {
+  if (!num && num !== 0) return '0'
+  return Number(num).toLocaleString('en-US')
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'Recent'
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
+const getTrendIcon = (trend) => {
+  if (trend === 'increasing') return TrendingUp
+  if (trend === 'decreasing') return TrendingDown
+  return Minus
+}
+
+const getTrendClass = (trend) => {
+  if (trend === 'increasing') return 'positive'
+  if (trend === 'decreasing') return 'negative'
+  return 'stable'
 }
 
 const handleLogout = async () => {
@@ -414,7 +355,9 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
-onMounted(() => { fetchMarketData() })
+onMounted(() => {
+  fetchMarketData()
+})
 </script>
 
 <style scoped>
@@ -1386,4 +1329,38 @@ onMounted(() => { fetchMarketData() })
 .market-layout.dark .btn-secondary:hover {
   background: #1a2338;
 }
+
+.empty-state-card {
+  background: white;
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+}
+.empty-state-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 16px 0 8px 0;
+}
+.empty-state-card p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px 0;
+}
+.empty-icon {
+  color: #9ca3af;
+  margin: 0 auto;
+}
+.market-layout.dark .empty-state-card {
+  background: #1e293b;
+}
+.market-layout.dark .empty-state-card h3 {
+  color: #f1f5f9;
+}
+.market-layout.dark .empty-state-card p {
+  color: #94a3b8;
+}
+
 </style>
