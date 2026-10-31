@@ -227,11 +227,8 @@
               </div>
 
               <!-- Institution / Bank Name -->
-              <h2 :class="['text-base font-bold tracking-tight mb-2 flex items-center justify-between', darkMode ? 'text-slate-100' : 'text-slate-900']">
+              <h2 :class="['text-base font-bold tracking-tight mb-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 <span>{{ method.bank_name }}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">
-                  Chapa Ready
-                </span>
               </h2>
 
               <!-- Masked Account Number -->
@@ -253,9 +250,9 @@
                   <span class="font-semibold text-slate-700 dark:text-slate-200">{{ method.account_holder }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] text-slate-400">Chapa Gateway:</span>
-                  <span class="text-emerald-500 font-semibold text-[11px] flex items-center gap-1">
-                    <CheckCircle2 class="w-3 h-3" /> Verified &amp; Active
+                  <span class="text-[11px] text-slate-400">Status:</span>
+                  <span class="text-blue-500 font-semibold text-[11px] flex items-center gap-1">
+                    <CheckCircle2 class="w-3 h-3" /> Active
                   </span>
                 </div>
               </div>
@@ -263,19 +260,9 @@
 
             <!-- Card Bottom Actions -->
             <div :class="['pt-3 border-t flex items-center justify-between gap-2 mt-auto', darkMode ? 'border-slate-800' : 'border-slate-200']">
-              <div class="flex items-center gap-2">
-                <button
-                  v-if="method.bank_name?.includes('Chapa') || method.type === 'card'"
-                  @click="openChapaModal"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer"
-                >
-                  <ShieldCheck class="w-3.5 h-3.5" />
-                  <span>Pay with Chapa</span>
-                </button>
-                <span v-else class="text-[11px] text-slate-400">
-                  Added {{ formatDate(method.created_at) }}
-                </span>
-              </div>
+              <span class="text-[11px] text-slate-400">
+                Added {{ formatDate(method.created_at) }}
+              </span>
 
               <button
                 v-if="!method.is_primary"
@@ -286,7 +273,7 @@
               </button>
               <span
                 v-else
-                class="text-xs font-bold text-emerald-500 flex items-center gap-1"
+                class="text-xs font-bold text-blue-500 flex items-center gap-1"
               >
                 <Check class="w-3.5 h-3.5 stroke-[3]" /> Active Primary
               </span>
@@ -1117,13 +1104,29 @@ const verifyChapaSession = async (txRef: string) => {
 const connectChapaPayment = async (openCheckout = true) => {
   connectingChapa.value = true
   try {
-    const channelName = chapaChannels.find(c => c.id === chapaForm.value.channel)?.name || 'Chapa Official Gateway'
+    const channelName = chapaChannels.find(c => c.id === chapaForm.value.channel)?.name || 'Chapa'
     const cleanPhone = (chapaBuyerPhone.value || authStore.user?.phone || '0911000000').replace(/[^0-9+]/g, '')
     const cleanEmail = (chapaBuyerEmail.value && !chapaBuyerEmail.value.includes('agriconnect.et')) 
       ? chapaBuyerEmail.value 
       : (authStore.user?.email && !authStore.user.email.includes('agriconnect.et') ? authStore.user.email : 'aydenfudagne@gmail.com')
 
-    // 1. Call Chapa API to initialize payment session
+    if (!openCheckout) {
+      // User explicitly clicked "Save Chapa Method"
+      await buyerAPI.createPaymentMethod({
+        type: 'card',
+        bank_name: channelName.includes('Chapa') ? channelName : `${channelName} (Chapa)`,
+        account_number: cleanPhone,
+        account_holder: authStore.user?.name || 'Verified Buyer',
+        is_primary: form.value.is_primary
+      })
+
+      modalOpen.value = false
+      showToast('Payment method saved successfully!')
+      await loadData()
+      return
+    }
+
+    // Call Chapa API to initialize payment session and open checkout
     const res = await buyerAPI.initializeChapaPayment({
       amount: 100,
       phone_number: cleanPhone,
@@ -1132,23 +1135,9 @@ const connectChapaPayment = async (openCheckout = true) => {
     })
 
     const checkoutUrl = res?.data?.data?.checkout_url
-    const txRef = res?.data?.data?.tx_ref || ('AGRI-CHAPA-' + Date.now())
-
-    // 2. Save Chapa Payment Gateway to database
-    await buyerAPI.createPaymentMethod({
-      type: 'card',
-      bank_name: 'Chapa Gateway (' + channelName + ')',
-      account_number: 'CHAPA-' + cleanPhone,
-      account_holder: authStore.user?.name || 'AgriConnect Verified Buyer',
-      is_primary: form.value.is_primary
-    })
-
     modalOpen.value = false
-    showToast('Chapa Payment Gateway connected successfully!')
-    await loadData()
 
-    // 3. Open original Chapa checkout if requested
-    if (openCheckout && checkoutUrl) {
+    if (checkoutUrl) {
       chapaSession.value = res?.data?.data || null
       chapaModalOpen.value = true
       try {
