@@ -1023,6 +1023,9 @@ const handleChapaRedirect = async () => {
       }
     } catch (e) {
       console.warn('Auto verification on redirect error:', e)
+    } finally {
+      // Clean up query param from URL so page reload won't re-trigger verification
+      router.replace({ path: route.path, query: {} })
     }
   }
 }
@@ -1089,11 +1092,8 @@ const initiateChapaCheckout = async () => {
 
     if (res && res.data && res.data.data) {
       chapaSession.value = res.data.data
-      showToast('Chapa payment session generated & card set!')
+      showToast('Chapa payment session generated!')
       await loadData()
-      if (res.data.data.checkout_url) {
-        window.open(res.data.data.checkout_url, '_blank')
-      }
     }
   } catch (err: any) {
     console.error('Chapa initiation error:', err)
@@ -1139,8 +1139,7 @@ const connectChapaPayment = async (openCheckout = true) => {
       is_primary: true
     })
 
-    // Call Chapa API to initialize payment session and open checkout if requested
-    let checkoutUrl = null
+    // Call Chapa API to initialize payment session and redirect to the Chapa Secure Payment modal
     if (openCheckout) {
       const res = await buyerAPI.initializeChapaPayment({
         amount: 100,
@@ -1148,24 +1147,25 @@ const connectChapaPayment = async (openCheckout = true) => {
         email: cleanEmail,
         channel: chapaForm.value.channel
       })
-      checkoutUrl = res?.data?.data?.checkout_url
       if (res?.data?.data) {
         chapaSession.value = res.data.data
       }
+      chapaForm.value = {
+        amount: 100,
+        channel: chapaForm.value.channel,
+        phone_number: cleanPhone,
+        email: cleanEmail
+      }
+      modalOpen.value = false
+      chapaModalOpen.value = true
+      showToast('Chapa payment session generated & card saved!')
+      await loadData()
+      return
     }
 
     modalOpen.value = false
     showToast('Chapa card set on payment methods page successfully!')
     await loadData()
-
-    if (openCheckout && checkoutUrl) {
-      chapaModalOpen.value = true
-      try {
-        window.open(checkoutUrl, '_blank')
-      } catch (e) {
-        console.warn('Popup blocked, modal fallback opened', e)
-      }
-    }
   } catch (err: any) {
     console.error('Failed to connect Chapa:', err)
     alert(err?.response?.data?.message || 'Failed to connect with Chapa Gateway.')

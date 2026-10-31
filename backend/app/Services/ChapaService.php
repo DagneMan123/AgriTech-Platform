@@ -56,7 +56,7 @@ class ChapaService
             'phone_number' => $cleanPhone,
             'tx_ref' => $txRef,
             'callback_url' => $data['callback_url'] ?? url('/api/buyer/chapa/callback'),
-            'return_url' => $data['return_url'] ?? ($frontendUrl . '/buyer/payments/history?tx_ref=' . $txRef),
+            'return_url' => $data['return_url'] ?? ($frontendUrl . '/buyer/payments?tx_ref=' . $txRef),
             'customization' => [
                 'title' => 'AgriConnect',
                 'description' => 'Produce Escrow Payment'
