@@ -79,6 +79,7 @@ const BuyerProfileView = () => import('@/views/buyer/ProfileView.vue')
 const BuyerMarketPricesView = () => import('@/views/buyer/MarketPricesView.vue')
 const BuyerSupplierDirectoryView = () => import('@/views/buyer/SupplierDirectoryView.vue')
 const BuyerPurchaseReportsView = () => import('@/views/buyer/PurchaseReportsView.vue')
+const BuyerExpenseAnalysisView = () => import('@/views/buyer/ExpenseAnalysisView.vue')
 
 const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
 const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
@@ -549,7 +550,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'reports/expenses',
         name: 'buyer-expense-analysis',
-        component: BuyerPurchaseReportsView,
+        component: BuyerExpenseAnalysisView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Expense Analysis' }
       }
     ]

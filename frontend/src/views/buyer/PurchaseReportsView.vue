@@ -45,16 +45,6 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
-              @click="fetchReports"
-              :disabled="loading"
-              :class="['inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm']"
-              title="Refresh report data"
-            >
-              <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin text-blue-500' : 'text-slate-400']" />
-              <span>Refresh</span>
-            </button>
-
-            <button
               @click="exportCSV"
               :disabled="loading || orders.length === 0"
               :class="['inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer disabled:opacity-50', darkMode ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm']"
@@ -653,7 +643,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
-  Menu, FileSpreadsheet, Download, Printer, RefreshCw, AlertCircle,
+  Menu, FileSpreadsheet, Download, Printer, AlertCircle,
   X, DollarSign, ShoppingBag, TrendingUp, Scale, Search, Calendar,
   BarChart3, PieChart, ShieldCheck, Eye, Store
 } from 'lucide-vue-next'
