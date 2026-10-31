@@ -453,6 +453,39 @@ const handleLogout = async () => {
   padding: 40px 20px;
 }
 
+/* Dark Mode Overrides */
+:global(html.dark) .cart-container {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9;
+}
+:global(html.dark) .page-title {
+  color: #f8fafc !important;
+}
+:global(html.dark) .page-subtitle {
+  color: #94a3b8 !important;
+}
+:global(html.dark) .cart-items-section,
+:global(html.dark) .order-summary,
+:global(html.dark) .empty-cart,
+:global(html.dark) .cart-item {
+  background: #131b2e !important;
+  border-color: #1e293b !important;
+  color: #f8fafc;
+}
+:global(html.dark) .item-name {
+  color: #f8fafc !important;
+}
+:global(html.dark) .item-price,
+:global(html.dark) .summary-row,
+:global(html.dark) .summary-total {
+  color: #f8fafc !important;
+}
+:global(html.dark) .btn-secondary {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
 /* Header */
 .cart-header {
   display: flex;

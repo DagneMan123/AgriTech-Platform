@@ -213,9 +213,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, Store, Package, LayoutGrid, 
   Heart, ShoppingCart, ShoppingBag, Clock, History, RotateCcw, Handshake, 
@@ -228,30 +229,8 @@ import {
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-
-const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
-
-const checkDarkMode = () => {
-  isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
-}
-
-let observer: any = null
-
-onMounted(() => {
-  window.addEventListener('storage', checkDarkMode)
-  
-  observer = new MutationObserver(() => {
-    checkDarkMode()
-  })
-  
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  checkDarkMode()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('storage', checkDarkMode)
-  if (observer) observer.disconnect()
-})
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
 
 const expandedSections = ref({
   marketplace: true,

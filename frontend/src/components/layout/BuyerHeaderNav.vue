@@ -312,6 +312,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { notificationAPI } from '@/api/notifications'
 import { 
   Bell, BellOff, Sun, Moon, ChevronDown, ChevronRight, 
@@ -320,22 +321,13 @@ import {
 
 const router = useRouter()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
-// Dark mode state
-const isDark = ref(localStorage.getItem('app_dark_mode') === 'true')
-
-const checkDarkMode = () => {
-  isDark.value = localStorage.getItem('app_dark_mode') === 'true' || document.documentElement.classList.contains('dark')
-}
+// Dark mode state connected to global reactive themeStore
+const isDark = computed(() => themeStore.isDark)
 
 const toggleTheme = () => {
-  isDark.value = !isDark.value
-  localStorage.setItem('app_dark_mode', String(isDark.value))
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
+  themeStore.toggleTheme()
 }
 
 // User details
@@ -486,18 +478,9 @@ const handleLogout = async () => {
 }
 
 let pollInterval: any = null
-let themeObserver: any = null
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  window.addEventListener('storage', checkDarkMode)
-
-  themeObserver = new MutationObserver(() => {
-    checkDarkMode()
-  })
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-
-  checkDarkMode()
   fetchNotifications()
 
   // Poll every 45 seconds for new alerts
@@ -511,8 +494,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('storage', checkDarkMode)
-  if (themeObserver) themeObserver.disconnect()
   if (pollInterval) clearInterval(pollInterval)
 })
 </script>

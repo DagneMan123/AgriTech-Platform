@@ -7,7 +7,8 @@ export const useThemeStore = defineStore('theme', () => {
     if (typeof window === 'undefined') return false
     try {
       const stored = localStorage.getItem('theme-preference')
-      return stored === 'dark'
+      const appDark = localStorage.getItem('app_dark_mode')
+      return stored === 'dark' || appDark === 'true'
     } catch {
       return false
     }
@@ -22,8 +23,10 @@ export const useThemeStore = defineStore('theme', () => {
     
     if (isDark.value) {
       document.documentElement.classList.add('dark')
+      document.body.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
+      document.body.classList.remove('dark')
     }
   }
 
@@ -32,6 +35,7 @@ export const useThemeStore = defineStore('theme', () => {
     if (typeof localStorage === 'undefined') return
     try {
       localStorage.setItem('theme-preference', isDark.value ? 'dark' : 'light')
+      localStorage.setItem('app_dark_mode', String(isDark.value))
     } catch {
       // Silently fail if localStorage is not available
     }

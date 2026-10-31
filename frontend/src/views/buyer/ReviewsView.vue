@@ -173,6 +173,30 @@ onMounted(() => {
   height: 100vh;
 }
 
+/* Dark Mode Overrides */
+:global(html.dark) .buyer-page {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9;
+}
+:global(html.dark) .page-header h1 {
+  color: #f8fafc !important;
+}
+:global(html.dark) .page-header p {
+  color: #94a3b8 !important;
+}
+:global(html.dark) .content-section,
+:global(html.dark) .review-item {
+  background: #131b2e !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+:global(html.dark) .review-header h4 {
+  color: #f8fafc !important;
+}
+:global(html.dark) .review-comment {
+  color: #cbd5e1 !important;
+}
+
 .buyer-page {
   margin-left: 260px;
   flex: 1;
@@ -355,7 +379,31 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .buyer-page {
+  /* Dark Mode Overrides */
+:global(html.dark) .buyer-page {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9;
+}
+:global(html.dark) .page-header h1 {
+  color: #f8fafc !important;
+}
+:global(html.dark) .page-header p {
+  color: #94a3b8 !important;
+}
+:global(html.dark) .content-section,
+:global(html.dark) .review-item {
+  background: #131b2e !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+:global(html.dark) .review-header h4 {
+  color: #f8fafc !important;
+}
+:global(html.dark) .review-comment {
+  color: #cbd5e1 !important;
+}
+
+.buyer-page {
     margin-left: 0;
     padding: 20px;
   }
