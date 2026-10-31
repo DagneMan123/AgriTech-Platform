@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\Buyer\DeliveryAddressController;
 use App\Http\Controllers\Api\Buyer\TransportCoordinationController;
 use App\Http\Controllers\Api\Buyer\PaymentMethodController;
 use App\Http\Controllers\Api\Buyer\ChapaPaymentController;
+use App\Http\Controllers\Api\Buyer\SupplierDirectoryController;
 
 // Supplier
 use App\Http\Controllers\Api\Supplier\ProductController as SupplierProductController;
@@ -668,6 +669,11 @@ Route::middleware('auth:sanctum')->group(function () {
                 MarketplaceController::class,
                 'search'
             ]);
+
+            // Supplier Directory
+            Route::get('/suppliers', [SupplierDirectoryController::class, 'index']);
+            Route::get('/suppliers/{id}', [SupplierDirectoryController::class, 'show']);
+            Route::post('/suppliers/{id}/contact', [SupplierDirectoryController::class, 'contact']);
         });
 
 
@@ -1066,6 +1072,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/market-prices', [
         MarketPriceController::class,
+        'index'
+    ]);
+
+    Route::get('/suppliers', [
+        SupplierDirectoryController::class,
         'index'
     ]);
 

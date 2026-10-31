@@ -101,4 +101,9 @@ export const buyerAPI = {
   // Market Prices & Commodity Trends
   getMarketPrices: (params?: any) => apiClient.get('/market-prices', { params }),
   getMarketPriceTrends: (params?: any) => apiClient.get('/market-prices/trends', { params }),
+
+  // Supplier Directory
+  getSuppliers: (params?: any) => apiClient.get('/buyer/suppliers', { params }),
+  getSupplier: (id: number | string) => apiClient.get(`/buyer/suppliers/${id}`),
+  contactSupplier: (id: number | string, data: any) => apiClient.post(`/buyer/suppliers/${id}/contact`, data),
 }

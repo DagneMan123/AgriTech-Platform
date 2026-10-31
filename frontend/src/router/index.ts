@@ -77,6 +77,7 @@ const BuyerPaymentsView = () => import('@/views/buyer/PaymentsView.vue')
 const BuyerReviewsView = () => import('@/views/buyer/ReviewsView.vue')
 const BuyerProfileView = () => import('@/views/buyer/ProfileView.vue')
 const BuyerMarketPricesView = () => import('@/views/buyer/MarketPricesView.vue')
+const BuyerSupplierDirectoryView = () => import('@/views/buyer/SupplierDirectoryView.vue')
 
 const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
 const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
@@ -525,6 +526,18 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-market-prices-alias',
         component: BuyerMarketPricesView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Agricultural Market Prices' }
+      },
+      {
+        path: 'services/suppliers',
+        name: 'buyer-supplier-directory',
+        component: BuyerSupplierDirectoryView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Supplier Directory' }
+      },
+      {
+        path: 'suppliers',
+        name: 'buyer-suppliers-alias',
+        component: BuyerSupplierDirectoryView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Supplier Directory' }
       }
     ]
   },
