@@ -43,36 +43,6 @@
               </p>
             </div>
           </div>
-
-          <!-- Header Right Actions -->
-          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button
-              @click="loadMarketPrices"
-              :disabled="loading"
-              :class="['inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm']"
-              title="Refresh live prices"
-            >
-              <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin text-blue-500' : 'text-slate-400']" />
-              <span>Refresh</span>
-            </button>
-
-            <button
-              @click="exportCSV"
-              :class="['inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm']"
-              title="Download market prices as CSV"
-            >
-              <Download class="w-4 h-4 text-blue-500" />
-              <span>Export CSV</span>
-            </button>
-
-            <router-link
-              to="/buyer/marketplace"
-              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
-            >
-              <Store class="w-4 h-4" />
-              <span>Go to Marketplace</span>
-            </router-link>
-          </div>
         </div>
       </div>
 
@@ -680,7 +650,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import {
-  Menu, BarChart3, TrendingUp, TrendingDown, Minus, Search, Download,
+  Menu, BarChart3, TrendingUp, TrendingDown, Minus, Search,
   RefreshCw, Store, MapPin, Building2, Calendar, Grid3X3, Table, Info,
   CheckCircle2, AlertCircle, X, ShieldCheck, Scale
 } from 'lucide-vue-next'
