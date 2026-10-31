@@ -43,14 +43,10 @@
           <div class="summary-card">
             <div class="card-header">
               <h3>Total Revenue</h3>
-              <DollarSign size="20" class="card-icon revenue-icon" />
+              <Banknote size="20" class="card-icon revenue-icon" />
             </div>
-            <p class="card-value">${{ formatNumber(summaryData.totalRevenue) }}</p>
-            <p class="card-trend" :class="summaryData.revenueGrowth >= 0 ? 'positive' : 'negative'">
-              <TrendingUp v-if="summaryData.revenueGrowth >= 0" size="14" />
-              <TrendingDown v-else size="14" />
-              {{ Math.abs(summaryData.revenueGrowth) }}% vs last month
-            </p>
+            <p class="card-value">ETB {{ formatNumber(summaryData.totalRevenue) }}</p>
+            <p class="card-subtitle">all-time revenue</p>
           </div>
 
           <div class="summary-card">
@@ -67,7 +63,7 @@
               <h3>Average Order</h3>
               <BarChart3 size="20" class="card-icon average-icon" />
             </div>
-            <p class="card-value">${{ formatNumber(summaryData.averageOrder) }}</p>
+            <p class="card-value">ETB {{ formatNumber(summaryData.averageOrder) }}</p>
             <p class="card-subtitle">value per order</p>
           </div>
 
@@ -82,7 +78,7 @@
         </div>
 
         <!-- Charts Section -->
-        <div class="charts-section">
+        <div v-if="sales.length > 0" class="charts-section">
           <div class="chart-card">
             <h3 class="chart-title">Revenue Trend (Last 12 Months)</h3>
             <div class="chart-placeholder">
@@ -182,9 +178,9 @@
                   </td>
                   <td class="td-product">{{ sale.productName }}</td>
                   <td class="td-quantity">{{ sale.quantity }} {{ sale.unit }}</td>
-                  <td class="td-price">${{ formatNumber(sale.pricePerUnit) }}</td>
+                  <td class="td-price">ETB {{ formatNumber(sale.pricePerUnit) }}</td>
                   <td class="td-amount">
-                    <span class="amount-badge">${{ formatNumber(sale.totalAmount) }}</span>
+                    <span class="amount-badge">ETB {{ formatNumber(sale.totalAmount) }}</span>
                   </td>
                   <td class="td-buyer">{{ sale.buyerName }}</td>
                   <td class="td-date">{{ formatDate(sale.saleDate) }}</td>
@@ -264,11 +260,11 @@
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Price per Unit</span>
-                  <span class="detail-value">${{ formatNumber(selectedSale.pricePerUnit) }}</span>
+                  <span class="detail-value">ETB {{ formatNumber(selectedSale.pricePerUnit) }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Total Amount</span>
-                  <span class="detail-value detail-amount">${{ formatNumber(selectedSale.totalAmount) }}</span>
+                  <span class="detail-value detail-amount">ETB {{ formatNumber(selectedSale.totalAmount) }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Status</span>
@@ -310,7 +306,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
-  TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock,
+  TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock, Banknote,
   AlertCircle, RotateCcw, Sliders, Download, X, Eye, FileDown, ChevronLeft,
   ChevronRight
 } from 'lucide-vue-next'
@@ -345,72 +341,6 @@ const filters = ref({
   status: ''
 })
 
-// Mock data - replace with API calls
-const mockSalesData = [
-  {
-    id: 'ORD-001',
-    productName: 'Tomatoes (Fresh)',
-    quantity: 50,
-    unit: 'kg',
-    pricePerUnit: 2.50,
-    totalAmount: 125.00,
-    buyerName: 'Fresh Market Ltd',
-    saleDate: '2026-09-01',
-    status: 'completed'
-  },
-  {
-    id: 'ORD-002',
-    productName: 'Organic Carrots',
-    quantity: 100,
-    unit: 'kg',
-    pricePerUnit: 1.80,
-    totalAmount: 180.00,
-    buyerName: 'Green Grocery Store',
-    saleDate: '2026-09-02',
-    status: 'completed'
-  },
-  {
-    id: 'ORD-003',
-    productName: 'Maize (Corn)',
-    quantity: 200,
-    unit: 'kg',
-    pricePerUnit: 0.50,
-    totalAmount: 100.00,
-    buyerName: 'Agricultural Cooperative',
-    saleDate: '2026-09-03',
-    status: 'pending'
-  },
-  {
-    id: 'ORD-004',
-    productName: 'Tomatoes (Fresh)',
-    quantity: 75,
-    unit: 'kg',
-    pricePerUnit: 2.50,
-    totalAmount: 187.50,
-    buyerName: 'Restaurant Supply Co',
-    saleDate: '2026-09-04',
-    status: 'completed'
-  },
-  {
-    id: 'ORD-005',
-    productName: 'Potatoes',
-    quantity: 150,
-    unit: 'kg',
-    pricePerUnit: 1.20,
-    totalAmount: 180.00,
-    buyerName: 'Food Processing Plant',
-    saleDate: '2026-09-05',
-    status: 'completed'
-  }
-]
-
-const mockProducts = [
-  { id: 1, name: 'Tomatoes (Fresh)' },
-  { id: 2, name: 'Organic Carrots' },
-  { id: 3, name: 'Maize (Corn)' },
-  { id: 4, name: 'Potatoes' }
-]
-
 // Computed
 const filteredSales = computed(() => {
   let result = sales.value
@@ -420,14 +350,48 @@ const filteredSales = computed(() => {
   }
 
   if (filters.value.product) {
-    result = result.filter(s => s.productName === filters.value.product)
+    result = result.filter(s => s.productId === Number(filters.value.product) || s.productName === filters.value.product)
+  }
+
+  if (filters.value.dateRange && filters.value.dateRange !== 'all') {
+    const now = new Date()
+    result = result.filter(s => {
+      if (!s.saleDate) return false
+      const saleDate = new Date(s.saleDate)
+      switch (filters.value.dateRange) {
+        case 'today':
+          return saleDate.toDateString() === now.toDateString()
+        case 'week': {
+          const d = new Date(now)
+          d.setDate(now.getDate() - 7)
+          return saleDate >= d
+        }
+        case 'month': {
+          const d = new Date(now)
+          d.setMonth(now.getMonth() - 1)
+          return saleDate >= d
+        }
+        case 'quarter': {
+          const d = new Date(now)
+          d.setMonth(now.getMonth() - 3)
+          return saleDate >= d
+        }
+        case 'year': {
+          const d = new Date(now)
+          d.setFullYear(now.getFullYear() - 1)
+          return saleDate >= d
+        }
+        default:
+          return true
+      }
+    })
   }
 
   return result
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredSales.value.length / parseInt(itemsPerPage.value))
+  return Math.ceil(filteredSales.value.length / parseInt(itemsPerPage.value)) || 1
 })
 
 const paginatedSales = computed(() => {
@@ -441,21 +405,84 @@ const fetchSalesData = async () => {
   loading.value = true
   error.value = null
   try {
-    // Replace with actual API call
-    // const res = await farmerAPI.getSales()
-    sales.value = mockSalesData
-    availableProducts.value = mockProducts
-    
-    // Calculate summary data
-    const completedSales = sales.value.filter(s => s.status === 'completed')
+    const [ordersRes, productsRes] = await Promise.all([
+      fetch('/api/farmer/orders', {
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+          'Accept': 'application/json'
+        }
+      }),
+      fetch('/api/farmer/products', {
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+          'Accept': 'application/json'
+        }
+      })
+    ])
+
+    const ordersJson = ordersRes.ok ? await ordersRes.json() : { data: [] }
+    const productsJson = productsRes.ok ? await productsRes.json() : { data: [] }
+
+    const rawOrders = ordersJson.data?.data || ordersJson.data || []
+    const rawProducts = productsJson.data?.data || productsJson.data || []
+
+    availableProducts.value = rawProducts.map(p => ({
+      id: p.id,
+      name: p.name
+    }))
+
+    const salesList = []
+    rawOrders.forEach(order => {
+      const buyerName = order.buyer?.name || order.buyer?.phone || 'Customer'
+      const orderNum = order.order_number || `ORD-${String(order.id).padStart(4, '0')}`
+
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          salesList.push({
+            id: orderNum,
+            orderId: order.id,
+            productName: item.product?.name || 'Product',
+            productId: item.product_id,
+            quantity: Number(item.quantity || 0),
+            unit: item.product?.quantity_unit || item.product?.unit || 'kg',
+            pricePerUnit: Number(item.price || 0),
+            totalAmount: Number(item.subtotal || (item.quantity * item.price) || 0),
+            buyerName: buyerName,
+            saleDate: order.created_at,
+            status: order.status || 'pending',
+            rawOrder: order
+          })
+        })
+      } else {
+        salesList.push({
+          id: orderNum,
+          orderId: order.id,
+          productName: 'Agricultural Produce',
+          productId: null,
+          quantity: 1,
+          unit: 'lot',
+          pricePerUnit: Number(order.grand_total || order.subtotal || 0),
+          totalAmount: Number(order.grand_total || order.subtotal || 0),
+          buyerName: buyerName,
+          saleDate: order.created_at,
+          status: order.status || 'pending',
+          rawOrder: order
+        })
+      }
+    })
+
+    sales.value = salesList
+
+    const completedSales = salesList.filter(s => s.status === 'completed' || s.status === 'delivered')
+    const totalRev = completedSales.reduce((sum, s) => sum + s.totalAmount, 0)
+    const pendingCount = salesList.filter(s => s.status === 'pending').length
+
     summaryData.value = {
-      totalRevenue: completedSales.reduce((sum, s) => sum + s.totalAmount, 0),
+      totalRevenue: totalRev,
       totalSales: completedSales.length,
-      averageOrder: completedSales.length > 0 
-        ? completedSales.reduce((sum, s) => sum + s.totalAmount, 0) / completedSales.length
-        : 0,
-      pendingOrders: sales.value.filter(s => s.status === 'pending').length,
-      revenueGrowth: 12.5 // Mock growth percentage
+      averageOrder: completedSales.length > 0 ? (totalRev / completedSales.length) : 0,
+      pendingOrders: pendingCount,
+      revenueGrowth: 0
     }
   } catch (err) {
     console.error('Error fetching sales data:', err)
@@ -504,21 +531,20 @@ const clearFilters = () => {
 }
 
 const exportData = () => {
-  // Implement CSV export
-  const headers = ['Order ID', 'Product', 'Quantity', 'Price', 'Amount', 'Buyer', 'Date', 'Status']
+  const headers = ['Order ID', 'Product', 'Quantity', 'Price (ETB)', 'Amount (ETB)', 'Buyer', 'Date', 'Status']
   const rows = filteredSales.value.map(sale => [
-    sale.id,
-    sale.productName,
-    `${sale.quantity} ${sale.unit}`,
-    `$${formatNumber(sale.pricePerUnit)}`,
-    `$${formatNumber(sale.totalAmount)}`,
-    sale.buyerName,
-    formatDate(sale.saleDate),
-    sale.status
+    `"${sale.id}"`,
+    `"${sale.productName}"`,
+    `"${sale.quantity} ${sale.unit}"`,
+    `"${formatNumber(sale.pricePerUnit)}"`,
+    `"${formatNumber(sale.totalAmount)}"`,
+    `"${sale.buyerName}"`,
+    `"${formatDate(sale.saleDate)}"`,
+    `"${sale.status}"`
   ])
 
-  const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -531,8 +557,30 @@ const viewDetails = (sale) => {
 }
 
 const downloadInvoice = (sale) => {
-  // Implement invoice download
-  alert(`Downloading invoice for Order ${sale.id}`)
+  const invoiceText = [
+    '========================================',
+    '             SALES INVOICE',
+    '========================================',
+    `Order Number:    ${sale.id}`,
+    `Sale Date:       ${formatDate(sale.saleDate)}`,
+    `Customer:        ${sale.buyerName}`,
+    `Status:          ${capitalize(sale.status)}`,
+    '----------------------------------------',
+    `Product:         ${sale.productName}`,
+    `Quantity:        ${sale.quantity} ${sale.unit}`,
+    `Unit Price:      ETB ${formatNumber(sale.pricePerUnit)}`,
+    `Total Amount:    ETB ${formatNumber(sale.totalAmount)}`,
+    '========================================',
+    'Thank you for your business!',
+    '========================================'
+  ].join('\n')
+
+  const blob = new Blob([invoiceText], { type: 'text/plain;charset=utf-8;' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Invoice-${sale.id}.txt`
+  a.click()
 }
 
 const handleLogout = async () => {

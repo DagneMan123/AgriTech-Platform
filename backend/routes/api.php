@@ -485,6 +485,11 @@ Route::middleware('auth:sanctum')->group(function () {
                 'index'
             ]);
 
+            Route::get('/sales', [
+                FarmerOrderController::class,
+                'index'
+            ]);
+
             Route::get('/orders/{id}', [
                 FarmerOrderController::class,
                 'show'

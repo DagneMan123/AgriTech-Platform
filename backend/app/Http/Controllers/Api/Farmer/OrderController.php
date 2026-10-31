@@ -16,8 +16,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $user = $request->user();
-            $farmer = $user->farmer;
+            $farmer = $this->getOrCreateFarmer();
 
             if (!$farmer) {
                 return response()->json(['message' => 'Farmer profile not found'], 404);
@@ -29,6 +28,7 @@ class OrderController extends Controller
                 ->paginate(15);
 
             return response()->json([
+                'success' => true,
                 'data' => $orders->items(),
                 'pagination' => [
                     'total' => $orders->total(),
@@ -48,8 +48,7 @@ class OrderController extends Controller
     public function show(Request $request, $id)
     {
         try {
-            $user = $request->user();
-            $farmer = $user->farmer;
+            $farmer = $this->getOrCreateFarmer();
 
             if (!$farmer) {
                 return response()->json(['message' => 'Farmer profile not found'], 404);
@@ -73,8 +72,7 @@ class OrderController extends Controller
     public function accept(Request $request, $id)
     {
         try {
-            $user = $request->user();
-            $farmer = $user->farmer;
+            $farmer = $this->getOrCreateFarmer();
 
             if (!$farmer) {
                 return response()->json(['message' => 'Farmer profile not found'], 404);
@@ -108,8 +106,7 @@ class OrderController extends Controller
     public function reject(Request $request, $id)
     {
         try {
-            $user = $request->user();
-            $farmer = $user->farmer;
+            $farmer = $this->getOrCreateFarmer();
 
             if (!$farmer) {
                 return response()->json(['message' => 'Farmer profile not found'], 404);

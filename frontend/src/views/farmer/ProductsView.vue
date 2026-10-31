@@ -47,11 +47,11 @@
 
         <div class="stat-card">
           <div class="stat-icon revenue">
-            <i class="fas fa-dollar-sign"></i>
+            <i class="fas fa-money-bill-wave"></i>
           </div>
           <div class="stat-content">
             <h3>Total Value</h3>
-            <p class="stat-value">${{ totalValue }}</p>
+            <p class="stat-value">ETB {{ formatNumber(totalValue) }}</p>
           </div>
         </div>
       </div>
@@ -113,7 +113,7 @@
               <div class="product-details">
                 <div class="detail-item">
                   <span class="label">Price:</span>
-                  <span class="value">${{ formatNumber(product.price) }}</span>
+                  <span class="value">ETB {{ formatNumber(product.price) }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="label">Quantity:</span>
@@ -216,7 +216,7 @@
                 <div class="form-group">
                   <label for="product-price">Unit Price *</label>
                   <div class="input-with-currency">
-                    <span class="currency">$</span>
+                    <span class="currency">ETB</span>
                     <input
                       id="product-price"
                       v-model.number="productForm.price"
