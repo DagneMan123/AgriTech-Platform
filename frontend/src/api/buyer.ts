@@ -97,4 +97,8 @@ export const buyerAPI = {
   createContract: (data: any) => apiClient.post('/buyer/contracts', data),
   getContract: (id: number) => apiClient.get('/buyer/contracts/' + id),
   cancelContract: (id: number, reason?: string) => apiClient.post('/buyer/contracts/' + id + '/cancel', { reason }),
+
+  // Market Prices & Commodity Trends
+  getMarketPrices: (params?: any) => apiClient.get('/market-prices', { params }),
+  getMarketPriceTrends: (params?: any) => apiClient.get('/market-prices/trends', { params }),
 }

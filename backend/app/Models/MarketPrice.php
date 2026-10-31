@@ -1,5 +1,4 @@
 <?php
-// app/Models/MarketPrice.php
 
 namespace App\Models;
 
@@ -10,27 +9,42 @@ class MarketPrice extends Model
 {
     use HasFactory;
 
+    protected $table = 'market_prices';
+
     protected $fillable = [
-        'product_name',
-        'category',
-        'city',
-        'region',
-        'price',
-        'price_unit',
-        'quality',
-        'source',
-        'is_verified'
+        'crop_name',
+        'market_location',
+        'market_region',
+        'price_per_unit',
+        'unit',
+        'price_trend',
+        'price_date',
+        'notes',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'is_verified' => 'boolean'
+        'price_per_unit' => 'decimal:2',
+        'price_date' => 'date',
     ];
 
-    public $timestamps = false;
-
-    public function getPriceFormattedAttribute()
+    /**
+     * Accessor for formatted price with currency.
+     */
+    public function getPriceFormattedAttribute(): string
     {
-        return number_format($this->price, 2) . ' ' . ($this->price_unit ?? 'ETB/kg');
+        return 'ETB ' . number_format((float)$this->price_per_unit, 2) . ' / ' . ($this->unit ?? 'kg');
+    }
+
+    /**
+     * Backward-compatible aliases for legacy frontend/controller references.
+     */
+    public function getProductNameAttribute(): string
+    {
+        return $this->crop_name ?? '';
+    }
+
+    public function getPriceAttribute(): float
+    {
+        return (float)($this->price_per_unit ?? 0);
     }
 }

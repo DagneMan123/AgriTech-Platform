@@ -208,6 +208,11 @@ Route::get('/weather', [
     'index'
 ]);
 
+Route::get('/market-prices/trends', [
+    MarketPriceController::class,
+    'trends'
+]);
+
 Route::get('/market-prices', [
     MarketPriceController::class,
     'index'
@@ -1052,6 +1057,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/weather', [
         FarmerWeatherController::class,
         'index'
+    ]);
+
+    Route::get('/market-prices/trends', [
+        MarketPriceController::class,
+        'trends'
     ]);
 
     Route::get('/market-prices', [

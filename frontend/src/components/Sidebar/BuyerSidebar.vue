@@ -288,6 +288,9 @@ const autoExpandSection = () => {
   if (path.includes('/buyer/payments') || name.includes('payment')) {
     expandedSections.value.payments = true
   }
+  if (path.includes('/buyer/services') || path.includes('prices')) {
+    expandedSections.value.services = true
+  }
   if (path.includes('/buyer/profile') || path.includes('/buyer/reviews') || name.includes('profile') || name.includes('reviews')) {
     expandedSections.value.account = true
   }
