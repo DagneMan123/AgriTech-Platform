@@ -149,7 +149,7 @@
                 <div class="stats-grid">
                   <div class="stat">
                     <span class="stat-label">Wholesale Price</span>
-                    <span class="stat-value font-bold text-emerald-600">ETB {{ formatNumber(selectedProductDetail.price) }} / {{ selectedProductDetail.unit }}</span>
+                    <span class="stat-value font-bold text-blue-600">ETB {{ formatNumber(selectedProductDetail.price) }} / {{ selectedProductDetail.unit }}</span>
                   </div>
                   <div class="stat">
                     <span class="stat-label">Market Location</span>
@@ -169,7 +169,7 @@
                   </div>
                   <div class="stat">
                     <span class="stat-label">Verification</span>
-                    <span class="stat-value text-emerald-500 font-semibold">ECX Certified</span>
+                    <span class="stat-value text-blue-500 font-semibold">ECX Certified</span>
                   </div>
                 </div>
               </div>

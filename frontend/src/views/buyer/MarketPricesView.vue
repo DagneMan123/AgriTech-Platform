@@ -26,8 +26,8 @@
             </button>
             <div>
               <div class="flex items-center gap-2 mb-1 flex-wrap">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                   Live ECX &amp; Wholesale Rates
                 </span>
                 <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
@@ -35,7 +35,7 @@
                 </span>
               </div>
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
-                <BarChart3 class="w-7 h-7 text-emerald-500" />
+                <BarChart3 class="w-7 h-7 text-blue-500" />
                 Agricultural Market Prices
               </h1>
               <p :class="['text-xs lg:text-sm m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
@@ -61,13 +61,13 @@
               :class="['inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-sm']"
               title="Download market prices as CSV"
             >
-              <Download class="w-4 h-4 text-emerald-500" />
+              <Download class="w-4 h-4 text-blue-500" />
               <span>Export CSV</span>
             </button>
 
             <router-link
               to="/buyer/marketplace"
-              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
             >
               <Store class="w-4 h-4" />
               <span>Go to Marketplace</span>
@@ -119,12 +119,12 @@
         <div :class="['p-4 rounded-2xl border transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200 shadow-sm']">
           <div class="flex items-center justify-between mb-2">
             <span :class="['text-xs font-semibold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">National Benchmark Avg</span>
-            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+            <div class="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
               <BarChart3 class="w-5 h-5" />
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <span :class="['text-2xl lg:text-3xl font-[800] text-emerald-600 dark:text-emerald-400']">ETB {{ formatNumber(summaryStats.avgPrice) }}</span>
+            <span :class="['text-2xl lg:text-3xl font-[800] text-blue-600 dark:text-blue-400']">ETB {{ formatNumber(summaryStats.avgPrice) }}</span>
           </div>
           <p :class="['text-[11px] mt-1 m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
             Weighted across regional wholesale terminals
@@ -140,7 +140,7 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1 text-emerald-500 font-bold text-xs">
+            <div class="flex items-center gap-1 text-blue-500 font-bold text-xs">
               <TrendingUp class="w-3.5 h-3.5" />
               <span>{{ summaryStats.increasing }} Up</span>
             </div>
@@ -187,7 +187,7 @@
             v-for="cat in commodityCategories"
             :key="cat.id"
             @click="selectedCategory = cat.id"
-            :class="['px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5', selectedCategory === cat.id ? 'bg-emerald-600 text-white shadow-sm' : darkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200']"
+            :class="['px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5', selectedCategory === cat.id ? 'bg-blue-600 text-white shadow-sm' : darkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200']"
           >
             <span>{{ cat.name }}</span>
             <span :class="['text-[10px] px-1.5 py-0.2 rounded-full font-bold', selectedCategory === cat.id ? 'bg-white/20 text-white' : darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600']">
@@ -204,7 +204,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search commodity, market hub or notes..."
-              :class="['w-full pl-9 pr-3.5 py-2.5 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder-slate-400 focus:border-emerald-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500']"
+              :class="['w-full pl-9 pr-3.5 py-2.5 rounded-xl text-xs border outline-none transition-all', darkMode ? 'bg-slate-800/80 border-slate-700 text-white placeholder-slate-400 focus:border-blue-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500']"
             />
           </div>
 
@@ -259,14 +259,14 @@
             <div :class="['flex p-1 rounded-xl border', darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200']">
               <button
                 @click="viewMode = 'grid'"
-                :class="['p-1.5 rounded-lg transition-all cursor-pointer', viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200']"
+                :class="['p-1.5 rounded-lg transition-all cursor-pointer', viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200']"
                 title="Grid Cards View"
               >
                 <Grid3X3 class="w-4 h-4" />
               </button>
               <button
                 @click="viewMode = 'table'"
-                :class="['p-1.5 rounded-lg transition-all cursor-pointer', viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200']"
+                :class="['p-1.5 rounded-lg transition-all cursor-pointer', viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200']"
                 title="Table Exchange View"
               >
                 <Table class="w-4 h-4" />
@@ -278,7 +278,7 @@
         <!-- Filter Tags / Clear Button -->
         <div v-if="hasActiveFilters" class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
           <span :class="darkMode ? 'text-slate-400' : 'text-slate-500'">Active Filters:</span>
-          <span v-if="searchQuery" class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 font-medium">"{{ searchQuery }}"</span>
+          <span v-if="searchQuery" class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 font-medium">"{{ searchQuery }}"</span>
           <span v-if="selectedCategory !== 'all'" class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 font-medium">{{ getCategoryLabel(selectedCategory) }}</span>
           <span v-if="selectedRegion !== 'all'" class="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 font-medium">Region: {{ selectedRegion }}</span>
           <span v-if="selectedLocation !== 'all'" class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-medium">Hub: {{ selectedLocation }}</span>
@@ -321,7 +321,7 @@
         </p>
         <button
           @click="loadMarketPrices"
-          class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer inline-flex items-center gap-1.5"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all cursor-pointer inline-flex items-center gap-1.5"
         >
           <RefreshCw class="w-3.5 h-3.5" />
           <span>Reload from Database</span>
@@ -342,7 +342,7 @@
         </p>
         <button
           @click="resetFilters"
-          class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all cursor-pointer"
         >
           Reset All Filters
         </button>
@@ -353,17 +353,17 @@
         <div
           v-for="item in filteredPrices"
           :key="item.id"
-          :class="['rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-emerald-500/50 group', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200 shadow-xs']"
+          :class="['rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-blue-500/50 group', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200 shadow-xs']"
         >
           <div>
             <!-- Header: Crop Name & Region Badge -->
             <div class="flex items-start justify-between gap-2 mb-2">
               <div>
-                <h3 :class="['text-sm font-bold m-0 group-hover:text-emerald-500 transition-colors line-clamp-1', darkMode ? 'text-slate-100' : 'text-slate-900']">
+                <h3 :class="['text-sm font-bold m-0 group-hover:text-blue-500 transition-colors line-clamp-1', darkMode ? 'text-slate-100' : 'text-slate-900']">
                   {{ item.crop_name }}
                 </h3>
                 <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <MapPin class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <MapPin class="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   <span class="truncate font-medium">{{ item.market_location }}</span>
                 </div>
               </div>
@@ -378,7 +378,7 @@
               <div class="flex items-baseline justify-between gap-2">
                 <div class="flex items-baseline gap-1">
                   <span class="text-xs font-bold text-slate-500">ETB</span>
-                  <span class="text-xl lg:text-2xl font-[800] text-emerald-600 dark:text-emerald-400">
+                  <span class="text-xl lg:text-2xl font-[800] text-blue-600 dark:text-blue-400">
                     {{ formatNumber(item.price_per_unit) }}
                   </span>
                   <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">/ {{ item.unit }}</span>
@@ -402,7 +402,7 @@
                 <Calendar class="w-3 h-3" />
                 <span>{{ formatDate(item.price_date) }}</span>
               </span>
-              <span class="text-emerald-500 font-semibold">ECX Verified</span>
+              <span class="text-blue-500 font-semibold">ECX Verified</span>
             </div>
           </div>
 
@@ -419,7 +419,7 @@
 
             <router-link
               :to="{ path: '/buyer/marketplace', query: { q: extractCropBaseName(item.crop_name) } }"
-              class="px-2.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
+              class="px-2.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
             >
               <Store class="w-3.5 h-3.5" />
               <span>Buy Crop</span>
@@ -461,7 +461,7 @@
                 <!-- Hub -->
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-1 text-slate-600 dark:text-slate-300">
-                    <MapPin class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <MapPin class="w-3.5 h-3.5 text-blue-500 shrink-0" />
                     <span>{{ item.market_location }}</span>
                   </div>
                 </td>
@@ -474,7 +474,7 @@
                 </td>
 
                 <!-- Price -->
-                <td class="py-3.5 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                <td class="py-3.5 px-4 text-right font-extrabold text-blue-600 dark:text-blue-400 whitespace-nowrap">
                   <span class="text-[10px] font-normal text-slate-400 mr-1">ETB</span>
                   {{ formatNumber(item.price_per_unit) }}
                   <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">/ {{ item.unit }}</span>
@@ -510,7 +510,7 @@
                     </button>
                     <router-link
                       :to="{ path: '/buyer/marketplace', query: { q: extractCropBaseName(item.crop_name) } }"
-                      class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all inline-flex items-center gap-1"
+                      class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all inline-flex items-center gap-1"
                       title="Buy from Marketplace"
                     >
                       <Store class="w-3 h-3" />
@@ -532,13 +532,13 @@
           <!-- Modal Header -->
           <div :class="['px-6 py-4 border-b flex items-center justify-between', darkMode ? 'border-slate-800 bg-[#0e1424]' : 'border-slate-200 bg-slate-50']">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
                 <Scale class="w-5 h-5" />
               </div>
               <div>
                 <h3 class="text-base font-bold m-0 flex items-center gap-2">
                   <span>{{ selectedCommodity.crop_name }}</span>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
                     Cross-Terminal Intelligence
                   </span>
                 </h3>
@@ -562,14 +562,14 @@
               <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200']">
                 <span class="text-[10px] uppercase font-semibold text-slate-400">Current Market Hub</span>
                 <div class="text-xs font-bold mt-1 text-slate-800 dark:text-slate-100 flex items-center gap-1">
-                  <MapPin class="w-3.5 h-3.5 text-emerald-500" />
+                  <MapPin class="w-3.5 h-3.5 text-blue-500" />
                   <span>{{ selectedCommodity.market_location }}</span>
                 </div>
               </div>
 
               <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200']">
                 <span class="text-[10px] uppercase font-semibold text-slate-400">Recorded Price</span>
-                <div class="text-base font-extrabold mt-0.5 text-emerald-600 dark:text-emerald-400">
+                <div class="text-base font-extrabold mt-0.5 text-blue-600 dark:text-blue-400">
                   ETB {{ formatNumber(selectedCommodity.price_per_unit) }} <span class="text-xs font-medium text-slate-400">/ {{ selectedCommodity.unit }}</span>
                 </div>
               </div>
@@ -591,7 +591,7 @@
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Regional Terminal Comparison (Spread)
                 </h4>
-                <span class="text-[11px] text-emerald-500 font-semibold">
+                <span class="text-[11px] text-blue-500 font-semibold">
                   {{ relatedTerminalPrices.length }} Hubs Aggregated
                 </span>
               </div>
@@ -600,10 +600,10 @@
                 <div
                   v-for="rel in relatedTerminalPrices"
                   :key="rel.id"
-                  :class="['p-3 flex items-center justify-between text-xs transition-colors', rel.id === selectedCommodity.id ? (darkMode ? 'bg-emerald-500/10' : 'bg-emerald-50') : '']"
+                  :class="['p-3 flex items-center justify-between text-xs transition-colors', rel.id === selectedCommodity.id ? (darkMode ? 'bg-blue-500/10' : 'bg-blue-50') : '']"
                 >
                   <div class="flex items-center gap-2">
-                    <MapPin :class="['w-3.5 h-3.5', rel.id === selectedCommodity.id ? 'text-emerald-500' : 'text-slate-400']" />
+                    <MapPin :class="['w-3.5 h-3.5', rel.id === selectedCommodity.id ? 'text-blue-500' : 'text-slate-400']" />
                     <div>
                       <span class="font-bold">{{ rel.market_location }}</span>
                       <span class="text-[10px] text-slate-400 ml-1.5">({{ rel.market_region }})</span>
@@ -615,7 +615,7 @@
                       <component :is="getTrendIcon(rel.price_trend)" class="w-2.5 h-2.5" />
                       <span class="capitalize">{{ rel.price_trend }}</span>
                     </span>
-                    <span class="font-extrabold text-emerald-600 dark:text-emerald-400">
+                    <span class="font-extrabold text-blue-600 dark:text-blue-400">
                       ETB {{ formatNumber(rel.price_per_unit) }} <span class="text-[10px] text-slate-400 font-normal">/ {{ rel.unit }}</span>
                     </span>
                   </div>
@@ -649,7 +649,7 @@
               </button>
               <router-link
                 :to="{ path: '/buyer/marketplace', query: { q: extractCropBaseName(selectedCommodity.crop_name) } }"
-                class="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer transition-all flex items-center justify-center gap-1.5"
+                class="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition-all flex items-center justify-center gap-1.5"
               >
                 <Store class="w-3.5 h-3.5" />
                 <span>Buy in Marketplace</span>
@@ -664,7 +664,7 @@
         v-if="toastMessage"
         class="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white border border-slate-700 shadow-xl text-xs font-semibold animate-slide-up"
       >
-        <CheckCircle2 class="w-4 h-4 text-emerald-400" />
+        <CheckCircle2 class="w-4 h-4 text-blue-400" />
         <span>{{ toastMessage }}</span>
       </div>
 
