@@ -257,3 +257,19 @@ export const daysBetween = (date1: Date | string, date2: Date | string): number 
   const millisecondsPerDay = 1000 * 60 * 60 * 24
   return Math.floor((d2.getTime() - d1.getTime()) / millisecondsPerDay)
 }
+
+
+/**
+ * Format image URL to ensure compatibility with local dev proxies and static paths
+ */
+export const formatImageUrl = (url?: string | null): string => {
+  if (!url) return ''
+  if (url.includes('/storage/')) {
+    const idx = url.indexOf('/storage/')
+    return url.substring(idx)
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  return `/storage/${url.replace(/^\/+/, '')}`
+}

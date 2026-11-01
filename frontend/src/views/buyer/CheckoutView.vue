@@ -27,7 +27,7 @@
               <div class="flex items-center gap-2 mb-1">
                 <router-link
                   to="/buyer/cart"
-                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   <ArrowLeft class="w-3.5 h-3.5" />
                   Back to Cart
@@ -55,7 +55,7 @@
       <!-- Stepper Indicator -->
       <div :class="['rounded-2xl border p-4 mb-6 shadow-2xs transition-all flex items-center justify-between overflow-x-auto gap-4', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex items-center gap-3 shrink-0">
-          <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
             <Check class="w-4 h-4" />
           </div>
           <div>
@@ -64,10 +64,10 @@
           </div>
         </div>
 
-        <div :class="['h-0.5 flex-1 min-w-[30px] rounded', orderSuccess ? 'bg-emerald-500' : 'bg-blue-500']"></div>
+        <div class="h-0.5 flex-1 min-w-[30px] rounded bg-blue-600"></div>
 
         <div class="flex items-center gap-3 shrink-0">
-          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-xs text-white', orderSuccess ? 'bg-emerald-500' : 'bg-blue-600 ring-4 ring-blue-500/20']">
+          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-xs text-white', orderSuccess ? 'bg-blue-600' : 'bg-blue-600 ring-4 ring-blue-500/20']">
             <Check v-if="orderSuccess" class="w-4 h-4" />
             <span v-else>2</span>
           </div>
@@ -77,10 +77,10 @@
           </div>
         </div>
 
-        <div :class="['h-0.5 flex-1 min-w-[30px] rounded', orderSuccess ? 'bg-emerald-500' : (darkMode ? 'bg-slate-800' : 'bg-slate-200')]"></div>
+        <div :class="['h-0.5 flex-1 min-w-[30px] rounded', orderSuccess ? 'bg-blue-600' : (darkMode ? 'bg-slate-800' : 'bg-slate-200')]"></div>
 
         <div class="flex items-center gap-3 shrink-0">
-          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-xs', orderSuccess ? 'bg-emerald-600 text-white ring-4 ring-emerald-500/20' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-400')]">
+          <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-xs', orderSuccess ? 'bg-blue-600 text-white ring-4 ring-blue-500/20' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-400')]">
             <Check v-if="orderSuccess" class="w-4 h-4" />
             <span v-else>3</span>
           </div>
@@ -92,11 +92,11 @@
       </div>
 
       <!-- ── SUCCESS CONFIRMATION SCREEN ── -->
-      <section v-if="orderSuccess" :class="['rounded-2xl border p-6 sm:p-10 mb-8 shadow-md text-center max-w-3xl mx-auto transition-all', darkMode ? 'bg-[#131b2e] border-emerald-500/40 text-slate-100' : 'bg-white border-emerald-200 text-slate-800']">
-        <div class="w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-500 border-2 border-emerald-500/30 flex items-center justify-center mx-auto mb-5 shadow-lg animate-bounce">
+      <section v-if="orderSuccess" :class="['rounded-2xl border p-6 sm:p-10 mb-8 shadow-md text-center max-w-3xl mx-auto transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']">
+        <div class="w-20 h-20 rounded-full bg-blue-500/10 text-blue-500 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-5 shadow-lg animate-bounce">
           <CheckCircle2 class="w-10 h-10" />
         </div>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 mb-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/30 mb-3">
           <Sparkles class="w-3.5 h-3.5" /> Order Successfully Placed
         </span>
         <h2 class="text-2xl sm:text-3xl font-black tracking-tight mb-2">Thank you for your order!</h2>
@@ -108,13 +108,13 @@
         <div :class="['rounded-2xl p-5 mb-8 border text-left grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
           <div>
             <span class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Order Reference:</span>
-            <p class="font-mono font-bold text-sm text-emerald-500 mt-0.5">
+            <p class="font-mono font-bold text-sm text-blue-500 mt-0.5">
               {{ confirmedOrders[0]?.order_number || 'ORD-ETH-SUCCESS' }}
             </p>
           </div>
           <div>
             <span class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Total Paid / Payable:</span>
-            <p class="font-mono font-bold text-sm text-emerald-500 mt-0.5">
+            <p class="font-mono font-bold text-sm text-blue-500 mt-0.5">
               ETB {{ formatNumber(summaryGrandTotal) }}
             </p>
           </div>
@@ -137,7 +137,7 @@
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
           <router-link
             to="/buyer/orders/active"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
           >
             <Truck class="w-4 h-4" />
             <span>Track in Active Orders</span>
@@ -154,7 +154,7 @@
 
       <!-- ── EMPTY CART NOTICE ── -->
       <section v-else-if="cartItems.length === 0" :class="['rounded-2xl border p-12 text-center shadow-2xs transition-all max-w-xl mx-auto', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="w-16 h-16 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4">
+        <div class="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-4">
           <ShoppingBag class="w-8 h-8" />
         </div>
         <h3 class="text-lg font-bold mb-1">Your cart is currently empty</h3>
@@ -163,7 +163,7 @@
         </p>
         <router-link
           to="/buyer/marketplace"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all cursor-pointer"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all cursor-pointer"
         >
           <ShoppingBag class="w-4 h-4" />
           <span>Browse Marketplace</span>
@@ -303,42 +303,97 @@
             </div>
           </section>
 
-          <!-- SECTION 2: SHIPPING SPEED & FREIGHT -->
+          <!-- SECTION 2: SHIPPING SPEED & FREIGHT (DYNAMIC CALCULATION) -->
           <section :class="['rounded-2xl border p-5 sm:p-6 shadow-2xs transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-            <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                <Truck class="w-4 h-4" />
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                  <Truck class="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 class="text-sm font-bold tracking-tight">2. Freight &amp; Delivery Logistics</h2>
+                  <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    Dynamic rates calculated automatically by cargo weight, transit distance, and crop perishability
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 class="text-sm font-bold tracking-tight">2. Freight &amp; Delivery Logistics</h2>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Select preferred dispatch speed</p>
+
+              <!-- Real-time Metrics Pill -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
+                  <Scale class="w-3.5 h-3.5 text-purple-500" />
+                  <span>Cargo Weight: <strong>{{ formatNumber(totalWeightKg) }} kg</strong></span>
+                </span>
+                <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
+                  <Compass class="w-3.5 h-3.5 text-blue-500" />
+                  <span>~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
+                </span>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Dynamic Category Filtering Notice -->
+            <div
+              v-if="hasPerishables"
+              class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2.5"
+            >
+              <Leaf class="w-4 h-4 shrink-0" />
+              <span>
+                <strong>Fresh Perishable Produce in Cart:</strong> Cold-Chain refrigerated transit (+4°C) is active and recommended to prevent harvest spoilage.
+              </span>
+            </div>
+            <div
+              v-else
+              class="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2.5"
+            >
+              <Info class="w-4 h-4 shrink-0" />
+              <span>
+                <strong>Dry Produce / Non-Perishable Cargo:</strong> Cart contains shelf-stable produce (e.g. grains, pulses, seeds). Cold-chain shipping is dynamically filtered out.
+              </span>
+            </div>
+
+            <!-- Dynamic Shipping Options Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <label
                 v-for="opt in shippingOptions"
                 :key="opt.key"
                 :class="[
-                  'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between',
+                  'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between group',
                   selectedShipping === opt.key
                     ? (darkMode ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/30' : 'border-purple-600 bg-purple-50/50 ring-2 ring-purple-600/20')
                     : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
                 ]"
               >
-                <div class="flex items-start justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      v-model="selectedShipping"
-                      :value="opt.key"
-                      class="text-purple-600 focus:ring-purple-500"
-                    />
-                    <span class="text-xs font-bold leading-tight">{{ opt.title }}</span>
+                <div>
+                  <div class="flex items-start justify-between gap-1 mb-2">
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        v-model="selectedShipping"
+                        :value="opt.key"
+                        class="text-purple-600 focus:ring-purple-500"
+                      />
+                      <span class="text-xs font-bold leading-tight">{{ opt.title }}</span>
+                    </div>
                   </div>
+
+                  <span
+                    v-if="opt.badge"
+                    class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30"
+                  >
+                    {{ opt.badge }}
+                  </span>
+
+                  <p :class="['text-[11px] mb-3 leading-snug', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    {{ opt.desc }}
+                  </p>
                 </div>
-                <p :class="['text-[11px] mb-3 leading-snug', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ opt.desc }}</p>
-                <p class="text-xs font-black text-purple-600 dark:text-purple-400">ETB {{ formatNumber(opt.fee) }}</p>
+
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400">Dynamic Fee:</span>
+                  <p class="text-sm font-black text-purple-600 dark:text-purple-400">
+                    ETB {{ formatNumber(opt.fee) }}
+                  </p>
+                </div>
               </label>
             </div>
           </section>
@@ -485,8 +540,8 @@
               <span class="text-xs font-semibold text-emerald-500">{{ cartItems.length }} item(s)</span>
             </h2>
 
-            <!-- Items Mini List -->
-            <div class="max-h-60 overflow-y-auto space-y-3 pr-1 mb-4 divide-y divide-slate-100 dark:divide-slate-800/60">
+            <!-- Items Mini List with Real-Time Quantity Modifiers -->
+            <div class="max-h-64 overflow-y-auto space-y-3 pr-1 mb-4 divide-y divide-slate-100 dark:divide-slate-800/60">
               <div
                 v-for="item in cartItems"
                 :key="item.id"
@@ -505,30 +560,83 @@
                 </div>
 
                 <div class="flex-1 min-w-0">
-                  <h4 :class="['text-xs font-bold truncate', darkMode ? 'text-slate-200' : 'text-slate-800']">
-                    {{ item.product_name }}
-                  </h4>
-                  <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    {{ item.quantity }} {{ item.unit || 'kg' }} &times; ETB {{ formatNumber(item.unit_price || item.price || 0) }}
+                  <div class="flex items-center justify-between gap-1">
+                    <h4 :class="['text-xs font-bold truncate', darkMode ? 'text-slate-200' : 'text-slate-800']">
+                      {{ item.product_name }}
+                    </h4>
+                    <!-- Inline Remove Button -->
+                    <button
+                      type="button"
+                      @click="handleRemoveItem(item.id)"
+                      :disabled="updatingCartItemId === item.id"
+                      class="text-slate-400 hover:text-red-500 transition p-1 cursor-pointer disabled:opacity-40"
+                      title="Remove from cart"
+                    >
+                      <Trash2 class="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <p :class="['text-[10px] mb-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    ETB {{ formatNumber(item.unit_price || item.price || 0) }} / {{ item.unit || 'kg' }}
                   </p>
+
+                  <!-- Real-time Quantity Modifiers -->
+                  <div class="flex items-center gap-2">
+                    <div :class="['flex items-center border rounded-lg overflow-hidden', darkMode ? 'border-slate-700 bg-[#0b0f19]' : 'border-slate-200 bg-white']">
+                      <button
+                        type="button"
+                        @click="handleDecrementQuantity(item)"
+                        :disabled="updatingCartItemId === item.id || item.quantity <= 1"
+                        class="px-2 py-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
+                        title="Decrease quantity"
+                      >
+                        <Minus class="w-2.5 h-2.5" />
+                      </button>
+                      <span class="px-2 py-0.5 text-[11px] font-bold text-center min-w-[24px]">
+                        {{ item.quantity }}
+                      </span>
+                      <button
+                        type="button"
+                        @click="handleIncrementQuantity(item)"
+                        :disabled="updatingCartItemId === item.id"
+                        class="px-2 py-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
+                        title="Increase quantity"
+                      >
+                        <Plus class="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                    <span class="text-[10px] text-slate-400">
+                      {{ formatNumber(getItemWeightKg(item)) }} kg
+                    </span>
+                  </div>
                 </div>
 
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  ETB {{ formatNumber(item.subtotal || (item.unit_price * item.quantity)) }}
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0 self-center">
+                  ETB {{ formatNumber(item.subtotal || ((item.unit_price || item.price) * item.quantity)) }}
                 </span>
               </div>
             </div>
 
             <!-- Financial Calculations -->
-            <div :class="['rounded-xl p-3 mb-5 space-y-2 border text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
+            <div :class="['rounded-xl p-3 mb-5 space-y-2.5 border text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Produce Subtotal:</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200">ETB {{ formatNumber(summarySubtotal) }}</span>
               </div>
-              <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
-                <span>Shipping Fee ({{ selectedShippingTitle }}):</span>
-                <span class="font-bold text-purple-500">ETB {{ formatNumber(selectedShippingFee) }}</span>
+
+              <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
+              <div class="space-y-0.5">
+                <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                  <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
+                  <span class="font-bold text-purple-500 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px] text-slate-400">
+                  <span>{{ formatNumber(totalWeightKg) }} kg • ~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
+                  <span v-if="hasPerishables" class="text-emerald-500 font-semibold">Cold-Chain active</span>
+                  <span v-else class="text-amber-500 font-medium">Ambient freight</span>
+                </div>
               </div>
+
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Platform Escrow Fee:</span>
                 <span class="font-bold text-emerald-500">FREE</span>
@@ -539,7 +647,10 @@
               </div>
 
               <div class="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center">
-                <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100">Total Due:</span>
+                <div>
+                  <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 block">Total Due:</span>
+                  <span class="text-[10px] text-slate-400">Includes freight &amp; settlement</span>
+                </div>
                 <span class="text-base font-black text-emerald-600 dark:text-emerald-400">
                   ETB {{ formatNumber(summaryGrandTotal) }}
                 </span>
@@ -581,7 +692,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -590,9 +701,18 @@ import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
+  getDynamicShippingOptions,
+  getCartTotalWeightKg,
+  cartHasPerishables,
+  getItemWeightKg,
+  ETHIOPIAN_REGIONS_LOGISTICS,
+  type DynamicShippingOption
+} from '@/utils/shippingCalculator'
+import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
-  Sparkles, RefreshCw, Lock, ShieldCheck, Leaf
+  Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
+  Scale, Compass, Info, Plus, Minus, Trash2
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -607,6 +727,7 @@ const submitting = ref(false)
 const orderSuccess = ref(false)
 const errorMessage = ref<string | null>(null)
 const confirmedOrders = ref<any[]>([])
+const updatingCartItemId = ref<number | null>(null)
 
 const cartItems = computed(() => buyerStore.cart || [])
 
@@ -640,20 +761,89 @@ const addressForm = ref({
 const savedAddresses = ref<any[]>([])
 const selectedSavedAddressId = ref<number | null>(null)
 
-// Shipping options
-const shippingOptions = [
-  { key: 'standard', title: 'Standard Freight', fee: 500, desc: '3 - 5 business days transit' },
-  { key: 'express', title: 'Express Direct', fee: 1200, desc: '1 - 2 business days farm-to-door' },
-  { key: 'overnight', title: 'Cold-Chain Agro', fee: 2500, desc: 'Climate-controlled next-day' }
-]
+// ── DYNAMIC SHIPPING CALCULATION LOGIC ──
+const totalWeightKg = computed(() => getCartTotalWeightKg(cartItems.value))
+const hasPerishables = computed(() => cartHasPerishables(cartItems.value))
+
+const regionInfo = computed(() => {
+  return ETHIOPIAN_REGIONS_LOGISTICS[addressForm.value.region] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
+})
+
+// Dynamic shipping options filtered by category and calculated from weight + distance
+const shippingOptions = computed<DynamicShippingOption[]>(() => {
+  return getDynamicShippingOptions(cartItems.value, addressForm.value.region)
+})
 
 const selectedShipping = ref<string>((route.query.shipping as string) || 'standard')
 
+// Watch shipping options: auto-fallback if selected option is hidden (e.g. cold-chain hidden for grains)
+watch(
+  shippingOptions,
+  (newOptions) => {
+    if (newOptions.length > 0 && !newOptions.some(o => o.key === selectedShipping.value)) {
+      selectedShipping.value = newOptions[0].key
+    }
+  },
+  { immediate: true }
+)
+
 const selectedShippingOption = computed(() => {
-  return shippingOptions.find(o => o.key === selectedShipping.value) || shippingOptions[0]
+  return (
+    shippingOptions.value.find(o => o.key === selectedShipping.value) ||
+    shippingOptions.value[0] || {
+      key: 'standard' as const,
+      title: 'Standard Agricultural Freight',
+      desc: '',
+      fee: 350,
+      badge: null,
+      isPerishableOnly: false,
+      transitDays: '3 - 5 days',
+      estimatedDays: '3 - 5 days'
+    }
+  )
 })
+
 const selectedShippingFee = computed(() => selectedShippingOption.value.fee)
 const selectedShippingTitle = computed(() => selectedShippingOption.value.title)
+
+// Real-time Cart Item Handlers
+const handleIncrementQuantity = async (item: any) => {
+  if (updatingCartItemId.value === item.id) return
+  updatingCartItemId.value = item.id
+  try {
+    const newQty = (Number(item.quantity) || 1) + 1
+    await buyerStore.updateCartItem(item.id, { quantity: newQty })
+  } catch (e) {
+    console.error('Failed to increment quantity:', e)
+  } finally {
+    updatingCartItemId.value = null
+  }
+}
+
+const handleDecrementQuantity = async (item: any) => {
+  if (updatingCartItemId.value === item.id || (Number(item.quantity) || 1) <= 1) return
+  updatingCartItemId.value = item.id
+  try {
+    const newQty = (Number(item.quantity) || 1) - 1
+    await buyerStore.updateCartItem(item.id, { quantity: newQty })
+  } catch (e) {
+    console.error('Failed to decrement quantity:', e)
+  } finally {
+    updatingCartItemId.value = null
+  }
+}
+
+const handleRemoveItem = async (itemId: number) => {
+  if (updatingCartItemId.value === itemId) return
+  updatingCartItemId.value = itemId
+  try {
+    await buyerStore.removeFromCart(itemId)
+  } catch (e) {
+    console.error('Failed to remove item:', e)
+  } finally {
+    updatingCartItemId.value = null
+  }
+}
 
 // Payment Methods
 const paymentMethodsList = [

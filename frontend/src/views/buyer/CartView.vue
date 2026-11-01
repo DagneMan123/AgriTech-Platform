@@ -164,32 +164,17 @@
               <div class="summary-row">
                 <span class="label">Shipping:</span>
                 <div class="shipping-options">
-                  <label class="radio-option">
+                  <label
+                    v-for="opt in dynamicShippingOptions"
+                    :key="opt.key"
+                    class="radio-option"
+                  >
                     <input
                       type="radio"
                       v-model="shippingType"
-                      value="standard"
-                      @change="updateShipping"
+                      :value="opt.key"
                     />
-                    <span>Standard (ETB {{ formatNumber(SHIPPING.STANDARD) }})</span>
-                  </label>
-                  <label class="radio-option">
-                    <input
-                      type="radio"
-                      v-model="shippingType"
-                      value="express"
-                      @change="updateShipping"
-                    />
-                    <span>Express (ETB {{ formatNumber(SHIPPING.EXPRESS) }})</span>
-                  </label>
-                  <label class="radio-option">
-                    <input
-                      type="radio"
-                      v-model="shippingType"
-                      value="overnight"
-                      @change="updateShipping"
-                    />
-                    <span>Overnight (ETB {{ formatNumber(SHIPPING.OVERNIGHT) }})</span>
+                    <span>{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
                   </label>
                 </div>
               </div>
@@ -268,19 +253,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
-
-// Constants
-const SHIPPING = {
-  STANDARD: 500,
-  EXPRESS: 1000,
-  OVERNIGHT: 2000
-}
+import {
+  getDynamicShippingOptions,
+  type DynamicShippingOption
+} from '@/utils/shippingCalculator'
 
 // Stores and Router
 const buyerStore = useBuyerStore()
@@ -291,9 +273,33 @@ const router = useRouter()
 const selectedItems = ref<number[]>([])
 const showSelectAll = ref(false)
 const shippingType = ref<'standard' | 'express' | 'overnight'>('standard')
-const shippingCost = ref(SHIPPING.STANDARD)
 const promoCode = ref('')
 const promoDiscount = ref(0)
+
+// Dynamic shipping options calculated from cart items and weight/perishability
+const dynamicShippingOptions = computed<DynamicShippingOption[]>(() => {
+  return getDynamicShippingOptions(buyerStore.cart || [], 'Addis Ababa')
+})
+
+// Auto-fallback if cold-chain is filtered out for non-perishable goods
+watch(
+  dynamicShippingOptions,
+  (newOptions) => {
+    if (newOptions.length > 0 && !newOptions.some(o => o.key === shippingType.value)) {
+      shippingType.value = newOptions[0].key as 'standard' | 'express' | 'overnight'
+    }
+  },
+  { immediate: true }
+)
+
+const selectedShippingOption = computed(() => {
+  return (
+    dynamicShippingOptions.value.find(o => o.key === shippingType.value) ||
+    dynamicShippingOptions.value[0] || { fee: 350 }
+  )
+})
+
+const shippingCost = computed(() => selectedShippingOption.value.fee)
 
 onMounted(async () => {
   try {
@@ -385,15 +391,6 @@ const addToWishlist = async (itemId: number) => {
   } catch (error) {
     console.error('Failed to add to wishlist:', error)
   }
-}
-
-const updateShipping = () => {
-  const amounts: Record<string, number> = {
-    standard: SHIPPING.STANDARD,
-    express: SHIPPING.EXPRESS,
-    overnight: SHIPPING.OVERNIGHT
-  }
-  shippingCost.value = amounts[shippingType.value] || SHIPPING.STANDARD
 }
 
 const applyPromoCode = () => {
