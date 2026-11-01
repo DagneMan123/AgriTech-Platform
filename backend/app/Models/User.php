@@ -100,4 +100,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(Farmer::class);
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id')->latest();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id')->whereNull('read_at')->latest();
+    }
 }

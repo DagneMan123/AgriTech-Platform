@@ -54,7 +54,7 @@ class DashboardController extends Controller
 
         // Recent orders
         $recentOrders = Order::where('buyer_id', $buyer->id)
-            ->with(['items', 'farm', 'delivery', 'payment'])
+            ->with(['items.product', 'farmer.user', 'delivery', 'payment'])
             ->latest()
             ->limit(5)
             ->get();
@@ -158,7 +158,7 @@ class DashboardController extends Controller
             $query->where('status', $status);
         }
 
-        $orders = $query->with(['items', 'farm', 'delivery', 'payment'])
+        $orders = $query->with(['items.product', 'farmer.user', 'delivery', 'payment'])
             ->latest()
             ->paginate(20);
 
@@ -252,9 +252,10 @@ class DashboardController extends Controller
             ->get();
 
         $favoriteSuppliers = Order::where('buyer_id', $buyer->id)
+            ->whereNotNull('farmer_id')
             ->groupBy('farmer_id')
             ->selectRaw('farmer_id, count(*) as purchase_count, SUM(grand_total) as total_spent')
-            ->with('farm')
+            ->with('farmer.user')
             ->orderByDesc('total_spent')
             ->limit(10)
             ->get();

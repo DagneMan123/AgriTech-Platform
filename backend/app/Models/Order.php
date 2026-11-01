@@ -61,6 +61,14 @@ class Order extends Model
     {
         return $this->belongsTo(Farmer::class);
     }
+    public function supplier()
+    {
+        return $this->belongsTo(Farmer::class, 'farmer_id');
+    }
+    public function farm()
+    {
+        return $this->hasOneThrough(Farm::class, Farmer::class, 'id', 'farmer_id', 'farmer_id', 'id');
+    }
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
