@@ -277,23 +277,29 @@ class CartController extends Controller
             foreach ($grouped as $farmerId => $items) {
                 $groupSubtotal = $items->sum(fn ($i) => (float) ($i->product ? $i->product->price * $i->quantity : 0));
 
+                $tax = (float) $request->input('tax_amount', $request->input('tax', 0));
+                $discount = (float) $request->input('promo_discount', $request->input('discount', 0));
+                $orderGrandTotal = max(0, $groupSubtotal + $deliveryFee + $tax - $discount);
+
                 $order = Order::create([
                     'order_number' => 'ORD-' . strtoupper(Str::random(8)),
                     'buyer_id' => $userId,
                     'farmer_id' => $farmerId,
                     'subtotal' => $groupSubtotal,
                     'delivery_fee' => $deliveryFee,
-                    'tax' => 0,
-                    'discount' => 0,
-                    'grand_total' => $groupSubtotal + $deliveryFee,
+                    'tax' => $tax,
+                    'discount' => $discount,
+                    'grand_total' => $orderGrandTotal,
                     'status' => 'pending',
                     'delivery_address' => $request->input('delivery_address', $user->address ?? 'Addis Ababa, Ethiopia'),
                     'delivery_region' => $request->input('delivery_region', 'Addis Ababa'),
                     'delivery_zone' => $request->input('delivery_zone', 'Central'),
                     'delivery_woreda' => $request->input('delivery_woreda', 'District 1'),
-                    'delivery_phone' => $request->input('phone', $user->phone ?? '251911111111'),
+                    'delivery_phone' => $request->input('phone', $request->input('delivery_phone', $user->phone ?? '251911111111')),
                     'payment_method' => $request->input('payment_method', 'telebirr'),
                     'payment_status' => 'pending',
+                    'payment_reference' => $request->input('payment_reference', 'REF-' . strtoupper(Str::random(10))),
+                    'notes' => $request->input('notes', $request->input('delivery_instructions')),
                 ]);
 
                 foreach ($items as $item) {

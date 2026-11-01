@@ -418,18 +418,18 @@ const continueShopping = () => {
   router.push('/buyer/marketplace')
 }
 
-const proceedToCheckout = async () => {
-  try {
-    await buyerStore.checkout({
-      shipping_type: shippingType.value,
-      shipping_cost: shippingCost.value,
-      tax_amount: tax.value,
-      promo_discount: promoDiscount.value
-    })
-    router.push('/buyer/payments')
-  } catch (error) {
-    console.error('Checkout failed:', error)
+const proceedToCheckout = () => {
+  if (!buyerStore.cart || buyerStore.cart.length === 0) {
+    alert('Your shopping cart is empty. Please add items before checking out.')
+    return
   }
+  router.push({
+    path: '/buyer/checkout',
+    query: {
+      shipping: shippingType.value,
+      promo: promoCode.value && promoDiscount.value > 0 ? promoCode.value : undefined
+    }
+  })
 }
 
 const handleLogout = async () => {
