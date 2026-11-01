@@ -406,6 +406,47 @@
               </div>
             </div>
 
+            <!-- Primary Payment Method Banner (Auto-populated from PostgreSQL) -->
+            <div
+              v-if="primaryPaymentMethod"
+              :class="[
+                'mb-4 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all',
+                darkMode ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'
+              ]"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <CheckCircle2 class="w-5 h-5" />
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      {{ primaryPaymentMethod.bank_name }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs">
+                      Default Primary Method
+                    </span>
+                  </div>
+                  <p :class="['text-[11px] mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
+                    A/C: <span class="font-mono font-bold">{{ maskAccountNumber(primaryPaymentMethod.account_number) }}</span>
+                    &bull; Account Holder: <span class="font-medium">{{ primaryPaymentMethod.account_holder }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 self-end sm:self-auto">
+                <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                  <Check class="w-3.5 h-3.5" /> Pre-Selected
+                </span>
+                <router-link
+                  to="/buyer/payments"
+                  class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                >
+                  Manage Methods &rarr;
+                </router-link>
+              </div>
+            </div>
+
             <!-- Payment Options Radio Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
               <label
@@ -484,19 +525,21 @@
               <div v-else-if="paymentForm.method === 'bank_transfer'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <Building class="w-4 h-4" />
-                  <span>Commercial Bank of Ethiopia (CBE) Direct Transfer</span>
+                  <span>
+                    {{ primaryPaymentMethod?.type === 'bank_transfer' ? `${primaryPaymentMethod.bank_name} Direct Transfer (Primary Method)` : 'Commercial Bank of Ethiopia (CBE) Direct Transfer' }}
+                  </span>
                 </div>
                 <div :class="['p-3 rounded-lg border font-mono text-[11px] space-y-1', darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700']">
-                  <p><strong>Bank:</strong> Commercial Bank of Ethiopia</p>
-                  <p><strong>Account Name:</strong> AgriTech Ethiopia Escrow</p>
-                  <p><strong>Account Number:</strong> 1000 4892 1093 4</p>
+                  <p><strong>Bank:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.bank_name : 'Commercial Bank of Ethiopia' }}</p>
+                  <p><strong>Account Name:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.account_holder : 'AgriTech Ethiopia Escrow' }}</p>
+                  <p><strong>Account Number:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.account_number : '1000 4892 1093 4' }}</p>
                 </div>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">Transfer Transaction Reference:</label>
                   <input
                     v-model="paymentForm.bank_ref"
                     type="text"
-                    placeholder="e.g. FT26301ABC..."
+                    :placeholder="primaryPaymentMethod?.type === 'bank_transfer' ? `Ref / A/C for ${primaryPaymentMethod.bank_name}...` : 'e.g. FT26301ABC...'"
                     :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
@@ -842,14 +885,67 @@ const handleRemoveItem = async (itemId: number) => {
   }
 }
 
-// Payment Methods
-const paymentMethodsList = [
-  { key: 'telebirr', title: 'Telebirr (Chapa)', desc: 'Instant mobile wallet payment', badge: 'POPULAR' },
-  { key: 'cbe_birr', title: 'CBE Birr', desc: 'Commercial Bank of Ethiopia mobile pay', badge: null },
-  { key: 'card', title: 'Debit / Credit Card', desc: 'Visa, Mastercard & Ethiopian bank cards', badge: 'SECURE' },
-  { key: 'bank_transfer', title: 'CBE Direct Transfer', desc: 'Deposit to escrow bank account', badge: null },
-  { key: 'cash_on_delivery', title: 'Agro-Escrow / COD', desc: 'Inspect produce upon physical delivery', badge: null }
-]
+// Payment Methods State & Helpers
+const primaryPaymentMethod = ref<any>(null)
+const savedPaymentMethods = ref<any[]>([])
+
+const maskAccountNumber = (num: string | number) => {
+  if (!num) return ''
+  const str = String(num).trim()
+  if (str.length <= 4) return str
+  return '•••• ' + str.slice(-4)
+}
+
+const getMethodKeyForSaved = (pm: any): string => {
+  if (!pm) return 'telebirr'
+  const type = pm.type
+  const bank = (pm.bank_name || '').toLowerCase()
+  if (type === 'bank_transfer') return 'bank_transfer'
+  if (type === 'mobile_money') {
+    return bank.includes('cbe') ? 'cbe_birr' : 'telebirr'
+  }
+  if (type === 'card') return 'card'
+  if (type === 'cash') return 'cash_on_delivery'
+  return 'telebirr'
+}
+
+const applyPrimaryPaymentMethod = (pm: any) => {
+  if (!pm) return
+  primaryPaymentMethod.value = pm
+
+  const targetKey = getMethodKeyForSaved(pm)
+  paymentForm.value.method = targetKey
+
+  if (targetKey === 'telebirr') {
+    paymentForm.value.telebirr_phone = pm.account_number || authStore.user?.phone || ''
+  } else if (targetKey === 'cbe_birr') {
+    paymentForm.value.cbe_phone = pm.account_number || authStore.user?.phone || ''
+  } else if (targetKey === 'bank_transfer') {
+    paymentForm.value.bank_ref = `${pm.bank_name} (Acc: ${pm.account_number})`
+  }
+}
+
+const paymentMethodsList = computed(() => {
+  const isBankPrimary = primaryPaymentMethod.value?.type === 'bank_transfer'
+  const bankTitle = isBankPrimary
+    ? `${primaryPaymentMethod.value.bank_name} Direct Transfer`
+    : 'CBE Direct Transfer'
+  const bankDesc = isBankPrimary
+    ? `Primary saved account (${primaryPaymentMethod.value.account_holder})`
+    : 'Deposit to escrow bank account'
+  const isTelebirrPrimary = primaryPaymentMethod.value?.type === 'mobile_money' && !(primaryPaymentMethod.value?.bank_name || '').toLowerCase().includes('cbe')
+  const isCbeBirrPrimary = primaryPaymentMethod.value?.type === 'mobile_money' && (primaryPaymentMethod.value?.bank_name || '').toLowerCase().includes('cbe')
+  const isCardPrimary = primaryPaymentMethod.value?.type === 'card'
+  const isCashPrimary = primaryPaymentMethod.value?.type === 'cash'
+
+  return [
+    { key: 'telebirr', title: 'Telebirr (Chapa)', desc: isTelebirrPrimary ? `Primary saved wallet (${primaryPaymentMethod.value.account_holder})` : 'Instant mobile wallet payment', badge: isTelebirrPrimary ? 'PRIMARY' : 'POPULAR' },
+    { key: 'cbe_birr', title: 'CBE Birr', desc: isCbeBirrPrimary ? `Primary saved mobile account (${primaryPaymentMethod.value.account_holder})` : 'Commercial Bank of Ethiopia mobile pay', badge: isCbeBirrPrimary ? 'PRIMARY' : null },
+    { key: 'card', title: 'Debit / Credit Card', desc: isCardPrimary ? `Primary saved card (${primaryPaymentMethod.value.account_holder})` : 'Visa, Mastercard & Ethiopian bank cards', badge: isCardPrimary ? 'PRIMARY' : 'SECURE' },
+    { key: 'bank_transfer', title: bankTitle, desc: bankDesc, badge: isBankPrimary ? 'PRIMARY' : null },
+    { key: 'cash_on_delivery', title: 'Agro-Escrow / COD', desc: 'Inspect produce upon physical delivery', badge: isCashPrimary ? 'PRIMARY' : null }
+  ]
+})
 
 const paymentForm = ref({
   method: 'telebirr',
@@ -889,7 +985,7 @@ const formatNumber = (num: number) => {
 }
 
 const formatPaymentName = (key: string) => {
-  const match = paymentMethodsList.find(p => p.key === key)
+  const match = paymentMethodsList.value.find(p => p.key === key)
   return match ? match.title : key
 }
 
@@ -945,6 +1041,21 @@ onMounted(async () => {
     }
   } catch (e) {
     // Graceful fallback to manual entry
+  }
+
+  // Load saved payment methods & auto-select primary from PostgreSQL database
+  try {
+    const res = await buyerAPI.getPaymentMethods()
+    const methods = res.data?.data || []
+    if (Array.isArray(methods) && methods.length > 0) {
+      savedPaymentMethods.value = methods
+      const primary = methods.find((m: any) => m.is_primary) || methods[0]
+      if (primary) {
+        applyPrimaryPaymentMethod(primary)
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load primary payment method from database:', err)
   }
 })
 

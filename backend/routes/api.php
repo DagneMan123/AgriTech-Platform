@@ -658,6 +658,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/transport/transporters', [TransportCoordinationController::class, 'transporters']);
 
             Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+            Route::get('/payment-methods/primary', [PaymentMethodController::class, 'primary']);
             Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
             Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
             Route::post('/payment-methods/{id}/default', [PaymentMethodController::class, 'setDefault']);

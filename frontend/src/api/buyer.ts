@@ -35,6 +35,7 @@ export const buyerAPI = {
 
   // Payment Methods
   getPaymentMethods: () => apiClient.get('/buyer/payment-methods'),
+  getPrimaryPaymentMethod: () => apiClient.get('/buyer/payment-methods/primary'),
   createPaymentMethod: (data: any) => apiClient.post('/buyer/payment-methods', data),
   deletePaymentMethod: (id: number | string) => apiClient.delete(`/buyer/payment-methods/${id}`),
   setDefaultPaymentMethod: (id: number | string) => apiClient.post(`/buyer/payment-methods/${id}/default`),

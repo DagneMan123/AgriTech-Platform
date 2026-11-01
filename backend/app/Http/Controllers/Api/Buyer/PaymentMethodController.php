@@ -45,6 +45,24 @@ class PaymentMethodController extends Controller
     }
 
     /**
+     * Get the explicitly set primary payment method for the authenticated buyer from PostgreSQL.
+     */
+    public function primary(Request $request)
+    {
+        $user = $request->user();
+
+        $primaryMethod = PaymentMethod::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->where('is_primary', true)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $primaryMethod
+        ]);
+    }
+
+    /**
      * Store a newly created payment method in the database.
      */
     public function store(Request $request)
