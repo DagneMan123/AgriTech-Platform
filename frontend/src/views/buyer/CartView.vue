@@ -16,7 +16,8 @@
         </div>
       </div>
 
-      <!-- Empty Cart State -->
+      <div class="cart-body">
+        <!-- Empty Cart State -->
       <div v-if="buyerStore.cart.length === 0" class="empty-cart">
         <div class="empty-icon">
           <i class="fas fa-shopping-cart"></i>
@@ -226,6 +227,7 @@
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -447,7 +449,7 @@ const handleLogout = async () => {
   overflow-y: auto;
   background-color: #f5f5f5;
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 0;
 }
 
 /* Dark Mode Overrides */
@@ -688,27 +690,42 @@ const handleLogout = async () => {
 .cart-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 40px;
+  align-items: center;
+  padding: 24px 32px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   gap: 20px;
 }
 
+:global(html.dark) .cart-header,
+.buyer-layout.dark .cart-header {
+  background-color: #131b2e !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
 .page-title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+  margin: 0 0 4px 0;
 }
 
 .page-subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
 }
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.cart-body {
+  padding: 28px 32px 48px;
 }
 
 /* Empty Cart */
@@ -750,7 +767,7 @@ const handleLogout = async () => {
 .cart-main {
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -782,12 +799,14 @@ const handleLogout = async () => {
 
 .cart-item {
   display: grid;
-  grid-template-columns: 40px 100px 1fr 120px 150px 120px 100px;
-  gap: 16px;
+  grid-template-columns: 36px 80px minmax(120px, 1fr) 95px 115px 95px 86px;
+  gap: 12px;
   align-items: center;
-  padding: 16px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
   transition: all 0.3s;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .cart-item:hover {
@@ -812,10 +831,10 @@ const handleLogout = async () => {
 }
 
 .item-image {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   background: #f3f4f6;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -832,7 +851,7 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   color: #d1d5db;
 }
 
@@ -840,6 +859,7 @@ const handleLogout = async () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .item-name {
@@ -927,17 +947,23 @@ const handleLogout = async () => {
 
 .item-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   justify-content: flex-end;
-  min-width: 100px;
+  flex-shrink: 0;
+  min-width: 82px;
+  padding-right: 2px;
 }
 
 .action-btn {
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   border: 1px solid #d1d5db;
   background: white;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   color: #6b7280;
   font-size: 14px;
@@ -945,6 +971,7 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .action-btn:hover {
@@ -1310,21 +1337,29 @@ const handleLogout = async () => {
 /* Responsive */
 @media (max-width: 1024px) {
   .cart-item {
-    grid-template-columns: 40px 80px 1fr 100px 80px 80px;
+    grid-template-columns: 32px 70px minmax(100px, 1fr) 85px 105px 85px 84px;
     gap: 8px;
-    padding: 12px 16px;
+    padding: 12px 14px;
   }
 
   .item-image {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
 }
 
 @media (max-width: 768px) {
   .cart-container {
     margin-left: 0;
-    padding: 20px 15px;
+    padding: 0;
+  }
+
+  .cart-header {
+    padding: 20px 16px;
+  }
+
+  .cart-body {
+    padding: 20px 16px 36px;
   }
 
   .cart-content {
@@ -1332,16 +1367,25 @@ const handleLogout = async () => {
   }
 
   .cart-item {
-    grid-template-columns: 40px 60px 1fr 60px;
+    grid-template-columns: 32px 60px minmax(90px, 1fr) auto;
     gap: 8px;
-    padding: 12px;
+    padding: 12px 8px;
+  }
+
+  .item-image {
+    width: 60px;
+    height: 60px;
   }
 
   .item-price,
-  .item-quantity,
-  .item-subtotal,
-  .item-actions {
+  .item-subtotal {
     display: none;
+  }
+
+  .item-actions {
+    display: flex !important;
+    gap: 6px;
+    min-width: unset;
   }
 
   .item-details {
@@ -1367,20 +1411,30 @@ const handleLogout = async () => {
 
 @media (max-width: 480px) {
   .cart-container {
+    padding: 0;
+  }
+
+  .cart-header {
     padding: 16px 12px;
   }
 
   .page-title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .cart-body {
+    padding: 16px 12px 28px;
   }
 
   .cart-item {
-    grid-template-columns: 40px 1fr;
+    grid-template-columns: 32px 50px minmax(80px, 1fr) auto;
     padding: 12px 8px;
   }
 
   .item-image {
-    display: none;
+    width: 50px;
+    height: 50px;
+    display: block;
   }
 }
 </style>
