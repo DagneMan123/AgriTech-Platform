@@ -4,106 +4,212 @@ namespace App\Http\Controllers\Api\Buyer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
-use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
     /**
-     * Get current user's cart
+     * Get current user's cart items
      */
-    public function index()
+    public function index(Request $request)
     {
-        $cart = Cart::where('user_id', Auth::id())
-            ->with('items.product')
-            ->firstOrCreate(['user_id' => Auth::id()]);
+        $userId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
+
+        $cartItems = Cart::where('user_id', $userId)
+            ->with(['product.farmer.user'])
+            ->get();
+
+        $formatted = $cartItems->map(function ($item) {
+            $product = $item->product;
+            $unitPrice = $product ? (float) $product->price : 0;
+            $qty = (int) $item->quantity;
+            $subtotal = $unitPrice * $qty;
+
+            $supplierName = 'Local Farmer';
+            if ($product && $product->farmer) {
+                $supplierName = $product->farmer->farm_name ?: ($product->farmer->user->name ?? 'Local Farmer');
+            }
+
+            return [
+                'id' => $item->id,
+                'cart_id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $product ? $product->name : 'Unknown Product',
+                'supplier_name' => $supplierName,
+                'unit_price' => $unitPrice,
+                'price' => $unitPrice,
+                'quantity' => $qty,
+                'subtotal' => $subtotal,
+                'image_url' => $product ? $product->image : null,
+                'sku' => 'SKU-' . $item->product_id,
+                'unit' => $product ? ($product->unit ?? $product->quantity_unit ?? 'kg') : 'kg',
+                'product' => $product,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $cart->load('items.product'),
+            'data' => $formatted,
+            'total_items' => $formatted->sum('quantity'),
+            'subtotal' => $formatted->sum('subtotal'),
         ]);
     }
 
     /**
      * Add item to cart
      */
-    public function addItem(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
-
-        // Check stock availability
-        if ($product->quantity_available < $validated['quantity']) {
+        $userId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
+        if (!$userId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Insufficient stock available',
+                'message' => 'Unauthenticated user.',
+            ], 401);
+        }
+
+        $productId = $validated['product_id'];
+        $quantity = isset($validated['quantity']) ? (int) $validated['quantity'] : 1;
+
+        $product = Product::with(['farmer.user'])->findOrFail($productId);
+
+        // Check stock availability if tracked
+        $availableQty = (float) ($product->quantity_available ?? $product->quantity ?? 0);
+        if ($availableQty > 0 && $availableQty < $quantity) {
+            return response()->json([
+                'success' => false,
+                'message' => "Only {$availableQty} {$product->unit} available in stock",
             ], 422);
         }
 
-        $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
-
-        $cartItem = $cart->items()
-            ->where('product_id', $validated['product_id'])
+        $cartItem = Cart::where('user_id', $userId)
+            ->where('product_id', $productId)
             ->first();
 
         if ($cartItem) {
-            $cartItem->update([
-                'quantity' => $cartItem->quantity + $validated['quantity'],
-            ]);
+            $cartItem->quantity += $quantity;
+            $cartItem->save();
         } else {
-            $cart->items()->create([
-                'product_id' => $validated['product_id'],
-                'quantity' => $validated['quantity'],
-                'price' => $product->price,
+            $cartItem = Cart::create([
+                'user_id' => $userId,
+                'product_id' => $productId,
+                'quantity' => $quantity,
             ]);
         }
 
+        $supplierName = 'Local Farmer';
+        if ($product->farmer) {
+            $supplierName = $product->farmer->farm_name ?: ($product->farmer->user->name ?? 'Local Farmer');
+        }
+
+        $formatted = [
+            'id' => $cartItem->id,
+            'cart_id' => $cartItem->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'supplier_name' => $supplierName,
+            'unit_price' => (float) $product->price,
+            'price' => (float) $product->price,
+            'quantity' => (int) $cartItem->quantity,
+            'subtotal' => (float) ($product->price * $cartItem->quantity),
+            'image_url' => $product->image,
+            'sku' => 'SKU-' . $product->id,
+            'unit' => $product->unit ?? $product->quantity_unit ?? 'kg',
+            'product' => $product,
+        ];
+
         return response()->json([
             'success' => true,
-            'message' => 'Item added to cart',
-            'data' => $cart->load('items.product'),
-        ]);
+            'message' => 'Product added to cart successfully',
+            'data' => $formatted,
+        ], 201);
+    }
+
+    /**
+     * Alias for store method
+     */
+    public function addItem(Request $request)
+    {
+        return $this->store($request);
     }
 
     /**
      * Update cart item quantity
      */
-    public function updateItem(Request $request, CartItem $cartItem)
+    public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $product = $cartItem->product;
+        $userId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
+        $cartItem = Cart::where('user_id', $userId)
+            ->where('id', $id)
+            ->first();
 
-        if ($product->quantity_available < $validated['quantity']) {
+        if (!$cartItem) {
+            $cartItem = Cart::where('user_id', $userId)
+                ->where('product_id', $id)
+                ->firstOrFail();
+        }
+
+        $product = Product::findOrFail($cartItem->product_id);
+        $availableQty = (float) ($product->quantity_available ?? $product->quantity ?? 0);
+        if ($availableQty > 0 && $availableQty < $validated['quantity']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Insufficient stock available',
+                'message' => "Only {$availableQty} {$product->unit} available in stock",
             ], 422);
         }
 
-        $cartItem->update($validated);
+        $cartItem->quantity = $validated['quantity'];
+        $cartItem->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Cart item updated',
-            'data' => $cartItem,
+            'data' => [
+                'id' => $cartItem->id,
+                'quantity' => $cartItem->quantity,
+                'subtotal' => (float) ($product->price * $cartItem->quantity),
+            ],
         ]);
+    }
+
+    /**
+     * Alias for update method
+     */
+    public function updateItem(Request $request, $id)
+    {
+        return $this->update($request, $id);
     }
 
     /**
      * Remove item from cart
      */
-    public function removeItem(CartItem $cartItem)
+    public function destroy($id)
     {
-        $cartItem->delete();
+        $userId = Auth::id() ?? auth()->id();
+        $cartItem = Cart::where('user_id', $userId)
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)->orWhere('product_id', $id);
+            })
+            ->first();
+
+        if ($cartItem) {
+            $cartItem->delete();
+        }
 
         return response()->json([
             'success' => true,
@@ -112,15 +218,20 @@ class CartController extends Controller
     }
 
     /**
-     * Clear cart
+     * Alias for destroy method
+     */
+    public function removeItem($id)
+    {
+        return $this->destroy($id);
+    }
+
+    /**
+     * Clear all items from current user's cart
      */
     public function clear()
     {
-        $cart = Cart::where('user_id', Auth::id())->first();
-
-        if ($cart) {
-            $cart->items()->delete();
-        }
+        $userId = Auth::id() ?? auth()->id();
+        Cart::where('user_id', $userId)->delete();
 
         return response()->json([
             'success' => true,
@@ -129,38 +240,98 @@ class CartController extends Controller
     }
 
     /**
-     * Get cart totals
+     * Checkout current cart items
      */
-    public function totals()
+    public function checkout(Request $request)
     {
-        $cart = Cart::where('user_id', Auth::id())
-            ->with('items')
-            ->first();
+        $userId = Auth::id() ?? auth()->id();
+        $user = Auth::user();
 
-        if (!$cart) {
+        $cartItems = Cart::where('user_id', $userId)
+            ->with('product')
+            ->get();
+
+        if ($cartItems->isEmpty()) {
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'subtotal' => 0,
-                    'tax' => 0,
-                    'total' => 0,
-                    'items_count' => 0,
-                ],
-            ]);
+                'success' => false,
+                'message' => 'Cart is empty',
+            ], 400);
         }
 
-        $subtotal = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
-        $tax = $subtotal * 0.1; // 10% tax
-        $total = $subtotal + $tax;
+        $subtotal = $cartItems->sum(function ($item) {
+            return (float) ($item->product ? $item->product->price * $item->quantity : 0);
+        });
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'subtotal' => $subtotal,
-                'tax' => $tax,
-                'total' => $total,
-                'items_count' => $cart->items->count(),
-            ],
-        ]);
+        $deliveryFee = (float) $request->input('delivery_fee', 0);
+        $grandTotal = $subtotal + $deliveryFee;
+
+        // Group by farmer so each farmer gets an order
+        $grouped = $cartItems->groupBy(function ($item) {
+            return $item->product ? $item->product->farmer_id : 1;
+        });
+
+        $createdOrders = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($grouped as $farmerId => $items) {
+                $groupSubtotal = $items->sum(fn ($i) => (float) ($i->product ? $i->product->price * $i->quantity : 0));
+
+                $order = Order::create([
+                    'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+                    'buyer_id' => $userId,
+                    'farmer_id' => $farmerId,
+                    'subtotal' => $groupSubtotal,
+                    'delivery_fee' => $deliveryFee,
+                    'tax' => 0,
+                    'discount' => 0,
+                    'grand_total' => $groupSubtotal + $deliveryFee,
+                    'status' => 'pending',
+                    'delivery_address' => $request->input('delivery_address', $user->address ?? 'Addis Ababa, Ethiopia'),
+                    'delivery_region' => $request->input('delivery_region', 'Addis Ababa'),
+                    'delivery_zone' => $request->input('delivery_zone', 'Central'),
+                    'delivery_woreda' => $request->input('delivery_woreda', 'District 1'),
+                    'delivery_phone' => $request->input('phone', $user->phone ?? '251911111111'),
+                    'payment_method' => $request->input('payment_method', 'telebirr'),
+                    'payment_status' => 'pending',
+                ]);
+
+                foreach ($items as $item) {
+                    if ($item->product) {
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'product_id' => $item->product_id,
+                            'quantity' => $item->quantity,
+                            'price' => $item->product->price,
+                            'subtotal' => $item->product->price * $item->quantity,
+                        ]);
+
+                        // Reduce product quantity available if positive
+                        if ($item->product->quantity >= $item->quantity) {
+                            $item->product->decrement('quantity', $item->quantity);
+                        }
+                    }
+                }
+
+                $createdOrders[] = $order;
+            }
+
+            // Clear cart
+            Cart::where('user_id', $userId)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order placed successfully',
+                'data' => $createdOrders,
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to checkout: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

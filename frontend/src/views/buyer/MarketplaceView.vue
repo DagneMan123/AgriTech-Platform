@@ -105,15 +105,17 @@
             :class="['rounded-2xl border overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']"
           >
             <!-- Product Image -->
-            <div :class="['relative w-full pt-[100%] overflow-hidden', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-100']">
+            <div :class="['relative w-full pt-[90%] overflow-hidden', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-100']">
               <img
-                v-if="product.image"
+                v-if="product.image && !failedImages[product.id]"
                 :src="product.image"
                 :alt="product.name"
+                @error="handleImageError(product.id)"
                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               />
-              <div v-else class="absolute inset-0 flex items-center justify-center text-slate-400 text-3xl">
-                <i class="fas fa-image"></i>
+              <div v-else class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-teal-500/10 text-emerald-600 dark:text-emerald-400">
+                <i class="fas fa-leaf text-3xl mb-1.5 opacity-80"></i>
+                <span class="text-[11px] uppercase font-bold tracking-wider opacity-75">{{ product.category || 'Produce' }}</span>
               </div>
               <button
                 @click.stop="toggleWishlist(product)"
@@ -149,8 +151,30 @@
                   <button @click.stop="viewProduct(product.id)" :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
                     View
                   </button>
-                  <button @click.stop="addToCart(product)" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs">
-                    Add to Cart
+                  <button
+                    @click.stop="addToCart(product)"
+                    :disabled="addingToCartId === product.id"
+                    :class="[
+                      'flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5',
+                      recentlyAddedId === product.id
+                        ? 'bg-emerald-700 text-white'
+                        : addingToCartId === product.id
+                          ? 'bg-emerald-600/70 text-white cursor-wait'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                    ]"
+                  >
+                    <span v-if="addingToCartId === product.id" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <i v-else-if="recentlyAddedId === product.id" class="fas fa-check"></i>
+                    <i v-else class="fas fa-cart-plus text-xs"></i>
+                    <span>
+                      {{
+                        recentlyAddedId === product.id
+                          ? 'Added'
+                          : addingToCartId === product.id
+                            ? 'Adding...'
+                            : 'Add to Cart'
+                      }}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -182,9 +206,16 @@
             <i class="fas fa-times"></i>
           </button>
           <div class="flex gap-4 mb-4">
-            <img v-if="selectedProduct.image" :src="selectedProduct.image" :alt="selectedProduct.name" class="w-24 h-24 object-cover rounded-xl" />
-            <div v-else class="w-24 h-24 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl text-slate-400 text-2xl">
-              <i class="fas fa-image"></i>
+            <img
+              v-if="selectedProduct.image && !failedImages[selectedProduct.id]"
+              :src="selectedProduct.image"
+              :alt="selectedProduct.name"
+              @error="handleImageError(selectedProduct.id)"
+              class="w-24 h-24 object-cover rounded-xl"
+            />
+            <div v-else class="w-24 h-24 bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-teal-500/10 text-emerald-600 dark:text-emerald-400 flex flex-col items-center justify-center rounded-xl">
+              <i class="fas fa-leaf text-2xl mb-1 opacity-80"></i>
+              <span class="text-[9px] uppercase font-bold tracking-wider opacity-75">{{ selectedProduct.category || 'Produce' }}</span>
             </div>
             <div>
               <h3 class="text-lg font-bold">{{ selectedProduct.name }}</h3>
@@ -200,10 +231,82 @@
           </div>
           <div class="flex gap-2">
             <button @click="selectedProduct = null" :class="['flex-1 py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-700']">Close</button>
-            <button @click="addToCart(selectedProduct); selectedProduct = null" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-all">Add to Cart</button>
+            <button
+              @click="addToCart(selectedProduct)"
+              :disabled="addingToCartId === selectedProduct.id"
+              :class="[
+                'flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-all flex items-center justify-center gap-2',
+                recentlyAddedId === selectedProduct.id
+                  ? 'bg-emerald-700 text-white'
+                  : addingToCartId === selectedProduct.id
+                    ? 'bg-emerald-600/70 text-white cursor-wait'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+              ]"
+            >
+              <span v-if="addingToCartId === selectedProduct.id" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <i v-else-if="recentlyAddedId === selectedProduct.id" class="fas fa-check"></i>
+              <i v-else class="fas fa-cart-plus text-xs"></i>
+              <span>
+                {{
+                  recentlyAddedId === selectedProduct.id
+                    ? 'Added to Cart'
+                    : addingToCartId === selectedProduct.id
+                      ? 'Adding...'
+                      : 'Add to Cart'
+                }}
+              </span>
+            </button>
           </div>
         </div>
       </div>
+
+      <!-- Professional Toast Notification for Cart Actions -->
+      <transition
+        enter-active-class="transform transition ease-out duration-300"
+        enter-from-class="translate-y-4 opacity-0 sm:translate-y-0 sm:translate-x-4"
+        enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="toast.visible"
+          class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#131b2e] border border-emerald-500/40 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 backdrop-blur-md"
+        >
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fas fa-shopping-bag text-lg"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-0.5">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ toast.title }}</h4>
+              <button
+                @click="toast.visible = false"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-snug mb-2.5">
+              {{ toast.message }}
+            </p>
+            <div class="flex items-center gap-2">
+              <router-link
+                to="/buyer/cart"
+                class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition-colors shadow-xs"
+              >
+                <span>View Cart</span>
+                <i class="fas fa-arrow-right text-[10px]"></i>
+              </router-link>
+              <button
+                @click="toast.visible = false"
+                class="px-2.5 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
 
     </main>
   </div>
@@ -248,6 +351,34 @@ const priceRange = ref('')
 const sortBy = ref('newest')
 const sidebarOpen = ref(false)
 const selectedProduct = ref<Product | null>(null)
+
+// Image and Cart interaction states
+const failedImages = ref<Record<number, boolean>>({})
+const addingToCartId = ref<number | null>(null)
+const recentlyAddedId = ref<number | null>(null)
+const toast = ref<{ visible: boolean; title: string; message: string; timeout?: any }>({
+  visible: false,
+  title: '',
+  message: ''
+})
+
+const handleImageError = (productId: number) => {
+  failedImages.value[productId] = true
+}
+
+const showToast = (title: string, message: string) => {
+  if (toast.value.timeout) {
+    clearTimeout(toast.value.timeout)
+  }
+  toast.value = {
+    visible: true,
+    title,
+    message,
+    timeout: setTimeout(() => {
+      toast.value.visible = false
+    }, 4500)
+  }
+}
 
 const darkMode = computed(() => themeStore.isDark)
 
@@ -345,15 +476,31 @@ const viewProduct = (id: number) => {
   selectedProduct.value = safeProducts.value.find(p => p.id === id) || null
 }
 
-const addToCart = async (product: Product) => {
+const addToCart = async (product: Product, quantity = 1) => {
+  if (!product || addingToCartId.value === product.id) return
+  addingToCartId.value = product.id
+
   try {
     await buyerStore.addToCart({
       product_id: product.id,
-      quantity: 1
+      quantity
     })
-    alert('Added to cart successfully')
-  } catch (error) {
+    recentlyAddedId.value = product.id
+    showToast(
+      'Added to Cart!',
+      `${quantity}x "${product.name}" added to your shopping cart.`
+    )
+    setTimeout(() => {
+      if (recentlyAddedId.value === product.id) {
+        recentlyAddedId.value = null
+      }
+    }, 2500)
+  } catch (error: any) {
     console.error('Failed to add to cart:', error)
+    const errorMsg = error.response?.data?.message || 'Could not add product to cart. Please try again.'
+    showToast('Unable to Add', errorMsg)
+  } finally {
+    addingToCartId.value = null
   }
 }
 

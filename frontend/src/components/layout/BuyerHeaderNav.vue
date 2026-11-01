@@ -17,6 +17,29 @@
       <Moon v-else class="w-4 h-4 text-slate-600" />
     </button>
 
+    <!-- ── SHOPPING CART ICON ── -->
+    <router-link
+      to="/buyer/cart"
+      :class="[
+        'relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-xs group',
+        isDark 
+          ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-400' 
+          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-emerald-600'
+      ]"
+      title="Shopping Cart"
+      aria-label="Shopping Cart"
+    >
+      <ShoppingCart class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110" />
+
+      <!-- Cart Item Badge -->
+      <span
+        v-if="cartCount > 0"
+        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-emerald-600 text-white text-[10px] font-extrabold flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 shadow-sm"
+      >
+        {{ cartCount > 99 ? '99+' : cartCount }}
+      </span>
+    </router-link>
+
     <!-- ── NOTIFICATION BELL ICON ── -->
     <div class="relative" ref="notificationDropdownRef">
       <button
@@ -313,15 +336,19 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useBuyerStore } from '@/stores/buyerStore'
 import { notificationAPI } from '@/api/notifications'
 import { 
   Bell, BellOff, Sun, Moon, ChevronDown, ChevronRight, 
-  User, Mail, FileSpreadsheet, LogOut 
+  User, Mail, FileSpreadsheet, LogOut, ShoppingCart 
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
+const buyerStore = useBuyerStore()
+
+const cartCount = computed(() => buyerStore.cartCount)
 
 // Dark mode state connected to global reactive themeStore
 const isDark = computed(() => themeStore.isDark)
@@ -482,6 +509,9 @@ let pollInterval: any = null
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   fetchNotifications()
+
+  // Ensure cart is initialized for the counter
+  buyerStore.fetchCart().catch(() => {})
 
   // Poll every 45 seconds for new alerts
   pollInterval = setInterval(fetchNotifications, 45000)

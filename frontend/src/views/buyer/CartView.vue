@@ -70,10 +70,11 @@
                   v-if="item.image_url"
                   :src="item.image_url"
                   :alt="item.product_name"
+                  @error="(e: any) => e.target.style.display = 'none'"
                   class="image"
                 />
                 <div v-else class="no-image">
-                  <i class="fas fa-image"></i>
+                  <i class="fas fa-leaf"></i>
                 </div>
               </div>
 
@@ -88,7 +89,7 @@
 
               <!-- Item Price -->
               <div class="item-price">
-                <span class="unit-price">Ksh {{ formatNumber(item.unit_price || 0) }}</span>
+                <span class="unit-price">ETB {{ formatNumber(item.unit_price || 0) }}</span>
               </div>
 
               <!-- Item Quantity -->
@@ -110,7 +111,7 @@
 
               <!-- Item Subtotal -->
               <div class="item-subtotal">
-                <span class="subtotal-amount">Ksh {{ formatNumber(item.subtotal || 0) }}</span>
+                <span class="subtotal-amount">ETB {{ formatNumber(item.subtotal || 0) }}</span>
               </div>
 
               <!-- Item Actions -->
@@ -158,7 +159,7 @@
             <div class="summary-items">
               <div class="summary-row">
                 <span class="label">Subtotal:</span>
-                <span class="value">Ksh {{ formatNumber(subtotal) }}</span>
+                <span class="value">ETB {{ formatNumber(subtotal) }}</span>
               </div>
               <div class="summary-row">
                 <span class="label">Shipping:</span>
@@ -170,7 +171,7 @@
                       value="standard"
                       @change="updateShipping"
                     />
-                    <span>Standard (Ksh {{ formatNumber(SHIPPING.STANDARD) }})</span>
+                    <span>Standard (ETB {{ formatNumber(SHIPPING.STANDARD) }})</span>
                   </label>
                   <label class="radio-option">
                     <input
@@ -179,7 +180,7 @@
                       value="express"
                       @change="updateShipping"
                     />
-                    <span>Express (Ksh {{ formatNumber(SHIPPING.EXPRESS) }})</span>
+                    <span>Express (ETB {{ formatNumber(SHIPPING.EXPRESS) }})</span>
                   </label>
                   <label class="radio-option">
                     <input
@@ -188,13 +189,13 @@
                       value="overnight"
                       @change="updateShipping"
                     />
-                    <span>Overnight (Ksh {{ formatNumber(SHIPPING.OVERNIGHT) }})</span>
+                    <span>Overnight (ETB {{ formatNumber(SHIPPING.OVERNIGHT) }})</span>
                   </label>
                 </div>
               </div>
               <div class="summary-row">
                 <span class="label">Tax (16%):</span>
-                <span class="value">Ksh {{ formatNumber(tax) }}</span>
+                <span class="value">ETB {{ formatNumber(tax) }}</span>
               </div>
 
               <!-- Discount Code -->
@@ -210,7 +211,7 @@
                   <button @click="applyPromoCode" class="btn-apply">Apply</button>
                 </div>
                 <div v-if="promoDiscount > 0" class="discount-applied">
-                  <i class="fas fa-check"></i> Discount: -Ksh {{ formatNumber(promoDiscount) }}
+                  <i class="fas fa-check"></i> Discount: -ETB {{ formatNumber(promoDiscount) }}
                 </div>
               </div>
 
@@ -219,7 +220,7 @@
               <!-- Total -->
               <div class="summary-total">
                 <span class="total-label">Total:</span>
-                <span class="total-amount">Ksh {{ formatNumber(total) }}</span>
+                <span class="total-amount">ETB {{ formatNumber(total) }}</span>
               </div>
             </div>
 
@@ -254,7 +255,7 @@
                 </div>
                 <div class="rec-info">
                   <p class="rec-name">Recommended Product {{ i }}</p>
-                  <p class="rec-price">Ksh 2,500</p>
+                  <p class="rec-price">ETB 2,500</p>
                   <button class="btn-add-rec">Add to Cart</button>
                 </div>
               </div>
@@ -401,7 +402,7 @@ const applyPromoCode = () => {
     console.log('Promo code applied: 10% discount')
   } else if (promoCode.value === 'SAVE500') {
     promoDiscount.value = 500
-    console.log('Promo code applied: Ksh 500 discount')
+    console.log('Promo code applied: ETB 500 discount')
   } else {
     promoDiscount.value = 0
     alert('Invalid promo code')

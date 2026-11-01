@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { buyerAPI } from '@/api/buyer'
 
 export const useBuyerStore = defineStore('buyer', () => {
@@ -14,12 +14,18 @@ export const useBuyerStore = defineStore('buyer', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const cartCount = computed(() => {
+    return cart.value.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0)
+  })
+
   // Cart
   const fetchCart = async () => {
     loading.value = true
     try {
       const response = await buyerAPI.getCart()
-      cart.value = response.data.data || response.data
+      cart.value = Array.isArray(response.data?.data)
+        ? response.data.data
+        : (Array.isArray(response.data) ? response.data : [])
       return cart.value
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch cart'
@@ -32,7 +38,7 @@ export const useBuyerStore = defineStore('buyer', () => {
   const addToCart = async (data: any) => {
     try {
       const response = await buyerAPI.addToCart(data)
-      cart.value.push(response.data.data || response.data)
+      await fetchCart()
       return response.data.data || response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to add to cart'
@@ -40,10 +46,21 @@ export const useBuyerStore = defineStore('buyer', () => {
     }
   }
 
+  const updateCartItem = async (id: number, data: any) => {
+    try {
+      const response = await buyerAPI.updateCartItem(id, data)
+      await fetchCart()
+      return response.data.data || response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update cart item'
+      throw err
+    }
+  }
+
   const removeFromCart = async (id: number) => {
     try {
       await buyerAPI.removeFromCart(id)
-      cart.value = cart.value.filter(item => item.id !== id)
+      cart.value = cart.value.filter(item => item.id !== id && item.cart_id !== id)
       return true
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to remove from cart'
@@ -242,6 +259,7 @@ export const useBuyerStore = defineStore('buyer', () => {
 
   return {
     cart,
+    cartCount,
     orders,
     wishlist,
     returns,
@@ -253,6 +271,7 @@ export const useBuyerStore = defineStore('buyer', () => {
     error,
     fetchCart,
     addToCart,
+    updateCartItem,
     removeFromCart,
     checkout,
     fetchOrders,
