@@ -155,10 +155,12 @@ export const useBuyerStore = defineStore('buyer', () => {
     loading.value = true
     try {
       const response = await buyerAPI.getWishlist()
-      wishlist.value = response.data.data || response.data
+      const raw = response.data?.data?.data || response.data?.data || response.data || []
+      wishlist.value = Array.isArray(raw) ? raw : []
       return wishlist.value
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch wishlist'
+      wishlist.value = []
       throw err
     } finally {
       loading.value = false
@@ -168,8 +170,14 @@ export const useBuyerStore = defineStore('buyer', () => {
   const addToWishlist = async (data: any) => {
     try {
       const response = await buyerAPI.addToWishlist(data)
-      wishlist.value.push(response.data.data || response.data)
-      return response.data.data || response.data
+      const newItem = response.data?.data || response.data
+      if (!Array.isArray(wishlist.value)) {
+        wishlist.value = []
+      }
+      if (newItem && typeof newItem === 'object') {
+        wishlist.value.push(newItem)
+      }
+      return newItem
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to add to wishlist'
       throw err
@@ -179,7 +187,9 @@ export const useBuyerStore = defineStore('buyer', () => {
   const removeFromWishlist = async (id: number) => {
     try {
       await buyerAPI.removeFromWishlist(id)
-      wishlist.value = wishlist.value.filter(item => item.id !== id)
+      if (Array.isArray(wishlist.value)) {
+        wishlist.value = wishlist.value.filter(item => item.id !== id && item.product_id !== id)
+      }
       return true
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to remove from wishlist'

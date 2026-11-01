@@ -412,7 +412,7 @@ const safeProducts = computed<Product[]>(() => {
 const totalProducts = computed(() => safeProducts.value.length)
 const totalSuppliers = computed(() => new Set(safeProducts.value.map(p => p.farmer_name)).size)
 const totalCategories = computed(() => new Set(safeProducts.value.map(p => p.category)).size)
-const wishlistCount = computed(() => buyerStore.wishlist?.length || 0)
+const wishlistCount = computed(() => (Array.isArray(buyerStore.wishlist) ? buyerStore.wishlist.length : 0))
 
 const summaryCards = computed(() => [
   { key: 'total', label: 'Total Products', value: totalProducts.value, sub: 'Available items', icon: 'fas fa-box' },
@@ -422,7 +422,8 @@ const summaryCards = computed(() => [
 ])
 
 const isInWishlist = (productId: number) => {
-  return buyerStore.wishlist?.some((item: any) => item.product_id === productId) || false
+  const list = Array.isArray(buyerStore.wishlist) ? buyerStore.wishlist : []
+  return list.some((item: any) => item.product_id === productId || item.id === productId)
 }
 
 const formatNumber = (num: number) => {
@@ -512,9 +513,17 @@ const addToCart = async (product: Product, quantity = 1) => {
 
 const toggleWishlist = async (product: Product) => {
   try {
-    await buyerStore.addToWishlist({ product_id: product.id })
+    if (isInWishlist(product.id)) {
+      const list = Array.isArray(buyerStore.wishlist) ? buyerStore.wishlist : []
+      const match = list.find((w: any) => w.product_id === product.id || w.id === product.id)
+      if (match?.id) {
+        await buyerStore.removeFromWishlist(match.id)
+      }
+    } else {
+      await buyerStore.addToWishlist({ product_id: product.id })
+    }
   } catch (error) {
-    console.error('Failed to add to wishlist:', error)
+    console.error('Failed to update wishlist:', error)
   }
 }
 
