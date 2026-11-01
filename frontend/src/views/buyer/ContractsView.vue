@@ -13,7 +13,7 @@
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
 
       <!-- Header Section (Strictly NO toggle symbol) -->
-      <div :class="['border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[24px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+      <div :class="['border-b border-t-0 border-x-0 transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[24px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <!-- Mobile Menu Toggle Button -->
@@ -25,15 +25,6 @@
               <Menu class="w-5 h-5" />
             </button>
             <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                  <Handshake class="w-3.5 h-3.5" />
-                  Contract Farming
-                </span>
-                <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                  Buyer Portal &gt; Contract Farming &gt; Direct Contracts
-                </span>
-              </div>
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 Direct Contracts
               </h1>
