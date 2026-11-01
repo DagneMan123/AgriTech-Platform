@@ -12,9 +12,6 @@
           <p class="page-subtitle">Review and manage your items</p>
         </div>
         <div class="header-actions">
-          <button @click="continueShopping" class="btn-secondary">
-            <i class="fas fa-arrow-left"></i> Continue Shopping
-          </button>
           <BuyerHeaderNav />
         </div>
       </div>
@@ -222,29 +219,6 @@
             <button @click="saveCart" class="btn-secondary btn-full">
               <i class="fas fa-bookmark"></i> Save for Later
             </button>
-
-            <!-- Security Info -->
-            <div class="security-info">
-              <i class="fas fa-lock"></i>
-              <span>Secure checkout. Your data is encrypted.</span>
-            </div>
-          </div>
-
-          <!-- Recommendations -->
-          <div class="recommendations-card">
-            <h3 class="rec-title">You might also like</h3>
-            <div class="rec-items">
-              <div v-for="i in 3" :key="i" class="rec-item">
-                <div class="rec-image">
-                  <i class="fas fa-image"></i>
-                </div>
-                <div class="rec-info">
-                  <p class="rec-name">Recommended Product {{ i }}</p>
-                  <p class="rec-price">ETB 2,500</p>
-                  <button class="btn-add-rec">Add to Cart</button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
