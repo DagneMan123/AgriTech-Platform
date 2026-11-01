@@ -684,20 +684,6 @@ const handleLogout = async () => {
   color: #f8fafc !important;
 }
 
-:global(html.dark) .action-btn.danger:hover,
-.buyer-layout.dark .action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.25) !important;
-  color: #f87171 !important;
-  border-color: #ef4444 !important;
-}
-
-:global(html.dark) .action-btn.wishlist-active,
-.buyer-layout.dark .action-btn.wishlist-active {
-  background: rgba(239, 68, 68, 0.2) !important;
-  color: #f87171 !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-}
-
 /* Header */
 .cart-header {
   display: flex;

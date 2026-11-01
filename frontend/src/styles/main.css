@@ -51,6 +51,11 @@ html.dark {
   @apply box-border;
 }
 
+html, body, #app, .app-container {
+  border: 0 !important;
+  outline: 0 !important;
+}
+
 body {
   background-color: var(--bg-light-secondary);
   color: var(--text-light-primary);

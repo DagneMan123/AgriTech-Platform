@@ -10,10 +10,10 @@
     <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
+    <main class="flex-1 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <!-- Header Section -->
-      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+      <!-- Header Section (Clean full-width flush top, no negative margin gaps) -->
+      <div :class="['flex justify-between items-start gap-4 px-6 lg:px-8 py-[24px] mb-6 border-b border-t-0 border-x-0 transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Marketplace</h1>
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and discover fresh agricultural products</p>
@@ -22,6 +22,9 @@
           <BuyerHeaderNav />
         </div>
       </div>
+
+      <!-- Page Content Container with standard padding -->
+      <div class="px-4 lg:px-8 pb-8">
 
       <!-- Summary Statistics Grid -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Marketplace summary statistics">
@@ -197,6 +200,7 @@
         <button @click="clearFilters" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
           <i class="fas fa-redo"></i> Reset Filters
         </button>
+      </div>
       </div>
 
       <!-- Product Details Modal -->
@@ -532,3 +536,14 @@ const handleLogout = () => {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+/* Strict reset: prevent top or side borders/outlines on main & header */
+main,
+main > div:first-child {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  outline: none !important;
+}
+</style>
