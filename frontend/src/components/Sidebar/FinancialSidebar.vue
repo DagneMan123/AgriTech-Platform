@@ -156,6 +156,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, CreditCard, FileText, 
   CheckCircle2, CalendarClock, ShieldAlert, Umbrella, FilePlus, 
@@ -165,6 +166,7 @@ import {
 } from 'lucide-vue-next'
 
 const emit = defineEmits(['logout'])
+const { isDark, toggleTheme } = useTheme()
 
 const expandedSections = ref({
   loans: true,
@@ -386,5 +388,24 @@ const toggleSection = (section) => {
 
 .logout-btn:hover {
   background: #fee2e2 !important;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sidebar.dark .theme-toggle-btn {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: #1e293b !important;
 }
 </style>

@@ -216,6 +216,10 @@
           <component :is="expandedSections.account ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.account" class="section-items">
+          <button type="button" class="menu-item sub-item theme-toggle-btn" @click="toggleTheme" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+            <component :is="isDark ? Sun : Moon" class="sub-icon text-amber-500" />
+            <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+          </button>
           <router-link to="/farmer/profile" class="menu-item sub-item" active-class="active">
             <User class="sub-icon" />
             <span>Profile</span>
@@ -241,13 +245,13 @@ import {
   Leaf, Flower2, FlaskConical, ShieldAlert, Wrench, FileText, 
   BadgeDollarSign, Truck, Send, MapPin, CloudSun, CloudSunRain, BarChart3, 
   MessageSquare, BookOpen, Landmark, HandCoins, ShieldCheck, Wallet, History, 
-  PieChart, FileSpreadsheet, UserCog, User, LogOut 
+  PieChart, FileSpreadsheet, UserCog, User, LogOut, Sun, Moon 
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-const { isDark, isLight } = useTheme()
+const { isDark, isLight, toggleTheme } = useTheme()
 const emit = defineEmits(['logout'])
 
 const expandedSections = ref({
@@ -575,5 +579,24 @@ onMounted(() => {
 
 .sidebar.dark .logout-btn:hover {
   background: rgba(220, 38, 38, 0.2) !important;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sidebar.dark .theme-toggle-btn {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: #1a2338 !important;
 }
 </style>

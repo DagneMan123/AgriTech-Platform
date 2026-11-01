@@ -146,14 +146,16 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, Truck, Inbox, Clock, 
   History, Map, Car, Users, Wrench, Wallet, Banknote, Receipt, 
   PieChart, FileSpreadsheet, BarChart3, UserCog, ShieldCheck, 
-  Bell, Mail, User, LogOut 
+  Bell, Mail, User, LogOut, Sun, Moon 
 } from 'lucide-vue-next'
 
 const emit = defineEmits(['logout'])
+const { isDark, toggleTheme } = useTheme()
 
 const expandedSections = ref({
   deliveries: true,
@@ -375,5 +377,24 @@ const toggleSection = (section) => {
 
 .logout-btn:hover {
   background: #fee2e2 !important;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sidebar.dark .theme-toggle-btn {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: #1e293b !important;
 }
 </style>

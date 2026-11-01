@@ -1,5 +1,5 @@
 <template>
-  <div class="buyer-layout">
+  <div class="buyer-layout" :class="{ 'dark': isDark }">
     <!-- Sidebar -->
     <BuyerSidebar @logout="handleLogout" />
 
@@ -260,6 +260,7 @@ import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import { formatImageUrl } from '@/utils/helpers'
+import { useTheme } from '@/composables/useTheme'
 import {
   getDynamicShippingOptions,
   type DynamicShippingOption
@@ -269,6 +270,7 @@ import {
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const { isDark, toggleTheme } = useTheme()
 
 // State
 const selectedItems = ref<number[]>([])
@@ -453,36 +455,237 @@ const handleLogout = async () => {
 }
 
 /* Dark Mode Overrides */
-:global(html.dark) .cart-container {
+:global(html.dark) .buyer-layout,
+.buyer-layout.dark {
   background-color: #0b0f19 !important;
   color: #f1f5f9;
 }
-:global(html.dark) .page-title {
+
+:global(html.dark) .cart-container,
+.buyer-layout.dark .cart-container {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9;
+}
+
+:global(html.dark) .page-title,
+.buyer-layout.dark .page-title {
   color: #f8fafc !important;
 }
-:global(html.dark) .page-subtitle {
+
+:global(html.dark) .page-subtitle,
+.buyer-layout.dark .page-subtitle {
   color: #94a3b8 !important;
 }
-:global(html.dark) .cart-items-section,
-:global(html.dark) .order-summary,
-:global(html.dark) .empty-cart,
-:global(html.dark) .cart-item {
+
+:global(html.dark) .cart-main,
+.buyer-layout.dark .cart-main {
   background: #131b2e !important;
-  border-color: #1e293b !important;
-  color: #f8fafc;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
 }
-:global(html.dark) .item-name {
+
+:global(html.dark) .cart-items-header,
+.buyer-layout.dark .cart-items-header {
+  background: #131b2e !important;
+  border-bottom: 1px solid #1e293b !important;
   color: #f8fafc !important;
 }
+
+:global(html.dark) .cart-items,
+.buyer-layout.dark .cart-items {
+  background: #131b2e !important;
+}
+
+:global(html.dark) .cart-item,
+.buyer-layout.dark .cart-item {
+  background: #131b2e !important;
+  border-bottom: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .cart-item:hover,
+.buyer-layout.dark .cart-item:hover {
+  background: #182238 !important;
+}
+
+:global(html.dark) .cart-item-actions,
+.buyer-layout.dark .cart-item-actions {
+  background: #0f172a !important;
+  border-top: 1px solid #1e293b !important;
+}
+
+:global(html.dark) .item-name,
+.buyer-layout.dark .item-name {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .item-supplier,
+.buyer-layout.dark .item-supplier {
+  color: #94a3b8 !important;
+}
+
 :global(html.dark) .item-price,
-:global(html.dark) .summary-row,
-:global(html.dark) .summary-total {
+.buyer-layout.dark .item-price {
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .quantity-control,
+.buyer-layout.dark .quantity-control {
+  background: #0b0f19 !important;
+  border: 1px solid #334155 !important;
+}
+
+:global(html.dark) .qty-btn,
+.buyer-layout.dark .qty-btn {
+  background: transparent !important;
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .qty-btn:hover,
+.buyer-layout.dark .qty-btn:hover {
+  background: #1e293b !important;
   color: #f8fafc !important;
 }
-:global(html.dark) .btn-secondary {
+
+:global(html.dark) .qty-input,
+.buyer-layout.dark .qty-input {
+  background: transparent !important;
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .summary-card,
+.buyer-layout.dark .summary-card {
+  background: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+:global(html.dark) .summary-title,
+.buyer-layout.dark .summary-title {
+  color: #f8fafc !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+:global(html.dark) .summary-row,
+.buyer-layout.dark .summary-row {
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .summary-row .label,
+.buyer-layout.dark .summary-row .label {
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .summary-row .value,
+.buyer-layout.dark .summary-row .value {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .summary-total,
+.buyer-layout.dark .summary-total {
+  border-top: 2px solid #1e293b !important;
+  border-bottom: 2px solid #1e293b !important;
+}
+
+:global(html.dark) .total-label,
+.buyer-layout.dark .total-label {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .radio-option,
+.buyer-layout.dark .radio-option {
+  color: #cbd5e1 !important;
+}
+
+:global(html.dark) .shipping-options,
+.buyer-layout.dark .shipping-options {
+  border-top: 1px solid #1e293b !important;
+}
+
+:global(html.dark) .shipping-summary-details,
+.buyer-layout.dark .shipping-summary-details {
+  background: #0b0f19 !important;
+  border: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .promo-input input,
+.buyer-layout.dark .promo-input input {
+  background: #0b0f19 !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .empty-cart,
+.buyer-layout.dark .empty-cart {
+  background: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .empty-cart h2,
+.buyer-layout.dark .empty-cart h2 {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .empty-cart p,
+.buyer-layout.dark .empty-cart p {
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .empty-icon,
+.buyer-layout.dark .empty-icon {
+  background: #0b0f19 !important;
+  color: #60a5fa !important;
+}
+
+:global(html.dark) .recommendations,
+.buyer-layout.dark .recommendations {
+  background: #131b2e !important;
+  border: 1px solid #1e293b !important;
+}
+
+:global(html.dark) .recommendations-title,
+.buyer-layout.dark .recommendations-title {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .rec-card,
+.buyer-layout.dark .rec-card {
+  background: #0b0f19 !important;
+  border: 1px solid #1e293b !important;
+}
+
+:global(html.dark) .rec-name,
+.buyer-layout.dark .rec-name {
+  color: #f8fafc !important;
+}
+
+:global(html.dark) .badge,
+.buyer-layout.dark .badge {
+  background: rgba(37, 99, 235, 0.2) !important;
+  color: #60a5fa !important;
+}
+
+:global(html.dark) .btn-secondary,
+.buyer-layout.dark .btn-secondary {
   background: #1e293b !important;
   border-color: #334155 !important;
   color: #e2e8f0 !important;
+}
+
+:global(html.dark) .action-btn,
+.buyer-layout.dark .action-btn {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+:global(html.dark) .action-btn:hover,
+.buyer-layout.dark .action-btn:hover {
+  background: #334155 !important;
+  color: #f8fafc !important;
 }
 
 /* Header */

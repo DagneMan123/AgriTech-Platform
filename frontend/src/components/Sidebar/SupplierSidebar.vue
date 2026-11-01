@@ -174,6 +174,10 @@
           <component :is="expandedSections.account ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.account" class="section-items">
+          <button type="button" class="menu-item sub-item theme-toggle-btn" @click="toggleTheme" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+            <component :is="isDark ? Sun : Moon" class="sub-icon text-amber-500" />
+            <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+          </button>
           <router-link to="/supplier/account/licenses" class="menu-item sub-item" active-class="active">
             <ShieldCheck class="sub-icon" />
             <span>Business Licenses & Docs</span>
@@ -202,15 +206,17 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
 import { 
   ChevronRight, ChevronDown, LayoutDashboard, Package, Boxes, PlusCircle, 
   Layers, Tags, ShoppingCart, Inbox, Clock, CheckCircle2, Landmark, 
   FileSpreadsheet, Sprout, ShieldAlert, Truck, Send, MapPin, Wallet, 
   Banknote, Receipt, History, PieChart, BarChart2, BarChart3, UserCog, 
-  ShieldCheck, Bell, Mail, User, LogOut 
+  ShieldCheck, Bell, Mail, User, LogOut, Sun, Moon 
 } from 'lucide-vue-next'
 
 const emit = defineEmits(['logout'])
+const { isDark, toggleTheme } = useTheme()
 
 const expandedSections = ref({
   inventory: true,
@@ -434,5 +440,24 @@ const toggleSection = (section) => {
 
 .logout-btn:hover {
   background: #fee2e2 !important;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sidebar.dark .theme-toggle-btn {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: #1e293b !important;
 }
 </style>

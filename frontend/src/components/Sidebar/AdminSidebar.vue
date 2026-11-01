@@ -212,10 +212,10 @@ import {
   Contact, UserPlus, Shield, ShieldCheck, ClipboardCheck, Sprout, ShoppingCart, 
   Boxes, Landmark, UsersRound, GraduationCap, Truck, Store, Wheat, 
   PackageSearch, ShieldAlert, Wallet, Vault, BadgeDollarSign, FileSpreadsheet, 
-  Sliders, MapPin, FileText, History, UserCog, Bell, Mail, User, LogOut 
+  Sliders, MapPin, FileText, History, UserCog, Bell, Mail, User, LogOut, Sun, Moon 
 } from 'lucide-vue-next'
 
-const { isDark } = useTheme()
+const { isDark, toggleTheme } = useTheme()
 const emit = defineEmits(['logout'])
 
 const expandedSections = ref({
@@ -456,5 +456,24 @@ const toggleSection = (section) => {
 
 .sidebar.dark .logout-sub-btn:hover {
   background: rgba(220, 38, 38, 0.2) !important;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.sidebar.dark .theme-toggle-btn {
+  color: #94a3b8 !important;
+}
+
+.sidebar.dark .theme-toggle-btn:hover {
+  color: #ffffff !important;
+  background: #1e293b !important;
 }
 </style>
