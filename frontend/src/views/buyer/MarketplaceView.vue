@@ -89,7 +89,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
-        <div class="w-10 h-10 border-4 border-slate-300 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-600 rounded-full animate-spin mb-4"></div>
         <p :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">Loading marketplace products...</p>
       </div>
 
@@ -107,13 +107,13 @@
             <!-- Product Image -->
             <div :class="['relative w-full pt-[90%] overflow-hidden', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-100']">
               <img
-                v-if="product.image && !failedImages[product.id]"
-                :src="product.image"
+                v-if="formatImageUrl(product.image) && !failedImages[String(product.id)]"
+                :src="formatImageUrl(product.image)"
                 :alt="product.name"
                 @error="handleImageError(product.id)"
                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               />
-              <div v-else class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-teal-500/10 text-emerald-600 dark:text-emerald-400">
+              <div v-else class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-500/10 via-blue-600/5 to-indigo-500/10 text-blue-600 dark:text-blue-400">
                 <i class="fas fa-leaf text-3xl mb-1.5 opacity-80"></i>
                 <span class="text-[11px] uppercase font-bold tracking-wider opacity-75">{{ product.category || 'Produce' }}</span>
               </div>
@@ -143,7 +143,7 @@
 
               <div>
                 <div :class="['flex justify-between items-center mb-3 pt-3 border-t', darkMode ? 'border-blue-500/30' : 'border-slate-100']">
-                  <span class="text-sm font-black text-emerald-500">ETB {{ formatNumber(product.price || 0) }}</span>
+                  <span class="text-sm font-black text-blue-600 dark:text-blue-400">ETB {{ formatNumber(product.price || 0) }}</span>
                   <span v-if="product.original_price" class="text-xs text-slate-400 line-through">ETB {{ formatNumber(product.original_price) }}</span>
                 </div>
 
@@ -157,10 +157,10 @@
                     :class="[
                       'flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5',
                       recentlyAddedId === product.id
-                        ? 'bg-emerald-700 text-white'
+                        ? 'bg-blue-700 text-white'
                         : addingToCartId === product.id
-                          ? 'bg-emerald-600/70 text-white cursor-wait'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                          ? 'bg-blue-600/70 text-white cursor-wait'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
                     ]"
                   >
                     <span v-if="addingToCartId === product.id" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -185,7 +185,7 @@
 
       <!-- Empty State -->
       <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
-        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600']">
+        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600']">
           <i class="fas fa-box-open"></i>
         </div>
         <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">
@@ -194,7 +194,7 @@
         <p :class="['text-xs max-w-sm mb-5', darkMode ? 'text-slate-400' : 'text-slate-500']">
           Try adjusting your filters or search terms to find available agricultural products.
         </p>
-        <button @click="clearFilters" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
+        <button @click="clearFilters" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">
           <i class="fas fa-redo"></i> Reset Filters
         </button>
       </div>
@@ -207,26 +207,26 @@
           </button>
           <div class="flex gap-4 mb-4">
             <img
-              v-if="selectedProduct.image && !failedImages[selectedProduct.id]"
-              :src="selectedProduct.image"
+              v-if="formatImageUrl(selectedProduct.image) && !failedImages[String(selectedProduct.id)]"
+              :src="formatImageUrl(selectedProduct.image)"
               :alt="selectedProduct.name"
               @error="handleImageError(selectedProduct.id)"
               class="w-24 h-24 object-cover rounded-xl"
             />
-            <div v-else class="w-24 h-24 bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-teal-500/10 text-emerald-600 dark:text-emerald-400 flex flex-col items-center justify-center rounded-xl">
+            <div v-else class="w-24 h-24 bg-gradient-to-br from-blue-500/10 via-blue-600/5 to-indigo-500/10 text-blue-600 dark:text-blue-400 flex flex-col items-center justify-center rounded-xl">
               <i class="fas fa-leaf text-2xl mb-1 opacity-80"></i>
               <span class="text-[9px] uppercase font-bold tracking-wider opacity-75">{{ selectedProduct.category || 'Produce' }}</span>
             </div>
             <div>
               <h3 class="text-lg font-bold">{{ selectedProduct.name }}</h3>
               <p class="text-xs text-slate-500 mt-1"><i class="fas fa-store"></i> {{ selectedProduct.farmer_name || 'Local Farmer' }}</p>
-              <p class="text-xs text-emerald-600 font-bold uppercase mt-1">{{ selectedProduct.category }}</p>
-              <p class="text-base font-black text-emerald-500 mt-2">ETB {{ formatNumber(selectedProduct.price || 0) }} / {{ selectedProduct.unit || 'kg' }}</p>
+              <p class="text-xs text-blue-600 font-bold uppercase mt-1">{{ selectedProduct.category }}</p>
+              <p class="text-base font-black text-blue-600 dark:text-blue-400 mt-2">ETB {{ formatNumber(selectedProduct.price || 0) }} / {{ selectedProduct.unit || 'kg' }}</p>
             </div>
           </div>
           <p v-if="selectedProduct.description" :class="['text-xs mb-4 p-3 rounded-xl', darkMode ? 'bg-[#0b0f19] text-slate-300' : 'bg-slate-50 text-slate-600']">{{ selectedProduct.description }}</p>
           <div class="flex justify-between items-center text-xs text-slate-500 mb-6">
-            <span>Available: <strong class="text-emerald-500">{{ selectedProduct.quantity_available || selectedProduct.quantity || 0 }} {{ selectedProduct.unit || 'kg' }}</strong></span>
+            <span>Available: <strong class="text-blue-600 dark:text-blue-400">{{ selectedProduct.quantity_available || selectedProduct.quantity || 0 }} {{ selectedProduct.unit || 'kg' }}</strong></span>
             <span>Grade: <strong>{{ selectedProduct.quality_grade || 'Standard' }}</strong></span>
           </div>
           <div class="flex gap-2">
@@ -237,10 +237,10 @@
               :class="[
                 'flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer shadow-xs transition-all flex items-center justify-center gap-2',
                 recentlyAddedId === selectedProduct.id
-                  ? 'bg-emerald-700 text-white'
+                  ? 'bg-blue-700 text-white'
                   : addingToCartId === selectedProduct.id
-                    ? 'bg-emerald-600/70 text-white cursor-wait'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                    ? 'bg-blue-600/70 text-white cursor-wait'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-95'
               ]"
             >
               <span v-if="addingToCartId === selectedProduct.id" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -271,9 +271,9 @@
       >
         <div
           v-if="toast.visible"
-          class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#131b2e] border border-emerald-500/40 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 backdrop-blur-md"
+          class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#131b2e] border border-blue-500/40 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 backdrop-blur-md"
         >
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
             <i class="fas fa-shopping-bag text-lg"></i>
           </div>
           <div class="flex-1 min-w-0">
@@ -292,7 +292,7 @@
             <div class="flex items-center gap-2">
               <router-link
                 to="/buyer/cart"
-                class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition-colors shadow-xs"
+                class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition-colors shadow-xs"
               >
                 <span>View Cart</span>
                 <i class="fas fa-arrow-right text-[10px]"></i>
@@ -319,6 +319,7 @@ import { useMarketplaceStore } from '@/stores/marketplaceStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { formatImageUrl } from '@/utils/helpers'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
@@ -353,7 +354,7 @@ const sidebarOpen = ref(false)
 const selectedProduct = ref<Product | null>(null)
 
 // Image and Cart interaction states
-const failedImages = ref<Record<number, boolean>>({})
+const failedImages = ref<Record<string, boolean>>({})
 const addingToCartId = ref<number | null>(null)
 const recentlyAddedId = ref<number | null>(null)
 const toast = ref<{ visible: boolean; title: string; message: string; timeout?: any }>({
@@ -362,8 +363,13 @@ const toast = ref<{ visible: boolean; title: string; message: string; timeout?: 
   message: ''
 })
 
-const handleImageError = (productId: number) => {
-  failedImages.value[productId] = true
+const handleImageError = (productId: number | string) => {
+  if (productId != null) {
+    failedImages.value = {
+      ...failedImages.value,
+      [String(productId)]: true
+    }
+  }
 }
 
 const showToast = (title: string, message: string) => {

@@ -307,7 +307,7 @@
           <section :class="['rounded-2xl border p-5 sm:p-6 shadow-2xs transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex-wrap gap-2">
               <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
                   <Truck class="w-4 h-4" />
                 </div>
                 <div>
@@ -321,7 +321,7 @@
               <!-- Real-time Metrics Pill -->
               <div class="flex items-center gap-2 flex-wrap">
                 <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
-                  <Scale class="w-3.5 h-3.5 text-purple-500" />
+                  <Scale class="w-3.5 h-3.5 text-blue-500" />
                   <span>Cargo Weight: <strong>{{ formatNumber(totalWeightKg) }} kg</strong></span>
                 </span>
                 <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
@@ -334,7 +334,7 @@
             <!-- Dynamic Category Filtering Notice -->
             <div
               v-if="hasPerishables"
-              class="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2.5"
+              class="mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs flex items-center gap-2.5"
             >
               <Leaf class="w-4 h-4 shrink-0" />
               <span>
@@ -359,7 +359,7 @@
                 :class="[
                   'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between group',
                   selectedShipping === opt.key
-                    ? (darkMode ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/30' : 'border-purple-600 bg-purple-50/50 ring-2 ring-purple-600/20')
+                    ? (darkMode ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20')
                     : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
                 ]"
               >
@@ -370,7 +370,7 @@
                         type="radio"
                         v-model="selectedShipping"
                         :value="opt.key"
-                        class="text-purple-600 focus:ring-purple-500"
+                        class="text-blue-600 focus:ring-blue-500"
                       />
                       <span class="text-xs font-bold leading-tight">{{ opt.title }}</span>
                     </div>
@@ -378,7 +378,7 @@
 
                   <span
                     v-if="opt.badge"
-                    class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30"
+                    class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-blue-500/20 text-blue-500 border border-blue-500/30"
                   >
                     {{ opt.badge }}
                   </span>
@@ -390,7 +390,7 @@
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
                   <span class="text-[10px] text-slate-400">Dynamic Fee:</span>
-                  <p class="text-sm font-black text-purple-600 dark:text-purple-400">
+                  <p class="text-sm font-black text-blue-600 dark:text-blue-400">
                     ETB {{ formatNumber(opt.fee) }}
                   </p>
                 </div>
@@ -401,7 +401,7 @@
           <!-- SECTION 3: PAYMENT METHOD -->
           <section :class="['rounded-2xl border p-5 sm:p-6 shadow-2xs transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
                 <CreditCard class="w-4 h-4" />
               </div>
               <div>
@@ -418,7 +418,7 @@
                 :class="[
                   'relative rounded-xl border p-4 cursor-pointer transition-all flex items-start gap-3',
                   paymentForm.method === pm.key
-                    ? (darkMode ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-600/20')
+                    ? (darkMode ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20')
                     : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
                 ]"
               >
@@ -426,12 +426,12 @@
                   type="radio"
                   v-model="paymentForm.method"
                   :value="pm.key"
-                  class="mt-1 text-emerald-600 focus:ring-emerald-500"
+                  class="mt-1 text-blue-600 focus:ring-blue-500"
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
                     <span class="text-xs font-bold">{{ pm.title }}</span>
-                    <span v-if="pm.badge" class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
+                    <span v-if="pm.badge" class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-500 border border-blue-500/30">
                       {{ pm.badge }}
                     </span>
                   </div>
@@ -446,7 +446,7 @@
             <div :class="['rounded-xl p-4 border transition-all text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <!-- Telebirr details -->
               <div v-if="paymentForm.method === 'telebirr'" class="space-y-3">
-                <div class="flex items-center gap-2 text-emerald-600 font-bold">
+                <div class="flex items-center gap-2 text-blue-600 font-bold">
                   <Phone class="w-4 h-4" />
                   <span>Telebirr Instant Payment</span>
                 </div>
@@ -459,14 +459,14 @@
                     v-model="paymentForm.telebirr_phone"
                     type="text"
                     placeholder="09... or 07..."
-                    :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-emerald-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+                    :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
               </div>
 
               <!-- CBE Birr details -->
               <div v-else-if="paymentForm.method === 'cbe_birr'" class="space-y-3">
-                <div class="flex items-center gap-2 text-purple-500 font-bold">
+                <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <Building class="w-4 h-4" />
                   <span>CBE Birr Mobile Money</span>
                 </div>
@@ -479,7 +479,7 @@
                     v-model="paymentForm.cbe_phone"
                     type="text"
                     placeholder="09... or 07..."
-                    :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-purple-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+                    :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
               </div>
@@ -508,7 +508,7 @@
 
               <!-- Card details -->
               <div v-else-if="paymentForm.method === 'card'" class="space-y-3">
-                <div class="flex items-center gap-2 text-emerald-500 font-bold">
+                <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <CreditCard class="w-4 h-4" />
                   <span>Debit / Credit Card (Chapa Secured)</span>
                 </div>
@@ -537,7 +537,7 @@
           <div :class="['rounded-2xl border p-5 sm:p-6 shadow-sm sticky top-6 transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <h2 class="text-sm font-bold tracking-tight mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <span>Order Summary</span>
-              <span class="text-xs font-semibold text-emerald-500">{{ cartItems.length }} item(s)</span>
+              <span class="text-xs font-semibold text-blue-500">{{ cartItems.length }} item(s)</span>
             </h2>
 
             <!-- Items Mini List with Real-Time Quantity Modifiers -->
@@ -550,13 +550,13 @@
                 <!-- Image or Leaf Placeholder -->
                 <div :class="['w-12 h-12 rounded-xl overflow-hidden shrink-0 flex items-center justify-center border', darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200']">
                   <img
-                    v-if="item.image_url"
-                    :src="item.image_url"
+                    v-if="formatImageUrl(item.image_url)"
+                    :src="formatImageUrl(item.image_url)"
                     :alt="item.product_name"
                     @error="(e: any) => e.target.style.display = 'none'"
                     class="w-full h-full object-cover"
                   />
-                  <Leaf v-else class="w-5 h-5 text-emerald-500" />
+                  <Leaf v-else class="w-5 h-5 text-blue-500" />
                 </div>
 
                 <div class="flex-1 min-w-0">
@@ -611,7 +611,7 @@
                   </div>
                 </div>
 
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0 self-center">
+                <span class="text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0 self-center">
                   ETB {{ formatNumber(item.subtotal || ((item.unit_price || item.price) * item.quantity)) }}
                 </span>
               </div>
@@ -628,20 +628,20 @@
               <div class="space-y-0.5">
                 <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
-                  <span class="font-bold text-purple-500 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
+                  <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-[10px] text-slate-400">
                   <span>{{ formatNumber(totalWeightKg) }} kg • ~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
-                  <span v-if="hasPerishables" class="text-emerald-500 font-semibold">Cold-Chain active</span>
+                  <span v-if="hasPerishables" class="text-blue-500 font-semibold">Cold-Chain active</span>
                   <span v-else class="text-amber-500 font-medium">Ambient freight</span>
                 </div>
               </div>
 
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Platform Escrow Fee:</span>
-                <span class="font-bold text-emerald-500">FREE</span>
+                <span class="font-bold text-blue-500">FREE</span>
               </div>
-              <div v-if="summaryDiscount > 0" class="flex justify-between items-center text-emerald-500">
+              <div v-if="summaryDiscount > 0" class="flex justify-between items-center text-blue-500">
                 <span>Promo Discount:</span>
                 <span class="font-bold">-ETB {{ formatNumber(summaryDiscount) }}</span>
               </div>
@@ -651,7 +651,7 @@
                   <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 block">Total Due:</span>
                   <span class="text-[10px] text-slate-400">Includes freight &amp; settlement</span>
                 </div>
-                <span class="text-base font-black text-emerald-600 dark:text-emerald-400">
+                <span class="text-base font-black text-blue-600 dark:text-blue-400">
                   ETB {{ formatNumber(summaryGrandTotal) }}
                 </span>
               </div>
@@ -668,7 +668,7 @@
               type="button"
               @click="handlePlaceOrder"
               :disabled="submitting || cartItems.length === 0"
-              class="w-full py-3.5 px-4 rounded-xl font-extrabold text-xs text-white bg-emerald-600 hover:bg-emerald-500 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full py-3.5 px-4 rounded-xl font-extrabold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw v-if="submitting" class="w-4 h-4 animate-spin" />
               <Lock v-else class="w-4 h-4" />
@@ -679,7 +679,7 @@
 
             <!-- Guarantee Notice -->
             <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2 text-[11px] text-slate-400 text-center">
-              <ShieldCheck class="w-4 h-4 text-emerald-500 shrink-0" />
+              <ShieldCheck class="w-4 h-4 text-blue-500 shrink-0" />
               <span>Protected by Chapa &amp; Verified Agro-Escrow</span>
             </div>
           </div>
@@ -698,6 +698,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
+import { formatImageUrl } from '@/utils/helpers'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {

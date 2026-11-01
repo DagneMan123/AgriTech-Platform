@@ -67,8 +67,8 @@
               <!-- Item Image -->
               <div class="item-image">
                 <img
-                  v-if="item.image_url"
-                  :src="item.image_url"
+                  v-if="formatImageUrl(item.image_url)"
+                  :src="formatImageUrl(item.image_url)"
                   :alt="item.product_name"
                   @error="(e: any) => e.target.style.display = 'none'"
                   class="image"
@@ -259,6 +259,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
+import { formatImageUrl } from '@/utils/helpers'
 import {
   getDynamicShippingOptions,
   type DynamicShippingOption
@@ -722,7 +723,7 @@ const handleLogout = async () => {
 .subtotal-amount {
   font-size: 16px;
   font-weight: 700;
-  color: #10b981;
+  color: #2563eb;
 }
 
 .item-actions {
@@ -916,13 +917,13 @@ const handleLogout = async () => {
 .total-amount {
   font-size: 22px;
   font-weight: 700;
-  color: #10b981;
+  color: #2563eb;
 }
 
 .btn-checkout {
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2563eb;
   color: white;
   border: none;
   border-radius: 6px;
@@ -938,8 +939,9 @@ const handleLogout = async () => {
 }
 
 .btn-checkout:hover:not(:disabled) {
+  background: #1d4ed8;
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.35);
 }
 
 .btn-checkout:disabled {
@@ -1029,7 +1031,7 @@ const handleLogout = async () => {
 .rec-price {
   font-size: 14px;
   font-weight: 700;
-  color: #10b981;
+  color: #2563eb;
   margin: 0;
 }
 

@@ -23,8 +23,8 @@
       :class="[
         'relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-xs group',
         isDark 
-          ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-emerald-400' 
-          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-emerald-600'
+          ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-blue-400' 
+          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600'
       ]"
       title="Shopping Cart"
       aria-label="Shopping Cart"
@@ -34,7 +34,7 @@
       <!-- Cart Item Badge -->
       <span
         v-if="cartCount > 0"
-        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-emerald-600 text-white text-[10px] font-extrabold flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 shadow-sm"
+        class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-extrabold flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 shadow-sm"
       >
         {{ cartCount > 99 ? '99+' : cartCount }}
       </span>
