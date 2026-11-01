@@ -91,7 +91,7 @@ class ChapaPaymentController extends Controller
             'last_name' => $user->name && count(explode(' ', $user->name)) > 1 ? explode(' ', $user->name)[1] : 'Buyer',
             'phone_number' => $request->input('phone_number', $user->phone ?? '0911000000'),
             'tx_ref' => $txRef,
-            'return_url' => env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/payments?tx_ref=' . $txRef,
+            'return_url' => $request->input('return_url') ?: (env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/orders/active?tx_ref=' . $txRef . '&payment_success=true'),
         ]);
 
         if (empty($res['success']) || empty($res['checkout_url'])) {

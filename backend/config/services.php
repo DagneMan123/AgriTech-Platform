@@ -78,8 +78,8 @@ return [
     ],
 
     'chapa' => [
-        'secret_key' => env('CHAPA_SECRET_KEY', 'CHASECK_TEST-v1-agriconnect'),
-        'public_key' => env('CHAPA_PUBLIC_KEY', 'CHAPUBK_TEST-v1-agriconnect'),
+        'secret_key' => env('CHAPA_SECRET_KEY', 'CHASECK_TEST-YpDEoSk7pikyWErZn6q4enzQuJ6CD7Wo'),
+        'public_key' => env('CHAPA_PUBLIC_KEY', 'CHAPUBK_TEST-8eXf0uVQ0Cppi22Q9dFrvBDB5K2dTShv'),
         'base_url' => env('CHAPA_BASE_URL', 'https://api.chapa.co/v1'),
     ],
 

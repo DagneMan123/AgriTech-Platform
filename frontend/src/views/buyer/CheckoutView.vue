@@ -712,7 +712,7 @@
               <RefreshCw v-if="submitting" class="w-4 h-4 animate-spin" />
               <Lock v-else class="w-4 h-4" />
               <span>
-                {{ submitting ? 'Processing Order & Settlement...' : `Confirm Order & Pay (ETB ${formatNumber(summaryGrandTotal)})` }}
+                {{ submitting ? 'Redirecting to Chapa Gateway...' : `Confirm Order & Pay (ETB ${formatNumber(summaryGrandTotal)})` }}
               </span>
             </button>
 
@@ -1095,15 +1095,44 @@ const handlePlaceOrder = async () => {
       payment_reference: paymentForm.value.bank_ref || undefined
     }
 
+    // 1. Create order(s) in PostgreSQL database
     const res = await buyerStore.checkout(payload)
-    confirmedOrders.value = res.data || []
-    orderSuccess.value = true
+    const orders = res.data || []
+    confirmedOrders.value = orders
+    const primaryOrder = Array.isArray(orders) ? orders[0] : orders
+    const orderId = primaryOrder?.id
 
-    // Synchronize header badge and cart state
+    // 2. Clear cart state in store
     await buyerStore.fetchCart().catch(() => {})
+
+    // 3. If Cash on Delivery is chosen, show order confirmation modal
+    if (paymentForm.value.method === 'cash_on_delivery') {
+      orderSuccess.value = true
+      return
+    }
+
+    // 4. Call Chapa initialize API to get checkout_url
+    const chapaPayload = {
+      amount: summaryGrandTotal.value,
+      order_id: orderId,
+      phone_number: addressForm.value.phone || paymentForm.value.telebirr_phone || paymentForm.value.cbe_phone || authStore.user?.phone || '0911000000',
+      email: authStore.user?.email || 'aydenfudagne@gmail.com',
+      channel: paymentForm.value.method,
+      return_url: `${window.location.origin}/buyer/orders/active?order_id=${orderId || ''}&payment_status=completed`
+    }
+
+    const chapaRes = await buyerAPI.initializeChapaPayment(chapaPayload)
+    const checkoutUrl = chapaRes.data?.data?.checkout_url || chapaRes.data?.checkout_url
+
+    if (checkoutUrl) {
+      // 5. Automatically redirect browser to Chapa's hosted test checkout page
+      window.location.href = checkoutUrl
+    } else {
+      orderSuccess.value = true
+    }
   } catch (err: any) {
     console.error('Checkout error:', err)
-    errorMessage.value = err.response?.data?.message || 'Failed to place order. Please review information and try again.'
+    errorMessage.value = err.response?.data?.message || err.message || 'Failed to place order. Please review information and try again.'
   } finally {
     submitting.value = false
   }

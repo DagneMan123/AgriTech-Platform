@@ -426,6 +426,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'orders/active',
+        alias: ['active-orders'],
         name: 'buyer-active-orders',
         component: BuyerActiveOrdersView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Active Orders' }

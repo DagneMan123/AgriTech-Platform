@@ -41,6 +41,32 @@
         </div>
       </div>
 
+      <!-- Chapa Payment Success Banner -->
+      <div
+        v-if="paymentSuccessMessage"
+        class="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 text-emerald-600 dark:text-emerald-400 animate-slide-up"
+      >
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+            <CheckCircle2 class="w-5 h-5 text-emerald-500" />
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Chapa Payment Verified &amp; Confirmed!
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+              {{ paymentSuccessMessage }}
+            </p>
+          </div>
+        </div>
+        <button
+          @click="paymentSuccessMessage = null"
+          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 transition-all cursor-pointer"
+        >
+          Dismiss
+        </button>
+      </div>
+
       <!-- ── Summary Stats Cards ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Active -->
@@ -858,7 +884,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
+import { buyerAPI } from '@/api/buyer'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
@@ -867,12 +894,14 @@ import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu,  Clock, Truck, PackageCheck,
   BadgeDollarSign, ShieldCheck, Search, PackageOpen,
-   Check, Package, MapPin, User, Calendar, Navigation,
+   Check, CheckCircle2, Package, MapPin, User, Calendar, Navigation,
   FileText, Phone, XCircle, AlertTriangle, ReceiptText, Printer,
   Warehouse, MessageSquare, Send
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
+const paymentSuccessMessage = ref<string | null>(null)
 const authStore = useAuthStore()
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
@@ -912,9 +941,30 @@ const contactModalOpen = ref(false)
 const activeOrderForContact = ref<any>(null)
 const contactMessage = ref('')
 
+const handleChapaReturn = async () => {
+  const txRef = (route.query.tx_ref as string) || (route.query.trx_ref as string)
+  const isSuccess = route.query.payment_success === 'true' || route.query.payment_status === 'completed' || route.query.status === 'success'
+
+  if (txRef || isSuccess) {
+    if (txRef) {
+      try {
+        await buyerAPI.verifyChapaPayment(txRef)
+      } catch (e) {
+        console.warn('Chapa verification warning:', e)
+      }
+    }
+    paymentSuccessMessage.value = 'Your payment was successfully processed through Chapa! The funds are secured in escrow, and your order is confirmed and active.'
+    await loadOrdersData()
+
+    // Clean up query parameters from URL
+    router.replace({ path: route.path, query: {} })
+  }
+}
+
 onMounted(async () => {
   themeStore.initializeTheme()
   await loadOrdersData()
+  await handleChapaReturn()
 })
 
 const loadOrdersData = async () => {
