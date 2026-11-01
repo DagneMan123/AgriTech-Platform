@@ -114,18 +114,23 @@
               <!-- Item Actions -->
               <div class="item-actions">
                 <button
-                  @click="addToWishlist(item.id)"
-                  class="action-btn"
-                  title="Add to Wishlist"
+                  type="button"
+                  @click="addToWishlist(item)"
+                  :class="['action-btn', { 'wishlist-active': isItemInWishlist(item.product_id || item.id) }]"
+                  :title="isItemInWishlist(item.product_id || item.id) ? 'Remove from Wishlist' : 'Add to Wishlist'"
                 >
-                  <i class="fas fa-heart"></i>
+                  <Heart
+                    class="w-4 h-4 transition-colors"
+                    :class="isItemInWishlist(item.product_id || item.id) ? 'fill-red-500 text-red-500' : ''"
+                  />
                 </button>
                 <button
+                  type="button"
                   @click="removeFromCart(item.id)"
                   class="action-btn danger"
                   title="Remove from Cart"
                 >
-                  <i class="fas fa-trash"></i>
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -229,6 +234,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Heart, Trash2 } from 'lucide-vue-next'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
@@ -283,6 +289,11 @@ onMounted(async () => {
     await buyerStore.fetchCart()
   } catch (error) {
     console.error('Failed to load cart:', error)
+  }
+  try {
+    await buyerStore.fetchWishlist()
+  } catch (error) {
+    console.error('Failed to load wishlist:', error)
   }
 })
 
@@ -361,12 +372,23 @@ const removeSelected = async () => {
   }
 }
 
-const addToWishlist = async (itemId: number) => {
+const isItemInWishlist = (productId: number) => {
+  return (buyerStore.wishlist || []).some((w: any) => w.product_id === productId || w.id === productId)
+}
+
+const addToWishlist = async (item: any) => {
+  const prodId = item?.product_id || item?.id || item
   try {
-    await buyerStore.addToWishlist(itemId)
-    console.log('Added to wishlist')
+    if (isItemInWishlist(prodId)) {
+      const match = (buyerStore.wishlist || []).find((w: any) => w.product_id === prodId || w.id === prodId)
+      if (match?.id) {
+        await buyerStore.removeFromWishlist(match.id)
+      }
+    } else {
+      await buyerStore.addToWishlist({ product_id: prodId })
+    }
   } catch (error) {
-    console.error('Failed to add to wishlist:', error)
+    console.error('Failed to update wishlist:', error)
   }
 }
 
@@ -660,6 +682,20 @@ const handleLogout = async () => {
 .buyer-layout.dark .action-btn:hover {
   background: #334155 !important;
   color: #f8fafc !important;
+}
+
+:global(html.dark) .action-btn.danger:hover,
+.buyer-layout.dark .action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #f87171 !important;
+  border-color: #ef4444 !important;
+}
+
+:global(html.dark) .action-btn.wishlist-active,
+.buyer-layout.dark .action-btn.wishlist-active {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
 }
 
 /* Header */
