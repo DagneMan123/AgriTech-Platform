@@ -357,4 +357,160 @@ class ShippingCalculatorService
             'formula_str' => "Base ETB {$tier['base_fee']} + ({$weightKg}kg × {$tier['rate_per_kg']}) + ({$distanceKm}km × {$tier['rate_per_km']}) = ETB {$totalFee}",
         ];
     }
+
+    /**
+     * Group cart items by their distinct agricultural origin locations
+     */
+    public static function groupCartItemsByOrigin($cartItems, string $destination = 'Addis Ababa'): array
+    {
+        $groups = [];
+
+        foreach ($cartItems as $item) {
+            $product = is_array($item) ? ($item['product'] ?? null) : ($item->product ?? null);
+            $orig = null;
+
+            if (is_array($item) && !empty($item['origin_location'])) {
+                $orig = $item['origin_location'];
+            } elseif ($product) {
+                $orig = is_array($product) ? ($product['origin_location'] ?? null) : ($product->origin_location ?? null);
+            }
+
+            $orig = trim($orig ?: 'Addis Ababa');
+            $qty = is_array($item) ? ($item['quantity'] ?? 1) : ($item->quantity ?? 1);
+            $itemWeight = $product ? self::getItemWeightKg($product, $qty) : max(1.0, (float) $qty);
+
+            if (!isset($groups[$orig])) {
+                $groups[$orig] = [
+                    'origin' => $orig,
+                    'destination' => $destination,
+                    'distance_km' => self::calculateDistanceKm($orig, $destination),
+                    'weight_kg' => 0.0,
+                    'has_perishables' => false,
+                    'items' => [],
+                ];
+            }
+
+            $groups[$orig]['weight_kg'] += $itemWeight;
+            $groups[$orig]['items'][] = $item;
+
+            if ($product) {
+                $cat = strtolower(trim(is_array($product) ? ($product['category'] ?? '') : ($product->category ?? '')));
+                $name = strtolower(trim(is_array($product) ? ($product['name'] ?? '') : ($product->name ?? '')));
+                foreach (self::PERISHABLE_CATEGORIES as $p) {
+                    if (str_contains($cat, $p) || str_contains($name, $p)) {
+                        $groups[$orig]['has_perishables'] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        foreach ($groups as &$g) {
+            $g['weight_kg'] = max(1.0, round($g['weight_kg'], 2));
+        }
+
+        return array_values($groups);
+    }
+
+    /**
+     * Multi-Origin Split Shipping Breakdown for a specific shipping tier
+     */
+    public static function getMultiOriginBreakdown(
+        $cartItems,
+        string $destination = 'Addis Ababa',
+        string $tierKey = 'standard'
+    ): array {
+        $groups = self::groupCartItemsByOrigin($cartItems, $destination);
+
+        if (empty($groups)) {
+            $groups = [[
+                'origin' => 'Addis Ababa',
+                'destination' => $destination,
+                'distance_km' => self::calculateDistanceKm('Addis Ababa', $destination),
+                'weight_kg' => 1.0,
+                'has_perishables' => false,
+                'items' => [],
+            ]];
+        }
+
+        $routes = [];
+        $totalFee = 0.0;
+        $totalWeight = 0.0;
+
+        foreach ($groups as $group) {
+            $routeBreakdown = self::getBreakdown($group['weight_kg'], $destination, $tierKey, $group['origin']);
+            $routeFee = $routeBreakdown['total_fee'];
+            $totalFee += $routeFee;
+            $totalWeight += $group['weight_kg'];
+
+            $routes[] = [
+                'origin' => $group['origin'],
+                'destination' => $destination,
+                'distance_km' => $group['distance_km'],
+                'weight_kg' => $group['weight_kg'],
+                'item_count' => count($group['items']),
+                'has_perishables' => $group['has_perishables'],
+                'total_fee' => $routeFee,
+                'is_flat_rate' => $routeBreakdown['is_flat_rate'],
+                'formula_str' => $routeBreakdown['formula_str'],
+                'breakdown' => $routeBreakdown,
+            ];
+        }
+
+        return [
+            'tier' => $tierKey,
+            'destination' => $destination,
+            'total_weight_kg' => round($totalWeight, 2),
+            'total_fee' => (float) $totalFee,
+            'origin_count' => count($routes),
+            'is_multi_origin' => count($routes) > 1,
+            'routes' => $routes,
+        ];
+    }
+
+    /**
+     * Calculate multi-origin fee sum for the cart
+     */
+    public static function calculateMultiOriginFee(
+        $cartItems,
+        string $destination = 'Addis Ababa',
+        string $tierKey = 'standard'
+    ): float {
+        $breakdown = self::getMultiOriginBreakdown($cartItems, $destination, $tierKey);
+        return $breakdown['total_fee'];
+    }
+
+    /**
+     * Get dynamic shipping options with multi-origin split calculations
+     */
+    public static function getDynamicShippingOptions($cartItems, string $destination = 'Addis Ababa'): array
+    {
+        $hasPerishables = self::hasPerishables($cartItems);
+        $options = [];
+
+        foreach (self::SHIPPING_TIERS as $key => $tier) {
+            if ($tier['perishable_only'] && !$hasPerishables) {
+                continue;
+            }
+
+            $multi = self::getMultiOriginBreakdown($cartItems, $destination, $key);
+            $options[] = [
+                'key' => $key,
+                'title' => $tier['title'],
+                'desc' => $multi['is_multi_origin']
+                    ? "Split shipment from {$multi['origin_count']} origins → {$destination}"
+                    : "Ambient cargo dispatch to {$destination}",
+                'fee' => $multi['total_fee'],
+                'badge' => $multi['is_multi_origin'] ? "SPLIT DISPATCH ({$multi['origin_count']} ORIGINS)" : null,
+                'is_perishable_only' => $tier['perishable_only'],
+                'routes' => $multi['routes'],
+                'is_multi_origin' => $multi['is_multi_origin'],
+                'origin_count' => $multi['origin_count'],
+                'breakdown' => $multi['routes'][0]['breakdown'] ?? null,
+            ];
+        }
+
+        return $options;
+    }
+
 }

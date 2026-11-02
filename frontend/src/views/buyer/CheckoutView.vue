@@ -406,7 +406,9 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                  <span class="text-[10px] text-slate-400">Dynamic Fee:</span>
+                  <span class="text-[10px] text-slate-400">
+                    {{ opt.isMultiOrigin ? `Total (${opt.originCount} origins):` : 'Dynamic Fee:' }}
+                  </span>
                   <p class="text-sm font-black text-blue-600 dark:text-blue-400">
                     ETB {{ formatNumber(opt.fee) }}
                   </p>
@@ -695,9 +697,8 @@
                 <span class="font-bold text-slate-800 dark:text-slate-200">ETB {{ formatNumber(summarySubtotal) }}</span>
               </div>
 
-              <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
-              <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
-              <div class="space-y-1.5">
+              <!-- Real-time Dynamic Shipping Row with Multi-Origin Breakdown Context -->
+              <div class="space-y-2">
                 <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
                   <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
@@ -709,20 +710,52 @@
                   <span class="font-bold text-blue-600 dark:text-blue-400">{{ selectedDestination }}</span>
                 </div>
 
-                <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <!-- Multi-Origin Route Breakdown or Single Route Card -->
+                <div v-if="selectedShippingRoutes.length > 0" class="space-y-1.5 pt-1">
+                  <!-- Header if multi-origin -->
+                  <div v-if="selectedShippingRoutes.length > 1" class="flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800/60 pb-1">
+                    <span>Multi-Origin Split Routes ({{ selectedShippingRoutes.length }} origins):</span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ selectedShippingRoutes.length }} Shipments</span>
+                  </div>
+
+                  <!-- Route card for each origin -->
+                  <div
+                    v-for="(route, idx) in selectedShippingRoutes"
+                    :key="route.origin + '-' + idx"
+                    class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-[11px] space-y-1"
+                  >
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-slate-800 dark:text-slate-100">
+                        📍 {{ route.origin }} → <span class="text-blue-600 dark:text-blue-400">{{ route.destination }}</span>
+                      </span>
+                      <span class="font-bold text-blue-600 dark:text-blue-400">
+                        ETB {{ formatNumber(route.fee) }}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>~{{ route.distanceKm }} km • {{ formatNumber(route.weightKg) }} kg ({{ route.itemCount }} item{{ route.itemCount > 1 ? 's' : '' }})</span>
+                      <span v-if="route.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
+                      <span v-else class="text-blue-500 font-semibold">Bulk Matrix</span>
+                    </div>
+
+                    <!-- Dynamic formula if bulk for this origin -->
+                    <div
+                      v-if="!route.isFlatRate && route.formulaStr"
+                      class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-500/10 leading-tight"
+                    >
+                      {{ route.formulaStr }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Single route fallback if routes empty -->
+                <div v-else class="flex justify-between items-center text-[10px] text-slate-400">
                   <span>
                     <strong class="text-slate-700 dark:text-slate-200">{{ selectedOrigin }}</strong> → 
                     <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
                     (~{{ selectedDistanceKm }} km • {{ formatNumber(totalWeightKg) }} kg)
                   </span>
-                </div>
-
-                <!-- Live Dynamic Formula Breakdown -->
-                <div
-                  v-if="selectedShippingOption.breakdown && !selectedShippingOption.breakdown.isFlatRate"
-                  class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10 leading-tight"
-                >
-                  Base ETB {{ selectedShippingOption.breakdown.baseFee }} + ({{ formatNumber(totalWeightKg) }}kg × ETB {{ selectedShippingOption.breakdown.ratePerKg }}) + ({{ selectedDistanceKm }}km to {{ selectedDestination }} × ETB {{ selectedShippingOption.breakdown.ratePerKm }}) = ETB {{ formatNumber(selectedShippingFee) }}
                 </div>
               </div>
 
@@ -800,7 +833,8 @@ import {
   resolveCartOriginAndDistance,
   WEIGHT_FLAT_THRESHOLD_KG,
   DISTANCE_SHORT_THRESHOLD_KM,
-  type DynamicShippingOption
+  type DynamicShippingOption,
+  type OriginShippingRoute
 } from '@/utils/shippingCalculator'
 import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
@@ -892,9 +926,13 @@ const regionInfo = computed(() => {
   return ETHIOPIAN_REGIONS_LOGISTICS[selectedDestination.value] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 })
 
-// Dynamic shipping options recalculated instantly when destination, origin, or weight changes
+// Dynamic shipping options recalculated instantly with Multi-Origin Split Shipping
 const shippingOptions = computed<DynamicShippingOption[]>(() => {
-  return getDynamicShippingOptions(cartItems.value, selectedDestination.value, selectedOrigin.value)
+  return getDynamicShippingOptions(cartItems.value, selectedDestination.value)
+})
+
+const selectedShippingRoutes = computed<OriginShippingRoute[]>(() => {
+  return selectedShippingOption.value.routes || []
 })
 
 const selectedShipping = ref<string>((route.query.shipping as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_shipping') : null) || 'standard')

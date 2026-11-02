@@ -58,6 +58,29 @@ export interface ShippingBreakdown {
   formulaStr: string
 }
 
+export interface OriginShippingRoute {
+  origin: string
+  destination: string
+  distanceKm: number
+  weightKg: number
+  itemCount: number
+  items: any[]
+  hasPerishables: boolean
+  fee: number
+  isFlatRate: boolean
+  formulaStr: string
+  breakdown: ShippingBreakdown
+}
+
+export interface OriginGroup {
+  origin: string
+  destination: string
+  distanceKm: number
+  weightKg: number
+  hasPerishables: boolean
+  items: any[]
+}
+
 export interface DynamicShippingOption {
   key: 'standard' | 'express' | 'overnight' | 'cold_chain'
   title: string
@@ -69,6 +92,9 @@ export interface DynamicShippingOption {
   requiresColdChain?: boolean
   estimatedDays: string
   breakdown?: ShippingBreakdown
+  routes?: OriginShippingRoute[]
+  isMultiOrigin?: boolean
+  originCount?: number
 }
 
 export const WEIGHT_FLAT_THRESHOLD_KG = 5.0
@@ -399,6 +425,46 @@ export function cartHasPerishables(cartItems: any[]): boolean {
 }
 
 /**
+ * Group cart items by their respective agricultural origin location
+ */
+export function groupCartItemsByOrigin(
+  cartItems: any[],
+  destination = 'Addis Ababa'
+): OriginGroup[] {
+  if (!Array.isArray(cartItems) || cartItems.length === 0) return []
+
+  const groups: Record<string, { items: any[]; totalWeight: number; hasPerishables: boolean }> = {}
+
+  for (const item of cartItems) {
+    if (!item) continue
+    const orig = String(
+      item.origin_location ||
+      item.product?.origin_location ||
+      'Addis Ababa'
+    ).trim() || 'Addis Ababa'
+
+    if (!groups[orig]) {
+      groups[orig] = { items: [], totalWeight: 0, hasPerishables: false }
+    }
+
+    groups[orig].items.push(item)
+    groups[orig].totalWeight += getItemWeightKg(item)
+    if (isItemPerishable(item)) {
+      groups[orig].hasPerishables = true
+    }
+  }
+
+  return Object.entries(groups).map(([origin, data]) => ({
+    origin,
+    destination,
+    distanceKm: calculateOriginDestinationDistanceKm(origin, destination),
+    weightKg: Math.max(1, Math.round(data.totalWeight * 100) / 100),
+    hasPerishables: data.hasPerishables,
+    items: data.items
+  }))
+}
+
+/**
  * Weight-Tiered Shipping Calculation Helper
  * 
  * Handles business rules for:
@@ -484,96 +550,160 @@ export function calculateTierFee(
 }
 
 /**
- * Calculates dynamic shipping fees and filters eligible options
+ * Multi-Origin Split Shipping Calculator
+ * 
+ * Groups cart items by their distinct origins, calculates each route's fee
+ * independently using weight-tiered logic (<= 5kg flat rate vs > 5kg dynamic matrix),
+ * and sums the route fees to determine the total cart shipping fee.
  */
 export function getDynamicShippingOptions(
   cartItems: any[],
   destinationName = 'Addis Ababa',
   forcedOrigin?: string
 ): DynamicShippingOption[] {
-  const totalWeight = Math.max(1, getCartTotalWeightKg(cartItems))
+  let groups = groupCartItemsByOrigin(cartItems, destinationName)
   const hasPerishables = cartHasPerishables(cartItems)
-
-  const originInfo = forcedOrigin
-    ? {
-        origin: forcedOrigin,
-        allOrigins: [forcedOrigin],
-        distanceKm: calculateOriginDestinationDistanceKm(forcedOrigin, destinationName),
-        destination: destinationName
-      }
-    : resolveCartOriginAndDistance(cartItems, destinationName)
-
-  const distance = originInfo.distanceKm
-  const origin = originInfo.origin
   const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[destinationName] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 
-  // 1. STANDARD FREIGHT
-  // Base: 200 ETB, Rate/kg: 10 ETB, Rate/km: 6 ETB, Flat Rate: 350 ETB
-  const stdCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
-    flatRate: 350,
-    baseFee: 200,
-    ratePerKg: 10,
-    ratePerKm: 6
-  })
+  // If forcedOrigin is provided and cart is empty or single forced override
+  if (groups.length === 0 && forcedOrigin) {
+    groups = [{
+      origin: forcedOrigin,
+      destination: destinationName,
+      distanceKm: calculateOriginDestinationDistanceKm(forcedOrigin, destinationName),
+      weightKg: Math.max(1, getCartTotalWeightKg(cartItems)),
+      hasPerishables,
+      items: cartItems || []
+    }]
+  } else if (groups.length === 0) {
+    groups = [{
+      origin: 'Addis Ababa',
+      destination: destinationName,
+      distanceKm: calculateOriginDestinationDistanceKm('Addis Ababa', destinationName),
+      weightKg: 1,
+      hasPerishables: false,
+      items: []
+    }]
+  }
 
-  // 2. EXPRESS DIRECT LOGISTICS
-  // Base: 350 ETB, Rate/kg: 16 ETB, Rate/km: 10 ETB, Flat Rate: 600 ETB
-  const expCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
-    flatRate: 600,
-    baseFee: 350,
-    ratePerKg: 16,
-    ratePerKm: 10
-  })
+  const isMulti = groups.length > 1
+  const originNames = groups.map(g => g.origin).join(', ')
 
-  const options: DynamicShippingOption[] = [
-    {
-      key: 'standard',
-      title: 'Standard Agricultural Freight',
-      desc: stdCalc.breakdown.isFlatRate
-        ? `Ambient cargo dispatch • ${regionInfo.transitDays} (Flat standard rate: ${origin} → ${destinationName})`
-        : `Ambient cargo dispatch • ${regionInfo.transitDays} (${origin} → ${destinationName} • ${totalWeight} kg • ${distance} km)`,
-      fee: stdCalc.fee,
-      badge: stdCalc.breakdown.isFlatRate ? 'STANDARD FLAT RATE' : 'DYNAMIC BULK MATRIX',
-      isPerishableOnly: false,
-      transitDays: regionInfo.transitDays,
-      estimatedDays: '3 - 5 business days',
-      breakdown: stdCalc.breakdown
-    },
-    {
-      key: 'express',
-      title: 'Express Direct Dispatch',
-      desc: `Priority dedicated transit (${origin} → ${destinationName}) • 1 - 2 business days`,
-      fee: expCalc.fee,
-      badge: hasPerishables ? 'FASTER TRANSIT' : null,
-      isPerishableOnly: false,
-      transitDays: '1 - 2 business days',
-      estimatedDays: '1 - 2 business days',
-      breakdown: expCalc.breakdown
+  const buildTierOption = (
+    tierKey: 'standard' | 'express' | 'overnight',
+    title: string,
+    config: { flatRate: number; baseFee: number; ratePerKg: number; ratePerKm: number },
+    tierPerishableOnly: boolean,
+    requiresColdChain: boolean,
+    estimatedDays: string,
+    defaultTransitDays: string
+  ): DynamicShippingOption => {
+    // Calculate each origin group independently
+    const routes: OriginShippingRoute[] = groups.map(group => {
+      const calc = calculateTierFee(
+        group.weightKg,
+        group.distanceKm,
+        group.origin,
+        destinationName,
+        config
+      )
+      return {
+        origin: group.origin,
+        destination: destinationName,
+        distanceKm: group.distanceKm,
+        weightKg: group.weightKg,
+        itemCount: group.items.length,
+        items: group.items,
+        hasPerishables: group.hasPerishables,
+        fee: calc.fee,
+        isFlatRate: calc.breakdown.isFlatRate,
+        formulaStr: calc.breakdown.formulaStr,
+        breakdown: calc.breakdown
+      }
+    })
+
+    // Sum all route fees across origin groups
+    const totalFee = routes.reduce((sum, r) => sum + r.fee, 0)
+    const primaryRoute = routes[0]
+
+    let badge: string | null = null
+    if (isMulti) {
+      badge = `SPLIT DISPATCH (${groups.length} ORIGINS)`
+    } else if (primaryRoute.isFlatRate) {
+      badge = 'STANDARD FLAT RATE'
+    } else {
+      badge = 'DYNAMIC BULK MATRIX'
     }
-  ]
 
-  // 3. COLD-CHAIN AGRO TRANSPORT
-  // DYNAMIC FILTERING: ONLY included if cart has perishable produce!
+    if (requiresColdChain) {
+      badge = 'RECOMMENDED FOR FRESH PRODUCE'
+    }
+
+    let desc = ''
+    if (isMulti) {
+      desc = `Split shipment from ${groups.length} hubs (${originNames}) → ${destinationName}`
+    } else if (primaryRoute.isFlatRate) {
+      desc = `Ambient cargo dispatch • ${regionInfo.transitDays} (Flat rate: ${primaryRoute.origin} → ${destinationName})`
+    } else {
+      desc = `Ambient cargo dispatch • ${regionInfo.transitDays} (${primaryRoute.origin} → ${destinationName} • ${primaryRoute.weightKg} kg • ${primaryRoute.distanceKm} km)`
+    }
+
+    return {
+      key: tierKey,
+      title,
+      desc,
+      fee: totalFee,
+      badge,
+      isPerishableOnly: tierPerishableOnly,
+      requiresColdChain,
+      transitDays: defaultTransitDays,
+      estimatedDays,
+      routes,
+      isMultiOrigin: isMulti,
+      originCount: groups.length,
+      breakdown: {
+        ...primaryRoute.breakdown,
+        totalFee
+      }
+    }
+  }
+
+  // 1. STANDARD FREIGHT (Flat 350, Base 200, 10 ETB/kg, 6 ETB/km)
+  const stdOption = buildTierOption(
+    'standard',
+    'Standard Agricultural Freight',
+    { flatRate: 350, baseFee: 200, ratePerKg: 10, ratePerKm: 6 },
+    false,
+    false,
+    '3 - 5 business days',
+    regionInfo.transitDays
+  )
+
+  // 2. EXPRESS DIRECT DISPATCH (Flat 600, Base 350, 16 ETB/kg, 10 ETB/km)
+  const expOption = buildTierOption(
+    'express',
+    'Express Direct Dispatch',
+    { flatRate: 600, baseFee: 350, ratePerKg: 16, ratePerKm: 10 },
+    false,
+    false,
+    '1 - 2 business days',
+    '1 - 2 business days'
+  )
+
+  const options: DynamicShippingOption[] = [stdOption, expOption]
+
+  // 3. COLD-CHAIN AGRO TRANSPORT (Flat 1200, Base 700, 22 ETB/kg, 15 ETB/km)
   if (hasPerishables) {
-    const coldCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
-      flatRate: 1200,
-      baseFee: 700,
-      ratePerKg: 22,
-      ratePerKm: 15
-    })
-
-    options.push({
-      key: 'overnight',
-      title: 'Cold-Chain Agro Transport',
-      desc: `Climate-controlled (+4°C) from ${origin} to ${destinationName} • Guaranteed crisp freshness`,
-      fee: coldCalc.fee,
-      badge: 'RECOMMENDED FOR FRESH PRODUCE',
-      isPerishableOnly: true,
-      requiresColdChain: true,
-      transitDays: 'Guaranteed next-day cold delivery',
-      estimatedDays: 'Next-day delivery',
-      breakdown: coldCalc.breakdown
-    })
+    const coldOption = buildTierOption(
+      'overnight',
+      'Cold-Chain Agro Transport',
+      { flatRate: 1200, baseFee: 700, ratePerKg: 22, ratePerKm: 15 },
+      true,
+      true,
+      'Next-day delivery',
+      'Guaranteed next-day cold delivery'
+    )
+    options.push(coldOption)
   }
 
   return options

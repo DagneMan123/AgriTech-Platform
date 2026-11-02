@@ -264,12 +264,12 @@ class CartController extends Controller
             return (float) ($item->product ? $item->product->price * $item->quantity : 0);
         });
 
-        // Dynamic Shipping Matrix Calculation based on product origin & buyer destination
+        // Dynamic Multi-Origin Shipping Matrix Calculation based on product origins & buyer destination
         $region = $request->input('delivery_region', 'Addis Ababa');
         $shippingType = $request->input('shipping_type', 'standard');
-        $originInfo = ShippingCalculatorService::resolveCartOriginAndDistance($cartItems, $region);
-        $totalWeightKg = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
-        $serverCalculatedFee = ShippingCalculatorService::calculateFee($totalWeightKg, $region, $shippingType, $originInfo['origin']);
+        $multiOriginBreakdown = ShippingCalculatorService::getMultiOriginBreakdown($cartItems, $region, $shippingType);
+        $totalWeightKg = $multiOriginBreakdown['total_weight_kg'];
+        $serverCalculatedFee = $multiOriginBreakdown['total_fee'];
 
         $clientDeliveryFee = (float) $request->input('delivery_fee', 0);
         $deliveryFee = $clientDeliveryFee > 0 ? $clientDeliveryFee : $serverCalculatedFee;
@@ -368,16 +368,8 @@ class CartController extends Controller
         $totalWeight = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
         $region = $request->query('region', 'Addis Ababa');
 
-        $originInfo = ShippingCalculatorService::resolveCartOriginAndDistance($cartItems, $region);
-        $options = [];
         $hasPerishables = ShippingCalculatorService::hasPerishables($cartItems);
-
-        foreach (ShippingCalculatorService::SHIPPING_TIERS as $key => $tier) {
-            if ($tier['perishable_only'] && !$hasPerishables) {
-                continue;
-            }
-            $options[] = ShippingCalculatorService::getBreakdown($totalWeight, $region, $key, $originInfo['origin']);
-        }
+        $options = ShippingCalculatorService::getDynamicShippingOptions($cartItems, $region);
 
         return response()->json([
             'success' => true,

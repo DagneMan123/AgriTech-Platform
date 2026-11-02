@@ -173,7 +173,6 @@
                   <option v-for="r in ethiopianRegions" :key="r" :value="r">{{ r }}</option>
                 </select>
               </div>
-
               <div class="summary-row shipping-row">
                 <span class="label">Shipping:</span>
                 <div class="shipping-options">
@@ -189,13 +188,18 @@
                     />
                     <div class="radio-content">
                       <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
-                      <small v-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
+                      <small v-if="opt.isMultiOrigin" class="split-dispatch-badge">
+                        Split dispatch from {{ opt.originCount }} origins
+                      </small>
+                      <small v-else-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
                         {{ opt.breakdown.formulaStr }}
                       </small>
                     </div>
                   </label>
                 </div>
               </div>
+
+
               <div class="summary-row">
                 <span class="label">Tax (16%):</span>
                 <span class="value">ETB {{ formatNumber(tax) }}</span>
@@ -264,7 +268,8 @@ import {
   resolveCartOriginAndDistance,
   getCartTotalWeightKg,
   ETHIOPIAN_REGIONS,
-  type DynamicShippingOption
+  type DynamicShippingOption,
+  type OriginShippingRoute
 } from '@/utils/shippingCalculator'
 
 // Stores and Router
@@ -304,7 +309,11 @@ const selectedDistanceKm = computed(() => calculateOriginDestinationDistanceKm(s
 const totalWeightKg = computed(() => Math.max(1, getCartTotalWeightKg(buyerStore.cart || [])))
 
 const dynamicShippingOptions = computed<DynamicShippingOption[]>(() => {
-  return getDynamicShippingOptions(buyerStore.cart || [], selectedDestination.value, selectedOrigin.value)
+  return getDynamicShippingOptions(buyerStore.cart || [], selectedDestination.value)
+})
+
+const selectedShippingRoutes = computed<OriginShippingRoute[]>(() => {
+  return selectedShippingOption.value.routes || []
 })
 
 // Auto-fallback if cold-chain is filtered out for non-perishable goods
@@ -1509,5 +1518,25 @@ const handleLogout = async () => {
 }
 
 
+
+.split-dispatch-badge {
+  font-size: 10px;
+  color: #2563eb;
+  font-weight: 600;
+  display: block;
+}
+
+:global(html.dark) .split-dispatch-badge,
+.buyer-layout.dark .split-dispatch-badge {
+  color: #60a5fa !important;
+}
+
 </style>
+
+
+.active-formula-card .formula-details {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.4;
+}
 
