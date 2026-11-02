@@ -65,7 +65,14 @@ class ChapaService
 
         try {
             $response = Http::withToken($this->secretKey)
-                ->timeout(15)
+                ->withOptions([
+                    'curl' => [
+                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    ],
+                    'connect_timeout' => 15,
+                ])
+                ->retry(2, 300)
+                ->timeout(25)
                 ->post($this->baseUrl . '/transaction/initialize', $payload);
 
             if ($response->successful()) {
@@ -98,21 +105,10 @@ class ChapaService
         } catch (\Throwable $e) {
             Log::error('Chapa API exception: ' . $e->getMessage());
 
-            // Resilient Fallback for Local Development & Test Mode:
-            if (str_starts_with($this->secretKey, 'CHASECK_TEST') || app()->environment('local')) {
-                Log::info('Chapa test fallback URL generated for tx_ref: ' . $txRef);
-                return [
-                    'success' => true,
-                    'tx_ref' => $txRef,
-                    'checkout_url' => 'https://checkout.chapa.co/checkout/payment/' . $txRef,
-                    'raw' => ['mode' => 'test_mode', 'tx_ref' => $txRef]
-                ];
-            }
-
             return [
                 'success' => false,
                 'tx_ref' => $txRef,
-                'message' => 'Failed to reach Chapa payment server: ' . $e->getMessage(),
+                'message' => 'Could not connect to Chapa payment server: ' . $e->getMessage() . '. Please verify your internet connection.',
                 'checkout_url' => null
             ];
         }
