@@ -66,9 +66,7 @@ class ChapaService
         try {
             $response = Http::withToken($this->secretKey)
                 ->withOptions([
-                    'curl' => [
-                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-                    ],
+                    'force_ip_resolve' => 'v4',
                     'connect_timeout' => 15,
                 ])
                 ->retry(2, 300)
