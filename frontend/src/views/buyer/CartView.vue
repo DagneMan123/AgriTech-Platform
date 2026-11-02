@@ -188,12 +188,6 @@
                     />
                     <div class="radio-content">
                       <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
-                      <small v-if="opt.isMultiOrigin" class="split-dispatch-badge">
-                        Split dispatch from {{ opt.originCount }} origins
-                      </small>
-                      <small v-else-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
-                        {{ opt.breakdown.formulaStr }}
-                      </small>
                     </div>
                   </label>
                 </div>
@@ -1518,18 +1512,6 @@ const handleLogout = async () => {
 }
 
 
-
-.split-dispatch-badge {
-  font-size: 10px;
-  color: #2563eb;
-  font-weight: 600;
-  display: block;
-}
-
-:global(html.dark) .split-dispatch-badge,
-.buyer-layout.dark .split-dispatch-badge {
-  color: #60a5fa !important;
-}
 
 </style>
 

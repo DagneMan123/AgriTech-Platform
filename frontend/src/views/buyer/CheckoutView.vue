@@ -318,17 +318,7 @@
             </div>
 
             
-            <!-- Route Header -->
-            <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border text-xs" :class="darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200'">
-              <div class="flex items-center gap-2">
-                <span class="text-slate-500 dark:text-slate-400 font-medium">Delivery Destination:</span>
-                <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
-                <span class="text-[10px] text-slate-400 font-normal">(Set in Cart)</span>
-              </div>
-              <span class="text-[11px] text-slate-400">
-                Transit Distance: <strong class="text-blue-500">{{ selectedDistanceKm }} km</strong> from {{ selectedOrigin }}
-              </span>
-            </div>
+
 
             <!-- Dynamic Category Filtering Notice -->
             <div
