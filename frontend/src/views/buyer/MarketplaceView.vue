@@ -410,6 +410,10 @@ onMounted(async () => {
     selectedCategory.value = String(route.query.category)
   }
   await handleSearch()
+  if (route.query.product) {
+    const pId = Number(route.query.product)
+    selectedProduct.value = safeProducts.value.find(p => p.id === pId) || null
+  }
 })
 
 watch(() => route.query.category, (newCategory) => {

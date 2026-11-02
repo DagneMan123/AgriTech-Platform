@@ -15,13 +15,47 @@ class WishlistController extends Controller
      */
     public function index(Request $request)
     {
-        $wishlist = Wishlist::where('user_id', Auth::id())
-            ->with('product.images')
-            ->paginate($request->get('limit', 20));
+        $userId = Auth::id();
+        $wishlist = Wishlist::where('user_id', $userId)
+            ->with(['product.farmer'])
+            ->get();
+
+        $data = $wishlist->map(function ($item) {
+            $product = $item->product ?: Product::find($item->product_id);
+            if (!$product) return null;
+
+            $images = $product->images;
+            $imageUrl = null;
+            if (!empty($images) && is_array($images) && count($images) > 0) {
+                $img = $images[0];
+                $imageUrl = str_starts_with($img, 'http') ? $img : asset('storage/' . $img);
+            }
+
+            $farmerName = 'Regional Supplier';
+            if ($product->farmer) {
+                $farmerName = $product->farmer->farm_name ?: ($product->farmer->user->name ?? 'Regional Supplier');
+            }
+
+            return [
+                'id' => $item->id,
+                'wishlist_id' => $item->id,
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'price' => (float)$product->price,
+                'quantity' => (float)($product->quantity ?? 0),
+                'quantity_available' => (float)($product->quantity_available ?? $product->quantity ?? 0),
+                'in_stock' => ($product->quantity > 0) && in_array($product->status, ['active', 'available', 'approved']),
+                'image' => $imageUrl ?: $product->image,
+                'farmer_name' => $farmerName,
+                'category' => $product->category,
+                'created_at' => $item->created_at,
+                'product' => $product,
+            ];
+        })->filter()->values();
 
         return response()->json([
             'success' => true,
-            'data' => $wishlist,
+            'data' => $data,
         ]);
     }
 
@@ -60,10 +94,12 @@ class WishlistController extends Controller
     /**
      * Remove product from wishlist
      */
-    public function destroy(Product $product)
+    public function destroy($id)
     {
         $wishlist = Wishlist::where('user_id', Auth::id())
-            ->where('product_id', $product->id)
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)->orWhere('product_id', $id);
+            })
             ->first();
 
         if (!$wishlist) {
@@ -101,16 +137,26 @@ class WishlistController extends Controller
     /**
      * Move wishlist item to cart
      */
-    public function moveToCart(Request $request, Product $product)
+    public function moveToCart(Request $request, $id)
     {
         $wishlist = Wishlist::where('user_id', Auth::id())
-            ->where('product_id', $product->id)
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)->orWhere('product_id', $id);
+            })
             ->first();
 
         if (!$wishlist) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found in wishlist',
+            ], 404);
+        }
+
+        $product = Product::find($wishlist->product_id);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
             ], 404);
         }
 

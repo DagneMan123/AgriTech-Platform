@@ -13,7 +13,7 @@
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
       <!-- Header Section -->
-      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b border-t-0 border-x-0 transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">My Wishlist</h1>
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Manage and review your saved agricultural products</p>
@@ -146,7 +146,7 @@
           </div>
           <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">Your Wishlist is Empty</h3>
           <p :class="['text-xs max-w-sm mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">You haven't saved any agricultural items yet. Browse marketplace to add products!</p>
-          <router-link to="/marketplace" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+          <router-link :to="{ name: 'buyer-marketplace' }" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
             Explore Marketplace
           </router-link>
         </div>
@@ -160,20 +160,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
 
 const loading = ref(false)
 const sidebarOpen = ref(false)
 const searchQuery = ref('')
-
-// ሳምፕል ዳታው ሙሉ በሙሉ ተወግዷል፤ አሁን የሚጀምረው በባዶ አርሬ (Empty Array) ነው
 const wishlistItems = ref([])
+const addingToCartId = ref(null)
 
 const darkMode = computed(() => themeStore.isDark)
 const toggleDarkMode = () => themeStore.toggleTheme()
@@ -181,19 +183,13 @@ const toggleDarkMode = () => themeStore.toggleTheme()
 const fetchWishlist = async () => {
   loading.value = true
   try {
-    const response = await fetch('http://localhost:8000/api/buyer/wishlist', {
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    if (response.ok) {
-      const data = await response.json()
-      const resData = Array.isArray(data) ? data : (data.data || [])
-      wishlistItems.value = resData
-    }
+    const response = await buyerAPI.getWishlist()
+    const data = response.data?.data || response.data || []
+    wishlistItems.value = Array.isArray(data) ? data : (data.data || [])
+    buyerStore.wishlist = wishlistItems.value
   } catch (err) {
     console.error('Error fetching wishlist:', err)
+    wishlistItems.value = []
   } finally {
     loading.value = false
   }
@@ -209,35 +205,47 @@ const inStockCount = computed(() => {
 
 const filteredWishlist = computed(() => {
   if (!searchQuery.value) return wishlistItems.value
+  const q = searchQuery.value.toLowerCase().trim()
   return wishlistItems.value.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    (item.farmer_name && item.farmer_name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    (item.name && item.name.toLowerCase().includes(q)) ||
+    (item.farmer_name && item.farmer_name.toLowerCase().includes(q)) ||
+    (item.category && item.category.toLowerCase().includes(q))
   )
 })
 
 const removeFromWishlist = async (id) => {
   try {
-    const response = await fetch(`http://localhost:8000/api/buyer/wishlist/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    if (response.ok) {
-      wishlistItems.value = wishlistItems.value.filter(item => item.id !== id)
-    }
+    await buyerAPI.removeFromWishlist(id)
+    wishlistItems.value = wishlistItems.value.filter(item => item.id !== id && item.product_id !== id)
+    buyerStore.wishlist = wishlistItems.value
   } catch (err) {
     console.error('Error removing from wishlist:', err)
-m  }
+  }
 }
 
 const viewProduct = (productId) => {
-  router.push(`/app/buyer/products/${productId}`)
+  router.push({
+    name: 'buyer-marketplace',
+    query: { product: productId }
+  })
 }
 
-const addToCart = (item) => {
-  alert(`Added ${item.name} to shopping cart!`)
+const addToCart = async (item) => {
+  if (!item || addingToCartId.value === item.product_id) return
+  addingToCartId.value = item.product_id
+
+  try {
+    await buyerStore.addToCart({
+      product_id: item.product_id,
+      quantity: 1
+    })
+    alert(`Added "${item.name}" to your shopping cart!`)
+  } catch (err) {
+    console.error('Failed to add to cart:', err)
+    alert('Failed to add product to cart.')
+  } finally {
+    addingToCartId.value = null
+  }
 }
 
 const formatNumber = (num) => {
