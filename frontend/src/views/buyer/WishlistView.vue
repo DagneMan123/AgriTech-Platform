@@ -37,6 +37,7 @@
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Estimated Value</h3>
             <p class="text-xl font-black">ETB {{ formatNumber(totalWishlistValue) }}</p>
+            <p :class="['text-[10px] mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Sum of 1 unit per item</p>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <i class="fas fa-wallet"></i>
@@ -107,11 +108,18 @@
             <!-- Product Details -->
             <div class="p-4 flex-1 flex flex-col justify-between">
               <div>
-                <h3 class="text-sm font-bold mb-1 line-clamp-1 group-hover:text-blue-500 transition-colors">{{ item.name }}</h3>
+                <h3 class="text-sm font-bold mb-1 line-clamp-1 group-hover:text-blue-500 transition-colors capitalize">{{ item.name }}</h3>
                 <p :class="['text-xs mb-2 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
                   <i class="fas fa-store text-xs"></i> {{ item.farmer_name || 'Regional Supplier' }}
                 </p>
-                <p class="text-sm font-black text-emerald-500 mb-4">ETB {{ formatNumber(item.price) }}</p>
+                <div class="flex items-baseline justify-between mb-4">
+                  <p class="text-sm font-black text-emerald-500">
+                    ETB {{ formatNumber(item.price) }} <span class="text-[11px] font-normal text-slate-400">/ {{ item.unit || 'kg' }}</span>
+                  </p>
+                  <span :class="['text-[11px] font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    Avail: {{ formatNumber(item.quantity_available || item.quantity) }} {{ item.unit || 'kg' }}
+                  </span>
+                </div>
               </div>
 
               <!-- Actions -->
