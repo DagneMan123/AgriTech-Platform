@@ -314,17 +314,7 @@
                 </div>
               </div>
 
-              <!-- Real-time Metrics Pill -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
-                  <Scale class="w-3.5 h-3.5 text-blue-500" />
-                  <span>Cargo Weight: <strong>{{ formatNumber(totalWeightKg) }} kg</strong></span>
-                </span>
-                <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
-                  <Compass class="w-3.5 h-3.5 text-blue-500" />
-                  <span>{{ selectedOrigin }} → {{ selectedDestination }}: ~{{ selectedDistanceKm }} km</span>
-                </span>
-              </div>
+
             </div>
 
             
