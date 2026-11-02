@@ -37,15 +37,6 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
-              @click="loadData"
-              :disabled="loading"
-              :class="['inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']"
-              title="Refresh from Database"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin text-blue-500' : '']" />
-              <span class="hidden md:inline">{{ loading ? 'Syncing...' : 'Refresh DB' }}</span>
-            </button>
-            <button
               @click="openAddModal"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
             >
@@ -301,7 +292,7 @@
               </p>
               <p :class="['m-0 flex items-center gap-1', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 <MapPin class="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span>{{ addr.sub_city ? `${addr.sub_city}, ` : '' }}{{ addr.city }}, {{ addr.region }}</span>
+                <span>{{ formatAddressLocation(addr) }}</span>
               </p>
               <p v-if="addr.landmark" :class="['m-0 text-[11px] italic', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 Landmark: {{ addr.landmark }}
@@ -442,7 +433,7 @@
                 <!-- Address -->
                 <td class="py-4 px-4">
                   <p class="m-0 font-medium">{{ addr.street_address }}</p>
-                  <p class="m-0 text-[11px] text-slate-400">{{ addr.sub_city ? `${addr.sub_city}, ` : '' }}{{ addr.city }}, {{ addr.region }}</p>
+                  <p class="m-0 text-[11px] text-slate-400">{{ formatAddressLocation(addr) }}</p>
                 </td>
 
                 <!-- Contact -->
@@ -982,6 +973,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
+import { formatHierarchicalLocation } from '@/utils/shippingCalculator'
 import {
   Menu, BookUser, Plus, Warehouse, Store, Factory, Snowflake, Building2,
   Tractor, Star, Truck, Navigation, Search, LayoutGrid, List, Copy, Edit3,
@@ -1372,8 +1364,12 @@ const confirmDeleteAddress = async (addr: DeliveryAddress) => {
   }
 }
 
+const formatAddressLocation = (addr: any): string => {
+  return formatHierarchicalLocation(addr)
+}
+
 const copyAddressToClipboard = (addr: DeliveryAddress) => {
-  const fullText = `${addr.title}\n${addr.street_address}\n${addr.sub_city ? addr.sub_city + ', ' : ''}${addr.city}, ${addr.region}\nLandmark: ${addr.landmark || 'N/A'}\nContact: ${addr.contact_name} (${addr.contact_phone})\nHours: ${addr.receiving_hours || 'Standard'}\nInstructions: ${addr.instructions || 'Standard'}`
+  const fullText = `${addr.title}\n${addr.street_address}\n${formatAddressLocation(addr)}\nLandmark: ${addr.landmark || 'N/A'}\nContact: ${addr.contact_name} (${addr.contact_phone})\nHours: ${addr.receiving_hours || 'Standard'}\nInstructions: ${addr.instructions || 'Standard'}`
 
   navigator.clipboard.writeText(fullText).then(() => {
     showToast('Address details copied to clipboard!')

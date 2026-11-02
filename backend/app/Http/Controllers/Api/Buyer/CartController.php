@@ -265,7 +265,8 @@ class CartController extends Controller
         });
 
         // Dynamic Multi-Origin Shipping Matrix Calculation based on product origins & buyer destination
-        $region = $request->input('delivery_region', 'Addis Ababa');
+        $rawRegion = $request->input('delivery_region', 'Addis Ababa');
+        $region = str_contains($rawRegion, ',') ? trim(explode(',', $rawRegion)[1]) : $rawRegion;
         $shippingType = $request->input('shipping_type', 'standard');
         $multiOriginBreakdown = ShippingCalculatorService::getMultiOriginBreakdown($cartItems, $region, $shippingType);
         $totalWeightKg = $multiOriginBreakdown['total_weight_kg'];

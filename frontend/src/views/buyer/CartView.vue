@@ -170,7 +170,9 @@
                   v-model="selectedDestination"
                   class="region-select"
                 >
-                  <option v-for="r in ethiopianRegions" :key="r" :value="r">{{ r }}</option>
+                  <option v-for="d in deliveryDestinations" :key="d.city + '-' + d.region" :value="d.city + ', ' + d.region">
+                    {{ d.label }}
+                  </option>
                 </select>
               </div>
               <div class="summary-row shipping-row">
@@ -262,6 +264,8 @@ import {
   resolveCartOriginAndDistance,
   getCartTotalWeightKg,
   ETHIOPIAN_REGIONS,
+  ETHIOPIAN_DELIVERY_DESTINATIONS,
+  resolveDestinationHubAndRegion,
   type DynamicShippingOption,
   type OriginShippingRoute
 } from '@/utils/shippingCalculator'
@@ -273,9 +277,11 @@ const router = useRouter()
 const { isDark, toggleTheme } = useTheme()
 
 // State
+const deliveryDestinations = ETHIOPIAN_DELIVERY_DESTINATIONS
 const ethiopianRegions = ETHIOPIAN_REGIONS
 const savedDest = (typeof window !== 'undefined' && sessionStorage.getItem('checkout_destination')) || ''
-const selectedDestination = ref<string>(savedDest || authStore.user?.region || 'Addis Ababa')
+const initialDest = resolveDestinationHubAndRegion(savedDest || authStore.user?.region || 'Addis Ababa')
+const selectedDestination = ref<string>(`${initialDest.city}, ${initialDest.region}`)
 const selectedRegion = selectedDestination
 const selectedItems = ref<number[]>([])
 const showSelectAll = ref(false)

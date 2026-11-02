@@ -568,7 +568,7 @@
                 </div>
                 <div>
                   <p class="font-bold m-0 text-slate-400 text-[10px] uppercase">Destination Address</p>
-                  <p class="font-semibold m-0">{{ activeOrderForTracking.delivery_address || 'Destination on file' }}</p>
+                  <p class="font-semibold m-0">{{ formatHierarchicalAddress({ street: activeOrderForTracking.delivery_address, woreda: activeOrderForTracking.delivery_woreda, zone: activeOrderForTracking.delivery_zone, region: activeOrderForTracking.delivery_region }) || 'Destination on file' }}</p>
                 </div>
               </div>
             </div>
@@ -891,6 +891,7 @@ import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
+import { formatHierarchicalAddress } from '@/utils/shippingCalculator'
 import {
   Menu,  Clock, Truck, PackageCheck,
   BadgeDollarSign, ShieldCheck, Search, PackageOpen,
@@ -1279,40 +1280,73 @@ const printReceipt = () => {
 
 const getTrackingLogs = (order: any) => {
   const norm = (order.status || '').toLowerCase()
+
+  // 1. Resolve Origin / Hub for Pickup
+  const originHub = 
+    order.delivery?.pickup_location ||
+    order.pickup_location ||
+    order.items?.[0]?.product?.origin_hub ||
+    order.seller?.city ||
+    (order.seller?.name ? `${order.seller.name} Aggregation Hub` : null) ||
+    'Origin Agricultural Logistics Depot'
+
+  // 2. Resolve Destination Location
+  const destHub = 
+    order.delivery_city ||
+    order.delivery_zone ||
+    order.delivery_region ||
+    'Destination Depot'
+
+  // 3. Resolve Transit Corridor
+  const transitCorridor = (originHub && destHub && !originHub.includes('Logistics Depot'))
+    ? `${originHub} → ${destHub} Highway Logistics Corridor`
+    : (order.delivery?.transit_corridor || `${originHub} → ${order.delivery_region || 'Destination'} Freight Corridor (GPS Monitored)`)
+
+  // 4. Resolve Clean Formatted Delivery Address
+  const finalDestinationAddress = order.delivery_address
+    ? formatHierarchicalAddress({
+        street: order.delivery_address,
+        woreda: order.delivery_woreda,
+        zone: order.delivery_zone,
+        region: order.delivery_region,
+        country: 'Ethiopia'
+      })
+    : (order.delivery?.destination_address || 'Designated Buyer Commercial Facility')
+
   return [
     {
       title: 'Order Placed & Escrow Created',
       time: formatDateTime(order.created_at),
       desc: 'Order logged into system, buyer payment deposited securely into escrow account.',
-      location: 'AgriConnect Platform Engine',
+      location: 'AgriConnect Central Exchange (Escrow Vault)',
       completed: true
     },
     {
       title: 'Farmer Confirmation & Quality Audit',
       time: formatDateTime(order.updated_at || order.created_at),
       desc: 'Produce harvested, inspected for moisture and grade standard, packaged for transport.',
-      location: order.seller?.name || order.seller_name || 'Regional Farm Hub',
+      location: originHub,
       completed: norm !== 'pending'
     },
     {
       title: 'Transporter Assigned & Cargo Picked Up',
       time: order.shipped_at ? formatDateTime(order.shipped_at) : 'Logistics Queue',
       desc: `Transporter ${order.delivery?.carrier_name || order.carrier_name || 'AgriConnect Courier'}, vehicle ${order.delivery?.vehicle_plate || order.vehicle_plate || 'Assigned'}, driver ${order.delivery?.driver_name || order.driver_name || 'Assigned'}.`,
-      location: order.delivery_region || 'Logistics Hub',
+      location: originHub,
       completed: ['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(norm)
     },
     {
       title: 'In Transit along Main Logistics Corridor',
       time: ['shipped', 'in_transit', 'out_for_delivery'].includes(norm) ? 'In Progress' : 'Pending',
-      desc: 'En route to recipient delivery address.',
-      location: order.delivery_zone || 'En Route',
+      desc: 'En route to recipient delivery address via active freight corridor.',
+      location: transitCorridor,
       completed: ['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(norm)
     },
     {
       title: 'Final Delivery & Acceptance Sign-off',
       time: order.delivered_at ? formatDateTime(order.delivered_at) : 'Pending Delivery',
       desc: 'Buyer signature on delivery receipt will release escrow funds to farmer.',
-      location: order.delivery_address || 'Destination Address',
+      location: finalDestinationAddress,
       completed: norm === 'delivered'
     }
   ]

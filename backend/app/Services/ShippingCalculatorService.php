@@ -122,6 +122,17 @@ class ShippingCalculatorService
         $orig = trim($origin ?: 'Addis Ababa');
         $dest = trim($destination ?: 'Addis Ababa');
 
+        // Parse combo destination strings like "Adama, Oromia" or "Adama (Oromia)"
+        if (preg_match('/^([^,(]+)(?:[,\(]\s*([^\)]+)\)?)?$/', $dest, $matches)) {
+            $candidateCity = trim($matches[1]);
+            $candidateRegion = isset($matches[2]) ? trim($matches[2]) : '';
+            if (isset(self::ETHIOPIAN_ORIGIN_HUBS[$candidateCity])) {
+                $dest = $candidateCity;
+            } elseif (isset(self::ETHIOPIAN_REGIONS_LOGISTICS[$candidateRegion])) {
+                $dest = $candidateRegion;
+            }
+        }
+
         // Same location = local intra-city transit
         if (strcasecmp($orig, $dest) === 0) {
             return 25.0;

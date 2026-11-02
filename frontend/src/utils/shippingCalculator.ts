@@ -228,6 +228,237 @@ export const ETHIOPIAN_REGIONS_LOGISTICS: Record<string, RegionLogisticsInfo> = 
 
 export const ETHIOPIAN_REGIONS = Object.keys(ETHIOPIAN_REGIONS_LOGISTICS)
 
+export interface DeliveryDestinationOption {
+  city: string
+  region: string
+  label: string
+  zone?: string
+}
+
+/**
+ * Detailed Delivery Destinations across Ethiopia capturing both specific City/Hub and Region
+ */
+export const ETHIOPIAN_DELIVERY_DESTINATIONS: DeliveryDestinationOption[] = [
+  { city: 'Addis Ababa', region: 'Addis Ababa', label: 'Addis Ababa (Central Terminal)', zone: 'Bole Sub-City' },
+  { city: 'Adama', region: 'Oromia', label: 'Adama (Oromia Agro-Hub)', zone: 'East Shewa Zone' },
+  { city: 'Bishoftu', region: 'Oromia', label: 'Bishoftu (Central Agro Valley)', zone: 'East Shewa Zone' },
+  { city: 'Jimma', region: 'Oromia', label: 'Jimma (Coffee & Agro Basin)', zone: 'Jimma Zone' },
+  { city: 'Shashamane', region: 'Oromia', label: 'Shashamane (Southern Junction)', zone: 'West Arsi Zone' },
+  { city: 'Nekemte', region: 'Oromia', label: 'Nekemte (Western Grain Belt)', zone: 'East Wollega Zone' },
+  { city: 'Bahir Dar', region: 'Amhara', label: 'Bahir Dar (Lake Tana Basin)', zone: 'West Gojjam Zone' },
+  { city: 'Gondar', region: 'Amhara', label: 'Gondar (North Amhara Basin)', zone: 'Central Gondar Zone' },
+  { city: 'Dessie', region: 'Amhara', label: 'Dessie (Eastern Amhara Basin)', zone: 'South Wollo Zone' },
+  { city: 'Debre Markos', region: 'Amhara', label: 'Debre Markos (Gojjam Basin)', zone: 'East Gojjam Zone' },
+  { city: 'Hawassa', region: 'Sidama', label: 'Hawassa (Sidama Rift Valley)', zone: 'Hawassa City Zone' },
+  { city: 'Arba Minch', region: 'SNNPR', label: 'Arba Minch (Fruit Valley)', zone: 'Gamo Zone' },
+  { city: 'Dire Dawa', region: 'Dire Dawa', label: 'Dire Dawa (Eastern Corridor)', zone: 'Dire Dawa Administration' },
+  { city: 'Harar', region: 'Harari', label: 'Harar (Harari Regional Hub)', zone: 'Harar Administration' },
+  { city: 'Mekelle', region: 'Tigray', label: 'Mekelle (Tigray Basin)', zone: 'Central Tigray' },
+  { city: 'Semera', region: 'Afar', label: 'Semera (Afar Regional Hub)', zone: 'Awsi Rasu (Zone 1)' },
+  { city: 'Jijiga', region: 'Somali', label: 'Jijiga (Somali Regional Hub)', zone: 'Fafan Zone' },
+  { city: 'Asosa', region: 'Benishangul-Gumuz', label: 'Asosa (B-Gumuz Regional Hub)', zone: 'Asosa Zone' },
+  { city: 'Gambela', region: 'Gambela', label: 'Gambela (Gambela Regional Hub)', zone: 'Anywaa Zone' }
+]
+
+/**
+ * Resolves destination input into specific hub/city and administrative region
+ */
+export function resolveDestinationHubAndRegion(destInput?: string): { city: string; region: string; hubName: string; displayName: string; defaultZone: string } {
+  if (!destInput) {
+    return { city: 'Addis Ababa', region: 'Addis Ababa', hubName: 'Addis Ababa', displayName: 'Addis Ababa (Addis Ababa)', defaultZone: 'Bole Sub-City' }
+  }
+  const raw = String(destInput).trim()
+
+  // 1. Direct match with ETHIOPIAN_DELIVERY_DESTINATIONS
+  const directMatch = ETHIOPIAN_DELIVERY_DESTINATIONS.find(
+    d => d.city.toLowerCase() === raw.toLowerCase() ||
+         d.label.toLowerCase() === raw.toLowerCase() ||
+         `${d.city}, ${d.region}`.toLowerCase() === raw.toLowerCase()
+  )
+  if (directMatch) {
+    return {
+      city: directMatch.city,
+      region: directMatch.region,
+      hubName: directMatch.city,
+      displayName: `${directMatch.city} (${directMatch.region})`,
+      defaultZone: directMatch.zone || 'Central Zone'
+    }
+  }
+
+  // 2. Direct match with ETHIOPIAN_ORIGIN_HUBS
+  const hubMatch = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === raw.toLowerCase())
+  if (hubMatch) {
+    return {
+      city: hubMatch.name,
+      region: hubMatch.region,
+      hubName: hubMatch.name,
+      displayName: `${hubMatch.name} (${hubMatch.region})`,
+      defaultZone: `${hubMatch.name} Zone`
+    }
+  }
+
+  // 3. String formatted as "City (Region)" or "City, Region"
+  const parsed = raw.match(/^([^,(]+)(?:[,\(]\s*([^\)]+)\)?)?$/)
+  if (parsed) {
+    const p1 = parsed[1].trim()
+    const p2 = parsed[2] ? parsed[2].trim() : ''
+
+    const foundByP1 = ETHIOPIAN_DELIVERY_DESTINATIONS.find(d => d.city.toLowerCase() === p1.toLowerCase())
+    if (foundByP1) {
+      return {
+        city: foundByP1.city,
+        region: p2 || foundByP1.region,
+        hubName: foundByP1.city,
+        displayName: `${foundByP1.city} (${p2 || foundByP1.region})`,
+        defaultZone: foundByP1.zone || 'Central Zone'
+      }
+    }
+
+    if (ETHIOPIAN_REGIONS_LOGISTICS[p1]) {
+      const hubInRegion = ETHIOPIAN_DELIVERY_DESTINATIONS.find(d => d.region.toLowerCase() === p1.toLowerCase())
+      return {
+        city: hubInRegion?.city || p1,
+        region: p1,
+        hubName: hubInRegion?.city || p1,
+        displayName: `${hubInRegion?.city || p1} (${p1})`,
+        defaultZone: hubInRegion?.zone || `${p1} Central Zone`
+      }
+    }
+  }
+
+  // 4. Matches region name
+  if (ETHIOPIAN_REGIONS_LOGISTICS[raw]) {
+    const hubInRegion = ETHIOPIAN_DELIVERY_DESTINATIONS.find(d => d.region.toLowerCase() === raw.toLowerCase())
+    return {
+      city: hubInRegion?.city || raw,
+      region: raw,
+      hubName: hubInRegion?.city || raw,
+      displayName: `${hubInRegion?.city || raw} (${raw})`,
+      defaultZone: hubInRegion?.zone || `${raw} Central Zone`
+    }
+  }
+
+  return { city: raw, region: raw, hubName: raw, displayName: raw, defaultZone: 'Central Area' }
+}
+
+/**
+ * Formats a clean hierarchical location string from address fields:
+ * [Sub-City/Woreda], [City/Town], [Zone], [Region], [Country]
+ * Strictly deduplicates overlapping/repeated variables (e.g. eliminates "Central, Addis Ababa, Addis Ababa")
+ */
+export function formatHierarchicalLocation(addr: {
+  sub_city?: string
+  woreda_kebele?: string
+  woreda?: string
+  city?: string
+  zone?: string
+  region?: string
+  country?: string
+}): string {
+  if (!addr) return ''
+
+  const subCity = (addr.sub_city || '').trim()
+  const woreda = (addr.woreda_kebele || addr.woreda || '').trim()
+  const city = (addr.city || '').trim()
+  const zone = (addr.zone || '').trim()
+  const region = (addr.region || '').trim()
+  const country = (addr.country || '').trim()
+
+  const segments: string[] = []
+
+  const isRedundant = (candidate: string): boolean => {
+    if (!candidate || !candidate.trim()) return true
+    const candNorm = candidate.toLowerCase().trim()
+    return segments.some(seg => {
+      const segNorm = seg.toLowerCase().trim()
+      return segNorm === candNorm ||
+             segNorm.includes(candNorm) ||
+             candNorm.includes(segNorm)
+    })
+  }
+
+  // 1. [Sub-City/Woreda]
+  const subWoredaParts: string[] = []
+  if (subCity) {
+    subWoredaParts.push(subCity)
+  }
+  if (woreda && !subWoredaParts.some(p => p.toLowerCase().includes(woreda.toLowerCase()))) {
+    subWoredaParts.push(woreda)
+  }
+  if (subWoredaParts.length > 0) {
+    segments.push(subWoredaParts.join(', '))
+  }
+
+  // 2. [City/Town]
+  if (city && !isRedundant(city)) {
+    segments.push(city)
+  }
+
+  // 3. [Zone]
+  if (zone && !isRedundant(zone)) {
+    segments.push(zone)
+  }
+
+  // 4. [Region] (e.g. eliminates repeating "Addis Ababa" when city is already "Addis Ababa")
+  if (region && !isRedundant(region)) {
+    segments.push(region)
+  }
+
+  // 5. [Country] (if provided and not redundant)
+  if (country && !isRedundant(country)) {
+    segments.push(country)
+  }
+
+  return segments.join(', ')
+}
+
+/**
+ * Cleanly formats address in strict hierarchical order:
+ * [Specific Street], [Woreda], [Zone/Sub-City], [Region], [Country]
+ * Eliminates redundant repetitions and jumbled fields (e.g. "Addis Ababa, Ethiopia, Bole, Central, Oromia")
+ */
+export function formatHierarchicalAddress(params: {
+  street?: string
+  street_address?: string
+  woreda?: string
+  woreda_kebele?: string
+  sub_city?: string
+  zone?: string
+  region?: string
+  country?: string
+  city?: string
+}): string {
+  let street = (params.street || params.street_address || '').trim()
+  const locationHierarchy = formatHierarchicalLocation({
+    sub_city: params.sub_city,
+    woreda: params.woreda || params.woreda_kebele,
+    city: params.city,
+    zone: params.zone,
+    region: params.region,
+    country: params.country || 'Ethiopia'
+  })
+
+  // Clean jumbled artifact from street if it was set to generic "Addis Ababa, Ethiopia" or city/region
+  if (street) {
+    street = street.replace(/^[,.\s]+|[,.\s]+$/g, '')
+    if (/^(addis ababa,?\s*ethiopia|ethiopia)$/i.test(street)) {
+      street = 'Commercial Agro-Distribution Depot'
+    } else {
+      // Remove trailing ", Ethiopia" from street
+      street = street.replace(/,\s*ethiopia$/i, '').trim()
+    }
+  }
+
+  if (street && locationHierarchy) {
+    if (street.toLowerCase().includes(locationHierarchy.toLowerCase())) {
+      return street
+    }
+    return `${street}, ${locationHierarchy}`
+  }
+
+  return street || locationHierarchy || 'Addis Ababa, Ethiopia'
+}
+
 export const PERISHABLE_CATEGORIES = [
   'vegetables',
   'vegetable',
@@ -266,29 +497,41 @@ export const NON_PERISHABLE_CATEGORIES = [
  */
 export function calculateOriginDestinationDistanceKm(origin?: string, destination?: string): number {
   const orig = String(origin || 'Addis Ababa').trim()
-  const dest = String(destination || 'Addis Ababa').trim()
+  const destRaw = String(destination || 'Addis Ababa').trim()
 
-  if (orig.toLowerCase() === dest.toLowerCase()) {
+  const resolvedDest = resolveDestinationHubAndRegion(destRaw)
+  const destHubName = resolvedDest.hubName
+  const destRegion = resolvedDest.region
+
+  if (orig.toLowerCase() === destHubName.toLowerCase() || orig.toLowerCase() === destRaw.toLowerCase()) {
     return 25
   }
 
-  const directKey = `${orig}:${dest}`
-  const reverseKey = `${dest}:${orig}`
-  if (DIRECT_DISTANCES[directKey]) return DIRECT_DISTANCES[directKey]
-  if (DIRECT_DISTANCES[reverseKey]) return DIRECT_DISTANCES[reverseKey]
+  // Try direct key matches (raw, city hub, region)
+  const candidateKeys = [
+    `${orig}:${destRaw}`,
+    `${destRaw}:${orig}`,
+    `${orig}:${destHubName}`,
+    `${destHubName}:${orig}`,
+    `${orig}:${destRegion}`,
+    `${destRegion}:${orig}`
+  ]
+  for (const k of candidateKeys) {
+    if (DIRECT_DISTANCES[k]) return DIRECT_DISTANCES[k]
+  }
 
   const origHub = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === orig.toLowerCase())
   const origDistToAddis = origHub ? origHub.distToAddis : 25
   const origRegion = origHub ? origHub.region : orig
 
-  if (ETHIOPIAN_REGIONS_LOGISTICS[dest]) {
-    const destRegionData = ETHIOPIAN_REGIONS_LOGISTICS[dest]
+  if (ETHIOPIAN_REGIONS_LOGISTICS[destRegion]) {
+    const destRegionData = ETHIOPIAN_REGIONS_LOGISTICS[destRegion]
     const destDistToAddis = destRegionData.distanceKm
 
-    if (origRegion.toLowerCase() === dest.toLowerCase()) {
+    if (origRegion.toLowerCase() === destRegion.toLowerCase()) {
       return Math.min(60, Math.round(destDistToAddis * 0.4))
     }
-    if (dest.toLowerCase() === 'addis ababa') {
+    if (destRegion.toLowerCase() === 'addis ababa') {
       return Math.max(25, origDistToAddis)
     }
     if (orig.toLowerCase() === 'addis ababa') {
@@ -297,7 +540,7 @@ export function calculateOriginDestinationDistanceKm(origin?: string, destinatio
     return Math.round(origDistToAddis + (destDistToAddis * 0.85))
   }
 
-  const destHub = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === dest.toLowerCase())
+  const destHub = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === destHubName.toLowerCase())
   if (destHub) {
     if (origRegion.toLowerCase() === destHub.region.toLowerCase()) {
       return 40
@@ -563,7 +806,8 @@ export function getDynamicShippingOptions(
 ): DynamicShippingOption[] {
   let groups = groupCartItemsByOrigin(cartItems, destinationName)
   const hasPerishables = cartHasPerishables(cartItems)
-  const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[destinationName] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
+  const resolvedDest = resolveDestinationHubAndRegion(destinationName)
+  const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[resolvedDest.region] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 
   // If forcedOrigin is provided and cart is empty or single forced override
   if (groups.length === 0 && forcedOrigin) {

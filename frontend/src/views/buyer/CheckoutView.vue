@@ -123,8 +123,8 @@
           </div>
           <div>
             <span class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Delivery Destination:</span>
-            <p class="font-semibold text-slate-300 dark:text-slate-200 mt-0.5 truncate" :title="addressForm.address">
-              {{ addressForm.woreda }}, {{ addressForm.region }}
+            <p class="font-semibold text-slate-300 dark:text-slate-200 mt-0.5 truncate" :title="formattedAddressPreview">
+              {{ formattedAddressPreview }}
             </p>
           </div>
         </div>
@@ -194,7 +194,7 @@
                 >
                   <option :value="null">Use Custom Address</option>
                   <option v-for="addr in savedAddresses" :key="addr.id" :value="addr.id">
-                    {{ addr.title || addr.label || addr.street_address || 'Saved Address' }} ({{ addr.sub_city || addr.city || addr.region }})
+                    {{ addr.title || addr.label || addr.street_address || 'Saved Address' }} ({{ formatHierarchicalLocation(addr) }})
                   </option>
                 </select>
               </div>
@@ -236,12 +236,12 @@
 
               <div>
                 <label :class="['block text-xs font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                  Region *
+                  Delivery Destination (Hub &amp; Region) *
                 </label>
                 <div
                   :class="['w-full px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
                 >
-                  <span>{{ selectedDestination }}</span>
+                  <span>{{ destinationDisplayName }}</span>
                   <span class="text-[10px] text-blue-500 font-semibold tracking-wide uppercase">Set in Cart</span>
                 </div>
               </div>
@@ -813,6 +813,10 @@ import {
   resolveCartOriginAndDistance,
   WEIGHT_FLAT_THRESHOLD_KG,
   DISTANCE_SHORT_THRESHOLD_KM,
+  ETHIOPIAN_DELIVERY_DESTINATIONS,
+  resolveDestinationHubAndRegion,
+  formatHierarchicalAddress,
+  formatHierarchicalLocation,
   type DynamicShippingOption,
   type OriginShippingRoute
 } from '@/utils/shippingCalculator'
@@ -839,30 +843,24 @@ const updatingCartItemId = ref<number | null>(null)
 
 const cartItems = computed(() => buyerStore.cart || [])
 
-// Ethiopian Regions list
-const ethiopianRegions = [
-  'Addis Ababa',
-  'Oromia',
-  'Amhara',
-  'Sidama',
-  'SNNPR',
-  'Tigray',
-  'Somali',
-  'Dire Dawa',
-  'Harari',
-  'Afar',
-  'Benishangul-Gumuz',
-  'Gambela'
-]
+// Ethiopian Delivery Destinations
+const deliveryDestinations = ETHIOPIAN_DELIVERY_DESTINATIONS
+
+const initialDestInfo = resolveDestinationHubAndRegion(
+  (route.query.region as string) || 
+  (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : null) || 
+  'Addis Ababa'
+)
 
 // Delivery Address Form
 const addressForm = ref({
   recipient_name: '',
   phone: '',
-  region: (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : null) || 'Addis Ababa',
-  zone: 'Bole Subcity',
+  region: initialDestInfo.region,
+  city: initialDestInfo.city,
+  zone: initialDestInfo.defaultZone || 'Bole Subcity',
   woreda: 'Woreda 03',
-  address: 'Bole Road, Commercial Agro-Hub',
+  address: 'Commercial Agro-Distribution Depot',
   notes: ''
 })
 
@@ -873,16 +871,33 @@ const selectedSavedAddressId = ref<number | null>(null)
 const destinationFromCart = computed<string>(() => {
   return (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : '') || ''
 })
-const selectedDestination = ref<string>(destinationFromCart.value || addressForm.value.region || 'Addis Ababa')
+const selectedDestination = ref<string>(destinationFromCart.value || `${initialDestInfo.city}, ${initialDestInfo.region}`)
+
+const resolvedDest = computed(() => resolveDestinationHubAndRegion(selectedDestination.value))
+const destinationDisplayName = computed(() => resolvedDest.value.displayName)
+
+// Clean hierarchical address: [Specific Street], [Woreda], [Zone/Sub-City], [Region], [Country]
+const formattedAddressPreview = computed(() => {
+  return formatHierarchicalAddress({
+    street: addressForm.value.address,
+    woreda: addressForm.value.woreda,
+    zone: addressForm.value.zone,
+    region: addressForm.value.region,
+    country: 'Ethiopia'
+  })
+})
 
 // Synchronize selectedDestination and addressForm.region bidirectionally
 watch(selectedDestination, (newDest) => {
-  if (newDest && addressForm.value.region !== newDest) {
-    addressForm.value.region = newDest
+  if (newDest) {
+    const res = resolveDestinationHubAndRegion(newDest)
+    if (addressForm.value.region !== res.region) {
+      addressForm.value.region = res.region
+    }
   }
 })
 watch(() => addressForm.value.region, (newReg) => {
-  if (newReg && selectedDestination.value !== newReg) {
+  if (newReg && resolvedDest.value.region !== newReg) {
     selectedDestination.value = newReg
   }
 })
@@ -903,7 +918,7 @@ const selectedDistanceKm = computed(() => {
 })
 
 const regionInfo = computed(() => {
-  return ETHIOPIAN_REGIONS_LOGISTICS[selectedDestination.value] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
+  return ETHIOPIAN_REGIONS_LOGISTICS[resolvedDest.value.region] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 })
 
 // Dynamic shipping options recalculated instantly with Multi-Origin Split Shipping
@@ -1150,10 +1165,15 @@ const applySavedAddress = () => {
   if (addr) {
     addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || addressForm.value.recipient_name || 'Verified Buyer'
     addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || addressForm.value.phone || '+251 911 234 567'
-    if (!destinationFromCart.value) { addressForm.value.region = addr.region || addressForm.value.region || 'Addis Ababa' } else { addressForm.value.region = selectedDestination.value }
-    addressForm.value.zone = addr.sub_city || addr.zone || addr.city || addressForm.value.zone || 'Bole Subcity'
+    if (!destinationFromCart.value) { 
+      addressForm.value.region = addr.region || addressForm.value.region || 'Addis Ababa' 
+      selectedDestination.value = addr.city ? `${addr.city}, ${addr.region}` : (addr.region || 'Addis Ababa')
+    } else { 
+      addressForm.value.region = resolvedDest.value.region 
+    }
+    addressForm.value.zone = addr.sub_city || addr.zone || addressForm.value.zone || 'Bole Subcity'
     addressForm.value.woreda = addr.woreda_kebele || addr.woreda || addressForm.value.woreda || 'Woreda 03'
-    addressForm.value.address = addr.street_address || addr.address_line || addr.address || addressForm.value.address || 'Bole Road, Commercial Agro-Hub'
+    addressForm.value.address = addr.street_address || addr.address_line || addr.address || addressForm.value.address || 'Commercial Agro-Distribution Depot'
     if (addr.instructions || addr.notes) {
       addressForm.value.notes = addr.instructions || addr.notes
     }
@@ -1178,10 +1198,16 @@ onMounted(async () => {
       paymentForm.value.telebirr_phone = authStore.user.phone
       paymentForm.value.cbe_phone = authStore.user.phone
     }
-    if (!destinationFromCart.value && authStore.user.region) { addressForm.value.region = authStore.user.region; selectedDestination.value = authStore.user.region }
+    if (!destinationFromCart.value && authStore.user.region) { 
+      addressForm.value.region = authStore.user.region
+      selectedDestination.value = authStore.user.city ? `${authStore.user.city}, ${authStore.user.region}` : authStore.user.region 
+    }
     if (authStore.user.zone) addressForm.value.zone = authStore.user.zone
     if (authStore.user.woreda) addressForm.value.woreda = authStore.user.woreda
-    if (authStore.user.address) addressForm.value.address = authStore.user.address
+    if (authStore.user.address) {
+      const cleanStreet = authStore.user.address.replace(/^addis ababa,?\s*ethiopia$/i, 'Commercial Agro-Distribution Depot')
+      addressForm.value.address = cleanStreet
+    }
   }
 
   // Load saved delivery addresses if available
@@ -1238,14 +1264,22 @@ const handlePlaceOrder = async () => {
 
   // Ensure valid dropoff address with graceful fallback instead of blocking
   if (!addressForm.value.address?.trim()) {
-    addressForm.value.address = authStore.user?.address || `${addressForm.value.zone || 'Central Area'}, ${addressForm.value.region || 'Addis Ababa'}`
+    addressForm.value.address = 'Commercial Agro-Distribution Depot'
   }
 
   submitting.value = true
 
   try {
+    const formattedAddress = formatHierarchicalAddress({
+      street: addressForm.value.address,
+      woreda: addressForm.value.woreda,
+      zone: addressForm.value.zone,
+      region: addressForm.value.region,
+      country: 'Ethiopia'
+    })
+
     const payload = {
-      delivery_address: `${addressForm.value.address}, ${addressForm.value.woreda}, ${addressForm.value.zone}, ${addressForm.value.region}`,
+      delivery_address: formattedAddress,
       delivery_region: addressForm.value.region,
       delivery_zone: addressForm.value.zone,
       delivery_woreda: addressForm.value.woreda,
