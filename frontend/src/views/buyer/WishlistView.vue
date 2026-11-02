@@ -98,7 +98,7 @@
               <span 
                 :class="[
                   'absolute bottom-3 left-3 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider',
-                  item.in_stock ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+                  item.in_stock ? 'bg-blue-600 text-white' : 'bg-red-500 text-white'
                 ]"
               >
                 {{ item.in_stock ? 'In Stock' : 'Out of Stock' }}
@@ -113,7 +113,7 @@
                   <i class="fas fa-store text-xs"></i> {{ item.farmer_name || 'Regional Supplier' }}
                 </p>
                 <div class="flex items-baseline justify-between mb-4">
-                  <p class="text-sm font-black text-emerald-500">
+                  <p :class="['text-sm font-black', darkMode ? 'text-blue-400' : 'text-blue-600']">
                     ETB {{ formatNumber(item.price) }} <span class="text-[11px] font-normal text-slate-400">/ {{ item.unit || 'kg' }}</span>
                   </p>
                   <span :class="['text-[11px] font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
@@ -136,7 +136,7 @@
                   :class="[
                     'flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5',
                     item.in_stock 
-                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' 
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-xs' 
                       : 'bg-slate-600 text-slate-300 cursor-not-allowed opacity-60'
                   ]"
                 >
