@@ -4,28 +4,115 @@ namespace App\Http\Controllers\Api\Marketplace;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     /**
-     * Get all categories with products
+     * Get all categories with real-time product counts from PostgreSQL database
      */
     public function index(Request $request)
     {
-        $query = Category::query();
+        try {
+            $categories = Category::where('is_active', true)
+                ->orderBy('order', 'asc')
+                ->orderBy('name', 'asc')
+                ->get();
 
-        if ($request->has('parent_id')) {
-            $query->where('parent_id', $request->parent_id);
+            // Auto-seed if categories table is empty
+            if ($categories->isEmpty()) {
+                try {
+                    \Artisan::call('db:seed', ['--class' => 'CategorySeeder', '--force' => true]);
+                    $categories = Category::where('is_active', true)
+                        ->orderBy('order', 'asc')
+                        ->orderBy('name', 'asc')
+                        ->get();
+                } catch (\Throwable $e) {
+                    // Ignore seeder exceptions
+                }
+            }
+
+            // Collect distinct categories directly from products table (crops/produce posted by farmers)
+            $productCategoryCounts = collect();
+            try {
+                $productCategoryCounts = Product::whereIn('status', ['active', 'available', 'approved'])
+                    ->whereNotNull('category')
+                    ->where('category', '!=', '')
+                    ->selectRaw('category, count(*) as count')
+                    ->groupBy('category')
+                    ->pluck('count', 'category');
+            } catch (\Throwable $e) {
+                // Ignore if query fails
+            }
+
+            $result = [];
+            $seen = [];
+
+            foreach ($categories as $cat) {
+                $catName = $cat->name;
+                $seen[strtolower($catName)] = true;
+                $seen[strtolower($cat->slug)] = true;
+
+                // Product count: count via relationship OR matching string in products.category
+                $count = 0;
+                try {
+                    $count = Product::whereIn('status', ['active', 'available', 'approved'])
+                        ->where(function ($q) use ($cat) {
+                            $q->where('category_id', $cat->id)
+                              ->orWhere('category', 'ilike', $cat->name)
+                              ->orWhere('category', 'ilike', "%{$cat->slug}%");
+                        })->count();
+                } catch (\Throwable $e) {
+                    $count = 0;
+                }
+
+                $result[] = [
+                    'id' => $cat->id,
+                    'name' => $cat->name,
+                    'slug' => $cat->slug,
+                    'description' => $cat->description ?: "Fresh agricultural {$cat->name} supplied directly from Ethiopian farmers and producers.",
+                    'icon' => $cat->icon ?: 'fas fa-seedling',
+                    'image' => $cat->image ?? null,
+                    'is_active' => true,
+                    'order' => $cat->order ?? 1,
+                    'product_count' => $count,
+                    'products_count' => $count,
+                ];
+            }
+
+            // Add any categories from products table that aren't in Category table yet
+            foreach ($productCategoryCounts as $pCat => $count) {
+                $lower = strtolower($pCat);
+                if (!isset($seen[$lower])) {
+                    $seen[$lower] = true;
+                    $result[] = [
+                        'id' => count($result) + 1,
+                        'name' => ucfirst($pCat),
+                        'slug' => \Illuminate\Support\Str::slug($pCat),
+                        'description' => "Fresh agricultural " . ucfirst($pCat) . " directly from local producers.",
+                        'icon' => 'fas fa-leaf',
+                        'image' => null,
+                        'is_active' => true,
+                        'order' => count($result) + 1,
+                        'product_count' => (int)$count,
+                        'products_count' => (int)$count,
+                    ];
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('CategoryController@index error: ' . $e->getMessage());
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'message' => $e->getMessage()
+            ]);
         }
-
-        $categories = $query->with('subcategories', 'products')
-            ->paginate($request->get('limit', 50));
-
-        return response()->json([
-            'success' => true,
-            'data' => $categories,
-        ]);
     }
 
     /**

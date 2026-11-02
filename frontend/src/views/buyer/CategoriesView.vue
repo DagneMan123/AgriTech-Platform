@@ -6,7 +6,7 @@
     <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/50 lg:hidden"></div>
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
       
-      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+      <div :class="['flex justify-between items-start gap-4 px-6 py-[30px] mb-6 border-b border-t-0 border-x-0 transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex-1">
           <h1 :class="['text-[28px] font-[800] m-0 mb-2 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">Product Categories</h1>
           <p :class="['text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Browse and explore agricultural products by specialized category</p>
@@ -47,6 +47,29 @@
             <i class="fas fa-fire"></i>
           </div>
         </article>
+      </section>
+
+      <!-- Category Filter & Search Bar -->
+      <section class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6">
+        <div class="relative flex-1 max-w-md">
+          <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search categories (e.g. Vegetables, Coffee, Grains)..."
+            :class="['w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border focus:outline-none focus:border-blue-500 transition-colors', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 placeholder-slate-500' : 'bg-white border-blue-200 text-slate-800 placeholder-slate-400']"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <label :class="['text-xs font-bold whitespace-nowrap', darkMode ? 'text-slate-400' : 'text-slate-600']">Sort By:</label>
+          <select
+            v-model="sortBy"
+            :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-200' : 'bg-white border-blue-200 text-slate-700']"
+          >
+            <option value="name">Name (A-Z)</option>
+            <option value="products">Most Products</option>
+          </select>
+        </div>
       </section>
 
       <!-- Main Content Section -->
@@ -155,6 +178,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { marketplaceAPI } from '@/api/marketplace'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
@@ -175,19 +199,12 @@ const toggleDarkMode = () => themeStore.toggleTheme()
 const loadCategories = async () => {
   loading.value = true
   try {
-    const response = await fetch('http://localhost:8000/api/marketplace/categories', {
-      headers: {
-        'Authorization': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      categories.value = data.data || []
-    }
+    const response = await marketplaceAPI.getCategories()
+    const raw = response.data?.data || response.data || []
+    categories.value = Array.isArray(raw) ? raw : (raw.data || [])
   } catch (err) {
     console.error('Error loading categories:', err)
+    categories.value = []
   } finally {
     loading.value = false
   }
@@ -206,20 +223,22 @@ const topCategoryName = computed(() => {
 const filteredCategories = computed(() => {
   let list = [...categories.value]
   if (searchQuery.value) {
-    list = list.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.description && c.description.toLowerCase().includes(q)))
   }
   if (sortBy.value === 'products') {
     list.sort((a, b) => (b.product_count || 0) - (a.product_count || 0))
   } else {
-    list.sort((a, b) => a.name.localeCompare(b.name))
+    list.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }
   return list
 })
 
 const selectCategory = (category) => {
+  if (!category) return
   router.push({
     name: 'buyer-marketplace',
-    query: { category: category.id }
+    query: { category: category.name }
   })
 }
 
@@ -228,13 +247,16 @@ const openCategoryDetails = (category) => {
 }
 
 const getCategoryIcon = (name = '') => {
-  const n = name.toLowerCase()
-  if (n.includes('grain') || n.includes('cereal')) return 'fas fa-wheat-awn'
-  if (n.includes('veg')) return 'fas fa-carrot'
-  if (n.includes('fruit')) return 'fas fa-apple-whole'
-  if (n.includes('dairy') || n.includes('milk')) return 'fas fa-cow'
-  if (n.includes('meat') || n.includes('livestock')) return 'fas fa-drumstick-bite'
+  const n = (name || '').toLowerCase()
+  if (n.includes('grain') || n.includes('cereal') || n.includes('wheat') || n.includes('teff')) return 'fas fa-wheat-awn'
+  if (n.includes('veg') || n.includes('carrot') || n.includes('tomato') || n.includes('onion')) return 'fas fa-carrot'
+  if (n.includes('fruit') || n.includes('apple') || n.includes('banana') || n.includes('orange')) return 'fas fa-apple-whole'
+  if (n.includes('dairy') || n.includes('milk') || n.includes('cheese')) return 'fas fa-cow'
+  if (n.includes('meat') || n.includes('livestock') || n.includes('beef') || n.includes('poultry')) return 'fas fa-drumstick-bite'
   if (n.includes('coffee') || n.includes('tea')) return 'fas fa-mug-hot'
+  if (n.includes('legume') || n.includes('pulse') || n.includes('bean') || n.includes('lentil')) return 'fas fa-seedling'
+  if (n.includes('spice') || n.includes('herb')) return 'fas fa-pepper-hot'
+  if (n.includes('oil') || n.includes('seed')) return 'fas fa-droplet'
   return 'fas fa-tag'
 }
 

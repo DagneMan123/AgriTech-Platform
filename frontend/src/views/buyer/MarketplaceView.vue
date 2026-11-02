@@ -61,11 +61,20 @@
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Category:</label>
             <select v-model="selectedCategory" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="">All Categories</option>
-              <option value="vegetables">Vegetables</option>
-              <option value="grains">Grains</option>
-              <option value="fruits">Fruits</option>
-              <option value="dairy">Dairy</option>
-              <option value="meat">Meat</option>
+              <template v-if="categoriesList.length > 0">
+                <option v-for="cat in categoriesList" :key="cat.id" :value="cat.name">
+                  {{ cat.name }} ({{ cat.product_count ?? cat.products_count ?? 0 }})
+                </option>
+              </template>
+              <template v-else>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Cereals & Grains">Cereals & Grains</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Coffee & Teas">Coffee & Teas</option>
+                <option value="Legumes & Pulses">Legumes & Pulses</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Meat">Meat</option>
+              </template>
             </select>
           </div>
           <div class="flex flex-col gap-1.5">

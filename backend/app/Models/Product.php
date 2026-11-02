@@ -94,6 +94,11 @@ class Product extends Model
         return $this->belongsTo(Farmer::class);
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Farmer::class, 'farmer_id');
+    }
+
     public function crop()
     {
         return $this->belongsTo(Crop::class);

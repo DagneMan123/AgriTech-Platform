@@ -14,17 +14,31 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $validated = $request->validate([
-            'category_id' => 'sometimes|exists:categories,id',
+            'category_id' => 'sometimes|nullable|exists:categories,id',
+            'category' => 'sometimes|nullable|string',
             'sort' => 'sometimes|in:newest,price_low,price_high,rating,popularity',
             'filter_in_stock' => 'sometimes|boolean',
             'limit' => 'sometimes|integer|min:1|max:100',
         ]);
 
-        $query = Product::where('status', 'active')
-            ->with('category', 'supplier');
+        $query = Product::whereIn('status', ['active', 'available', 'approved'])
+            ->with(['category', 'farmer']);
 
-        if (isset($validated['category_id'])) {
+        if (!empty($validated['category_id'])) {
             $query->where('category_id', $validated['category_id']);
+        } elseif ($request->filled('category')) {
+            $cat = trim($request->input('category'));
+            if (is_numeric($cat)) {
+                $query->where('category_id', (int)$cat);
+            } else {
+                $query->where(function ($q) use ($cat) {
+                    $q->where('category', 'ilike', "%{$cat}%")
+                      ->orWhereHas('category', function ($sub) use ($cat) {
+                          $sub->where('name', 'ilike', "%{$cat}%")
+                              ->orWhere('slug', 'ilike', "%{$cat}%");
+                      });
+                });
+            }
         }
 
         if ($validated['filter_in_stock'] ?? false) {
