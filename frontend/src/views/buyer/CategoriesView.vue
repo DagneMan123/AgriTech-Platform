@@ -113,9 +113,10 @@
               </div>
 
               <h3 class="text-base font-bold mb-1.5 group-hover:text-blue-500 transition-colors">{{ category.name }}</h3>
-              <p :class="['text-xs line-clamp-2 mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                {{ category.description || 'Explore top quality ' + category.name + ' directly from local farms.' }}
+              <p v-if="category.description" :class="['text-xs line-clamp-2 mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                {{ category.description }}
               </p>
+              <div v-else class="mb-4"></div>
             </div>
 
             <!-- Action Buttons -->
@@ -154,8 +155,8 @@
             </div>
           </div>
 
-          <p :class="['text-xs mb-6 leading-relaxed', darkMode ? 'text-slate-300' : 'text-slate-600']">
-            {{ selectedModalCategory.description || 'This category contains fresh agricultural products supplied directly by registered regional farmers and suppliers.' }}
+          <p v-if="selectedModalCategory.description" :class="['text-xs mb-6 leading-relaxed', darkMode ? 'text-slate-300' : 'text-slate-600']">
+            {{ selectedModalCategory.description }}
           </p>
 
           <div class="flex gap-3">

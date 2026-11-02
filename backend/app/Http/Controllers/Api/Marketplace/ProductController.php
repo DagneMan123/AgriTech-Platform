@@ -25,11 +25,11 @@ class ProductController extends Controller
             ->with(['category', 'farmer']);
 
         if (!empty($validated['category_id'])) {
-            $query->where('category_id', $validated['category_id']);
+            $query->where('product_category_id', $validated['category_id']);
         } elseif ($request->filled('category')) {
             $cat = trim($request->input('category'));
             if (is_numeric($cat)) {
-                $query->where('category_id', (int)$cat);
+                $query->where('product_category_id', (int)$cat);
             } else {
                 $query->where(function ($q) use ($cat) {
                     $q->where('category', 'ilike', "%{$cat}%")

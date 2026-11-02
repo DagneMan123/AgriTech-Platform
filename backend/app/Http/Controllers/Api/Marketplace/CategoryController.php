@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     /**
-     * Get all categories with real-time product counts from PostgreSQL database
+     * Get all categories with real-time product counts strictly from PostgreSQL database
      */
     public function index(Request $request)
     {
@@ -20,48 +20,24 @@ class CategoryController extends Controller
                 ->orderBy('name', 'asc')
                 ->get();
 
-            // Auto-seed if categories table is empty
-            if ($categories->isEmpty()) {
-                try {
-                    \Artisan::call('db:seed', ['--class' => 'CategorySeeder', '--force' => true]);
-                    $categories = Category::where('is_active', true)
-                        ->orderBy('order', 'asc')
-                        ->orderBy('name', 'asc')
-                        ->get();
-                } catch (\Throwable $e) {
-                    // Ignore seeder exceptions
-                }
-            }
-
-            // Collect distinct categories directly from products table (crops/produce posted by farmers)
-            $productCategoryCounts = collect();
-            try {
-                $productCategoryCounts = Product::whereIn('status', ['active', 'available', 'approved'])
-                    ->whereNotNull('category')
-                    ->where('category', '!=', '')
-                    ->selectRaw('category, count(*) as count')
-                    ->groupBy('category')
-                    ->pluck('count', 'category');
-            } catch (\Throwable $e) {
-                // Ignore if query fails
-            }
-
             $result = [];
-            $seen = [];
 
             foreach ($categories as $cat) {
-                $catName = $cat->name;
-                $seen[strtolower($catName)] = true;
-                $seen[strtolower($cat->slug)] = true;
-
-                // Product count: count via relationship OR matching string in products.category
+                // Product count: count active products linked to this category in database
                 $count = 0;
                 try {
                     $count = Product::whereIn('status', ['active', 'available', 'approved'])
                         ->where(function ($q) use ($cat) {
-                            $q->where('category_id', $cat->id)
+                            $q->where('product_category_id', $cat->id)
                               ->orWhere('category', 'ilike', $cat->name)
-                              ->orWhere('category', 'ilike', "%{$cat->slug}%");
+                              ->orWhere('category', 'ilike', $cat->slug)
+                              ->orWhere('category', 'ilike', '%' . str_replace('-', '%', $cat->slug) . '%');
+
+                            if ($cat->slug === 'cereals-grains') {
+                                $q->orWhere('category', 'ilike', '%grain%')->orWhere('category', 'ilike', '%cereal%');
+                            } elseif ($cat->slug === 'dairy') {
+                                $q->orWhere('category', 'ilike', '%dairy%')->orWhere('category', 'ilike', '%milk%');
+                            }
                         })->count();
                 } catch (\Throwable $e) {
                     $count = 0;
@@ -71,34 +47,15 @@ class CategoryController extends Controller
                     'id' => $cat->id,
                     'name' => $cat->name,
                     'slug' => $cat->slug,
-                    'description' => $cat->description ?: "Fresh agricultural {$cat->name} supplied directly from Ethiopian farmers and producers.",
+                    'description' => $cat->description ?: '',
                     'icon' => $cat->icon ?: 'fas fa-seedling',
-                    'image' => $cat->image ?? null,
-                    'is_active' => true,
-                    'order' => $cat->order ?? 1,
-                    'product_count' => $count,
-                    'products_count' => $count,
+                    'image' => $cat->image,
+                    'is_active' => (bool)$cat->is_active,
+                    'order' => (int)($cat->order ?? 0),
+                    'parent_id' => $cat->parent_id,
+                    'product_count' => (int)$count,
+                    'products_count' => (int)$count,
                 ];
-            }
-
-            // Add any categories from products table that aren't in Category table yet
-            foreach ($productCategoryCounts as $pCat => $count) {
-                $lower = strtolower($pCat);
-                if (!isset($seen[$lower])) {
-                    $seen[$lower] = true;
-                    $result[] = [
-                        'id' => count($result) + 1,
-                        'name' => ucfirst($pCat),
-                        'slug' => \Illuminate\Support\Str::slug($pCat),
-                        'description' => "Fresh agricultural " . ucfirst($pCat) . " directly from local producers.",
-                        'icon' => 'fas fa-leaf',
-                        'image' => null,
-                        'is_active' => true,
-                        'order' => count($result) + 1,
-                        'product_count' => (int)$count,
-                        'products_count' => (int)$count,
-                    ];
-                }
             }
 
             return response()->json([
@@ -108,10 +65,10 @@ class CategoryController extends Controller
         } catch (\Throwable $e) {
             \Log::error('CategoryController@index error: ' . $e->getMessage());
             return response()->json([
-                'success' => true,
+                'success' => false,
                 'data' => [],
                 'message' => $e->getMessage()
-            ]);
+            ], 500);
         }
     }
 

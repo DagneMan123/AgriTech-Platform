@@ -61,20 +61,9 @@
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Category:</label>
             <select v-model="selectedCategory" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
               <option value="">All Categories</option>
-              <template v-if="categoriesList.length > 0">
-                <option v-for="cat in categoriesList" :key="cat.id" :value="cat.name">
-                  {{ cat.name }} ({{ cat.product_count ?? cat.products_count ?? 0 }})
-                </option>
-              </template>
-              <template v-else>
-                <option value="Vegetables">Vegetables</option>
-                <option value="Cereals & Grains">Cereals & Grains</option>
-                <option value="Fruits">Fruits</option>
-                <option value="Coffee & Teas">Coffee & Teas</option>
-                <option value="Legumes & Pulses">Legumes & Pulses</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Meat">Meat</option>
-              </template>
+              <option v-for="cat in categoriesList" :key="cat.id" :value="cat.name">
+                {{ cat.name }} ({{ cat.product_count ?? cat.products_count ?? 0 }})
+              </option>
             </select>
           </div>
           <div class="flex flex-col gap-1.5">
@@ -326,12 +315,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useMarketplaceStore } from '@/stores/marketplaceStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { marketplaceAPI } from '@/api/marketplace'
 import { formatImageUrl } from '@/utils/helpers'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
@@ -353,6 +343,7 @@ interface Product {
 }
 
 const router = useRouter()
+const route = useRoute()
 const marketplaceStore = useMarketplaceStore()
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
@@ -361,6 +352,7 @@ const themeStore = useThemeStore()
 const loading = ref(false)
 const searchQuery = ref('')
 const selectedCategory = ref('')
+const categoriesList = ref<any[]>([])
 const priceRange = ref('')
 const sortBy = ref('newest')
 const sidebarOpen = ref(false)
@@ -401,16 +393,32 @@ const showToast = (title: string, message: string) => {
 
 const darkMode = computed(() => themeStore.isDark)
 
+const fetchCategoriesList = async () => {
+  try {
+    const res = await marketplaceAPI.getCategories()
+    const raw = res.data?.data || res.data || []
+    categoriesList.value = Array.isArray(raw) ? raw : (raw.data || [])
+  } catch (err) {
+    console.warn('Failed to fetch categories list:', err)
+  }
+}
+
 onMounted(async () => {
   themeStore.initializeTheme()
-  loading.value = true
-  try {
-    await marketplaceStore.fetchProducts()
-  } catch (error) {
-    console.error('Failed to load products:', error)
-  } finally {
-    loading.value = false
+  await fetchCategoriesList()
+  if (route.query.category) {
+    selectedCategory.value = String(route.query.category)
   }
+  await handleSearch()
+})
+
+watch(() => route.query.category, (newCategory) => {
+  if (newCategory) {
+    selectedCategory.value = String(newCategory)
+  } else {
+    selectedCategory.value = ''
+  }
+  handleSearch()
 })
 
 const safeProducts = computed<Product[]>(() => {
@@ -489,6 +497,9 @@ const clearFilters = () => {
   selectedCategory.value = ''
   priceRange.value = ''
   sortBy.value = 'newest'
+  if (route.query.category) {
+    router.replace({ query: {} })
+  }
   handleSearch()
 }
 
