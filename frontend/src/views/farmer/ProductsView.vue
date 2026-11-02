@@ -123,6 +123,11 @@
                   <span class="label">Category:</span>
                   <span class="value">{{ product.category }}</span>
                 </div>
+
+                <div class="detail-item">
+                  <span class="label">Origin:</span>
+                  <span class="value font-semibold text-emerald-600">{{ product.origin_location || 'Adama' }}</span>
+                </div>
               </div>
 
               <!-- Inventory Bar -->
@@ -209,6 +214,21 @@
                   required
                 />
                 <span v-if="formErrors.category" class="error-text">{{ formErrors.category }}</span>
+              </div>
+
+              <!-- Origin Location (Hub/City for Dynamic Shipping Matrix) -->
+              <div class="form-group">
+                <label for="product-origin">Origin Location (Agricultural Hub / Dispatch Origin) *</label>
+                <select id="product-origin" v-model="productForm.origin_location" required>
+                  <option value="">Select dispatch origin hub</option>
+                  <option v-for="hub in originHubs" :key="hub.name" :value="hub.name">
+                    {{ hub.label }}
+                  </option>
+                </select>
+                <small class="form-hint" style="display:block; font-size:11px; color:#64748b; margin-top:4px;">
+                  Calculates dynamic distance (km) and weight matrix shipping fee to buyer destinations.
+                </small>
+                <span v-if="formErrors.origin_location" class="error-text">{{ formErrors.origin_location }}</span>
               </div>
 
               <!-- Price and Quantity Row -->
@@ -319,9 +339,11 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import { ETHIOPIAN_ORIGIN_HUBS } from '@/utils/shippingCalculator'
 
 const router = useRouter()
 const auth = useAuthStore()
+const originHubs = ETHIOPIAN_ORIGIN_HUBS
 const { isDark, isLight } = useTheme()
 
 // State
@@ -344,6 +366,7 @@ const productForm = ref({
   name: '',
   description: '',
   category: '',
+  origin_location: 'Adama',
   price: '',
   quantity_available: '',
   unit: 'kg',
@@ -453,6 +476,7 @@ const resetProductForm = () => {
     name: '',
     description: '',
     category: '',
+    origin_location: 'Adama',
     price: '',
     quantity_available: '',
     unit: 'kg',
@@ -469,6 +493,7 @@ const editProduct = (product) => {
     name: product.name,
     description: product.description,
     category: product.category || '',
+    origin_location: product.origin_location || 'Adama',
     price: product.price,
     quantity_available: product.quantity_available,
     unit: product.unit || 'kg',
@@ -529,6 +554,7 @@ const submitProductForm = async () => {
     formData.append('name', productForm.value.name)
     formData.append('description', productForm.value.description)
     formData.append('category', productForm.value.category)
+    formData.append('origin_location', productForm.value.origin_location || 'Adama')
     formData.append('price', productForm.value.price)
     formData.append('quantity_available', productForm.value.quantity_available)
     formData.append('unit', productForm.value.unit)

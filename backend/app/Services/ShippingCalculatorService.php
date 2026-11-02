@@ -7,6 +7,60 @@ class ShippingCalculatorService
     public const WEIGHT_FLAT_THRESHOLD_KG = 5.0;
     public const DISTANCE_SHORT_THRESHOLD_KM = 30.0;
 
+    /**
+     * Major Ethiopian Agricultural Hubs & Production Basins
+     */
+    public const ETHIOPIAN_ORIGIN_HUBS = [
+        'Adama' => ['region' => 'Oromia', 'dist_to_addis' => 95, 'label' => 'Adama (Oromia Agro-Logistics Center)'],
+        'Hawassa' => ['region' => 'Sidama', 'dist_to_addis' => 275, 'label' => 'Hawassa (Sidama Rift Valley Basin)'],
+        'Bahir Dar' => ['region' => 'Amhara', 'dist_to_addis' => 495, 'label' => 'Bahir Dar (Lake Tana Basin)'],
+        'Addis Ababa' => ['region' => 'Addis Ababa', 'dist_to_addis' => 25, 'label' => 'Addis Ababa (Central Terminal)'],
+        'Jimma' => ['region' => 'Oromia', 'dist_to_addis' => 350, 'label' => 'Jimma (Coffee & Agro Basin)'],
+        'Gondar' => ['region' => 'Amhara', 'dist_to_addis' => 660, 'label' => 'Gondar (North Amhara Basin)'],
+        'Dire Dawa' => ['region' => 'Dire Dawa', 'dist_to_addis' => 450, 'label' => 'Dire Dawa (Eastern Corridor)'],
+        'Mekelle' => ['region' => 'Tigray', 'dist_to_addis' => 780, 'label' => 'Mekelle (Tigray Basin)'],
+        'Shashamane' => ['region' => 'Oromia', 'dist_to_addis' => 245, 'label' => 'Shashamane (Rift Valley Junction)'],
+        'Nekemte' => ['region' => 'Oromia', 'dist_to_addis' => 330, 'label' => 'Nekemte (Western Grain Belt)'],
+        'Bishoftu' => ['region' => 'Oromia', 'dist_to_addis' => 45, 'label' => 'Bishoftu (Central Agro Valley)'],
+        'Arba Minch' => ['region' => 'SNNPR', 'dist_to_addis' => 440, 'label' => 'Arba Minch (Southern Fruit Basin)'],
+        'Dessie' => ['region' => 'Amhara', 'dist_to_addis' => 385, 'label' => 'Dessie (Eastern Amhara)'],
+        'Debre Markos' => ['region' => 'Amhara', 'dist_to_addis' => 300, 'label' => 'Debre Markos (Gojjam Basin)'],
+    ];
+
+    /**
+     * Known highway inter-city / direct route distance matrix (km)
+     */
+    public const DIRECT_DISTANCES = [
+        'Adama:Addis Ababa' => 95,
+        'Addis Ababa:Adama' => 95,
+        'Adama:Hawassa' => 185,
+        'Hawassa:Adama' => 185,
+        'Adama:Dire Dawa' => 355,
+        'Dire Dawa:Adama' => 355,
+        'Hawassa:Addis Ababa' => 275,
+        'Addis Ababa:Hawassa' => 275,
+        'Hawassa:Shashamane' => 25,
+        'Shashamane:Hawassa' => 25,
+        'Bahir Dar:Addis Ababa' => 495,
+        'Addis Ababa:Bahir Dar' => 495,
+        'Bahir Dar:Gondar' => 175,
+        'Gondar:Bahir Dar' => 175,
+        'Bishoftu:Addis Ababa' => 45,
+        'Addis Ababa:Bishoftu' => 45,
+        'Bishoftu:Adama' => 50,
+        'Adama:Bishoftu' => 50,
+        'Jimma:Addis Ababa' => 350,
+        'Addis Ababa:Jimma' => 350,
+        'Dire Dawa:Harari' => 55,
+        'Harari:Dire Dawa' => 55,
+        'Dire Dawa:Addis Ababa' => 450,
+        'Addis Ababa:Dire Dawa' => 450,
+        'Mekelle:Addis Ababa' => 780,
+        'Addis Ababa:Mekelle' => 780,
+        'Arba Minch:Hawassa' => 165,
+        'Hawassa:Arba Minch' => 165,
+    ];
+
     public const ETHIOPIAN_REGIONS_LOGISTICS = [
         'Addis Ababa' => ['distance_km' => 25, 'transit_days' => 'Same-day or next-day delivery'],
         'Oromia' => ['distance_km' => 120, 'transit_days' => '1 - 2 business days'],
@@ -61,13 +115,113 @@ class ShippingCalculatorService
     ];
 
     /**
+     * Dynamically calculate distance (km) between product origin and buyer destination
+     */
+    public static function calculateDistanceKm(?string $origin, ?string $destination): float
+    {
+        $orig = trim($origin ?: 'Addis Ababa');
+        $dest = trim($destination ?: 'Addis Ababa');
+
+        // Same location = local intra-city transit
+        if (strcasecmp($orig, $dest) === 0) {
+            return 25.0;
+        }
+
+        // Direct pair lookup
+        $key1 = "{$orig}:{$dest}";
+        $key2 = "{$dest}:{$orig}";
+        if (isset(self::DIRECT_DISTANCES[$key1])) {
+            return (float) self::DIRECT_DISTANCES[$key1];
+        }
+        if (isset(self::DIRECT_DISTANCES[$key2])) {
+            return (float) self::DIRECT_DISTANCES[$key2];
+        }
+
+        // Resolve origin hub info
+        $origInfo = self::ETHIOPIAN_ORIGIN_HUBS[$orig] ?? null;
+        $origDistToAddis = $origInfo ? (float) $origInfo['dist_to_addis'] : 25.0;
+        $origRegion = $origInfo ? $origInfo['region'] : $orig;
+
+        // If destination is one of the administrative regions
+        if (isset(self::ETHIOPIAN_REGIONS_LOGISTICS[$dest])) {
+            $destDistToAddis = (float) self::ETHIOPIAN_REGIONS_LOGISTICS[$dest]['distance_km'];
+
+            // Same region
+            if (strcasecmp($origRegion, $dest) === 0) {
+                return min(60.0, $destDistToAddis * 0.4);
+            }
+
+            // Transit through or towards Addis corridor
+            if (strcasecmp($dest, 'Addis Ababa') === 0) {
+                return max(25.0, $origDistToAddis);
+            }
+            if (strcasecmp($orig, 'Addis Ababa') === 0) {
+                return max(25.0, $destDistToAddis);
+            }
+
+            // Route through hub network
+            return round($origDistToAddis + ($destDistToAddis * 0.85));
+        }
+
+        // Destination is another hub
+        $destInfo = self::ETHIOPIAN_ORIGIN_HUBS[$dest] ?? null;
+        if ($destInfo) {
+            $destDistToAddis = (float) $destInfo['dist_to_addis'];
+            $destRegion = $destInfo['region'];
+
+            if (strcasecmp($origRegion, $destRegion) === 0) {
+                return 40.0;
+            }
+            return round($origDistToAddis + $destDistToAddis);
+        }
+
+        // Fallback default
+        return 95.0;
+    }
+
+    /**
+     * Get primary origin location or max-distance origin for an array/collection of cart items
+     */
+    public static function resolveCartOriginAndDistance($cartItems, string $destination = 'Addis Ababa'): array
+    {
+        $maxDistance = 25.0;
+        $primaryOrigin = 'Addis Ababa';
+        $originsFound = [];
+
+        foreach ($cartItems as $item) {
+            $product = is_array($item) ? ($item['product'] ?? null) : ($item->product ?? null);
+            $orig = null;
+            if (is_array($item) && !empty($item['origin_location'])) {
+                $orig = $item['origin_location'];
+            } elseif ($product) {
+                $orig = is_array($product) ? ($product['origin_location'] ?? null) : ($product->origin_location ?? null);
+            }
+
+            $orig = $orig ?: 'Addis Ababa';
+            $originsFound[] = $orig;
+            $dist = self::calculateDistanceKm($orig, $destination);
+
+            if ($dist >= $maxDistance) {
+                $maxDistance = $dist;
+                $primaryOrigin = $orig;
+            }
+        }
+
+        return [
+            'origin' => $primaryOrigin,
+            'all_origins' => array_unique($originsFound),
+            'distance_km' => $maxDistance,
+            'destination' => $destination
+        ];
+    }
+
+    /**
      * Convert an item's unit & quantity to normalized kilograms
      */
     public static function getItemWeightKg($product, float|int $quantity): float
     {
         $qty = max(0, (float) $quantity);
         $rawUnit = strtolower(trim($product->unit ?? $product->quantity_unit ?? 'kg'));
-        // Clean pricing unit markers like 'etb/kg'
         $unit = preg_replace('/^(etb|birr|\$)?\s*\/?\s*/i', '', $rawUnit);
 
         return match ($unit) {
@@ -131,23 +285,24 @@ class ShippingCalculatorService
     public static function calculateFee(
         float $weightKg,
         string $region = 'Addis Ababa',
-        string $tierKey = 'standard'
+        string $tierKey = 'standard',
+        ?string $origin = 'Addis Ababa'
     ): float {
-        $breakdown = self::getBreakdown($weightKg, $region, $tierKey);
+        $breakdown = self::getBreakdown($weightKg, $region, $tierKey, $origin);
         return $breakdown['total_fee'];
     }
 
     /**
-     * Get detailed breakdown of the shipping calculation
+     * Get detailed breakdown of the dynamic shipping calculation
      */
     public static function getBreakdown(
         float $weightKg,
-        string $region = 'Addis Ababa',
-        string $tierKey = 'standard'
+        string $destination = 'Addis Ababa',
+        string $tierKey = 'standard',
+        ?string $origin = 'Addis Ababa'
     ): array {
         $tier = self::SHIPPING_TIERS[$tierKey] ?? self::SHIPPING_TIERS['standard'];
-        $regionData = self::ETHIOPIAN_REGIONS_LOGISTICS[$region] ?? self::ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa'];
-        $distanceKm = (float) $regionData['distance_km'];
+        $distanceKm = self::calculateDistanceKm($origin ?: 'Addis Ababa', $destination);
 
         $isSmallLocal = ($weightKg <= self::WEIGHT_FLAT_THRESHOLD_KG) && ($distanceKm <= self::DISTANCE_SHORT_THRESHOLD_KM);
 
@@ -155,7 +310,8 @@ class ShippingCalculatorService
             return [
                 'tier' => $tier['key'],
                 'title' => $tier['title'],
-                'region' => $region,
+                'origin' => $origin ?: 'Addis Ababa',
+                'destination' => $destination,
                 'weight_kg' => round($weightKg, 2),
                 'distance_km' => $distanceKm,
                 'is_flat_rate' => true,
@@ -169,18 +325,19 @@ class ShippingCalculatorService
             ];
         }
 
-        // Dynamic matrix calculation: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+        // Dynamic Weight & Distance Matrix: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
         $weightCost = round($weightKg * $tier['rate_per_kg'], 2);
         $distanceCost = round($distanceKm * $tier['rate_per_km'], 2);
         $rawTotal = $tier['base_fee'] + $weightCost + $distanceCost;
         
-        // Never fall below the tier's minimum flat rate, rounded to nearest 10 ETB
+        // Never fall below minimum flat rate, rounded to nearest 10 ETB
         $totalFee = max($tier['flat_rate'], round($rawTotal / 10) * 10);
 
         return [
             'tier' => $tier['key'],
             'title' => $tier['title'],
-            'region' => $region,
+            'origin' => $origin ?: 'Addis Ababa',
+            'destination' => $destination,
             'weight_kg' => round($weightKg, 2),
             'distance_km' => $distanceKm,
             'is_flat_rate' => false,

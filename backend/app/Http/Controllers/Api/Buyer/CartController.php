@@ -50,6 +50,7 @@ class CartController extends Controller
                 'image_url' => $product ? $product->image : null,
                 'sku' => 'SKU-' . $item->product_id,
                 'unit' => $product ? ($product->unit ?? $product->quantity_unit ?? 'kg') : 'kg',
+                'origin_location' => $product ? ($product->origin_location ?: 'Addis Ababa') : 'Addis Ababa',
                 'product' => $product,
             ];
         });
@@ -263,11 +264,12 @@ class CartController extends Controller
             return (float) ($item->product ? $item->product->price * $item->quantity : 0);
         });
 
-        // Dynamic Shipping Matrix Calculation
+        // Dynamic Shipping Matrix Calculation based on product origin & buyer destination
         $region = $request->input('delivery_region', 'Addis Ababa');
         $shippingType = $request->input('shipping_type', 'standard');
+        $originInfo = ShippingCalculatorService::resolveCartOriginAndDistance($cartItems, $region);
         $totalWeightKg = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
-        $serverCalculatedFee = ShippingCalculatorService::calculateFee($totalWeightKg, $region, $shippingType);
+        $serverCalculatedFee = ShippingCalculatorService::calculateFee($totalWeightKg, $region, $shippingType, $originInfo['origin']);
 
         $clientDeliveryFee = (float) $request->input('delivery_fee', 0);
         $deliveryFee = $clientDeliveryFee > 0 ? $clientDeliveryFee : $serverCalculatedFee;
@@ -366,6 +368,7 @@ class CartController extends Controller
         $totalWeight = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
         $region = $request->query('region', 'Addis Ababa');
 
+        $originInfo = ShippingCalculatorService::resolveCartOriginAndDistance($cartItems, $region);
         $options = [];
         $hasPerishables = ShippingCalculatorService::hasPerishables($cartItems);
 
@@ -373,11 +376,14 @@ class CartController extends Controller
             if ($tier['perishable_only'] && !$hasPerishables) {
                 continue;
             }
-            $options[] = ShippingCalculatorService::getBreakdown($totalWeight, $region, $key);
+            $options[] = ShippingCalculatorService::getBreakdown($totalWeight, $region, $key, $originInfo['origin']);
         }
 
         return response()->json([
             'success' => true,
+            'origin' => $originInfo['origin'],
+            'destination' => $region,
+            'distance_km' => $originInfo['distance_km'],
             'total_weight_kg' => round($totalWeight, 2),
             'has_perishables' => $hasPerishables,
             'region' => $region,

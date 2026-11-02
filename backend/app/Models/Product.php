@@ -28,6 +28,7 @@ class Product extends Model
         'status',
         'is_organic',
         'certification',
+        'origin_location',
         'specifications',
         'views_count',
         'minimum_order_quantity',

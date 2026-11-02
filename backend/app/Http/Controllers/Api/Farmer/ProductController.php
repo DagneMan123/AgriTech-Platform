@@ -70,6 +70,7 @@ class ProductController extends Controller
             'quantity_unit' => 'nullable|string|max:50',
             'quality_grade' => 'nullable|string|max:50',
             'harvest_id' => 'nullable',
+            'origin_location' => 'nullable|string|max:100',
             'status' => 'nullable|string|max:50',
             'image' => 'nullable|image|max:5120',
         ]);
@@ -80,6 +81,7 @@ class ProductController extends Controller
 
         $unit = $request->input('unit') ?? $request->input('quantity_unit') ?? 'kg';
         $status = $request->input('status') ?? 'active';
+        $originLocation = $request->input('origin_location') ?: 'Addis Ababa';
 
         $images = [];
         if ($request->hasFile('image')) {
@@ -101,6 +103,7 @@ class ProductController extends Controller
             'price_unit' => 'ETB/' . $unit,
             'quantity' => $quantity,
             'quantity_unit' => $unit,
+            'origin_location' => $originLocation,
             'quality_grade' => $validated['quality_grade'] ?? null,
             'status' => $status,
             'images' => $images,
@@ -148,6 +151,7 @@ class ProductController extends Controller
             'quantity_unit' => 'nullable|string|max:50',
             'quality_grade' => 'nullable|string|max:50',
             'harvest_id' => 'nullable',
+            'origin_location' => 'nullable|string|max:100',
             'status' => 'sometimes|string|max:50',
             'image' => 'nullable|image|max:5120',
         ]);
@@ -159,6 +163,7 @@ class ProductController extends Controller
         if ($request->has('price')) $updateData['price'] = $request->price;
         if ($request->has('status')) $updateData['status'] = $request->status;
         if ($request->has('quality_grade')) $updateData['quality_grade'] = $request->quality_grade;
+        if ($request->has('origin_location')) $updateData['origin_location'] = $request->origin_location;
         if ($request->has('harvest_id')) {
             $updateData['crop_id'] = is_numeric($request->harvest_id) ? (int)$request->harvest_id : null;
         }

@@ -27,6 +27,7 @@ class ProductResource extends JsonResource
             'quality_grade' => $this->quality_grade,
             'product_image' => $this->product_image,
             'category' => $this->category,
+            'origin_location' => $this->origin_location ?? 'Addis Ababa',
             'certification' => $this->certification,
             'expiry_date' => $this->expiry_date,
             'status' => $this->status,

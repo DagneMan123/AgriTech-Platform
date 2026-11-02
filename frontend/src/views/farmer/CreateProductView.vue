@@ -46,6 +46,17 @@
       </div>
 
       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Origin Location (Agricultural Hub) *</label>
+        <select v-model="form.origin_location" required class="input-field">
+          <option value="">Select origin agricultural hub</option>
+          <option v-for="hub in originHubs" :key="hub.name" :value="hub.name">
+            {{ hub.label }}
+          </option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Used for dynamic shipping distance matrix calculation to buyer destinations.</p>
+      </div>
+
+      <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
         <input @change="handleImageUpload" type="file" multiple accept="image/*" class="input-field" />
       </div>
@@ -65,9 +76,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFarmerStore } from '@/stores/farmerStore'
+import { ETHIOPIAN_ORIGIN_HUBS } from '@/utils/shippingCalculator'
 
 const router = useRouter()
 const farmerStore = useFarmerStore()
+const originHubs = ETHIOPIAN_ORIGIN_HUBS
 const form = ref({
   name: '',
   description: '',
@@ -75,6 +88,7 @@ const form = ref({
   quantity: 0,
   unit: 'kg',
   category: 'vegetables',
+  origin_location: 'Adama',
   images: null as FileList | null
 })
 const loading = ref(false)
@@ -96,6 +110,7 @@ const handleCreateProduct = async () => {
     formData.append('quantity', form.value.quantity.toString())
     formData.append('unit', form.value.unit)
     formData.append('category', form.value.category)
+    formData.append('origin_location', form.value.origin_location || 'Adama')
     
     if (form.value.images) {
       Array.from(form.value.images).forEach((file, index) => {

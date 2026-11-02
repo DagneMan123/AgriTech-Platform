@@ -1,12 +1,12 @@
 /**
  * Dynamic Agricultural Shipping & Logistics Calculator
- * Calculates freight & delivery costs based on total weight, volume, distance,
- * and dynamically filters shipping options based on product perishability.
+ * Calculates freight & delivery costs based on product origin (e.g., Adama, Hawassa, Bahir Dar),
+ * user destination, total weight (kg), distance (km), and product perishability.
  * 
  * Required Business Logic (Distance & Weight Matrix):
  * - For small/medium orders (weight <= 5 kg and short distance <= 30 km), keep standard flat rate (e.g. ETB 350).
- * - For bulk or heavier orders (weight > 5 kg or long distance), dynamically calculate using:
- *   Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+ * - For bulk or heavier orders (weight > 5 kg or distance > 30 km):
+ *   Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
  */
 
 export interface CartItem {
@@ -19,11 +19,13 @@ export interface CartItem {
   price?: number
   subtotal?: number
   category?: string
+  origin_location?: string
   product?: {
     category?: string
     name?: string
     unit?: string
     quantity_unit?: string
+    origin_location?: string
   }
 }
 
@@ -39,6 +41,8 @@ export interface ShippingBreakdown {
   weightKg: number
   ratePerKg: number
   weightCost: number
+  originLocation: string
+  destinationLocation: string
   distanceKm: number
   ratePerKm: number
   distanceCost: number
@@ -63,6 +67,57 @@ export interface DynamicShippingOption {
 
 export const WEIGHT_FLAT_THRESHOLD_KG = 5.0
 export const DISTANCE_SHORT_THRESHOLD_KM = 30.0
+
+/**
+ * Major Ethiopian Agricultural Hubs & Production Basins
+ */
+export const ETHIOPIAN_ORIGIN_HUBS: { name: string; region: string; distToAddis: number; label: string }[] = [
+  { name: 'Adama', region: 'Oromia', distToAddis: 95, label: 'Adama (Oromia Agro-Hub)' },
+  { name: 'Hawassa', region: 'Sidama', distToAddis: 275, label: 'Hawassa (Sidama Rift Valley)' },
+  { name: 'Bahir Dar', region: 'Amhara', distToAddis: 495, label: 'Bahir Dar (Lake Tana Basin)' },
+  { name: 'Addis Ababa', region: 'Addis Ababa', distToAddis: 25, label: 'Addis Ababa (Central Terminal)' },
+  { name: 'Jimma', region: 'Oromia', distToAddis: 350, label: 'Jimma (Coffee & Agro Basin)' },
+  { name: 'Gondar', region: 'Amhara', distToAddis: 660, label: 'Gondar (North Amhara Basin)' },
+  { name: 'Dire Dawa', region: 'Dire Dawa', distToAddis: 450, label: 'Dire Dawa (Eastern Corridor)' },
+  { name: 'Mekelle', region: 'Tigray', distToAddis: 780, label: 'Mekelle (Tigray Basin)' },
+  { name: 'Shashamane', region: 'Oromia', distToAddis: 245, label: 'Shashamane (Southern Junction)' },
+  { name: 'Nekemte', region: 'Oromia', distToAddis: 330, label: 'Nekemte (Western Grain Belt)' },
+  { name: 'Bishoftu', region: 'Oromia', distToAddis: 45, label: 'Bishoftu (Central Agro Valley)' },
+  { name: 'Arba Minch', region: 'SNNPR', distToAddis: 440, label: 'Arba Minch (Fruit Valley)' },
+  { name: 'Dessie', region: 'Amhara', distToAddis: 385, label: 'Dessie (Eastern Amhara Basin)' },
+  { name: 'Debre Markos', region: 'Amhara', distToAddis: 300, label: 'Debre Markos (Gojjam Basin)' }
+]
+
+export const DIRECT_DISTANCES: Record<string, number> = {
+  'Adama:Addis Ababa': 95,
+  'Addis Ababa:Adama': 95,
+  'Adama:Hawassa': 185,
+  'Hawassa:Adama': 185,
+  'Adama:Dire Dawa': 355,
+  'Dire Dawa:Adama': 355,
+  'Hawassa:Addis Ababa': 275,
+  'Addis Ababa:Hawassa': 275,
+  'Hawassa:Shashamane': 25,
+  'Shashamane:Hawassa': 25,
+  'Bahir Dar:Addis Ababa': 495,
+  'Addis Ababa:Bahir Dar': 495,
+  'Bahir Dar:Gondar': 175,
+  'Gondar:Bahir Dar': 175,
+  'Bishoftu:Addis Ababa': 45,
+  'Addis Ababa:Bishoftu': 45,
+  'Bishoftu:Adama': 50,
+  'Adama:Bishoftu': 50,
+  'Jimma:Addis Ababa': 350,
+  'Addis Ababa:Jimma': 350,
+  'Dire Dawa:Harari': 55,
+  'Harari:Dire Dawa': 55,
+  'Dire Dawa:Addis Ababa': 450,
+  'Addis Ababa:Dire Dawa': 450,
+  'Mekelle:Addis Ababa': 780,
+  'Addis Ababa:Mekelle': 780,
+  'Arba Minch:Hawassa': 165,
+  'Hawassa:Arba Minch': 165,
+}
 
 export const ETHIOPIAN_REGIONS_LOGISTICS: Record<string, RegionLogisticsInfo> = {
   'Addis Ababa': {
@@ -175,6 +230,86 @@ export const NON_PERISHABLE_CATEGORIES = [
 ]
 
 /**
+ * Calculates dynamic distance (km) between product origin hub and buyer destination
+ */
+export function calculateOriginDestinationDistanceKm(origin?: string, destination?: string): number {
+  const orig = String(origin || 'Addis Ababa').trim()
+  const dest = String(destination || 'Addis Ababa').trim()
+
+  if (orig.toLowerCase() === dest.toLowerCase()) {
+    return 25
+  }
+
+  const directKey = `${orig}:${dest}`
+  const reverseKey = `${dest}:${orig}`
+  if (DIRECT_DISTANCES[directKey]) return DIRECT_DISTANCES[directKey]
+  if (DIRECT_DISTANCES[reverseKey]) return DIRECT_DISTANCES[reverseKey]
+
+  const origHub = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === orig.toLowerCase())
+  const origDistToAddis = origHub ? origHub.distToAddis : 25
+  const origRegion = origHub ? origHub.region : orig
+
+  if (ETHIOPIAN_REGIONS_LOGISTICS[dest]) {
+    const destRegionData = ETHIOPIAN_REGIONS_LOGISTICS[dest]
+    const destDistToAddis = destRegionData.distanceKm
+
+    if (origRegion.toLowerCase() === dest.toLowerCase()) {
+      return Math.min(60, Math.round(destDistToAddis * 0.4))
+    }
+    if (dest.toLowerCase() === 'addis ababa') {
+      return Math.max(25, origDistToAddis)
+    }
+    if (orig.toLowerCase() === 'addis ababa') {
+      return Math.max(25, destDistToAddis)
+    }
+    return Math.round(origDistToAddis + (destDistToAddis * 0.85))
+  }
+
+  const destHub = ETHIOPIAN_ORIGIN_HUBS.find(h => h.name.toLowerCase() === dest.toLowerCase())
+  if (destHub) {
+    if (origRegion.toLowerCase() === destHub.region.toLowerCase()) {
+      return 40
+    }
+    return Math.round(origDistToAddis + destHub.distToAddis)
+  }
+
+  return 95
+}
+
+/**
+ * Resolves effective origin location and distance from cart items to destination
+ */
+export function resolveCartOriginAndDistance(cartItems: any[], destination = 'Addis Ababa'): {
+  origin: string
+  allOrigins: string[]
+  distanceKm: number
+  destination: string
+} {
+  let maxDistance = 25
+  let primaryOrigin = 'Addis Ababa'
+  const originsFound: string[] = []
+
+  if (Array.isArray(cartItems)) {
+    for (const item of cartItems) {
+      const orig = item?.origin_location || item?.product?.origin_location || 'Addis Ababa'
+      originsFound.push(orig)
+      const dist = calculateOriginDestinationDistanceKm(orig, destination)
+      if (dist >= maxDistance) {
+        maxDistance = dist
+        primaryOrigin = orig
+      }
+    }
+  }
+
+  return {
+    origin: primaryOrigin,
+    allOrigins: Array.from(new Set(originsFound)),
+    distanceKm: maxDistance,
+    destination
+  }
+}
+
+/**
  * Checks if a cart item is perishable (requires temperature control)
  */
 export function isItemPerishable(item: any): boolean {
@@ -184,7 +319,6 @@ export function isItemPerishable(item: any): boolean {
 
   if (PERISHABLE_CATEGORIES.some(c => cat.includes(c))) return true
 
-  // Fallback to name keywords
   const perishableKeywords = [
     'tomato', 'onion', 'potato', 'cabbage', 'carrot', 'pepper', 'spinach',
     'lettuce', 'banana', 'mango', 'avocado', 'apple', 'orange', 'milk',
@@ -201,7 +335,6 @@ export function getItemWeightKg(item: any): number {
   const rawUnit = String(item.unit || item.product?.unit || item.product?.quantity_unit || 'kg').toLowerCase().trim()
   const qty = Number(item.quantity) || 1
 
-  // Clean unit string (e.g. remove "etb/kg", "/kg", etc.)
   const unit = rawUnit.replace(/^(etb|birr|\$)?\s*\/?\s*/i, '').trim()
 
   switch (unit) {
@@ -237,7 +370,6 @@ export function getItemWeightKg(item: any): number {
       return qty * 2
     case 'liter':
     case 'liters':
-    case 'l':
       return qty * 1
     default:
       return qty * 1
@@ -266,6 +398,8 @@ export function cartHasPerishables(cartItems: any[]): boolean {
 function calculateTierFee(
   totalWeight: number,
   distance: number,
+  origin: string,
+  destination: string,
   config: {
     flatRate: number
     baseFee: number
@@ -283,13 +417,15 @@ function calculateTierFee(
         weightKg: totalWeight,
         ratePerKg: config.ratePerKg,
         weightCost: 0,
+        originLocation: origin,
+        destinationLocation: destination,
         distanceKm: distance,
         ratePerKm: config.ratePerKm,
         distanceCost: 0,
         isFlatRate: true,
         flatRate: config.flatRate,
         totalFee: config.flatRate,
-        formulaStr: `Standard Flat Rate: ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg)`
+        formulaStr: `Standard Flat Rate: ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg & ≤ ${DISTANCE_SHORT_THRESHOLD_KM}km)`
       }
     }
   }
@@ -307,6 +443,8 @@ function calculateTierFee(
       weightKg: totalWeight,
       ratePerKg: config.ratePerKg,
       weightCost,
+      originLocation: origin,
+      destinationLocation: destination,
       distanceKm: distance,
       ratePerKm: config.ratePerKm,
       distanceCost,
@@ -323,17 +461,28 @@ function calculateTierFee(
  */
 export function getDynamicShippingOptions(
   cartItems: any[],
-  regionName = 'Addis Ababa'
+  destinationName = 'Addis Ababa',
+  forcedOrigin?: string
 ): DynamicShippingOption[] {
   const totalWeight = Math.max(1, getCartTotalWeightKg(cartItems))
   const hasPerishables = cartHasPerishables(cartItems)
 
-  const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[regionName] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
-  const distance = regionInfo.distanceKm
+  const originInfo = forcedOrigin
+    ? {
+        origin: forcedOrigin,
+        allOrigins: [forcedOrigin],
+        distanceKm: calculateOriginDestinationDistanceKm(forcedOrigin, destinationName),
+        destination: destinationName
+      }
+    : resolveCartOriginAndDistance(cartItems, destinationName)
+
+  const distance = originInfo.distanceKm
+  const origin = originInfo.origin
+  const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[destinationName] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 
   // 1. STANDARD FREIGHT
   // Base: 200 ETB, Rate/kg: 10 ETB, Rate/km: 6 ETB, Flat Rate: 350 ETB
-  const stdCalc = calculateTierFee(totalWeight, distance, {
+  const stdCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
     flatRate: 350,
     baseFee: 200,
     ratePerKg: 10,
@@ -342,7 +491,7 @@ export function getDynamicShippingOptions(
 
   // 2. EXPRESS DIRECT LOGISTICS
   // Base: 350 ETB, Rate/kg: 16 ETB, Rate/km: 10 ETB, Flat Rate: 650 ETB
-  const expCalc = calculateTierFee(totalWeight, distance, {
+  const expCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
     flatRate: 650,
     baseFee: 350,
     ratePerKg: 16,
@@ -354,8 +503,8 @@ export function getDynamicShippingOptions(
       key: 'standard',
       title: 'Standard Agricultural Freight',
       desc: stdCalc.breakdown.isFlatRate
-        ? `Ambient cargo dispatch • ${regionInfo.transitDays} (Flat standard rate)`
-        : `Ambient cargo dispatch • ${regionInfo.transitDays} (${totalWeight} kg • ~${distance} km)`,
+        ? `Ambient cargo dispatch • ${regionInfo.transitDays} (Flat standard rate: ${origin} → ${destinationName})`
+        : `Ambient cargo dispatch • ${regionInfo.transitDays} (${origin} → ${destinationName} • ${totalWeight} kg • ${distance} km)`,
       fee: stdCalc.fee,
       badge: stdCalc.breakdown.isFlatRate ? 'STANDARD FLAT RATE' : 'DYNAMIC BULK MATRIX',
       isPerishableOnly: false,
@@ -366,7 +515,7 @@ export function getDynamicShippingOptions(
     {
       key: 'express',
       title: 'Express Direct Dispatch',
-      desc: `Priority dedicated farm-to-door transit • 1 - 2 business days`,
+      desc: `Priority dedicated transit (${origin} → ${destinationName}) • 1 - 2 business days`,
       fee: expCalc.fee,
       badge: hasPerishables ? 'FASTER TRANSIT' : null,
       isPerishableOnly: false,
@@ -379,7 +528,7 @@ export function getDynamicShippingOptions(
   // 3. COLD-CHAIN AGRO TRANSPORT
   // DYNAMIC FILTERING: ONLY included if cart has perishable produce!
   if (hasPerishables) {
-    const coldCalc = calculateTierFee(totalWeight, distance, {
+    const coldCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
       flatRate: 1200,
       baseFee: 700,
       ratePerKg: 22,
@@ -389,7 +538,7 @@ export function getDynamicShippingOptions(
     options.push({
       key: 'overnight',
       title: 'Cold-Chain Agro Transport',
-      desc: `Climate-controlled (+4°C) for fresh produce • Guaranteed crisp freshness`,
+      desc: `Climate-controlled (+4°C) from ${origin} to ${destinationName} • Guaranteed crisp freshness`,
       fee: coldCalc.fee,
       badge: 'RECOMMENDED FOR FRESH PRODUCE',
       isPerishableOnly: true,

@@ -25,6 +25,7 @@ class SupplierProduct extends Model
         'model',
         'warranty',
         'certification',
+        'origin_location',
         'status'
     ];
 

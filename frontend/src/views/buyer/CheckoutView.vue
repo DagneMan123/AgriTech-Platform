@@ -629,9 +629,14 @@
                     </button>
                   </div>
 
-                  <p :class="['text-[10px] mb-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    ETB {{ formatNumber(item.unit_price || item.price || 0) }} / {{ item.unit || 'kg' }}
-                  </p>
+                  <div class="flex items-center gap-2 text-[10px] mb-1.5 flex-wrap">
+                    <span :class="darkMode ? 'text-slate-400' : 'text-slate-500'">
+                      ETB {{ formatNumber(item.unit_price || item.price || 0) }} / {{ item.unit || 'kg' }}
+                    </span>
+                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-semibold border border-emerald-500/20">
+                      📍 Origin: {{ item.origin_location || item.product?.origin_location || 'Adama' }}
+                    </span>
+                  </div>
 
                   <!-- Real-time Quantity Modifiers -->
                   <div class="flex items-center gap-2">
@@ -690,7 +695,11 @@
                   <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-[10px] text-slate-400">
-                  <span>{{ formatNumber(totalWeightKg) }} kg • ~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
+                  <span>
+                    <strong class="text-slate-700 dark:text-slate-200">{{ selectedShippingOption.breakdown?.originLocation || 'Adama' }}</strong> → 
+                    <strong class="text-slate-700 dark:text-slate-200">{{ addressForm.region }}</strong>
+                    (~{{ selectedShippingOption.breakdown?.distanceKm || 25 }} km • {{ formatNumber(totalWeightKg) }} kg)
+                  </span>
                   <span v-if="selectedShippingOption.breakdown?.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
                   <span v-else class="text-blue-500 font-semibold">Dynamic Matrix</span>
                 </div>
