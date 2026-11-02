@@ -129,7 +129,7 @@
               </button>
               <button 
                 @click="selectCategory(category)"
-                class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                class="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
               >
                 Explore<i class="fas fa-arrow-right text-[10px]"></i>
               </button>
@@ -163,7 +163,7 @@
             <button @click="selectedModalCategory = null" :class="['flex-1 py-2.5 border rounded-xl text-xs font-bold cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
               Close
             </button>
-            <button @click="selectCategory(selectedModalCategory)" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-2">
+            <button @click="selectCategory(selectedModalCategory)" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-2">
               Browse Category <i class="fas fa-shopping-bag"></i>
             </button>
           </div>
