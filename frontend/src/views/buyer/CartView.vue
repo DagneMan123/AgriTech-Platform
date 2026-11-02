@@ -167,12 +167,13 @@
               <div class="summary-row">
                 <span class="label">Destination:</span>
                 <select
-                  v-model="selectedRegion"
+                  v-model="selectedDestination"
                   class="region-select"
                 >
                   <option v-for="r in ethiopianRegions" :key="r" :value="r">{{ r }}</option>
                 </select>
               </div>
+
               <div class="summary-row shipping-row">
                 <span class="label">Shipping:</span>
                 <div class="shipping-options">
@@ -188,11 +189,8 @@
                     />
                     <div class="radio-content">
                       <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
-                      <small v-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
+                      <small v-if="opt.breakdown" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
                         {{ opt.breakdown.formulaStr }}
-                      </small>
-                      <small v-else-if="opt.breakdown?.isFlatRate" class="matrix-breakdown text-[10px] text-emerald-500 block">
-                        Standard flat rate (≤ 5 kg)
                       </small>
                     </div>
                   </label>
@@ -262,6 +260,9 @@ import { formatImageUrl } from '@/utils/helpers'
 import { useTheme } from '@/composables/useTheme'
 import {
   getDynamicShippingOptions,
+  calculateOriginDestinationDistanceKm,
+  resolveCartOriginAndDistance,
+  getCartTotalWeightKg,
   ETHIOPIAN_REGIONS,
   type DynamicShippingOption
 } from '@/utils/shippingCalculator'
@@ -274,16 +275,36 @@ const { isDark, toggleTheme } = useTheme()
 
 // State
 const ethiopianRegions = ETHIOPIAN_REGIONS
-const selectedRegion = ref<string>(authStore.user?.region || 'Addis Ababa')
+const savedDest = (typeof window !== 'undefined' && sessionStorage.getItem('checkout_destination')) || ''
+const selectedDestination = ref<string>(savedDest || authStore.user?.region || 'Addis Ababa')
+const selectedRegion = selectedDestination
 const selectedItems = ref<number[]>([])
 const showSelectAll = ref(false)
-const shippingType = ref<'standard' | 'express' | 'overnight'>('standard')
+const savedShip = (typeof window !== 'undefined' && sessionStorage.getItem('checkout_shipping')) as any
+const shippingType = ref<'standard' | 'express' | 'overnight'>(savedShip || 'standard')
 const promoCode = ref('')
 const promoDiscount = ref(0)
 
+watch(selectedDestination, (newVal) => {
+  if (newVal && typeof window !== 'undefined') {
+    sessionStorage.setItem('checkout_destination', newVal)
+  }
+}, { immediate: true })
+
+watch(shippingType, (newVal) => {
+  if (newVal && typeof window !== 'undefined') {
+    sessionStorage.setItem('checkout_shipping', newVal)
+  }
+}, { immediate: true })
+
 // Dynamic shipping options calculated from cart items and weight/perishability
+const cartOriginInfo = computed(() => resolveCartOriginAndDistance(buyerStore.cart || [], selectedDestination.value))
+const selectedOrigin = computed(() => cartOriginInfo.value.origin || 'Adama')
+const selectedDistanceKm = computed(() => calculateOriginDestinationDistanceKm(selectedOrigin.value, selectedDestination.value))
+const totalWeightKg = computed(() => Math.max(1, getCartTotalWeightKg(buyerStore.cart || [])))
+
 const dynamicShippingOptions = computed<DynamicShippingOption[]>(() => {
-  return getDynamicShippingOptions(buyerStore.cart || [], selectedRegion.value)
+  return getDynamicShippingOptions(buyerStore.cart || [], selectedDestination.value, selectedOrigin.value)
 })
 
 // Auto-fallback if cold-chain is filtered out for non-perishable goods
@@ -304,7 +325,8 @@ const selectedShippingOption = computed(() => {
   )
 })
 
-const shippingCost = computed(() => selectedShippingOption.value.fee)
+const selectedShippingFee = computed(() => selectedShippingOption.value.fee)
+const shippingCost = selectedShippingFee
 
 onMounted(async () => {
   try {
@@ -441,11 +463,15 @@ const proceedToCheckout = () => {
     alert('Your shopping cart is empty. Please add items before checking out.')
     return
   }
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('checkout_destination', selectedDestination.value)
+    sessionStorage.setItem('checkout_shipping', shippingType.value)
+  }
   router.push({
     path: '/buyer/checkout',
     query: {
       shipping: shippingType.value,
-      region: selectedRegion.value,
+      region: selectedDestination.value,
       promo: promoCode.value && promoDiscount.value > 0 ? promoCode.value : undefined
     }
   })
@@ -1481,5 +1507,7 @@ const handleLogout = async () => {
     display: block;
   }
 }
+
+
 </style>
 

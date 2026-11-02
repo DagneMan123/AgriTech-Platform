@@ -238,12 +238,12 @@
                 <label :class="['block text-xs font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
                   Region *
                 </label>
-                <select
-                  v-model="addressForm.region"
-                  :class="['w-full px-3 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-blue-500 transition cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+                <div
+                  :class="['w-full px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
                 >
-                  <option v-for="reg in ethiopianRegions" :key="reg" :value="reg">{{ reg }}</option>
-                </select>
+                  <span>{{ selectedDestination }}</span>
+                  <span class="text-[10px] text-blue-500 font-semibold tracking-wide uppercase">Set in Cart</span>
+                </div>
               </div>
 
               <div>
@@ -322,9 +322,22 @@
                 </span>
                 <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700']">
                   <Compass class="w-3.5 h-3.5 text-blue-500" />
-                  <span>~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
+                  <span>{{ selectedOrigin }} → {{ selectedDestination }}: ~{{ selectedDistanceKm }} km</span>
                 </span>
               </div>
+            </div>
+
+            
+            <!-- Route Header -->
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border text-xs" :class="darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200'">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Delivery Destination:</span>
+                <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
+                <span class="text-[10px] text-slate-400 font-normal">(Set in Cart)</span>
+              </div>
+              <span class="text-[11px] text-slate-400">
+                Transit Distance: <strong class="text-blue-500">{{ selectedDistanceKm }} km</strong> from {{ selectedOrigin }}
+              </span>
             </div>
 
             <!-- Dynamic Category Filtering Notice -->
@@ -689,25 +702,41 @@
               </div>
 
               <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
-              <div class="space-y-1">
+              <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
+              <div class="space-y-1.5">
                 <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
                   <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
                 </div>
+
+                <!-- Destination in Order Summary -->
+                <div class="flex items-center justify-between text-[11px] pt-1 pb-0.5 border-t border-slate-100 dark:border-slate-800/60">
+                  <span class="text-slate-500 dark:text-slate-400 font-medium">Destination:</span>
+                  <span class="font-bold text-blue-600 dark:text-blue-400">{{ selectedDestination }}</span>
+                </div>
+
                 <div class="flex justify-between items-center text-[10px] text-slate-400">
                   <span>
-                    <strong class="text-slate-700 dark:text-slate-200">{{ selectedShippingOption.breakdown?.originLocation || 'Adama' }}</strong> → 
-                    <strong class="text-slate-700 dark:text-slate-200">{{ addressForm.region }}</strong>
-                    (~{{ selectedShippingOption.breakdown?.distanceKm || 25 }} km • {{ formatNumber(totalWeightKg) }} kg)
+                    <strong class="text-slate-700 dark:text-slate-200">{{ selectedOrigin }}</strong> → 
+                    <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
+                    (~{{ selectedDistanceKm }} km • {{ formatNumber(totalWeightKg) }} kg)
                   </span>
                   <span v-if="selectedShippingOption.breakdown?.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
                   <span v-else class="text-blue-500 font-semibold">Dynamic Matrix</span>
                 </div>
+
+                <!-- Live Dynamic Formula Breakdown -->
                 <div
                   v-if="selectedShippingOption.breakdown && !selectedShippingOption.breakdown.isFlatRate"
-                  class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10"
+                  class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10 leading-tight"
                 >
-                  Base ETB {{ selectedShippingOption.breakdown.baseFee }} + ({{ selectedShippingOption.breakdown.weightKg }}kg × ETB {{ selectedShippingOption.breakdown.ratePerKg }}) + ({{ selectedShippingOption.breakdown.distanceKm }}km × ETB {{ selectedShippingOption.breakdown.ratePerKm }})
+                  Base ETB {{ selectedShippingOption.breakdown.baseFee }} + ({{ formatNumber(totalWeightKg) }}kg × ETB {{ selectedShippingOption.breakdown.ratePerKg }}) + ({{ selectedDistanceKm }}km to {{ selectedDestination }} × ETB {{ selectedShippingOption.breakdown.ratePerKm }}) = ETB {{ formatNumber(selectedShippingFee) }}
+                </div>
+                <div
+                  v-else
+                  class="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 leading-tight"
+                >
+                  Standard Flat Rate to {{ selectedDestination }}: ETB {{ formatNumber(selectedShippingFee) }} (≤ 5 kg cargo weight &amp; ≤ 30 km local distance)
                 </div>
               </div>
 
@@ -781,6 +810,10 @@ import {
   cartHasPerishables,
   getItemWeightKg,
   ETHIOPIAN_REGIONS_LOGISTICS,
+  calculateOriginDestinationDistanceKm,
+  resolveCartOriginAndDistance,
+  WEIGHT_FLAT_THRESHOLD_KG,
+  DISTANCE_SHORT_THRESHOLD_KM,
   type DynamicShippingOption
 } from '@/utils/shippingCalculator'
 import {
@@ -826,7 +859,7 @@ const ethiopianRegions = [
 const addressForm = ref({
   recipient_name: '',
   phone: '',
-  region: (route.query.region as string) || 'Addis Ababa',
+  region: (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : null) || 'Addis Ababa',
   zone: 'Bole Subcity',
   woreda: 'Woreda 03',
   address: 'Bole Road, Commercial Agro-Hub',
@@ -836,20 +869,74 @@ const addressForm = ref({
 const savedAddresses = ref<any[]>([])
 const selectedSavedAddressId = ref<number | null>(null)
 
-// ── DYNAMIC SHIPPING CALCULATION LOGIC ──
+// ── DYNAMIC SHIPPING CALCULATION STATE & MATRIX ──
+const destinationFromCart = computed<string>(() => {
+  return (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : '') || ''
+})
+const selectedDestination = ref<string>(destinationFromCart.value || addressForm.value.region || 'Addis Ababa')
+
+// Synchronize selectedDestination and addressForm.region bidirectionally
+watch(selectedDestination, (newDest) => {
+  if (newDest && addressForm.value.region !== newDest) {
+    addressForm.value.region = newDest
+  }
+})
+watch(() => addressForm.value.region, (newReg) => {
+  if (newReg && selectedDestination.value !== newReg) {
+    selectedDestination.value = newReg
+  }
+})
+
 const totalWeightKg = computed(() => getCartTotalWeightKg(cartItems.value))
 const hasPerishables = computed(() => cartHasPerishables(cartItems.value))
 
+// Resolve product origin from cart items
+const cartOriginInfo = computed(() => {
+  return resolveCartOriginAndDistance(cartItems.value, selectedDestination.value)
+})
+
+const selectedOrigin = computed(() => cartOriginInfo.value.origin || 'Adama')
+
+// Dynamic distance fetched directly from distance matrix
+const selectedDistanceKm = computed(() => {
+  return calculateOriginDestinationDistanceKm(selectedOrigin.value, selectedDestination.value)
+})
+
 const regionInfo = computed(() => {
-  return ETHIOPIAN_REGIONS_LOGISTICS[addressForm.value.region] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
+  return ETHIOPIAN_REGIONS_LOGISTICS[selectedDestination.value] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
 })
 
-// Dynamic shipping options filtered by category and calculated from weight + distance
+// Dynamic shipping options recalculated instantly when destination, origin, or weight changes
 const shippingOptions = computed<DynamicShippingOption[]>(() => {
-  return getDynamicShippingOptions(cartItems.value, addressForm.value.region)
+  return getDynamicShippingOptions(cartItems.value, selectedDestination.value, selectedOrigin.value)
 })
 
-const selectedShipping = ref<string>((route.query.shipping as string) || 'standard')
+const selectedShipping = ref<string>((route.query.shipping as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_shipping') : null) || 'standard')
+
+// Immediate watchers for query params from shopping cart
+watch(
+  () => route.query.region,
+  (newRegion) => {
+    if (newRegion && typeof newRegion === 'string') {
+      selectedDestination.value = newRegion
+      addressForm.value.region = newRegion
+      if (typeof window !== 'undefined') sessionStorage.setItem('checkout_destination', newRegion)
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.shipping,
+  (newShip) => {
+    if (newShip && typeof newShip === 'string') {
+      selectedShipping.value = newShip
+      if (typeof window !== 'undefined') sessionStorage.setItem('checkout_shipping', newShip)
+    }
+  },
+  { immediate: true }
+)
+
 
 // Watch shipping options: auto-fallback if selected option is hidden (e.g. cold-chain hidden for grains)
 watch(
@@ -868,12 +955,27 @@ const selectedShippingOption = computed(() => {
     shippingOptions.value[0] || {
       key: 'standard' as const,
       title: 'Standard Agricultural Freight',
-      desc: '',
+      desc: `${selectedOrigin.value} → ${selectedDestination.value}`,
       fee: 350,
-      badge: null,
+      badge: 'STANDARD FLAT RATE',
       isPerishableOnly: false,
       transitDays: '3 - 5 days',
-      estimatedDays: '3 - 5 days'
+      estimatedDays: '3 - 5 days',
+      breakdown: {
+        baseFee: 200,
+        weightKg: totalWeightKg.value,
+        ratePerKg: 10,
+        weightCost: 0,
+        originLocation: selectedOrigin.value,
+        destinationLocation: selectedDestination.value,
+        distanceKm: selectedDistanceKm.value,
+        ratePerKm: 6,
+        distanceCost: 0,
+        isFlatRate: true,
+        flatRate: 350,
+        totalFee: 350,
+        formulaStr: `Standard Flat Rate: ETB 350 (Orders ≤ 5kg & ≤ 30km)`
+      }
     }
   )
 })
@@ -1044,7 +1146,7 @@ const applySavedAddress = () => {
   if (addr) {
     addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || addressForm.value.recipient_name || 'Verified Buyer'
     addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || addressForm.value.phone || '+251 911 234 567'
-    addressForm.value.region = addr.region || addressForm.value.region || 'Addis Ababa'
+    if (!destinationFromCart.value) { addressForm.value.region = addr.region || addressForm.value.region || 'Addis Ababa' } else { addressForm.value.region = selectedDestination.value }
     addressForm.value.zone = addr.sub_city || addr.zone || addr.city || addressForm.value.zone || 'Bole Subcity'
     addressForm.value.woreda = addr.woreda_kebele || addr.woreda || addressForm.value.woreda || 'Woreda 03'
     addressForm.value.address = addr.street_address || addr.address_line || addr.address || addressForm.value.address || 'Bole Road, Commercial Agro-Hub'
@@ -1072,7 +1174,7 @@ onMounted(async () => {
       paymentForm.value.telebirr_phone = authStore.user.phone
       paymentForm.value.cbe_phone = authStore.user.phone
     }
-    if (authStore.user.region) addressForm.value.region = authStore.user.region
+    if (!destinationFromCart.value && authStore.user.region) { addressForm.value.region = authStore.user.region; selectedDestination.value = authStore.user.region }
     if (authStore.user.zone) addressForm.value.zone = authStore.user.zone
     if (authStore.user.woreda) addressForm.value.woreda = authStore.user.woreda
     if (authStore.user.address) addressForm.value.address = authStore.user.address
@@ -1084,9 +1186,18 @@ onMounted(async () => {
     const list = res.data?.data || res.data || []
     if (Array.isArray(list) && list.length > 0) {
       savedAddresses.value = list
-      const defaultAddr = list.find(a => a.is_default) || list[0]
-      selectedSavedAddressId.value = defaultAddr.id
-      applySavedAddress()
+      if (!destinationFromCart.value) {
+        const defaultAddr = list.find(a => a.is_default) || list[0]
+        selectedSavedAddressId.value = defaultAddr.id
+        applySavedAddress()
+      } else {
+        const matchingAddr = list.find(a => (a.region || '').toLowerCase() === destinationFromCart.value.toLowerCase())
+        if (matchingAddr) {
+          selectedSavedAddressId.value = matchingAddr.id
+          applySavedAddress()
+        }
+        addressForm.value.region = selectedDestination.value
+      }
     }
   } catch (e) {
     // Graceful fallback to manual entry

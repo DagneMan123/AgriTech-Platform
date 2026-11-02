@@ -425,7 +425,7 @@ function calculateTierFee(
         isFlatRate: true,
         flatRate: config.flatRate,
         totalFee: config.flatRate,
-        formulaStr: `Standard Flat Rate: ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg & ≤ ${DISTANCE_SHORT_THRESHOLD_KM}km)`
+        formulaStr: `Flat Rate to ${destination} (${distance}km): ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg & ≤ ${DISTANCE_SHORT_THRESHOLD_KM}km)`
       }
     }
   }
@@ -451,7 +451,7 @@ function calculateTierFee(
       isFlatRate: false,
       flatRate: config.flatRate,
       totalFee: finalFee,
-      formulaStr: `Base ETB ${config.baseFee} + (${totalWeight}kg × ETB ${config.ratePerKg}) + (${distance}km × ETB ${config.ratePerKm}) = ETB ${finalFee}`
+      formulaStr: `Base ETB ${config.baseFee} + (${totalWeight}kg × ETB ${config.ratePerKg}) + (${distance}km to ${destination} × ETB ${config.ratePerKm}) = ETB ${finalFee}`
     }
   }
 }
