@@ -165,6 +165,15 @@
                 <span class="value">ETB {{ formatNumber(subtotal) }}</span>
               </div>
               <div class="summary-row">
+                <span class="label">Destination:</span>
+                <select
+                  v-model="selectedRegion"
+                  class="region-select"
+                >
+                  <option v-for="r in ethiopianRegions" :key="r" :value="r">{{ r }}</option>
+                </select>
+              </div>
+              <div class="summary-row shipping-row">
                 <span class="label">Shipping:</span>
                 <div class="shipping-options">
                   <label
@@ -177,7 +186,15 @@
                       v-model="shippingType"
                       :value="opt.key"
                     />
-                    <span>{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
+                    <div class="radio-content">
+                      <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
+                      <small v-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
+                        {{ opt.breakdown.formulaStr }}
+                      </small>
+                      <small v-else-if="opt.breakdown?.isFlatRate" class="matrix-breakdown text-[10px] text-emerald-500 block">
+                        Standard flat rate (≤ 5 kg)
+                      </small>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -245,6 +262,7 @@ import { formatImageUrl } from '@/utils/helpers'
 import { useTheme } from '@/composables/useTheme'
 import {
   getDynamicShippingOptions,
+  ETHIOPIAN_REGIONS,
   type DynamicShippingOption
 } from '@/utils/shippingCalculator'
 
@@ -255,6 +273,8 @@ const router = useRouter()
 const { isDark, toggleTheme } = useTheme()
 
 // State
+const ethiopianRegions = ETHIOPIAN_REGIONS
+const selectedRegion = ref<string>(authStore.user?.region || 'Addis Ababa')
 const selectedItems = ref<number[]>([])
 const showSelectAll = ref(false)
 const shippingType = ref<'standard' | 'express' | 'overnight'>('standard')
@@ -263,7 +283,7 @@ const promoDiscount = ref(0)
 
 // Dynamic shipping options calculated from cart items and weight/perishability
 const dynamicShippingOptions = computed<DynamicShippingOption[]>(() => {
-  return getDynamicShippingOptions(buyerStore.cart || [], 'Addis Ababa')
+  return getDynamicShippingOptions(buyerStore.cart || [], selectedRegion.value)
 })
 
 // Auto-fallback if cold-chain is filtered out for non-perishable goods
@@ -425,6 +445,7 @@ const proceedToCheckout = () => {
     path: '/buyer/checkout',
     query: {
       shipping: shippingType.value,
+      region: selectedRegion.value,
       promo: promoCode.value && promoDiscount.value > 0 ? promoCode.value : undefined
     }
   })
@@ -1038,6 +1059,23 @@ const handleLogout = async () => {
   font-weight: 600;
 }
 
+.region-select {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #fff;
+  color: #1e293b;
+  outline: none;
+}
+
+:global(html.dark) .region-select,
+.buyer-layout.dark .region-select {
+  background-color: #0b0f19 !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
 .shipping-options {
   display: flex;
   flex-direction: column;
@@ -1049,11 +1087,17 @@ const handleLogout = async () => {
 
 .radio-option {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   font-size: 13px;
   cursor: pointer;
   color: #1f2937;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .radio-option input {

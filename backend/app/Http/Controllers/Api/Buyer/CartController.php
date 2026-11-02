@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\ShippingCalculatorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -262,7 +263,14 @@ class CartController extends Controller
             return (float) ($item->product ? $item->product->price * $item->quantity : 0);
         });
 
-        $deliveryFee = (float) $request->input('delivery_fee', 0);
+        // Dynamic Shipping Matrix Calculation
+        $region = $request->input('delivery_region', 'Addis Ababa');
+        $shippingType = $request->input('shipping_type', 'standard');
+        $totalWeightKg = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
+        $serverCalculatedFee = ShippingCalculatorService::calculateFee($totalWeightKg, $region, $shippingType);
+
+        $clientDeliveryFee = (float) $request->input('delivery_fee', 0);
+        $deliveryFee = $clientDeliveryFee > 0 ? $clientDeliveryFee : $serverCalculatedFee;
         $grandTotal = $subtotal + $deliveryFee;
 
         // Group by farmer so each farmer gets an order
@@ -271,22 +279,29 @@ class CartController extends Controller
         });
 
         $createdOrders = [];
+        $numFarmers = $grouped->count();
 
         DB::beginTransaction();
         try {
             foreach ($grouped as $farmerId => $items) {
                 $groupSubtotal = $items->sum(fn ($i) => (float) ($i->product ? $i->product->price * $i->quantity : 0));
 
+                // Allocate delivery fee proportionally if multi-farmer cart
+                $groupWeight = ShippingCalculatorService::calculateTotalWeightKg($items);
+                $groupDeliveryFee = $numFarmers > 1
+                    ? round(($groupWeight / max(0.01, $totalWeightKg)) * $deliveryFee, 2)
+                    : $deliveryFee;
+
                 $tax = (float) $request->input('tax_amount', $request->input('tax', 0));
                 $discount = (float) $request->input('promo_discount', $request->input('discount', 0));
-                $orderGrandTotal = max(0, $groupSubtotal + $deliveryFee + $tax - $discount);
+                $orderGrandTotal = max(0, $groupSubtotal + $groupDeliveryFee + $tax - $discount);
 
                 $order = Order::create([
                     'order_number' => 'ORD-' . strtoupper(Str::random(8)),
                     'buyer_id' => $userId,
                     'farmer_id' => $farmerId,
                     'subtotal' => $groupSubtotal,
-                    'delivery_fee' => $deliveryFee,
+                    'delivery_fee' => $groupDeliveryFee,
                     'tax' => $tax,
                     'discount' => $discount,
                     'grand_total' => $orderGrandTotal,
@@ -339,5 +354,34 @@ class CartController extends Controller
                 'message' => 'Failed to checkout: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Get dynamic shipping calculation estimate for the current cart
+     */
+    public function shippingEstimate(Request $request)
+    {
+        $userId = Auth::id() ?? ($request->user() ? $request->user()->id : null);
+        $cartItems = Cart::where('user_id', $userId)->with('product')->get();
+        $totalWeight = ShippingCalculatorService::calculateTotalWeightKg($cartItems);
+        $region = $request->query('region', 'Addis Ababa');
+
+        $options = [];
+        $hasPerishables = ShippingCalculatorService::hasPerishables($cartItems);
+
+        foreach (ShippingCalculatorService::SHIPPING_TIERS as $key => $tier) {
+            if ($tier['perishable_only'] && !$hasPerishables) {
+                continue;
+            }
+            $options[] = ShippingCalculatorService::getBreakdown($totalWeight, $region, $key);
+        }
+
+        return response()->json([
+            'success' => true,
+            'total_weight_kg' => round($totalWeight, 2),
+            'has_perishables' => $hasPerishables,
+            'region' => $region,
+            'options' => $options,
+        ]);
     }
 }

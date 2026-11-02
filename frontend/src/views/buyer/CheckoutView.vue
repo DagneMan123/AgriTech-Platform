@@ -379,9 +379,23 @@
                     {{ opt.badge }}
                   </span>
 
-                  <p :class="['text-[11px] mb-3 leading-snug', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  <p :class="['text-[11px] mb-2 leading-snug', darkMode ? 'text-slate-400' : 'text-slate-500']">
                     {{ opt.desc }}
                   </p>
+
+                  <!-- Dynamic Weight & Distance Formula Details -->
+                  <div
+                    v-if="opt.breakdown && !opt.breakdown.isFlatRate"
+                    class="p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 mb-3 text-[10px] text-blue-600 dark:text-blue-400 font-mono leading-tight"
+                  >
+                    {{ opt.breakdown.formulaStr }}
+                  </div>
+                  <div
+                    v-else-if="opt.breakdown?.isFlatRate"
+                    class="p-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mb-3 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium leading-tight"
+                  >
+                    Standard flat rate applied (Order ≤ 5 kg)
+                  </div>
                 </div>
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
@@ -631,9 +645,15 @@
                       >
                         <Minus class="w-2.5 h-2.5" />
                       </button>
-                      <span class="px-2 py-0.5 text-[11px] font-bold text-center min-w-[24px]">
-                        {{ item.quantity }}
-                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        :value="item.quantity"
+                        @change="handleQuantityChange(item, $event)"
+                        :disabled="updatingCartItemId === item.id"
+                        class="w-10 text-center text-[11px] font-bold bg-transparent border-0 focus:ring-0 p-0 text-slate-800 dark:text-slate-100"
+                        title="Enter quantity"
+                      />
                       <button
                         type="button"
                         @click="handleIncrementQuantity(item)"
@@ -664,15 +684,21 @@
               </div>
 
               <!-- Real-time Dynamic Shipping Row with Weight & Distance Context -->
-              <div class="space-y-0.5">
+              <div class="space-y-1">
                 <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
                   <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-[10px] text-slate-400">
                   <span>{{ formatNumber(totalWeightKg) }} kg • ~{{ regionInfo.distanceKm }} km ({{ addressForm.region }})</span>
-                  <span v-if="hasPerishables" class="text-blue-500 font-semibold">Cold-Chain active</span>
-                  <span v-else class="text-amber-500 font-medium">Ambient freight</span>
+                  <span v-if="selectedShippingOption.breakdown?.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
+                  <span v-else class="text-blue-500 font-semibold">Dynamic Matrix</span>
+                </div>
+                <div
+                  v-if="selectedShippingOption.breakdown && !selectedShippingOption.breakdown.isFlatRate"
+                  class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10"
+                >
+                  Base ETB {{ selectedShippingOption.breakdown.baseFee }} + ({{ selectedShippingOption.breakdown.weightKg }}kg × ETB {{ selectedShippingOption.breakdown.ratePerKg }}) + ({{ selectedShippingOption.breakdown.distanceKm }}km × ETB {{ selectedShippingOption.breakdown.ratePerKm }})
                 </div>
               </div>
 
@@ -791,7 +817,7 @@ const ethiopianRegions = [
 const addressForm = ref({
   recipient_name: '',
   phone: '',
-  region: 'Addis Ababa',
+  region: (route.query.region as string) || 'Addis Ababa',
   zone: 'Bole Subcity',
   woreda: 'Woreda 03',
   address: 'Bole Road, Commercial Agro-Hub',
@@ -868,6 +894,20 @@ const handleDecrementQuantity = async (item: any) => {
     await buyerStore.updateCartItem(item.id, { quantity: newQty })
   } catch (e) {
     console.error('Failed to decrement quantity:', e)
+  } finally {
+    updatingCartItemId.value = null
+  }
+}
+
+const handleQuantityChange = async (item: any, event: any) => {
+  if (updatingCartItemId.value === item.id) return
+  const inputVal = parseInt(event.target.value)
+  const newQty = isNaN(inputVal) || inputVal < 1 ? 1 : inputVal
+  updatingCartItemId.value = item.id
+  try {
+    await buyerStore.updateCartItem(item.id, { quantity: newQty })
+  } catch (e) {
+    console.error('Failed to change quantity:', e)
   } finally {
     updatingCartItemId.value = null
   }

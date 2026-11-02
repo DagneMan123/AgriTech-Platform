@@ -621,6 +621,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::apiResource('/cart', CartController::class);
 
+            Route::get('/cart/shipping-estimate', [
+                CartController::class,
+                'shippingEstimate'
+            ]);
+
             Route::post('/cart/checkout', [
                 CartController::class,
                 'checkout'

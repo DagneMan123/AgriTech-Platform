@@ -1,7 +1,12 @@
 /**
- * Dynamic Agricultural Shipping Calculator
+ * Dynamic Agricultural Shipping & Logistics Calculator
  * Calculates freight & delivery costs based on total weight, volume, distance,
  * and dynamically filters shipping options based on product perishability.
+ * 
+ * Required Business Logic (Distance & Weight Matrix):
+ * - For small/medium orders (weight <= 5 kg and short distance <= 30 km), keep standard flat rate (e.g. ETB 350).
+ * - For bulk or heavier orders (weight > 5 kg or long distance), dynamically calculate using:
+ *   Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
  */
 
 export interface CartItem {
@@ -29,6 +34,20 @@ export interface RegionLogisticsInfo {
   transitDays: string
 }
 
+export interface ShippingBreakdown {
+  baseFee: number
+  weightKg: number
+  ratePerKg: number
+  weightCost: number
+  distanceKm: number
+  ratePerKm: number
+  distanceCost: number
+  isFlatRate: boolean
+  flatRate: number
+  totalFee: number
+  formulaStr: string
+}
+
 export interface DynamicShippingOption {
   key: 'standard' | 'express' | 'overnight' | 'cold_chain'
   title: string
@@ -39,7 +58,11 @@ export interface DynamicShippingOption {
   transitDays: string
   requiresColdChain?: boolean
   estimatedDays: string
+  breakdown?: ShippingBreakdown
 }
+
+export const WEIGHT_FLAT_THRESHOLD_KG = 5.0
+export const DISTANCE_SHORT_THRESHOLD_KM = 30.0
 
 export const ETHIOPIAN_REGIONS_LOGISTICS: Record<string, RegionLogisticsInfo> = {
   'Addis Ababa': {
@@ -116,6 +139,8 @@ export const ETHIOPIAN_REGIONS_LOGISTICS: Record<string, RegionLogisticsInfo> = 
   }
 }
 
+export const ETHIOPIAN_REGIONS = Object.keys(ETHIOPIAN_REGIONS_LOGISTICS)
+
 export const PERISHABLE_CATEGORIES = [
   'vegetables',
   'vegetable',
@@ -173,8 +198,11 @@ export function isItemPerishable(item: any): boolean {
  */
 export function getItemWeightKg(item: any): number {
   if (!item) return 0
-  const unit = String(item.unit || item.product?.unit || item.product?.quantity_unit || 'kg').toLowerCase().trim()
+  const rawUnit = String(item.unit || item.product?.unit || item.product?.quantity_unit || 'kg').toLowerCase().trim()
   const qty = Number(item.quantity) || 1
+
+  // Clean unit string (e.g. remove "etb/kg", "/kg", etc.)
+  const unit = rawUnit.replace(/^(etb|birr|\$)?\s*\/?\s*/i, '').trim()
 
   switch (unit) {
     case 'kg':
@@ -201,6 +229,12 @@ export function getItemWeightKg(item: any): number {
     case 'sack':
     case 'sacks':
       return qty * 50
+    case 'bundle':
+    case 'bundles':
+      return qty * 5
+    case 'piece':
+    case 'pieces':
+      return qty * 2
     case 'liter':
     case 'liters':
     case 'l':
@@ -227,6 +261,64 @@ export function cartHasPerishables(cartItems: any[]): boolean {
 }
 
 /**
+ * Matrix calculation helper for a single shipping tier
+ */
+function calculateTierFee(
+  totalWeight: number,
+  distance: number,
+  config: {
+    flatRate: number
+    baseFee: number
+    ratePerKg: number
+    ratePerKm: number
+  }
+): { fee: number; breakdown: ShippingBreakdown } {
+  const isSmallLocal = totalWeight <= WEIGHT_FLAT_THRESHOLD_KG && distance <= DISTANCE_SHORT_THRESHOLD_KM
+
+  if (isSmallLocal) {
+    return {
+      fee: config.flatRate,
+      breakdown: {
+        baseFee: config.flatRate,
+        weightKg: totalWeight,
+        ratePerKg: config.ratePerKg,
+        weightCost: 0,
+        distanceKm: distance,
+        ratePerKm: config.ratePerKm,
+        distanceCost: 0,
+        isFlatRate: true,
+        flatRate: config.flatRate,
+        totalFee: config.flatRate,
+        formulaStr: `Standard Flat Rate: ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg)`
+      }
+    }
+  }
+
+  // Weight and Distance Matrix Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+  const weightCost = Math.round(totalWeight * config.ratePerKg)
+  const distanceCost = Math.round(distance * config.ratePerKm)
+  const rawTotal = config.baseFee + weightCost + distanceCost
+  const finalFee = Math.max(config.flatRate, Math.round(rawTotal / 10) * 10)
+
+  return {
+    fee: finalFee,
+    breakdown: {
+      baseFee: config.baseFee,
+      weightKg: totalWeight,
+      ratePerKg: config.ratePerKg,
+      weightCost,
+      distanceKm: distance,
+      ratePerKm: config.ratePerKm,
+      distanceCost,
+      isFlatRate: false,
+      flatRate: config.flatRate,
+      totalFee: finalFee,
+      formulaStr: `Base ETB ${config.baseFee} + (${totalWeight}kg × ETB ${config.ratePerKg}) + (${distance}km × ETB ${config.ratePerKm}) = ETB ${finalFee}`
+    }
+  }
+}
+
+/**
  * Calculates dynamic shipping fees and filters eligible options
  */
 export function getDynamicShippingOptions(
@@ -238,90 +330,73 @@ export function getDynamicShippingOptions(
 
   const regionInfo = ETHIOPIAN_REGIONS_LOGISTICS[regionName] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
   const distance = regionInfo.distanceKm
-  const mult = regionInfo.multiplier
 
   // 1. STANDARD FREIGHT
-  // Base: 250 ETB, + distance rate + tiered weight rate
-  const stdBase = 250
-  const stdDist = distance * 0.50
-  let stdWeight = 0
-  if (totalWeight > 10) {
-    const billableWeight = totalWeight - 10
-    if (billableWeight <= 90) {
-      stdWeight = billableWeight * 4.0 // 4 ETB/kg for next 90kg
-    } else if (billableWeight <= 490) {
-      stdWeight = (90 * 4.0) + ((billableWeight - 90) * 2.5) // Bulk tier 1
-    } else {
-      stdWeight = (90 * 4.0) + (400 * 2.5) + ((billableWeight - 490) * 1.8) // Heavy agricultural bulk
-    }
-  }
-  const standardFee = Math.max(350, Math.round(((stdBase + stdDist + stdWeight) * mult) / 10) * 10)
+  // Base: 200 ETB, Rate/kg: 10 ETB, Rate/km: 6 ETB, Flat Rate: 350 ETB
+  const stdCalc = calculateTierFee(totalWeight, distance, {
+    flatRate: 350,
+    baseFee: 200,
+    ratePerKg: 10,
+    ratePerKm: 6
+  })
 
   // 2. EXPRESS DIRECT LOGISTICS
-  // Base: 550 ETB, + priority distance rate + priority weight rate
-  const expBase = 550
-  const expDist = distance * 0.90
-  let expWeight = 0
-  if (totalWeight > 10) {
-    const billableWeight = totalWeight - 10
-    if (billableWeight <= 90) {
-      expWeight = billableWeight * 7.0
-    } else {
-      expWeight = (90 * 7.0) + ((billableWeight - 90) * 5.0)
-    }
-  }
-  const expressFee = Math.max(750, Math.round(((expBase + expDist + expWeight) * mult) / 10) * 10)
+  // Base: 350 ETB, Rate/kg: 16 ETB, Rate/km: 10 ETB, Flat Rate: 650 ETB
+  const expCalc = calculateTierFee(totalWeight, distance, {
+    flatRate: 650,
+    baseFee: 350,
+    ratePerKg: 16,
+    ratePerKm: 10
+  })
 
   const options: DynamicShippingOption[] = [
     {
       key: 'standard',
       title: 'Standard Agricultural Freight',
-      desc: `Ambient cargo dispatch • ${regionInfo.transitDays}`,
-      fee: standardFee,
-      badge: null,
+      desc: stdCalc.breakdown.isFlatRate
+        ? `Ambient cargo dispatch • ${regionInfo.transitDays} (Flat standard rate)`
+        : `Ambient cargo dispatch • ${regionInfo.transitDays} (${totalWeight} kg • ~${distance} km)`,
+      fee: stdCalc.fee,
+      badge: stdCalc.breakdown.isFlatRate ? 'STANDARD FLAT RATE' : 'DYNAMIC BULK MATRIX',
       isPerishableOnly: false,
       transitDays: regionInfo.transitDays,
-      estimatedDays: '3 - 5 business days'
+      estimatedDays: '3 - 5 business days',
+      breakdown: stdCalc.breakdown
     },
     {
       key: 'express',
       title: 'Express Direct Dispatch',
       desc: `Priority dedicated farm-to-door transit • 1 - 2 business days`,
-      fee: expressFee,
+      fee: expCalc.fee,
       badge: hasPerishables ? 'FASTER TRANSIT' : null,
       isPerishableOnly: false,
       transitDays: '1 - 2 business days',
-      estimatedDays: '1 - 2 business days'
+      estimatedDays: '1 - 2 business days',
+      breakdown: expCalc.breakdown
     }
   ]
 
   // 3. COLD-CHAIN AGRO TRANSPORT
   // DYNAMIC FILTERING: ONLY included if cart has perishable produce!
-  // For non-perishable goods (e.g. grains, pulses, seeds), this option is hidden.
   if (hasPerishables) {
-    const coldBase = 1200 // Refrigeration compressor overhead
-    const coldDist = distance * 1.60
-    let coldWeight = 0
-    if (totalWeight > 10) {
-      const billableWeight = totalWeight - 10
-      if (billableWeight <= 90) {
-        coldWeight = billableWeight * 10.0
-      } else {
-        coldWeight = (90 * 10.0) + ((billableWeight - 90) * 8.0)
-      }
-    }
-    const coldChainFee = Math.max(1800, Math.round(((coldBase + coldDist + coldWeight) * mult) / 10) * 10)
+    const coldCalc = calculateTierFee(totalWeight, distance, {
+      flatRate: 1200,
+      baseFee: 700,
+      ratePerKg: 22,
+      ratePerKm: 15
+    })
 
     options.push({
-      key: 'overnight', // mapped to cold_chain/overnight key
+      key: 'overnight',
       title: 'Cold-Chain Agro Transport',
       desc: `Climate-controlled (+4°C) for fresh produce • Guaranteed crisp freshness`,
-      fee: coldChainFee,
+      fee: coldCalc.fee,
       badge: 'RECOMMENDED FOR FRESH PRODUCE',
       isPerishableOnly: true,
       requiresColdChain: true,
       transitDays: 'Guaranteed next-day cold delivery',
-      estimatedDays: 'Next-day delivery'
+      estimatedDays: 'Next-day delivery',
+      breakdown: coldCalc.breakdown
     })
   }
 
