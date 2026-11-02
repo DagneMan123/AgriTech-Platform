@@ -393,6 +393,20 @@ const showToast = (title: string, message: string) => {
 
 const darkMode = computed(() => themeStore.isDark)
 
+const resolveCategoryName = (param?: any) => {
+  if (!param) return ''
+  const q = String(param).toLowerCase().trim()
+  const matched = categoriesList.value.find(c =>
+    String(c.id) === q ||
+    (c.slug && c.slug.toLowerCase() === q) ||
+    (c.name && c.name.toLowerCase() === q) ||
+    (q.includes('grain') && c.slug === 'cereals-grains') ||
+    (q.includes('cereal') && c.slug === 'cereals-grains') ||
+    (q.includes('veg') && c.slug === 'vegetables')
+  )
+  return matched ? matched.name : param
+}
+
 const fetchCategoriesList = async () => {
   try {
     const res = await marketplaceAPI.getCategories()
@@ -407,7 +421,7 @@ onMounted(async () => {
   themeStore.initializeTheme()
   await fetchCategoriesList()
   if (route.query.category) {
-    selectedCategory.value = String(route.query.category)
+    selectedCategory.value = resolveCategoryName(route.query.category)
   }
   await handleSearch()
   if (route.query.product) {
@@ -418,7 +432,7 @@ onMounted(async () => {
 
 watch(() => route.query.category, (newCategory) => {
   if (newCategory) {
-    selectedCategory.value = String(newCategory)
+    selectedCategory.value = resolveCategoryName(newCategory)
   } else {
     selectedCategory.value = ''
   }
@@ -427,11 +441,26 @@ watch(() => route.query.category, (newCategory) => {
 
 const safeProducts = computed<Product[]>(() => {
   const raw = marketplaceStore.products
-  if (Array.isArray(raw)) return raw as Product[]
-  if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) {
-    return (raw as any).data as Product[]
+  let list: Product[] = []
+  if (Array.isArray(raw)) list = raw as Product[]
+  else if (raw && typeof raw === 'object' && Array.isArray((raw as any).data)) {
+    list = (raw as any).data as Product[]
   }
-  return []
+
+  // Filter products by selected category
+  if (selectedCategory.value) {
+    const sel = selectedCategory.value.toLowerCase().trim()
+    list = list.filter(p => {
+      const pCat = (p.category || '').toLowerCase().trim()
+      if (pCat === sel || pCat.includes(sel) || sel.includes(pCat)) return true
+      if (sel.includes('grain') && (pCat.includes('cereal') || pCat.includes('grain'))) return true
+      if (sel.includes('cereal') && (pCat.includes('cereal') || pCat.includes('grain'))) return true
+      if (sel.includes('veg') && pCat.includes('veg')) return true
+      return false
+    })
+  }
+
+  return list
 })
 
 const totalProducts = computed(() => safeProducts.value.length)

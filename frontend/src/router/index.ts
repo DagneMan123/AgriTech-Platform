@@ -125,6 +125,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, title: 'Reset Password' }
   },
 
+  // Products redirect to marketplace
+  {
+    path: '/products',
+    redirect: (to: any) => ({ name: 'buyer-marketplace', query: to.query })
+  },
+
   
 
   // Authentication
@@ -401,6 +407,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'marketplace',
+        alias: ['products'],
         name: 'buyer-marketplace',
         component: BuyerMarketplaceView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Marketplace' }

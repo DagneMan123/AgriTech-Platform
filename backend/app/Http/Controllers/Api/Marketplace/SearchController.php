@@ -65,21 +65,32 @@ class SearchController extends Controller
                     ->orWhere('tags', 'ilike', '%' . $validated['q'] . '%');
             });
 
-        if (!empty($validated['category_id'])) {
-            $query->where('product_category_id', $validated['category_id']);
-        } elseif ($request->filled('category')) {
-            $cat = trim($request->input('category'));
-            if (is_numeric($cat)) {
-                $query->where('product_category_id', (int)$cat);
-            } else {
-                $query->where(function ($q) use ($cat) {
-                    $q->where('category', 'ilike', "%{$cat}%")
-                      ->orWhereHas('category', function ($sub) use ($cat) {
-                          $sub->where('name', 'ilike', "%{$cat}%")
-                              ->orWhere('slug', 'ilike', "%{$cat}%");
-                      });
-                });
-            }
+        $catParam = $request->input('category_id') ?? $request->input('category');
+        if (!empty($catParam)) {
+            $cat = trim($catParam);
+            $matchedCategory = is_numeric($cat)
+                ? \App\Models\Category::find($cat)
+                : \App\Models\Category::where('slug', $cat)->orWhere('name', 'ilike', $cat)->first();
+
+            $query->where(function ($q) use ($cat, $matchedCategory) {
+                if ($matchedCategory) {
+                    $q->where('product_category_id', $matchedCategory->id)
+                      ->orWhere('category', 'ilike', "%{$matchedCategory->name}%")
+                      ->orWhere('category', 'ilike', "%{$matchedCategory->slug}%");
+
+                    if ($matchedCategory->slug === 'cereals-grains' || str_contains(strtolower($matchedCategory->name), 'grain')) {
+                        $q->orWhere('category', 'ilike', '%grain%')->orWhere('category', 'ilike', '%cereal%');
+                    }
+                }
+
+                $q->orWhere('category', 'ilike', "%{$cat}%");
+                if (is_numeric($cat)) {
+                    $q->orWhere('product_category_id', (int)$cat);
+                }
+                if (str_contains(strtolower($cat), 'grain') || str_contains(strtolower($cat), 'cereal')) {
+                    $q->orWhere('category', 'ilike', '%grain%')->orWhere('category', 'ilike', '%cereal%');
+                }
+            });
         }
 
         if (isset($validated['min_price'])) {

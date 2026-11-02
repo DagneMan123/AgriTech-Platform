@@ -131,7 +131,7 @@
                 @click="selectCategory(category)"
                 class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
               >
-                Explore <i class="fas fa-arrow-right text-[10px]"></i>
+                Explore<i class="fas fa-arrow-right text-[10px]"></i>
               </button>
             </div>
           </article>
@@ -237,9 +237,10 @@ const filteredCategories = computed(() => {
 
 const selectCategory = (category) => {
   if (!category) return
+  const param = category.slug || category.name.toLowerCase()
   router.push({
     name: 'buyer-marketplace',
-    query: { category: category.name }
+    query: { category: param }
   })
 }
 
