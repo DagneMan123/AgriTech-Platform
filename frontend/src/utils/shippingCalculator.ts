@@ -3,10 +3,16 @@
  * Calculates freight & delivery costs based on product origin (e.g., Adama, Hawassa, Bahir Dar),
  * user destination, total weight (kg), distance (km), and product perishability.
  * 
- * Required Business Logic (Distance & Weight Matrix):
- * - For small/medium orders (weight <= 5 kg and short distance <= 30 km), keep standard flat rate (e.g. ETB 350).
- * - For bulk or heavier orders (weight > 5 kg or distance > 30 km):
- *   Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+ * Required Business Logic (Weight-Tiered Shipping):
+ * 1. Small Shipments / Light Loads (Weight <= 5 kg):
+ *    - Distance matrix is ignored (distance km rate is NOT multiplied).
+ *    - Applies fixed affordable flat rate based on selected shipping type:
+ *      * Standard: ETB 350 flat rate
+ *      * Express: ETB 600 flat rate
+ *      * Cold-Chain: ETB 1200 flat rate
+ * 2. Heavy Shipments / Bulk Loads (Weight > 5 kg):
+ *    - Full Freight Formula: [Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)]
+ *    - Required due to truck allocation and higher logistics/fuel costs.
  */
 
 export interface CartItem {
@@ -393,9 +399,20 @@ export function cartHasPerishables(cartItems: any[]): boolean {
 }
 
 /**
- * Matrix calculation helper for a single shipping tier
+ * Weight-Tiered Shipping Calculation Helper
+ * 
+ * Handles business rules for:
+ * 1. Small Shipments / Light Loads (totalWeight <= 5 kg):
+ *    - Distance is ignored (no distance km multiplier applied).
+ *    - Applies fixed affordable flat rate based on selected shipping type:
+ *      * Standard: ETB 350
+ *      * Express: ETB 600
+ *      * Cold-Chain: ETB 1200
+ * 2. Heavy Shipments / Bulk Loads (totalWeight > 5 kg):
+ *    - Dynamic Freight Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+ *    - Rounded to nearest 10 ETB, with flat rate as minimum floor.
  */
-function calculateTierFee(
+export function calculateTierFee(
   totalWeight: number,
   distance: number,
   origin: string,
@@ -407,9 +424,15 @@ function calculateTierFee(
     ratePerKm: number
   }
 ): { fee: number; breakdown: ShippingBreakdown } {
-  const isSmallLocal = totalWeight <= WEIGHT_FLAT_THRESHOLD_KG && distance <= DISTANCE_SHORT_THRESHOLD_KM
+  // -------------------------------------------------------------------------
+  // THRESHOLD CHECK: Light Loads (<= 5 kg) vs Bulk / Heavy Shipments (> 5 kg)
+  // -------------------------------------------------------------------------
+  const isLightLoad = totalWeight <= WEIGHT_FLAT_THRESHOLD_KG
 
-  if (isSmallLocal) {
+  if (isLightLoad) {
+    // 1. Small Shipments (<= 5 kg):
+    // Do NOT multiply by distance matrix (ignore distance km rate).
+    // Charge a fixed, affordable flat rate based on shipping tier.
     return {
       fee: config.flatRate,
       breakdown: {
@@ -425,15 +448,19 @@ function calculateTierFee(
         isFlatRate: true,
         flatRate: config.flatRate,
         totalFee: config.flatRate,
-        formulaStr: `Flat Rate to ${destination} (${distance}km): ETB ${config.flatRate} (Orders ≤ ${WEIGHT_FLAT_THRESHOLD_KG}kg & ≤ ${DISTANCE_SHORT_THRESHOLD_KM}km)`
+        formulaStr: ''
       }
     }
   }
 
-  // Weight and Distance Matrix Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
+  // 2. Heavy Shipments / Bulk Loads (> 5 kg):
+  // Shipments exceeding 5 kg require truck allocation and higher logistics/fuel costs.
+  // Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
   const weightCost = Math.round(totalWeight * config.ratePerKg)
   const distanceCost = Math.round(distance * config.ratePerKm)
   const rawTotal = config.baseFee + weightCost + distanceCost
+  
+  // Ensure fee never falls below the baseline flat rate, rounded to nearest 10 ETB
   const finalFee = Math.max(config.flatRate, Math.round(rawTotal / 10) * 10)
 
   return {
@@ -490,9 +517,9 @@ export function getDynamicShippingOptions(
   })
 
   // 2. EXPRESS DIRECT LOGISTICS
-  // Base: 350 ETB, Rate/kg: 16 ETB, Rate/km: 10 ETB, Flat Rate: 650 ETB
+  // Base: 350 ETB, Rate/kg: 16 ETB, Rate/km: 10 ETB, Flat Rate: 600 ETB
   const expCalc = calculateTierFee(totalWeight, distance, origin, destinationName, {
-    flatRate: 650,
+    flatRate: 600,
     baseFee: 350,
     ratePerKg: 16,
     ratePerKm: 10

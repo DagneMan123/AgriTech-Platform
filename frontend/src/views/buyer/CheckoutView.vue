@@ -403,12 +403,6 @@
                   >
                     {{ opt.breakdown.formulaStr }}
                   </div>
-                  <div
-                    v-else-if="opt.breakdown?.isFlatRate"
-                    class="p-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mb-3 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium leading-tight"
-                  >
-                    Standard flat rate applied (Order ≤ 5 kg)
-                  </div>
                 </div>
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
@@ -721,8 +715,6 @@
                     <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
                     (~{{ selectedDistanceKm }} km • {{ formatNumber(totalWeightKg) }} kg)
                   </span>
-                  <span v-if="selectedShippingOption.breakdown?.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
-                  <span v-else class="text-blue-500 font-semibold">Dynamic Matrix</span>
                 </div>
 
                 <!-- Live Dynamic Formula Breakdown -->
@@ -731,12 +723,6 @@
                   class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-2 py-1 rounded border border-blue-500/10 leading-tight"
                 >
                   Base ETB {{ selectedShippingOption.breakdown.baseFee }} + ({{ formatNumber(totalWeightKg) }}kg × ETB {{ selectedShippingOption.breakdown.ratePerKg }}) + ({{ selectedDistanceKm }}km to {{ selectedDestination }} × ETB {{ selectedShippingOption.breakdown.ratePerKm }}) = ETB {{ formatNumber(selectedShippingFee) }}
-                </div>
-                <div
-                  v-else
-                  class="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 leading-tight"
-                >
-                  Standard Flat Rate to {{ selectedDestination }}: ETB {{ formatNumber(selectedShippingFee) }} (≤ 5 kg cargo weight &amp; ≤ 30 km local distance)
                 </div>
               </div>
 
@@ -974,7 +960,7 @@ const selectedShippingOption = computed(() => {
         isFlatRate: true,
         flatRate: 350,
         totalFee: 350,
-        formulaStr: `Standard Flat Rate: ETB 350 (Orders ≤ 5kg & ≤ 30km)`
+        formulaStr: `Standard Flat Rate: ETB 350 (Light load ≤ 5kg)`
       }
     }
   )

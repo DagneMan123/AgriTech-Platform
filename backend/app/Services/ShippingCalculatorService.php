@@ -91,7 +91,7 @@ class ShippingCalculatorService
             'key' => 'express',
             'title' => 'Express Direct Dispatch',
             'desc' => 'Priority dedicated farm-to-door transit',
-            'flat_rate' => 650.0,
+            'flat_rate' => 600.0,
             'base_fee' => 350.0,
             'rate_per_kg' => 16.0,
             'rate_per_km' => 10.0,
@@ -280,7 +280,8 @@ class ShippingCalculatorService
     /**
      * Calculate dynamic shipping fee using Weight & Distance Matrix
      * Formula: Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
-     * For small/medium orders (<= 5kg and distance <= 30km): Flat Rate (ETB 350)
+     * 1. Light Loads (<= 5kg): Fixed Flat Rate (Standard: ETB 350, Express: ETB 600, Cold-Chain: ETB 1200)
+     * 2. Bulk/Heavy Loads (> 5kg): Base Fee + (Weight * Rate per kg) + (Distance * Rate per km)
      */
     public static function calculateFee(
         float $weightKg,
@@ -304,9 +305,15 @@ class ShippingCalculatorService
         $tier = self::SHIPPING_TIERS[$tierKey] ?? self::SHIPPING_TIERS['standard'];
         $distanceKm = self::calculateDistanceKm($origin ?: 'Addis Ababa', $destination);
 
-        $isSmallLocal = ($weightKg <= self::WEIGHT_FLAT_THRESHOLD_KG) && ($distanceKm <= self::DISTANCE_SHORT_THRESHOLD_KM);
+        // -------------------------------------------------------------------------
+        // THRESHOLD CHECK: Light Loads (<= 5 kg) vs Bulk / Heavy Shipments (> 5 kg)
+        // -------------------------------------------------------------------------
+        $isLightLoad = ($weightKg <= self::WEIGHT_FLAT_THRESHOLD_KG);
 
-        if ($isSmallLocal) {
+        if ($isLightLoad) {
+            // 1. Small Shipments (<= 5 kg):
+            // Do NOT multiply by distance matrix (ignore distance km rate).
+            // Charge a fixed, affordable flat rate based on shipping tier.
             return [
                 'tier' => $tier['key'],
                 'title' => $tier['title'],
@@ -315,13 +322,13 @@ class ShippingCalculatorService
                 'weight_kg' => round($weightKg, 2),
                 'distance_km' => $distanceKm,
                 'is_flat_rate' => true,
-                'base_fee' => $tier['flat_rate'],
-                'rate_per_kg' => $tier['rate_per_kg'],
+                'base_fee' => (float) $tier['flat_rate'],
+                'rate_per_kg' => (float) $tier['rate_per_kg'],
                 'weight_cost' => 0.0,
-                'rate_per_km' => $tier['rate_per_km'],
+                'rate_per_km' => (float) $tier['rate_per_km'],
                 'distance_cost' => 0.0,
                 'total_fee' => (float) $tier['flat_rate'],
-                'formula_str' => "Flat Rate: ETB {$tier['flat_rate']} (Orders ≤ 5kg & local)",
+                'formula_str' => '',
             ];
         }
 

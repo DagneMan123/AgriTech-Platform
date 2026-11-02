@@ -189,7 +189,7 @@
                     />
                     <div class="radio-content">
                       <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
-                      <small v-if="opt.breakdown" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
+                      <small v-if="opt.breakdown && !opt.breakdown.isFlatRate" class="matrix-breakdown text-[10px] text-blue-500 font-mono block">
                         {{ opt.breakdown.formulaStr }}
                       </small>
                     </div>
