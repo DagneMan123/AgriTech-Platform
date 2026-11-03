@@ -35,10 +35,10 @@
           </div>
 
           <!-- Header Right Actions -->
-          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               @click="openBookingModal"
-              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
+              class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer shrink-0"
             >
               <Plus class="w-4 h-4" />
               <span>Book Freight Transport</span>
