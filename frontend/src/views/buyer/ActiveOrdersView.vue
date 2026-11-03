@@ -13,7 +13,7 @@
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen lg:ml-64 transition-all" role="main">
 
       <!-- Header Section -->
-      <div :class="['border-b border-t-0 border-x-0 transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[24px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+      <div :class="['border-b transition-all -mx-4 lg:-mx-8 -mt-4 lg:-mt-8 mb-6 px-6 lg:px-8 py-[24px]', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <!-- Mobile Menu Toggle Button -->
@@ -25,6 +25,15 @@
               <Menu class="w-5 h-5" />
             </button>
             <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Fulfillment
+                </span>
+                <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  Buyer Portal &gt; Orders &gt; Active
+                </span>
+              </div>
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 Active Orders
               </h1>
@@ -36,35 +45,11 @@
 
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <BuyerHeaderNav />
-          </div>
-        </div>
-      </div>
 
-      <!-- Chapa Payment Success Banner -->
-      <div
-        v-if="paymentSuccessMessage"
-        class="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 text-emerald-600 dark:text-emerald-400 animate-slide-up"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-            <CheckCircle2 class="w-5 h-5 text-emerald-500" />
-          </div>
-          <div>
-            <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Chapa Payment Verified &amp; Confirmed!
-            </h4>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-              {{ paymentSuccessMessage }}
-            </p>
+            
+            
           </div>
         </div>
-        <button
-          @click="paymentSuccessMessage = null"
-          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 transition-all cursor-pointer"
-        >
-          Dismiss
-        </button>
       </div>
 
       <!-- ── Summary Stats Cards ── -->
@@ -106,15 +91,15 @@
         </article>
 
         <!-- Total In-Flight Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In-Flight Value</h3>
-            <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(stats.totalValue) }}</p>
-            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
+            <p class="text-xl lg:text-2xl font-black text-emerald-500">ETB {{ formatNumber(stats.totalValue) }}</p>
+            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
               <ShieldCheck class="w-3 h-3 inline" /> Escrow secured
             </span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <BadgeDollarSign class="w-6 h-6" />
           </div>
         </article>
@@ -188,7 +173,7 @@
 
       <!-- ── Loading State ── -->
       <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <div class="w-10 h-10 border-4 border-slate-300 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
         <p :class="['text-sm font-semibold', darkMode ? 'text-slate-200' : 'text-slate-700']">Loading active orders from database...</p>
         <p :class="['text-xs mt-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Retrieving real-time statuses and tracking coordinates</p>
       </div>
@@ -452,7 +437,7 @@
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t font-black text-sm">
                     <span>Total Amount:</span>
-                    <span class="text-base text-blue-500">
+                    <span class="text-base text-emerald-500">
                       ETB {{ formatNumber(order.total_amount || order.grand_total || 0) }}
                     </span>
                   </div>
@@ -568,7 +553,7 @@
                 </div>
                 <div>
                   <p class="font-bold m-0 text-slate-400 text-[10px] uppercase">Destination Address</p>
-                  <p class="font-semibold m-0">{{ formatHierarchicalAddress({ street: activeOrderForTracking.delivery_address, woreda: activeOrderForTracking.delivery_woreda, zone: activeOrderForTracking.delivery_zone, region: activeOrderForTracking.delivery_region }) || 'Destination on file' }}</p>
+                  <p class="font-semibold m-0">{{ activeOrderForTracking.delivery_address || 'Destination on file' }}</p>
                 </div>
               </div>
             </div>
@@ -583,7 +568,7 @@
               <a
                 v-if="activeOrderForTracking.delivery?.driver_phone || activeOrderForTracking.driver_phone"
                 :href="'tel:' + (activeOrderForTracking.delivery?.driver_phone || activeOrderForTracking.driver_phone)"
-                class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm shadow-blue-600/30"
+                class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1"
               >
                 <Phone class="w-3 h-3" />
                 <span>Call Driver</span>
@@ -732,7 +717,7 @@
             </div>
             <div class="flex justify-between items-center pt-2 border-t font-black text-sm">
               <span>Grand Total:</span>
-              <span class="text-base text-blue-500">
+              <span class="text-base text-emerald-500">
                 ETB {{ formatNumber(activeOrderForDetails.total_amount || activeOrderForDetails.grand_total || 0) }}
               </span>
             </div>
@@ -750,7 +735,7 @@
           </button>
           <button
             @click="detailsModalOpen = false"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-600/30"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
           >
             Done
           </button>
@@ -870,7 +855,7 @@
           </button>
           <button
             @click="sendMessageToSeller"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-blue-600/30"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Send class="w-3.5 h-3.5" />
             <span>Send Message</span>
@@ -884,25 +869,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { buyerAPI } from '@/api/buyer'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
-import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
-import { formatHierarchicalAddress } from '@/utils/shippingCalculator'
 import {
   Menu,  Clock, Truck, PackageCheck,
   BadgeDollarSign, ShieldCheck, Search, PackageOpen,
-   Check, CheckCircle2, Package, MapPin, User, Calendar, Navigation,
+   Check, Package, MapPin, User, Calendar, Navigation,
   FileText, Phone, XCircle, AlertTriangle, ReceiptText, Printer,
   Warehouse, MessageSquare, Send
 } from 'lucide-vue-next'
 
 const router = useRouter()
-const route = useRoute()
-const paymentSuccessMessage = ref<string | null>(null)
 const authStore = useAuthStore()
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
@@ -911,6 +891,7 @@ const darkMode = computed(() => themeStore.isDark)
 
 const sidebarOpen = ref(false)
 const loading = ref(false)
+
 
 // Search & Filter State
 const searchQuery = ref('')
@@ -942,30 +923,9 @@ const contactModalOpen = ref(false)
 const activeOrderForContact = ref<any>(null)
 const contactMessage = ref('')
 
-const handleChapaReturn = async () => {
-  const txRef = (route.query.tx_ref as string) || (route.query.trx_ref as string)
-  const isSuccess = route.query.payment_success === 'true' || route.query.payment_status === 'completed' || route.query.status === 'success'
-
-  if (txRef || isSuccess) {
-    if (txRef) {
-      try {
-        await buyerAPI.verifyChapaPayment(txRef)
-      } catch (e) {
-        console.warn('Chapa verification warning:', e)
-      }
-    }
-    paymentSuccessMessage.value = 'Your payment was successfully processed through Chapa! The funds are secured in escrow, and your order is confirmed and active.'
-    await loadOrdersData()
-
-    // Clean up query parameters from URL
-    router.replace({ path: route.path, query: {} })
-  }
-}
-
 onMounted(async () => {
   themeStore.initializeTheme()
   await loadOrdersData()
-  await handleChapaReturn()
 })
 
 const loadOrdersData = async () => {
@@ -1280,73 +1240,40 @@ const printReceipt = () => {
 
 const getTrackingLogs = (order: any) => {
   const norm = (order.status || '').toLowerCase()
-
-  // 1. Resolve Origin / Hub for Pickup
-  const originHub = 
-    order.delivery?.pickup_location ||
-    order.pickup_location ||
-    order.items?.[0]?.product?.origin_hub ||
-    order.seller?.city ||
-    (order.seller?.name ? `${order.seller.name} Aggregation Hub` : null) ||
-    'Origin Agricultural Logistics Depot'
-
-  // 2. Resolve Destination Location
-  const destHub = 
-    order.delivery_city ||
-    order.delivery_zone ||
-    order.delivery_region ||
-    'Destination Depot'
-
-  // 3. Resolve Transit Corridor
-  const transitCorridor = (originHub && destHub && !originHub.includes('Logistics Depot'))
-    ? `${originHub} → ${destHub} Highway Logistics Corridor`
-    : (order.delivery?.transit_corridor || `${originHub} → ${order.delivery_region || 'Destination'} Freight Corridor (GPS Monitored)`)
-
-  // 4. Resolve Clean Formatted Delivery Address
-  const finalDestinationAddress = order.delivery_address
-    ? formatHierarchicalAddress({
-        street: order.delivery_address,
-        woreda: order.delivery_woreda,
-        zone: order.delivery_zone,
-        region: order.delivery_region,
-        country: 'Ethiopia'
-      })
-    : (order.delivery?.destination_address || 'Designated Buyer Commercial Facility')
-
   return [
     {
       title: 'Order Placed & Escrow Created',
       time: formatDateTime(order.created_at),
       desc: 'Order logged into system, buyer payment deposited securely into escrow account.',
-      location: 'AgriConnect Central Exchange (Escrow Vault)',
+      location: 'AgriConnect Platform Engine',
       completed: true
     },
     {
       title: 'Farmer Confirmation & Quality Audit',
       time: formatDateTime(order.updated_at || order.created_at),
       desc: 'Produce harvested, inspected for moisture and grade standard, packaged for transport.',
-      location: originHub,
+      location: order.seller?.name || order.seller_name || 'Regional Farm Hub',
       completed: norm !== 'pending'
     },
     {
       title: 'Transporter Assigned & Cargo Picked Up',
       time: order.shipped_at ? formatDateTime(order.shipped_at) : 'Logistics Queue',
       desc: `Transporter ${order.delivery?.carrier_name || order.carrier_name || 'AgriConnect Courier'}, vehicle ${order.delivery?.vehicle_plate || order.vehicle_plate || 'Assigned'}, driver ${order.delivery?.driver_name || order.driver_name || 'Assigned'}.`,
-      location: originHub,
+      location: order.delivery_region || 'Logistics Hub',
       completed: ['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(norm)
     },
     {
       title: 'In Transit along Main Logistics Corridor',
       time: ['shipped', 'in_transit', 'out_for_delivery'].includes(norm) ? 'In Progress' : 'Pending',
-      desc: 'En route to recipient delivery address via active freight corridor.',
-      location: transitCorridor,
+      desc: 'En route to recipient delivery address.',
+      location: order.delivery_zone || 'En Route',
       completed: ['shipped', 'in_transit', 'out_for_delivery', 'delivered'].includes(norm)
     },
     {
       title: 'Final Delivery & Acceptance Sign-off',
       time: order.delivered_at ? formatDateTime(order.delivered_at) : 'Pending Delivery',
       desc: 'Buyer signature on delivery receipt will release escrow funds to farmer.',
-      location: finalDestinationAddress,
+      location: order.delivery_address || 'Destination Address',
       completed: norm === 'delivered'
     }
   ]
