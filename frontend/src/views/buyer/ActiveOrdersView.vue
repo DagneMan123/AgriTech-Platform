@@ -25,15 +25,6 @@
               <Menu class="w-5 h-5" />
             </button>
             <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Live Fulfillment
-                </span>
-                <span :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                  Buyer Portal &gt; Orders &gt; Active
-                </span>
-              </div>
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 Active Orders
               </h1>
