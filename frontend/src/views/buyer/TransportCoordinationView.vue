@@ -37,15 +37,6 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
-              @click="loadData"
-              :disabled="loading"
-              :class="['inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200']"
-              title="Refresh from Database"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin text-blue-500' : '']" />
-              <span class="hidden md:inline">{{ loading ? 'Syncing...' : 'Refresh DB' }}</span>
-            </button>
-            <button
               @click="openBookingModal"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
             >
