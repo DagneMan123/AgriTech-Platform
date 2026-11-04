@@ -176,7 +176,7 @@
                   </select>
                 </div>
 
-                <!-- Shipping Options (Including Self-Pickup) -->
+                <!-- Shipping Options (Including Self-Pickup styled identically) -->
                 <div class="summary-row shipping-row flex-col items-start">
                   <span class="label mb-2">Shipping:</span>
                   <div class="shipping-options w-full">
@@ -195,7 +195,7 @@
                       </div>
                     </label>
 
-                    <!-- Self-Pickup / Farm-Gate Option (ETB 0) -->
+                    <!-- Self-Pickup / Farm-Gate Option (Styled identically to standard options) -->
                     <label class="radio-option border-t pt-2 mt-2 border-slate-200">
                       <input
                         type="radio"
@@ -203,7 +203,7 @@
                         value="self-pickup"
                       />
                       <div class="radio-content">
-                        <span class="font-semibold text-green-700 dark:text-green-400">Self-Pickup / Farm-Gate (ETB 0)</span>
+                        <span class="font-semibold">Self-Pickup / Farm-Gate (ETB 0)</span>
                       </div>
                     </label>
                   </div>
