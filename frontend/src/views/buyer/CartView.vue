@@ -18,231 +18,239 @@
 
       <div class="cart-body">
         <!-- Empty Cart State -->
-      <div v-if="buyerStore.cart.length === 0" class="empty-cart">
-        <div class="empty-icon">
-          <i class="fas fa-shopping-cart"></i>
-        </div>
-        <h2>Your cart is empty</h2>
-        <p>Start shopping to add items to your cart</p>
-        <button @click="continueShopping" class="btn-primary">
-          <i class="fas fa-shopping-bag"></i> Browse Marketplace
-        </button>
-      </div>
-
-      <!-- Cart Content -->
-      <div v-else class="cart-content">
-        <!-- Main Cart Section -->
-        <div class="cart-main">
-          <!-- Cart Header -->
-          <div class="cart-items-header">
-            <div class="item-count">
-              <span class="badge">{{ buyerStore.cart.length }} item(s)</span>
-            </div>
-            <button @click="showSelectAll = !showSelectAll" class="btn-secondary btn-sm">
-              <i :class="['fas', showSelectAll ? 'fa-check-square' : 'fa-square']"></i>
-              Select All
-            </button>
+        <div v-if="buyerStore.cart.length === 0" class="empty-cart">
+          <div class="empty-icon">
+            <i class="fas fa-shopping-cart"></i>
           </div>
-
-          <!-- Cart Items -->
-          <div class="cart-items">
-            <div
-              v-for="item in buyerStore.cart"
-              :key="item.id"
-              class="cart-item"
-              :class="{ selected: selectedItems.includes(item.id) }"
-            >
-              <!-- Item Checkbox -->
-              <div class="item-checkbox">
-                <input
-                  type="checkbox"
-                  :checked="selectedItems.includes(item.id)"
-                  @change="toggleItemSelect(item.id)"
-                  class="checkbox"
-                />
-              </div>
-
-              <!-- Item Image -->
-              <div class="item-image">
-                <img
-                  v-if="formatImageUrl(item.image_url)"
-                  :src="formatImageUrl(item.image_url)"
-                  :alt="item.product_name"
-                  @error="(e: any) => e.target.style.display = 'none'"
-                  class="image"
-                />
-                <div v-else class="no-image">
-                  <i class="fas fa-leaf"></i>
-                </div>
-              </div>
-
-              <!-- Item Details -->
-              <div class="item-details">
-                <h3 class="item-name">{{ item.product_name }}</h3>
-                <p class="item-supplier">
-                  <i class="fas fa-store"></i> {{ item.supplier_name || 'Supplier' }}
-                </p>
-                <p class="item-sku">SKU: {{ item.sku || 'N/A' }}</p>
-              </div>
-
-              <!-- Item Price -->
-              <div class="item-price">
-                <span class="unit-price">ETB {{ formatNumber(item.unit_price || 0) }}</span>
-              </div>
-
-              <!-- Item Quantity -->
-              <div class="item-quantity">
-                <button @click="decrementQuantity(item.id)" class="qty-btn">
-                  <i class="fas fa-minus"></i>
-                </button>
-                <input
-                  type="number"
-                  :value="item.quantity"
-                  @change="updateQuantity(item.id, $event)"
-                  min="1"
-                  class="qty-input"
-                />
-                <button @click="incrementQuantity(item.id)" class="qty-btn">
-                  <i class="fas fa-plus"></i>
-                </button>
-              </div>
-
-              <!-- Item Subtotal -->
-              <div class="item-subtotal">
-                <span class="subtotal-amount">ETB {{ formatNumber(item.subtotal || 0) }}</span>
-              </div>
-
-              <!-- Item Actions -->
-              <div class="item-actions">
-                <button
-                  type="button"
-                  @click="addToWishlist(item)"
-                  :class="['action-btn', { 'wishlist-active': isItemInWishlist(item.product_id || item.id) }]"
-                  :title="isItemInWishlist(item.product_id || item.id) ? 'Remove from Wishlist' : 'Add to Wishlist'"
-                >
-                  <Heart
-                    class="w-4 h-4 transition-colors"
-                    :class="isItemInWishlist(item.product_id || item.id) ? 'fill-red-500 text-red-500' : ''"
-                  />
-                </button>
-                <button
-                  type="button"
-                  @click="removeFromCart(item.id)"
-                  class="action-btn danger"
-                  title="Remove from Cart"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cart Actions -->
-          <div class="cart-item-actions">
-            <button
-              v-if="selectedItems.length > 0"
-              @click="removeSelected"
-              class="btn-danger"
-            >
-              <i class="fas fa-trash"></i> Remove Selected
-            </button>
-            <button @click="continueShopping" class="btn-secondary">
-              <i class="fas fa-shopping-bag"></i> Add More Items
-            </button>
-          </div>
+          <h2>Your cart is empty</h2>
+          <p>Start shopping to add items to your cart</p>
+          <button @click="continueShopping" class="btn-primary">
+            <i class="fas fa-shopping-bag"></i> Browse Marketplace
+          </button>
         </div>
 
-        <!-- Order Summary Sidebar -->
-        <div class="cart-summary">
-          <!-- Summary Card -->
-          <div class="summary-card">
-            <h2 class="summary-title">Order Summary</h2>
-
-            <!-- Summary Items -->
-            <div class="summary-items">
-              <div class="summary-row">
-                <span class="label">Subtotal:</span>
-                <span class="value">ETB {{ formatNumber(subtotal) }}</span>
+        <!-- Cart Content -->
+        <div v-else class="cart-content">
+          <!-- Main Cart Section -->
+          <div class="cart-main">
+            <!-- Cart Header -->
+            <div class="cart-items-header">
+              <div class="item-count">
+                <span class="badge">{{ buyerStore.cart.length }} item(s)</span>
               </div>
-              <div class="summary-row">
-                <span class="label">Destination:</span>
-                <select
-                  v-model="selectedDestination"
-                  class="region-select"
-                >
-                  <option v-for="d in deliveryDestinations" :key="d.city + '-' + d.region" :value="d.city + ', ' + d.region">
-                    {{ d.label }}
-                  </option>
-                </select>
-              </div>
-              <div class="summary-row shipping-row">
-                <span class="label">Shipping:</span>
-                <div class="shipping-options">
-                  <label
-                    v-for="opt in dynamicShippingOptions"
-                    :key="opt.key"
-                    class="radio-option"
-                  >
-                    <input
-                      type="radio"
-                      v-model="shippingType"
-                      :value="opt.key"
-                    />
-                    <div class="radio-content">
-                      <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
+              <button @click="showSelectAll = !showSelectAll" class="btn-secondary btn-sm">
+                <i :class="['fas', showSelectAll ? 'fa-check-square' : 'fa-square']"></i>
+                Select All
+              </button>
+            </div>
 
-
-              <div class="summary-row">
-                <span class="label">Tax (16%):</span>
-                <span class="value">ETB {{ formatNumber(tax) }}</span>
-              </div>
-
-              <!-- Discount Code -->
-              <div class="discount-section">
-                <label>Promo Code:</label>
-                <div class="promo-input-group">
+            <!-- Cart Items -->
+            <div class="cart-items">
+              <div
+                v-for="item in buyerStore.cart"
+                :key="item.id"
+                class="cart-item"
+                :class="{ selected: selectedItems.includes(item.id) }"
+              >
+                <!-- Item Checkbox -->
+                <div class="item-checkbox">
                   <input
-                    v-model="promoCode"
-                    type="text"
-                    placeholder="Enter promo code"
-                    class="promo-input"
+                    type="checkbox"
+                    :checked="selectedItems.includes(item.id)"
+                    @change="toggleItemSelect(item.id)"
+                    class="checkbox"
                   />
-                  <button @click="applyPromoCode" class="btn-apply">Apply</button>
                 </div>
-                <div v-if="promoDiscount > 0" class="discount-applied">
-                  <i class="fas fa-check"></i> Discount: -ETB {{ formatNumber(promoDiscount) }}
+
+                <!-- Item Image -->
+                <div class="item-image">
+                  <img
+                    v-if="formatImageUrl(item.image_url)"
+                    :src="formatImageUrl(item.image_url)"
+                    :alt="item.product_name"
+                    @error="(e: any) => e.target.style.display = 'none'"
+                    class="image"
+                  />
+                  <div v-else class="no-image">
+                    <i class="fas fa-leaf"></i>
+                  </div>
                 </div>
-              </div>
 
-              <div class="summary-divider"></div>
+                <!-- Item Details -->
+                <div class="item-details">
+                  <h3 class="item-name">{{ item.product_name }}</h3>
+                  <p class="item-supplier">
+                    <i class="fas fa-store"></i> {{ item.supplier_name || 'Supplier' }}
+                  </p>
+                  <p class="item-sku">SKU: {{ item.sku || 'N/A' }}</p>
+                </div>
 
-              <!-- Total -->
-              <div class="summary-total">
-                <span class="total-label">Total:</span>
-                <span class="total-amount">ETB {{ formatNumber(total) }}</span>
+                <!-- Item Price -->
+                <div class="item-price">
+                  <span class="unit-price">ETB {{ formatNumber(item.unit_price || 0) }}</span>
+                </div>
+
+                <!-- Item Quantity -->
+                <div class="item-quantity">
+                  <button @click="decrementQuantity(item.id)" class="qty-btn">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <input
+                    type="number"
+                    :value="item.quantity"
+                    @change="updateQuantity(item.id, $event)"
+                    min="1"
+                    class="qty-input"
+                  />
+                  <button @click="incrementQuantity(item.id)" class="qty-btn">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+
+                <!-- Item Subtotal -->
+                <div class="item-subtotal">
+                  <span class="subtotal-amount">ETB {{ formatNumber(item.subtotal || 0) }}</span>
+                </div>
+
+                <!-- Item Actions -->
+                <div class="item-actions">
+                  <button
+                    type="button"
+                    @click="addToWishlist(item)"
+                    :class="['action-btn', { 'wishlist-active': isItemInWishlist(item.product_id || item.id) }]"
+                    :title="isItemInWishlist(item.product_id || item.id) ? 'Remove from Wishlist' : 'Add to Wishlist'"
+                  >
+                    <Heart
+                      class="w-4 h-4 transition-colors"
+                      :class="isItemInWishlist(item.product_id || item.id) ? 'fill-red-500 text-red-500' : ''"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    @click="removeFromCart(item.id)"
+                    class="action-btn danger"
+                    title="Remove from Cart"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- Checkout Button -->
-            <button
-              @click="proceedToCheckout"
-              :disabled="buyerStore.cart.length === 0"
-              class="btn-checkout"
-            >
-              <i class="fas fa-credit-card"></i> Proceed to Checkout
-            </button>
+            <!-- Cart Actions -->
+            <div class="cart-item-actions">
+              <button
+                v-if="selectedItems.length > 0"
+                @click="removeSelected"
+                class="btn-danger"
+              >
+                <i class="fas fa-trash"></i> Remove Selected
+              </button>
+              <button @click="continueShopping" class="btn-secondary">
+                <i class="fas fa-shopping-bag"></i> Add More Items
+              </button>
+            </div>
+          </div>
 
-            <!-- Save for Later -->
-            <button @click="saveCart" class="btn-secondary btn-full">
-              <i class="fas fa-bookmark"></i> Save for Later
-            </button>
+          <!-- Order Summary Sidebar -->
+          <div class="cart-summary">
+            <!-- Summary Card -->
+            <div class="summary-card">
+              <h2 class="summary-title">Order Summary</h2>
+
+              <!-- Summary Items -->
+              <div class="summary-items">
+                <div class="summary-row">
+                  <span class="label">Subtotal:</span>
+                  <span class="value">ETB {{ formatNumber(subtotal) }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="label">Destination:</span>
+                  <select
+                    v-model="selectedDestination"
+                    class="region-select"
+                  >
+                    <option v-for="d in deliveryDestinations" :key="d.city + '-' + d.region" :value="d.city + ', ' + d.region">
+                      {{ d.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Shipping Options (Including Self-Pickup) -->
+                <div class="summary-row shipping-row flex-col items-start">
+                  <span class="label mb-2">Shipping:</span>
+                  <div class="shipping-options w-full">
+                    <label
+                      v-for="opt in dynamicShippingOptions"
+                      :key="opt.key"
+                      class="radio-option"
+                    >
+                      <input
+                        type="radio"
+                        v-model="shippingType"
+                        :value="opt.key"
+                      />
+                      <div class="radio-content">
+                        <span class="font-semibold">{{ opt.title }} (ETB {{ formatNumber(opt.fee) }})</span>
+                      </div>
+                    </label>
+
+                    <!-- Self-Pickup / Farm-Gate Option (ETB 0) -->
+                    <label class="radio-option border-t pt-2 mt-2 border-slate-200">
+                      <input
+                        type="radio"
+                        v-model="shippingType"
+                        value="self-pickup"
+                      />
+                      <div class="radio-content">
+                        <span class="font-semibold text-green-700 dark:text-green-400">Self-Pickup / Farm-Gate (ETB 0)</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Discount Code -->
+                <div class="discount-section">
+                  <label>Promo Code:</label>
+                  <div class="promo-input-group">
+                    <input
+                      v-model="promoCode"
+                      type="text"
+                      placeholder="Enter promo code"
+                      class="promo-input"
+                    />
+                    <button @click="applyPromoCode" class="btn-apply">Apply</button>
+                  </div>
+                  <div v-if="promoDiscount > 0" class="discount-applied">
+                    <i class="fas fa-check"></i> Discount: -ETB {{ formatNumber(promoDiscount) }}
+                  </div>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <!-- Total (Tax-Free & Self-Pickup Supported) -->
+                <div class="summary-total">
+                  <span class="total-label">Total:</span>
+                  <span class="total-amount">ETB {{ formatNumber(total) }}</span>
+                </div>
+              </div>
+
+              <!-- Checkout Button -->
+              <button
+                @click="proceedToCheckout"
+                :disabled="buyerStore.cart.length === 0"
+                class="btn-checkout"
+              >
+                <i class="fas fa-credit-card"></i> Proceed to Checkout
+              </button>
+
+              <!-- Save for Later -->
+              <button @click="saveCart" class="btn-secondary btn-full">
+                <i class="fas fa-bookmark"></i> Save for Later
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   </div>
@@ -274,19 +282,17 @@ import {
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
 const router = useRouter()
-const { isDark, toggleTheme } = useTheme()
+const { isDark } = useTheme()
 
 // State
 const deliveryDestinations = ETHIOPIAN_DELIVERY_DESTINATIONS
-const ethiopianRegions = ETHIOPIAN_REGIONS
 const savedDest = (typeof window !== 'undefined' && sessionStorage.getItem('checkout_destination')) || ''
 const initialDest = resolveDestinationHubAndRegion(savedDest || authStore.user?.region || 'Addis Ababa')
 const selectedDestination = ref<string>(`${initialDest.city}, ${initialDest.region}`)
-const selectedRegion = selectedDestination
 const selectedItems = ref<number[]>([])
 const showSelectAll = ref(false)
 const savedShip = (typeof window !== 'undefined' && sessionStorage.getItem('checkout_shipping')) as any
-const shippingType = ref<'standard' | 'express' | 'overnight'>(savedShip || 'standard')
+const shippingType = ref<string>(savedShip || 'standard')
 const promoCode = ref('')
 const promoDiscount = ref(0)
 
@@ -312,29 +318,15 @@ const dynamicShippingOptions = computed<DynamicShippingOption[]>(() => {
   return getDynamicShippingOptions(buyerStore.cart || [], selectedDestination.value)
 })
 
-const selectedShippingRoutes = computed<OriginShippingRoute[]>(() => {
-  return selectedShippingOption.value.routes || []
+// Shipping fee logic supporting Self-Pickup (ETB 0)
+const selectedShippingFee = computed(() => {
+  if (shippingType.value === 'self-pickup') {
+    return 0
+  }
+  const found = dynamicShippingOptions.value.find(o => o.key === shippingType.value)
+  return found ? found.fee : (dynamicShippingOptions.value[0]?.fee || 350)
 })
 
-// Auto-fallback if cold-chain is filtered out for non-perishable goods
-watch(
-  dynamicShippingOptions,
-  (newOptions) => {
-    if (newOptions.length > 0 && !newOptions.some(o => o.key === shippingType.value)) {
-      shippingType.value = newOptions[0].key as 'standard' | 'express' | 'overnight'
-    }
-  },
-  { immediate: true }
-)
-
-const selectedShippingOption = computed(() => {
-  return (
-    dynamicShippingOptions.value.find(o => o.key === shippingType.value) ||
-    dynamicShippingOptions.value[0] || { fee: 350 }
-  )
-})
-
-const selectedShippingFee = computed(() => selectedShippingOption.value.fee)
 const shippingCost = selectedShippingFee
 
 onMounted(async () => {
@@ -350,17 +342,13 @@ onMounted(async () => {
   }
 })
 
-// Computed properties
+// Computed properties (Tax fully excluded)
 const subtotal = computed(() => {
   return buyerStore.cart.reduce((sum, item) => sum + (item.subtotal || 0), 0)
 })
 
-const tax = computed(() => {
-  return Math.round(subtotal.value * 0.16)
-})
-
 const total = computed(() => {
-  return subtotal.value + shippingCost.value + tax.value - promoDiscount.value
+  return Math.max(0, subtotal.value + shippingCost.value - promoDiscount.value)
 })
 
 // Methods
@@ -448,10 +436,8 @@ const addToWishlist = async (item: any) => {
 const applyPromoCode = () => {
   if (promoCode.value === 'SAVE10') {
     promoDiscount.value = Math.round(subtotal.value * 0.1)
-    console.log('Promo code applied: 10% discount')
   } else if (promoCode.value === 'SAVE500') {
     promoDiscount.value = 500
-    console.log('Promo code applied: ETB 500 discount')
   } else {
     promoDiscount.value = 0
     alert('Invalid promo code')
@@ -459,7 +445,6 @@ const applyPromoCode = () => {
 }
 
 const saveCart = () => {
-  console.log('Cart saved for later')
   alert('Cart saved successfully!')
 }
 
@@ -508,240 +493,6 @@ const handleLogout = async () => {
   padding: 0;
 }
 
-/* Dark Mode Overrides */
-:global(html.dark) .buyer-layout,
-.buyer-layout.dark {
-  background-color: #0b0f19 !important;
-  color: #f1f5f9;
-}
-
-:global(html.dark) .cart-container,
-.buyer-layout.dark .cart-container {
-  background-color: #0b0f19 !important;
-  color: #f1f5f9;
-}
-
-:global(html.dark) .page-title,
-.buyer-layout.dark .page-title {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .page-subtitle,
-.buyer-layout.dark .page-subtitle {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .cart-main,
-.buyer-layout.dark .cart-main {
-  background: #131b2e !important;
-  border: 1px solid #1e293b !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
-}
-
-:global(html.dark) .cart-items-header,
-.buyer-layout.dark .cart-items-header {
-  background: #131b2e !important;
-  border-bottom: 1px solid #1e293b !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .cart-items,
-.buyer-layout.dark .cart-items {
-  background: #131b2e !important;
-}
-
-:global(html.dark) .cart-item,
-.buyer-layout.dark .cart-item {
-  background: #131b2e !important;
-  border-bottom: 1px solid #1e293b !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .cart-item:hover,
-.buyer-layout.dark .cart-item:hover {
-  background: #182238 !important;
-}
-
-:global(html.dark) .cart-item-actions,
-.buyer-layout.dark .cart-item-actions {
-  background: #0f172a !important;
-  border-top: 1px solid #1e293b !important;
-}
-
-:global(html.dark) .item-name,
-.buyer-layout.dark .item-name {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .item-supplier,
-.buyer-layout.dark .item-supplier {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .item-price,
-.buyer-layout.dark .item-price {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .quantity-control,
-.buyer-layout.dark .quantity-control {
-  background: #0b0f19 !important;
-  border: 1px solid #334155 !important;
-}
-
-:global(html.dark) .qty-btn,
-.buyer-layout.dark .qty-btn {
-  background: transparent !important;
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .qty-btn:hover,
-.buyer-layout.dark .qty-btn:hover {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .qty-input,
-.buyer-layout.dark .qty-input {
-  background: transparent !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .summary-card,
-.buyer-layout.dark .summary-card {
-  background: #131b2e !important;
-  border: 1px solid #1e293b !important;
-  color: #f8fafc !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
-}
-
-:global(html.dark) .summary-title,
-.buyer-layout.dark .summary-title {
-  color: #f8fafc !important;
-  border-bottom: 1px solid #1e293b !important;
-}
-
-:global(html.dark) .summary-row,
-.buyer-layout.dark .summary-row {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .summary-row .label,
-.buyer-layout.dark .summary-row .label {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .summary-row .value,
-.buyer-layout.dark .summary-row .value {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .summary-total,
-.buyer-layout.dark .summary-total {
-  border-top: 2px solid #1e293b !important;
-  border-bottom: 2px solid #1e293b !important;
-}
-
-:global(html.dark) .total-label,
-.buyer-layout.dark .total-label {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .radio-option,
-.buyer-layout.dark .radio-option {
-  color: #cbd5e1 !important;
-}
-
-:global(html.dark) .shipping-options,
-.buyer-layout.dark .shipping-options {
-  border-top: 1px solid #1e293b !important;
-}
-
-:global(html.dark) .shipping-summary-details,
-.buyer-layout.dark .shipping-summary-details {
-  background: #0b0f19 !important;
-  border: 1px solid #1e293b !important;
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .promo-input input,
-.buyer-layout.dark .promo-input input {
-  background: #0b0f19 !important;
-  border: 1px solid #334155 !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .empty-cart,
-.buyer-layout.dark .empty-cart {
-  background: #131b2e !important;
-  border: 1px solid #1e293b !important;
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .empty-cart h2,
-.buyer-layout.dark .empty-cart h2 {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .empty-cart p,
-.buyer-layout.dark .empty-cart p {
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .empty-icon,
-.buyer-layout.dark .empty-icon {
-  background: #0b0f19 !important;
-  color: #60a5fa !important;
-}
-
-:global(html.dark) .recommendations,
-.buyer-layout.dark .recommendations {
-  background: #131b2e !important;
-  border: 1px solid #1e293b !important;
-}
-
-:global(html.dark) .recommendations-title,
-.buyer-layout.dark .recommendations-title {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .rec-card,
-.buyer-layout.dark .rec-card {
-  background: #0b0f19 !important;
-  border: 1px solid #1e293b !important;
-}
-
-:global(html.dark) .rec-name,
-.buyer-layout.dark .rec-name {
-  color: #f8fafc !important;
-}
-
-:global(html.dark) .badge,
-.buyer-layout.dark .badge {
-  background: rgba(37, 99, 235, 0.2) !important;
-  color: #60a5fa !important;
-}
-
-:global(html.dark) .btn-secondary,
-.buyer-layout.dark .btn-secondary {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-:global(html.dark) .action-btn,
-.buyer-layout.dark .action-btn {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #94a3b8 !important;
-}
-
-:global(html.dark) .action-btn:hover,
-.buyer-layout.dark .action-btn:hover {
-  background: #334155 !important;
-  color: #f8fafc !important;
-}
-
 /* Header */
 .cart-header {
   display: flex;
@@ -750,14 +501,7 @@ const handleLogout = async () => {
   padding: 24px 32px;
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
   gap: 20px;
-}
-
-:global(html.dark) .cart-header,
-.buyer-layout.dark .cart-header {
-  background-color: #131b2e !important;
-  border-bottom: 1px solid #1e293b !important;
 }
 
 .page-title {
@@ -850,7 +594,6 @@ const handleLogout = async () => {
 .cart-items {
   display: flex;
   flex-direction: column;
-  padding: 0;
 }
 
 .cart-item {
@@ -861,8 +604,6 @@ const handleLogout = async () => {
   padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
   transition: all 0.3s;
-  box-sizing: border-box;
-  width: 100%;
 }
 
 .cart-item:hover {
@@ -923,7 +664,6 @@ const handleLogout = async () => {
   font-weight: 600;
   color: #1f2937;
   margin: 0;
-  line-height: 1.3;
 }
 
 .item-supplier {
@@ -970,7 +710,6 @@ const handleLogout = async () => {
   cursor: pointer;
   color: #6b7280;
   font-size: 12px;
-  transition: all 0.3s;
   border-radius: 4px;
 }
 
@@ -1006,28 +745,19 @@ const handleLogout = async () => {
   align-items: center;
   gap: 8px;
   justify-content: flex-end;
-  flex-shrink: 0;
-  min-width: 82px;
-  padding-right: 2px;
 }
 
 .action-btn {
   width: 36px;
   height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  flex-shrink: 0;
   border: 1px solid #d1d5db;
   background: white;
   border-radius: 8px;
   cursor: pointer;
   color: #6b7280;
-  font-size: 14px;
-  transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
 }
 
 .action-btn:hover {
@@ -1104,20 +834,11 @@ const handleLogout = async () => {
   outline: none;
 }
 
-:global(html.dark) .region-select,
-.buyer-layout.dark .region-select {
-  background-color: #0b0f19 !important;
-  border-color: #334155 !important;
-  color: #f8fafc !important;
-}
-
 .shipping-options {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
 }
 
 .radio-option {
@@ -1133,11 +854,6 @@ const handleLogout = async () => {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.radio-option input {
-  cursor: pointer;
-  accent-color: #3b82f6;
 }
 
 .discount-section {
@@ -1169,12 +885,6 @@ const handleLogout = async () => {
   font-size: 13px;
 }
 
-.promo-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
 .btn-apply {
   padding: 8px 16px;
   background: #3b82f6;
@@ -1184,7 +894,6 @@ const handleLogout = async () => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
 }
 
 .btn-apply:hover {
@@ -1235,7 +944,6 @@ const handleLogout = async () => {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1245,8 +953,6 @@ const handleLogout = async () => {
 
 .btn-checkout:hover:not(:disabled) {
   background: #1d4ed8;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.35);
 }
 
 .btn-checkout:disabled {
@@ -1259,106 +965,6 @@ const handleLogout = async () => {
   margin-top: 12px;
 }
 
-.security-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 12px;
-  background: #f0fdf4;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #16a34a;
-}
-
-/* Recommendations */
-.recommendations-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.rec-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 16px 0;
-}
-
-.rec-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rec-item {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  transition: all 0.3s;
-}
-
-.rec-item:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-.rec-image {
-  width: 60px;
-  height: 60px;
-  background: #f3f4f6;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #d1d5db;
-  flex-shrink: 0;
-}
-
-.rec-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.rec-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.rec-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: #2563eb;
-  margin: 0;
-}
-
-.btn-add-rec {
-  align-self: flex-start;
-  padding: 6px 12px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 4px;
-}
-
-.btn-add-rec:hover {
-  background: #2563eb;
-}
-
-/* Button Styles */
 .btn-primary {
   background: #3b82f6;
   color: white;
@@ -1368,15 +974,9 @@ const handleLogout = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
 }
 
 .btn-secondary {
@@ -1388,14 +988,9 @@ const handleLogout = async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
 }
 
 .btn-sm {
@@ -1407,124 +1002,9 @@ const handleLogout = async () => {
   background: #fee2e2;
   color: #dc2626;
   border: 1px solid #fecaca;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
 }
-
-.btn-danger:hover {
-  background: #fecaca;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .cart-item {
-    grid-template-columns: 32px 70px minmax(100px, 1fr) 85px 105px 85px 84px;
-    gap: 8px;
-    padding: 12px 14px;
-  }
-
-  .item-image {
-    width: 70px;
-    height: 70px;
-  }
-}
-
-@media (max-width: 768px) {
-  .cart-container {
-    margin-left: 0;
-    padding: 0;
-  }
-
-  .cart-header {
-    padding: 20px 16px;
-  }
-
-  .cart-body {
-    padding: 20px 16px 36px;
-  }
-
-  .cart-content {
-    grid-template-columns: 1fr;
-  }
-
-  .cart-item {
-    grid-template-columns: 32px 60px minmax(90px, 1fr) auto;
-    gap: 8px;
-    padding: 12px 8px;
-  }
-
-  .item-image {
-    width: 60px;
-    height: 60px;
-  }
-
-  .item-price,
-  .item-subtotal {
-    display: none;
-  }
-
-  .item-actions {
-    display: flex !important;
-    gap: 6px;
-    min-width: unset;
-  }
-
-  .item-details {
-    gap: 2px;
-  }
-
-  .item-name {
-    font-size: 13px;
-  }
-
-  .item-supplier {
-    font-size: 11px;
-  }
-
-  .summary-card {
-    position: static;
-  }
-
-  .cart-item-actions {
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 480px) {
-  .cart-container {
-    padding: 0;
-  }
-
-  .cart-header {
-    padding: 16px 12px;
-  }
-
-  .page-title {
-    font-size: 22px;
-  }
-
-  .cart-body {
-    padding: 16px 12px 28px;
-  }
-
-  .cart-item {
-    grid-template-columns: 32px 50px minmax(80px, 1fr) auto;
-    padding: 12px 8px;
-  }
-
-  .item-image {
-    width: 50px;
-    height: 50px;
-    display: block;
-  }
-}
-
-
-
 </style>
-
-
-.active-formula-card .formula-details {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-  line-height: 1.4;
-}
-
