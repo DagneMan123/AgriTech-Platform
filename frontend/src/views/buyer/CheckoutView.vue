@@ -185,8 +185,8 @@
                 </div>
               </div>
 
-              <!-- Saved Addresses Quick Select -->
-              <div v-if="savedAddresses.length > 0" class="relative">
+              <!-- Saved Addresses Quick Select with Use Custom Address option -->
+              <div class="relative">
                 <select
                   v-model="selectedSavedAddressId"
                   @change="applySavedAddress"
@@ -335,7 +335,7 @@
               </span>
             </div>
 
-            <!-- Dynamic Shipping Options Grid (Including Self-Pickup styled identically) -->
+            <!-- Dynamic Shipping Options Grid (Including Self-Pickup) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <label
                 v-for="opt in shippingOptions"
@@ -390,7 +390,7 @@
                 </div>
               </label>
 
-              <!-- Self-Pickup / Farm-Gate Option (Styled identically to standard options) -->
+              <!-- Self-Pickup / Farm-Gate Option -->
               <label
                 :class="[
                   'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between group',
@@ -668,66 +668,64 @@
               </div>
             </div>
 
-            <!-- Financial Calculations (Tax-Free & Multi-Origin Split Routes Fully Retained) -->
+            <!-- Financial Calculations (Clean Summary) -->
             <div :class="['rounded-xl p-3 mb-5 space-y-2.5 border text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Produce Subtotal:</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200">ETB {{ formatNumber(summarySubtotal) }}</span>
               </div>
 
-              <!-- Shipping Row / Multi-Origin Split Routes context -->
-              <div class="space-y-2">
-                <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
-                  <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
-                  <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">
-                    {{ selectedShipping === 'self-pickup' ? 'ETB 0 (Free)' : 'ETB ' + formatNumber(selectedShippingFee) }}
-                  </span>
+              <!-- Shipping Row -->
+              <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                <span class="truncate pr-2">Shipping ({{ selectedShipping === 'self-pickup' ? 'Self-Pickup / Farm-Gate' : selectedShippingTitle }}):</span>
+                <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                  {{ selectedShipping === 'self-pickup' ? 'ETB 0 (Free)' : 'ETB ' + formatNumber(selectedShippingFee) }}
+                </span>
+              </div>
+
+              <!-- Destination Hub & Region (Keeps original destination even when self-pickup is selected) -->
+              <div class="flex items-center justify-between text-[11px] pt-1 pb-0.5 border-t border-slate-100 dark:border-slate-800/60">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Destination:</span>
+                <span class="font-bold text-blue-600 dark:text-blue-400">{{ selectedDestination }}</span>
+              </div>
+
+              <!-- Multi-Origin Breakdown (Hidden completely when Self-Pickup is selected) -->
+              <div v-if="selectedShipping !== 'self-pickup' && selectedShippingRoutes.length > 0" class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                <div v-if="selectedShippingRoutes.length > 1" class="flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400 pb-1">
+                  <span>Multi-Origin Split Routes ({{ selectedShippingRoutes.length }} origins):</span>
+                  <span class="text-[10px] font-mono text-slate-400">{{ selectedShippingRoutes.length }} Shipments</span>
                 </div>
 
-                <!-- Destination -->
-                <div class="flex items-center justify-between text-[11px] pt-1 pb-0.5 border-t border-slate-100 dark:border-slate-800/60">
-                  <span class="text-slate-500 dark:text-slate-400 font-medium">Destination:</span>
-                  <span class="font-bold text-blue-600 dark:text-blue-400">{{ selectedDestination }}</span>
-                </div>
+                <div
+                  v-for="(route, idx) in selectedShippingRoutes"
+                  :key="route.origin + '-' + idx"
+                  class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-[11px] space-y-1"
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-100">
+                      📍 {{ route.origin }} → <span class="text-blue-600 dark:text-blue-400">{{ route.destination }}</span>
+                    </span>
+                    <span class="font-bold text-blue-600 dark:text-blue-400">
+                      ETB {{ formatNumber(route.fee) }}
+                    </span>
+                  </div>
 
-                <!-- Multi-Origin Split Routes Breakdown (Preserved and fully functional) -->
-                <div v-if="selectedShipping !== 'self-pickup' && selectedShippingRoutes.length > 0" class="space-y-1.5 pt-1">
-                  <div v-if="selectedShippingRoutes.length > 1" class="flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800/60 pb-1">
-                    <span>Multi-Origin Split Routes ({{ selectedShippingRoutes.length }} origins):</span>
-                    <span class="text-[10px] font-mono text-slate-400">{{ selectedShippingRoutes.length }} Shipments</span>
+                  <div class="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>~{{ route.distanceKm }} km • {{ formatNumber(route.weightKg) }} kg ({{ route.itemCount }} item{{ route.itemCount > 1 ? 's' : '' }})</span>
+                    <span v-if="route.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
+                    <span v-else class="text-blue-500 font-semibold">Bulk Matrix</span>
                   </div>
 
                   <div
-                    v-for="(route, idx) in selectedShippingRoutes"
-                    :key="route.origin + '-' + idx"
-                    class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-[11px] space-y-1"
+                    v-if="!route.isFlatRate && route.formulaStr"
+                    class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-500/10 leading-tight"
                   >
-                    <div class="flex items-center justify-between">
-                      <span class="font-bold text-slate-800 dark:text-slate-100">
-                        📍 {{ route.origin }} → <span class="text-blue-600 dark:text-blue-400">{{ route.destination }}</span>
-                      </span>
-                      <span class="font-bold text-blue-600 dark:text-blue-400">
-                        ETB {{ formatNumber(route.fee) }}
-                      </span>
-                    </div>
-
-                    <div class="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>~{{ route.distanceKm }} km • {{ formatNumber(route.weightKg) }} kg ({{ route.itemCount }} item{{ route.itemCount > 1 ? 's' : '' }})</span>
-                      <span v-if="route.isFlatRate" class="text-emerald-500 font-semibold">Flat Rate (≤ 5 kg)</span>
-                      <span v-else class="text-blue-500 font-semibold">Bulk Matrix</span>
-                    </div>
-
-                    <div
-                      v-if="!route.isFlatRate && route.formulaStr"
-                      class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-500/10 leading-tight"
-                    >
-                      {{ route.formulaStr }}
-                    </div>
+                    {{ route.formulaStr }}
                   </div>
                 </div>
               </div>
 
-              <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+              <div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/60 text-slate-500 dark:text-slate-400">
                 <span>Platform Escrow Fee:</span>
                 <span class="font-bold text-blue-500">FREE</span>
               </div>
@@ -737,7 +735,7 @@
                 <span class="font-bold">-ETB {{ formatNumber(summaryDiscount) }}</span>
               </div>
 
-              <!-- Grand Total (Tax Removed) -->
+              <!-- Grand Total -->
               <div class="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center">
                 <div>
                   <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 block">Total Due:</span>
@@ -850,8 +848,15 @@ const addressForm = ref({
 const savedAddresses = ref<any[]>([])
 const selectedSavedAddressId = ref<number | null>(null)
 
-const destinationFromCart = computed<string>(() => {
-  return (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : '') || ''
+const destinationFromCart = computed<string>({
+  get() {
+    return (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : '') || ''
+  },
+  set(val) {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('checkout_destination', val)
+    }
+  }
 })
 const selectedDestination = ref<string>(destinationFromCart.value || `${initialDestInfo.city}, ${initialDestInfo.region}`)
 
@@ -1039,6 +1044,17 @@ onMounted(async () => {
   themeStore.initializeTheme()
   if (!buyerStore.cart || buyerStore.cart.length === 0) {
     await buyerStore.fetchCart().catch(() => {})
+  }
+  
+  // Fetch saved addresses from database API securely without store error
+  try {
+    const res = await buyerAPI.getDeliveryAddresses()
+    const list = res?.data?.data || res?.data || res || []
+    if (Array.isArray(list)) {
+      savedAddresses.value = list
+    }
+  } catch (e) {
+    savedAddresses.value = []
   }
 })
 
