@@ -335,7 +335,7 @@
               </span>
             </div>
 
-            <!-- Dynamic Shipping Options Grid (Including Self-Pickup) -->
+            <!-- Dynamic Shipping Options Grid (Including Self-Pickup styled identically) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <label
                 v-for="opt in shippingOptions"
@@ -390,12 +390,12 @@
                 </div>
               </label>
 
-              <!-- Self-Pickup / Farm-Gate Option (ETB 0) -->
+              <!-- Self-Pickup / Farm-Gate Option (Styled identically to standard options) -->
               <label
                 :class="[
                   'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between group',
                   selectedShipping === 'self-pickup'
-                    ? (darkMode ? 'border-green-500 bg-green-500/10 ring-2 ring-green-500/30' : 'border-green-600 bg-green-50/50 ring-2 ring-green-600/20')
+                    ? (darkMode ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20')
                     : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
                 ]"
               >
@@ -406,13 +406,13 @@
                         type="radio"
                         v-model="selectedShipping"
                         value="self-pickup"
-                        class="text-green-600 focus:ring-green-500"
+                        class="text-blue-600 focus:ring-blue-500"
                       />
-                      <span class="text-xs font-bold leading-tight text-green-700 dark:text-green-400">Self-Pickup / Farm-Gate</span>
+                      <span class="text-xs font-bold leading-tight">Self-Pickup / Farm-Gate</span>
                     </div>
                   </div>
 
-                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-green-500/20 text-green-600 border border-green-500/30">
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-blue-500/20 text-blue-500 border border-blue-500/30">
                     FREE TRANSPORT
                   </span>
 
@@ -423,7 +423,7 @@
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
                   <span class="text-[10px] text-slate-400">Buyer Transport:</span>
-                  <p class="text-sm font-black text-green-600 dark:text-green-400">
+                  <p class="text-sm font-black text-blue-600 dark:text-blue-400">
                     ETB 0
                   </p>
                 </div>
