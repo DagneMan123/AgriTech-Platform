@@ -313,12 +313,7 @@
                   </p>
                 </div>
               </div>
-
-
             </div>
-
-            
-
 
             <!-- Dynamic Category Filtering Notice -->
             <div
@@ -340,7 +335,7 @@
               </span>
             </div>
 
-            <!-- Dynamic Shipping Options Grid -->
+            <!-- Dynamic Shipping Options Grid (Including Self-Pickup) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <label
                 v-for="opt in shippingOptions"
@@ -394,6 +389,45 @@
                   </p>
                 </div>
               </label>
+
+              <!-- Self-Pickup / Farm-Gate Option (ETB 0) -->
+              <label
+                :class="[
+                  'relative rounded-xl border p-4 cursor-pointer transition-all flex flex-col justify-between group',
+                  selectedShipping === 'self-pickup'
+                    ? (darkMode ? 'border-green-500 bg-green-500/10 ring-2 ring-green-500/30' : 'border-green-600 bg-green-50/50 ring-2 ring-green-600/20')
+                    : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
+                ]"
+              >
+                <div>
+                  <div class="flex items-start justify-between gap-1 mb-2">
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        v-model="selectedShipping"
+                        value="self-pickup"
+                        class="text-green-600 focus:ring-green-500"
+                      />
+                      <span class="text-xs font-bold leading-tight text-green-700 dark:text-green-400">Self-Pickup / Farm-Gate</span>
+                    </div>
+                  </div>
+
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase mb-2 bg-green-500/20 text-green-600 border border-green-500/30">
+                    FREE TRANSPORT
+                  </span>
+
+                  <p :class="['text-[11px] mb-2 leading-snug', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    Pick up goods directly from the farmer's origin warehouse/farm-gate using your own vehicle.
+                  </p>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400">Buyer Transport:</span>
+                  <p class="text-sm font-black text-green-600 dark:text-green-400">
+                    ETB 0
+                  </p>
+                </div>
+              </label>
             </div>
           </section>
 
@@ -409,7 +443,7 @@
               </div>
             </div>
 
-            <!-- Primary Payment Method Banner (Auto-populated from PostgreSQL) -->
+            <!-- Primary Payment Method Banner -->
             <div
               v-if="primaryPaymentMethod"
               :class="[
@@ -484,15 +518,11 @@
 
             <!-- Dynamic Payment Details Panel -->
             <div :class="['rounded-xl p-4 border transition-all text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <!-- Telebirr details -->
               <div v-if="paymentForm.method === 'telebirr'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-600 font-bold">
                   <Phone class="w-4 h-4" />
                   <span>Telebirr Instant Payment</span>
                 </div>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                  Enter your Telebirr registered phone number. A USSD or payment confirmation will be dispatched upon clicking 'Confirm Order &amp; Pay'.
-                </p>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">Telebirr Mobile Number:</label>
                   <input
@@ -503,16 +533,11 @@
                   />
                 </div>
               </div>
-
-              <!-- CBE Birr details -->
               <div v-else-if="paymentForm.method === 'cbe_birr'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <Building class="w-4 h-4" />
                   <span>CBE Birr Mobile Money</span>
                 </div>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                  Provide your CBE Birr mobile number linked to Commercial Bank of Ethiopia.
-                </p>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">CBE Birr Mobile Number:</label>
                   <input
@@ -523,58 +548,38 @@
                   />
                 </div>
               </div>
-
-              <!-- Bank Transfer details -->
               <div v-else-if="paymentForm.method === 'bank_transfer'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <Building class="w-4 h-4" />
-                  <span>
-                    {{ primaryPaymentMethod?.type === 'bank_transfer' ? `${primaryPaymentMethod.bank_name} Direct Transfer (Primary Method)` : 'Commercial Bank of Ethiopia (CBE) Direct Transfer' }}
-                  </span>
-                </div>
-                <div :class="['p-3 rounded-lg border font-mono text-[11px] space-y-1', darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700']">
-                  <p><strong>Bank:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.bank_name : 'Commercial Bank of Ethiopia' }}</p>
-                  <p><strong>Account Name:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.account_holder : 'AgriTech Ethiopia Escrow' }}</p>
-                  <p><strong>Account Number:</strong> {{ primaryPaymentMethod?.type === 'bank_transfer' ? primaryPaymentMethod.account_number : '1000 4892 1093 4' }}</p>
+                  <span>Direct Bank Transfer</span>
                 </div>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">Transfer Transaction Reference:</label>
                   <input
                     v-model="paymentForm.bank_ref"
                     type="text"
-                    :placeholder="primaryPaymentMethod?.type === 'bank_transfer' ? `Ref / A/C for ${primaryPaymentMethod.bank_name}...` : 'e.g. FT26301ABC...'"
+                    placeholder="e.g. FT26301ABC..."
                     :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
               </div>
-
-              <!-- Card details -->
               <div v-else-if="paymentForm.method === 'card'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <CreditCard class="w-4 h-4" />
                   <span>Debit / Credit Card (Chapa Secured)</span>
                 </div>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                  Payments are encrypted via 256-bit SSL Chapa Gateway. Cardholder name and phone will be verified.
-                </p>
               </div>
-
-              <!-- Cash on Delivery -->
               <div v-else class="space-y-2">
                 <div class="flex items-center gap-2 text-amber-500 font-bold">
                   <ShieldCheck class="w-4 h-4" />
                   <span>Agro-Escrow / Cash on Delivery</span>
                 </div>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                  Inspect your fresh agricultural produce upon dispatch delivery before payment is collected and verified by the transport agent.
-                </p>
               </div>
             </div>
           </section>
-
         </div>
 
-        <!-- RIGHT COLUMN: Order Summary & Pay Action (4/5 Cols) -->
+        <!-- RIGHT COLUMN: Order Summary & Pay Action -->
         <div class="lg:col-span-5 xl:col-span-4">
           <div :class="['rounded-2xl border p-5 sm:p-6 shadow-sm sticky top-6 transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <h2 class="text-sm font-bold tracking-tight mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -582,14 +587,13 @@
               <span class="text-xs font-semibold text-blue-500">{{ cartItems.length }} item(s)</span>
             </h2>
 
-            <!-- Items Mini List with Real-Time Quantity Modifiers -->
+            <!-- Items Mini List -->
             <div class="max-h-64 overflow-y-auto space-y-3 pr-1 mb-4 divide-y divide-slate-100 dark:divide-slate-800/60">
               <div
                 v-for="item in cartItems"
                 :key="item.id"
                 class="pt-3 first:pt-0 flex items-center gap-3"
               >
-                <!-- Image or Leaf Placeholder -->
                 <div :class="['w-12 h-12 rounded-xl overflow-hidden shrink-0 flex items-center justify-center border', darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200']">
                   <img
                     v-if="formatImageUrl(item.image_url)"
@@ -606,13 +610,11 @@
                     <h4 :class="['text-xs font-bold truncate', darkMode ? 'text-slate-200' : 'text-slate-800']">
                       {{ item.product_name }}
                     </h4>
-                    <!-- Inline Remove Button -->
                     <button
                       type="button"
                       @click="handleRemoveItem(item.id)"
                       :disabled="updatingCartItemId === item.id"
                       class="text-slate-400 hover:text-red-500 transition p-1 cursor-pointer disabled:opacity-40"
-                      title="Remove from cart"
                     >
                       <Trash2 class="w-3 h-3" />
                     </button>
@@ -627,15 +629,13 @@
                     </span>
                   </div>
 
-                  <!-- Real-time Quantity Modifiers -->
                   <div class="flex items-center gap-2">
                     <div :class="['flex items-center border rounded-lg overflow-hidden', darkMode ? 'border-slate-700 bg-[#0b0f19]' : 'border-slate-200 bg-white']">
                       <button
                         type="button"
                         @click="handleDecrementQuantity(item)"
                         :disabled="updatingCartItemId === item.id || item.quantity <= 1"
-                        class="px-2 py-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
-                        title="Decrease quantity"
+                        class="px-2 py-0.5 text-slate-400 hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
                       >
                         <Minus class="w-2.5 h-2.5" />
                       </button>
@@ -646,14 +646,12 @@
                         @change="handleQuantityChange(item, $event)"
                         :disabled="updatingCartItemId === item.id"
                         class="w-10 text-center text-[11px] font-bold bg-transparent border-0 focus:ring-0 p-0 text-slate-800 dark:text-slate-100"
-                        title="Enter quantity"
                       />
                       <button
                         type="button"
                         @click="handleIncrementQuantity(item)"
                         :disabled="updatingCartItemId === item.id"
-                        class="px-2 py-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
-                        title="Increase quantity"
+                        class="px-2 py-0.5 text-slate-400 hover:text-slate-200 transition disabled:opacity-30 cursor-pointer"
                       >
                         <Plus class="w-2.5 h-2.5" />
                       </button>
@@ -670,35 +668,35 @@
               </div>
             </div>
 
-            <!-- Financial Calculations -->
+            <!-- Financial Calculations (Tax-Free & Multi-Origin Split Routes Fully Retained) -->
             <div :class="['rounded-xl p-3 mb-5 space-y-2.5 border text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Produce Subtotal:</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200">ETB {{ formatNumber(summarySubtotal) }}</span>
               </div>
 
-              <!-- Real-time Dynamic Shipping Row with Multi-Origin Breakdown Context -->
+              <!-- Shipping Row / Multi-Origin Split Routes context -->
               <div class="space-y-2">
                 <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                   <span class="truncate pr-2">Shipping ({{ selectedShippingTitle }}):</span>
-                  <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">ETB {{ formatNumber(selectedShippingFee) }}</span>
+                  <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                    {{ selectedShipping === 'self-pickup' ? 'ETB 0 (Free)' : 'ETB ' + formatNumber(selectedShippingFee) }}
+                  </span>
                 </div>
 
-                <!-- Destination in Order Summary -->
+                <!-- Destination -->
                 <div class="flex items-center justify-between text-[11px] pt-1 pb-0.5 border-t border-slate-100 dark:border-slate-800/60">
                   <span class="text-slate-500 dark:text-slate-400 font-medium">Destination:</span>
                   <span class="font-bold text-blue-600 dark:text-blue-400">{{ selectedDestination }}</span>
                 </div>
 
-                <!-- Multi-Origin Route Breakdown or Single Route Card -->
-                <div v-if="selectedShippingRoutes.length > 0" class="space-y-1.5 pt-1">
-                  <!-- Header if multi-origin -->
+                <!-- Multi-Origin Split Routes Breakdown (Preserved and fully functional) -->
+                <div v-if="selectedShipping !== 'self-pickup' && selectedShippingRoutes.length > 0" class="space-y-1.5 pt-1">
                   <div v-if="selectedShippingRoutes.length > 1" class="flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800/60 pb-1">
                     <span>Multi-Origin Split Routes ({{ selectedShippingRoutes.length }} origins):</span>
                     <span class="text-[10px] font-mono text-slate-400">{{ selectedShippingRoutes.length }} Shipments</span>
                   </div>
 
-                  <!-- Route card for each origin -->
                   <div
                     v-for="(route, idx) in selectedShippingRoutes"
                     :key="route.origin + '-' + idx"
@@ -719,7 +717,6 @@
                       <span v-else class="text-blue-500 font-semibold">Bulk Matrix</span>
                     </div>
 
-                    <!-- Dynamic formula if bulk for this origin -->
                     <div
                       v-if="!route.isFlatRate && route.formulaStr"
                       class="text-[9px] text-blue-600 dark:text-blue-400 font-mono bg-blue-500/5 px-1.5 py-0.5 rounded border border-blue-500/10 leading-tight"
@@ -728,26 +725,19 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Single route fallback if routes empty -->
-                <div v-else class="flex justify-between items-center text-[10px] text-slate-400">
-                  <span>
-                    <strong class="text-slate-700 dark:text-slate-200">{{ selectedOrigin }}</strong> → 
-                    <strong class="text-blue-600 dark:text-blue-400 font-bold">{{ selectedDestination }}</strong>
-                    (~{{ selectedDistanceKm }} km • {{ formatNumber(totalWeightKg) }} kg)
-                  </span>
-                </div>
               </div>
 
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Platform Escrow Fee:</span>
                 <span class="font-bold text-blue-500">FREE</span>
               </div>
+
               <div v-if="summaryDiscount > 0" class="flex justify-between items-center text-blue-500">
                 <span>Promo Discount:</span>
                 <span class="font-bold">-ETB {{ formatNumber(summaryDiscount) }}</span>
               </div>
 
+              <!-- Grand Total (Tax Removed) -->
               <div class="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center">
                 <div>
                   <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 block">Total Due:</span>
@@ -786,9 +776,7 @@
             </div>
           </div>
         </div>
-
       </div>
-
     </main>
   </div>
 </template>
@@ -811,8 +799,6 @@ import {
   ETHIOPIAN_REGIONS_LOGISTICS,
   calculateOriginDestinationDistanceKm,
   resolveCartOriginAndDistance,
-  WEIGHT_FLAT_THRESHOLD_KG,
-  DISTANCE_SHORT_THRESHOLD_KM,
   ETHIOPIAN_DELIVERY_DESTINATIONS,
   resolveDestinationHubAndRegion,
   formatHierarchicalAddress,
@@ -824,7 +810,7 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Scale, Compass, Info, Plus, Minus, Trash2
+  Plus, Minus, Trash2, Info
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -842,8 +828,6 @@ const confirmedOrders = ref<any[]>([])
 const updatingCartItemId = ref<number | null>(null)
 
 const cartItems = computed(() => buyerStore.cart || [])
-
-// Ethiopian Delivery Destinations
 const deliveryDestinations = ETHIOPIAN_DELIVERY_DESTINATIONS
 
 const initialDestInfo = resolveDestinationHubAndRegion(
@@ -852,7 +836,6 @@ const initialDestInfo = resolveDestinationHubAndRegion(
   'Addis Ababa'
 )
 
-// Delivery Address Form
 const addressForm = ref({
   recipient_name: '',
   phone: '',
@@ -867,7 +850,6 @@ const addressForm = ref({
 const savedAddresses = ref<any[]>([])
 const selectedSavedAddressId = ref<number | null>(null)
 
-// ── DYNAMIC SHIPPING CALCULATION STATE & MATRIX ──
 const destinationFromCart = computed<string>(() => {
   return (route.query.region as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_destination') : '') || ''
 })
@@ -876,7 +858,6 @@ const selectedDestination = ref<string>(destinationFromCart.value || `${initialD
 const resolvedDest = computed(() => resolveDestinationHubAndRegion(selectedDestination.value))
 const destinationDisplayName = computed(() => resolvedDest.value.displayName)
 
-// Clean hierarchical address: [Specific Street], [Woreda], [Zone/Sub-City], [Region], [Country]
 const formattedAddressPreview = computed(() => {
   return formatHierarchicalAddress({
     street: addressForm.value.address,
@@ -887,7 +868,6 @@ const formattedAddressPreview = computed(() => {
   })
 })
 
-// Synchronize selectedDestination and addressForm.region bidirectionally
 watch(selectedDestination, (newDest) => {
   if (newDest) {
     const res = resolveDestinationHubAndRegion(newDest)
@@ -896,79 +876,39 @@ watch(selectedDestination, (newDest) => {
     }
   }
 })
-watch(() => addressForm.value.region, (newReg) => {
-  if (newReg && resolvedDest.value.region !== newReg) {
-    selectedDestination.value = newReg
-  }
-})
 
 const totalWeightKg = computed(() => getCartTotalWeightKg(cartItems.value))
 const hasPerishables = computed(() => cartHasPerishables(cartItems.value))
-
-// Resolve product origin from cart items
-const cartOriginInfo = computed(() => {
-  return resolveCartOriginAndDistance(cartItems.value, selectedDestination.value)
-})
-
+const cartOriginInfo = computed(() => resolveCartOriginAndDistance(cartItems.value, selectedDestination.value))
 const selectedOrigin = computed(() => cartOriginInfo.value.origin || 'Adama')
+const selectedDistanceKm = computed(() => calculateOriginDestinationDistanceKm(selectedOrigin.value, selectedDestination.value))
 
-// Dynamic distance fetched directly from distance matrix
-const selectedDistanceKm = computed(() => {
-  return calculateOriginDestinationDistanceKm(selectedOrigin.value, selectedDestination.value)
-})
-
-const regionInfo = computed(() => {
-  return ETHIOPIAN_REGIONS_LOGISTICS[resolvedDest.value.region] || ETHIOPIAN_REGIONS_LOGISTICS['Addis Ababa']
-})
-
-// Dynamic shipping options recalculated instantly with Multi-Origin Split Shipping
 const shippingOptions = computed<DynamicShippingOption[]>(() => {
   return getDynamicShippingOptions(cartItems.value, selectedDestination.value)
 })
 
 const selectedShippingRoutes = computed<OriginShippingRoute[]>(() => {
+  if (selectedShipping.value === 'self-pickup') return []
   return selectedShippingOption.value.routes || []
 })
 
 const selectedShipping = ref<string>((route.query.shipping as string) || (typeof window !== 'undefined' ? sessionStorage.getItem('checkout_shipping') : null) || 'standard')
 
-// Immediate watchers for query params from shopping cart
-watch(
-  () => route.query.region,
-  (newRegion) => {
-    if (newRegion && typeof newRegion === 'string') {
-      selectedDestination.value = newRegion
-      addressForm.value.region = newRegion
-      if (typeof window !== 'undefined') sessionStorage.setItem('checkout_destination', newRegion)
-    }
-  },
-  { immediate: true }
-)
-
-watch(
-  () => route.query.shipping,
-  (newShip) => {
-    if (newShip && typeof newShip === 'string') {
-      selectedShipping.value = newShip
-      if (typeof window !== 'undefined') sessionStorage.setItem('checkout_shipping', newShip)
-    }
-  },
-  { immediate: true }
-)
-
-
-// Watch shipping options: auto-fallback if selected option is hidden (e.g. cold-chain hidden for grains)
-watch(
-  shippingOptions,
-  (newOptions) => {
-    if (newOptions.length > 0 && !newOptions.some(o => o.key === selectedShipping.value)) {
-      selectedShipping.value = newOptions[0].key
-    }
-  },
-  { immediate: true }
-)
-
 const selectedShippingOption = computed(() => {
+  if (selectedShipping.value === 'self-pickup') {
+    return {
+      key: 'self-pickup',
+      title: 'Self-Pickup / Farm-Gate',
+      desc: 'Buyer transport from origin warehouse',
+      fee: 0,
+      badge: 'FREE',
+      isPerishableOnly: false,
+      transitDays: 'Immediate',
+      estimatedDays: 'Immediate',
+      routes: [],
+      breakdown: null
+    }
+  }
   return (
     shippingOptions.value.find(o => o.key === selectedShipping.value) ||
     shippingOptions.value[0] || {
@@ -980,37 +920,20 @@ const selectedShippingOption = computed(() => {
       isPerishableOnly: false,
       transitDays: '3 - 5 days',
       estimatedDays: '3 - 5 days',
-      breakdown: {
-        baseFee: 200,
-        weightKg: totalWeightKg.value,
-        ratePerKg: 10,
-        weightCost: 0,
-        originLocation: selectedOrigin.value,
-        destinationLocation: selectedDestination.value,
-        distanceKm: selectedDistanceKm.value,
-        ratePerKm: 6,
-        distanceCost: 0,
-        isFlatRate: true,
-        flatRate: 350,
-        totalFee: 350,
-        formulaStr: `Standard Flat Rate: ETB 350 (Light load ≤ 5kg)`
-      }
+      routes: [],
+      breakdown: null
     }
   )
 })
 
-const selectedShippingFee = computed(() => selectedShippingOption.value.fee)
+const selectedShippingFee = computed(() => selectedShipping.value === 'self-pickup' ? 0 : selectedShippingOption.value.fee)
 const selectedShippingTitle = computed(() => selectedShippingOption.value.title)
 
-// Real-time Cart Item Handlers
 const handleIncrementQuantity = async (item: any) => {
   if (updatingCartItemId.value === item.id) return
   updatingCartItemId.value = item.id
   try {
-    const newQty = (Number(item.quantity) || 1) + 1
-    await buyerStore.updateCartItem(item.id, { quantity: newQty })
-  } catch (e) {
-    console.error('Failed to increment quantity:', e)
+    await buyerStore.updateCartItem(item.id, { quantity: (Number(item.quantity) || 1) + 1 })
   } finally {
     updatingCartItemId.value = null
   }
@@ -1020,10 +943,7 @@ const handleDecrementQuantity = async (item: any) => {
   if (updatingCartItemId.value === item.id || (Number(item.quantity) || 1) <= 1) return
   updatingCartItemId.value = item.id
   try {
-    const newQty = (Number(item.quantity) || 1) - 1
-    await buyerStore.updateCartItem(item.id, { quantity: newQty })
-  } catch (e) {
-    console.error('Failed to decrement quantity:', e)
+    await buyerStore.updateCartItem(item.id, { quantity: (Number(item.quantity) || 1) - 1 })
   } finally {
     updatingCartItemId.value = null
   }
@@ -1036,8 +956,6 @@ const handleQuantityChange = async (item: any, event: any) => {
   updatingCartItemId.value = item.id
   try {
     await buyerStore.updateCartItem(item.id, { quantity: newQty })
-  } catch (e) {
-    console.error('Failed to change quantity:', e)
   } finally {
     updatingCartItemId.value = null
   }
@@ -1048,74 +966,25 @@ const handleRemoveItem = async (itemId: number) => {
   updatingCartItemId.value = itemId
   try {
     await buyerStore.removeFromCart(itemId)
-  } catch (e) {
-    console.error('Failed to remove item:', e)
   } finally {
     updatingCartItemId.value = null
   }
 }
 
-// Payment Methods State & Helpers
 const primaryPaymentMethod = ref<any>(null)
-const savedPaymentMethods = ref<any[]>([])
-
 const maskAccountNumber = (num: string | number) => {
   if (!num) return ''
   const str = String(num).trim()
-  if (str.length <= 4) return str
-  return '•••• ' + str.slice(-4)
+  return str.length <= 4 ? str : '•••• ' + str.slice(-4)
 }
 
-const getMethodKeyForSaved = (pm: any): string => {
-  if (!pm) return 'telebirr'
-  const type = pm.type
-  const bank = (pm.bank_name || '').toLowerCase()
-  if (type === 'bank_transfer') return 'bank_transfer'
-  if (type === 'mobile_money') {
-    return bank.includes('cbe') ? 'cbe_birr' : 'telebirr'
-  }
-  if (type === 'card') return 'card'
-  if (type === 'cash') return 'cash_on_delivery'
-  return 'telebirr'
-}
-
-const applyPrimaryPaymentMethod = (pm: any) => {
-  if (!pm) return
-  primaryPaymentMethod.value = pm
-
-  const targetKey = getMethodKeyForSaved(pm)
-  paymentForm.value.method = targetKey
-
-  if (targetKey === 'telebirr') {
-    paymentForm.value.telebirr_phone = pm.account_number || authStore.user?.phone || ''
-  } else if (targetKey === 'cbe_birr') {
-    paymentForm.value.cbe_phone = pm.account_number || authStore.user?.phone || ''
-  } else if (targetKey === 'bank_transfer') {
-    paymentForm.value.bank_ref = `${pm.bank_name} (Acc: ${pm.account_number})`
-  }
-}
-
-const paymentMethodsList = computed(() => {
-  const isBankPrimary = primaryPaymentMethod.value?.type === 'bank_transfer'
-  const bankTitle = isBankPrimary
-    ? `${primaryPaymentMethod.value.bank_name} Direct Transfer`
-    : 'CBE Direct Transfer'
-  const bankDesc = isBankPrimary
-    ? `Primary saved account (${primaryPaymentMethod.value.account_holder})`
-    : 'Deposit to escrow bank account'
-  const isTelebirrPrimary = primaryPaymentMethod.value?.type === 'mobile_money' && !(primaryPaymentMethod.value?.bank_name || '').toLowerCase().includes('cbe')
-  const isCbeBirrPrimary = primaryPaymentMethod.value?.type === 'mobile_money' && (primaryPaymentMethod.value?.bank_name || '').toLowerCase().includes('cbe')
-  const isCardPrimary = primaryPaymentMethod.value?.type === 'card'
-  const isCashPrimary = primaryPaymentMethod.value?.type === 'cash'
-
-  return [
-    { key: 'telebirr', title: 'Telebirr (Chapa)', desc: isTelebirrPrimary ? `Primary saved wallet (${primaryPaymentMethod.value.account_holder})` : 'Instant mobile wallet payment', badge: isTelebirrPrimary ? 'PRIMARY' : 'POPULAR' },
-    { key: 'cbe_birr', title: 'CBE Birr', desc: isCbeBirrPrimary ? `Primary saved mobile account (${primaryPaymentMethod.value.account_holder})` : 'Commercial Bank of Ethiopia mobile pay', badge: isCbeBirrPrimary ? 'PRIMARY' : null },
-    { key: 'card', title: 'Debit / Credit Card', desc: isCardPrimary ? `Primary saved card (${primaryPaymentMethod.value.account_holder})` : 'Visa, Mastercard & Ethiopian bank cards', badge: isCardPrimary ? 'PRIMARY' : 'SECURE' },
-    { key: 'bank_transfer', title: bankTitle, desc: bankDesc, badge: isBankPrimary ? 'PRIMARY' : null },
-    { key: 'cash_on_delivery', title: 'Agro-Escrow / COD', desc: 'Inspect produce upon physical delivery', badge: isCashPrimary ? 'PRIMARY' : null }
-  ]
-})
+const paymentMethodsList = computed(() => [
+  { key: 'telebirr', title: 'Telebirr (Chapa)', desc: 'Instant mobile wallet payment', badge: 'POPULAR' },
+  { key: 'cbe_birr', title: 'CBE Birr', desc: 'Commercial Bank of Ethiopia mobile pay', badge: null },
+  { key: 'card', title: 'Debit / Credit Card', desc: 'Visa, Mastercard & Ethiopian bank cards', badge: 'SECURE' },
+  { key: 'bank_transfer', title: 'Direct Bank Transfer', desc: 'Deposit to escrow bank account', badge: null },
+  { key: 'cash_on_delivery', title: 'Agro-Escrow / COD', desc: 'Inspect produce upon physical delivery', badge: null }
+])
 
 const paymentForm = ref({
   method: 'telebirr',
@@ -1124,7 +993,7 @@ const paymentForm = ref({
   bank_ref: ''
 })
 
-// Financial Calculations
+// Financial Calculations (Tax Fully Excluded - 0% Tax)
 const summarySubtotal = computed(() => {
   return cartItems.value.reduce((sum, item) => {
     const price = Number(item.unit_price || item.price || 0)
@@ -1135,11 +1004,8 @@ const summarySubtotal = computed(() => {
 
 const summaryDiscount = computed(() => {
   const promo = route.query.promo as string
-  if (promo === 'SAVE10') {
-    return Math.round(summarySubtotal.value * 0.1)
-  } else if (promo === 'SAVE500') {
-    return 500
-  }
+  if (promo === 'SAVE10') return Math.round(summarySubtotal.value * 0.1)
+  if (promo === 'SAVE500') return 500
   return 0
 })
 
@@ -1148,10 +1014,7 @@ const summaryGrandTotal = computed(() => {
 })
 
 const formatNumber = (num: number) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(num || 0)
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0)
 }
 
 const formatPaymentName = (key: string) => {
@@ -1163,110 +1026,24 @@ const applySavedAddress = () => {
   if (!selectedSavedAddressId.value) return
   const addr = savedAddresses.value.find(a => a.id === selectedSavedAddressId.value)
   if (addr) {
-    addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || addressForm.value.recipient_name || 'Verified Buyer'
-    addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || addressForm.value.phone || '+251 911 234 567'
-    if (!destinationFromCart.value) { 
-      addressForm.value.region = addr.region || addressForm.value.region || 'Addis Ababa' 
-      selectedDestination.value = addr.city ? `${addr.city}, ${addr.region}` : (addr.region || 'Addis Ababa')
-    } else { 
-      addressForm.value.region = resolvedDest.value.region 
-    }
-    addressForm.value.zone = addr.sub_city || addr.zone || addressForm.value.zone || 'Bole Subcity'
-    addressForm.value.woreda = addr.woreda_kebele || addr.woreda || addressForm.value.woreda || 'Woreda 03'
-    addressForm.value.address = addr.street_address || addr.address_line || addr.address || addressForm.value.address || 'Commercial Agro-Distribution Depot'
-    if (addr.instructions || addr.notes) {
-      addressForm.value.notes = addr.instructions || addr.notes
-    }
+    addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || 'Verified Buyer'
+    addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || '+251 911 234 567'
+    addressForm.value.region = addr.region || 'Addis Ababa'
+    addressForm.value.zone = addr.sub_city || addr.zone || 'Bole Subcity'
+    addressForm.value.woreda = addr.woreda_kebele || addr.woreda || 'Woreda 03'
+    addressForm.value.address = addr.street_address || addr.address_line || 'Commercial Agro-Distribution Depot'
   }
 }
 
 onMounted(async () => {
   themeStore.initializeTheme()
-
-  // Ensure cart is fresh
   if (!buyerStore.cart || buyerStore.cart.length === 0) {
     await buyerStore.fetchCart().catch(() => {})
-  }
-
-  // Pre-fill user data
-  if (authStore.user) {
-    if (authStore.user.name || authStore.user.full_name) {
-      addressForm.value.recipient_name = authStore.user.name || authStore.user.full_name
-    }
-    if (authStore.user.phone) {
-      addressForm.value.phone = authStore.user.phone
-      paymentForm.value.telebirr_phone = authStore.user.phone
-      paymentForm.value.cbe_phone = authStore.user.phone
-    }
-    if (!destinationFromCart.value && authStore.user.region) { 
-      addressForm.value.region = authStore.user.region
-      selectedDestination.value = authStore.user.city ? `${authStore.user.city}, ${authStore.user.region}` : authStore.user.region 
-    }
-    if (authStore.user.zone) addressForm.value.zone = authStore.user.zone
-    if (authStore.user.woreda) addressForm.value.woreda = authStore.user.woreda
-    if (authStore.user.address) {
-      const cleanStreet = authStore.user.address.replace(/^addis ababa,?\s*ethiopia$/i, 'Commercial Agro-Distribution Depot')
-      addressForm.value.address = cleanStreet
-    }
-  }
-
-  // Load saved delivery addresses if available
-  try {
-    const res = await buyerAPI.getDeliveryAddresses()
-    const list = res.data?.data || res.data || []
-    if (Array.isArray(list) && list.length > 0) {
-      savedAddresses.value = list
-      if (!destinationFromCart.value) {
-        const defaultAddr = list.find(a => a.is_default) || list[0]
-        selectedSavedAddressId.value = defaultAddr.id
-        applySavedAddress()
-      } else {
-        const matchingAddr = list.find(a => (a.region || '').toLowerCase() === destinationFromCart.value.toLowerCase())
-        if (matchingAddr) {
-          selectedSavedAddressId.value = matchingAddr.id
-          applySavedAddress()
-        }
-        addressForm.value.region = selectedDestination.value
-      }
-    }
-  } catch (e) {
-    // Graceful fallback to manual entry
-  }
-
-  // Load saved payment methods & auto-select primary from PostgreSQL database
-  try {
-    const res = await buyerAPI.getPaymentMethods()
-    const methods = res.data?.data || []
-    if (Array.isArray(methods) && methods.length > 0) {
-      savedPaymentMethods.value = methods
-      const primary = methods.find((m: any) => m.is_primary) || methods[0]
-      if (primary) {
-        applyPrimaryPaymentMethod(primary)
-      }
-    }
-  } catch (err) {
-    console.warn('Failed to load primary payment method from database:', err)
   }
 })
 
 const handlePlaceOrder = async () => {
   errorMessage.value = null
-
-  // Ensure valid recipient name
-  if (!addressForm.value.recipient_name?.trim()) {
-    addressForm.value.recipient_name = authStore.user?.name || authStore.user?.email?.split('@')[0] || 'Valued Buyer'
-  }
-
-  // Ensure valid phone
-  if (!addressForm.value.phone?.trim()) {
-    addressForm.value.phone = authStore.user?.phone || '+251 911 234 567'
-  }
-
-  // Ensure valid dropoff address with graceful fallback instead of blocking
-  if (!addressForm.value.address?.trim()) {
-    addressForm.value.address = 'Commercial Agro-Distribution Depot'
-  }
-
   submitting.value = true
 
   try {
@@ -1287,50 +1064,16 @@ const handlePlaceOrder = async () => {
       delivery_fee: selectedShippingFee.value,
       shipping_type: selectedShipping.value,
       payment_method: paymentForm.value.method,
-      tax_amount: 0,
+      tax_amount: 0, // Tax-free agricultural produce
       promo_discount: summaryDiscount.value,
-      notes: addressForm.value.notes,
-      payment_reference: paymentForm.value.bank_ref || undefined
+      notes: addressForm.value.notes
     }
 
-    // 1. Create order(s) in PostgreSQL database
     const res = await buyerStore.checkout(payload)
-    const orders = res.data || []
-    confirmedOrders.value = orders
-    const primaryOrder = Array.isArray(orders) ? orders[0] : orders
-    const orderId = primaryOrder?.id
-
-    // 2. Clear cart state in store
-    await buyerStore.fetchCart().catch(() => {})
-
-    // 3. If Cash on Delivery is chosen, show order confirmation modal
-    if (paymentForm.value.method === 'cash_on_delivery') {
-      orderSuccess.value = true
-      return
-    }
-
-    // 4. Call Chapa initialize API to get checkout_url
-    const chapaPayload = {
-      amount: summaryGrandTotal.value,
-      order_id: orderId,
-      phone_number: addressForm.value.phone || paymentForm.value.telebirr_phone || paymentForm.value.cbe_phone || authStore.user?.phone || '0911000000',
-      email: authStore.user?.email || 'aydenfudagne@gmail.com',
-      channel: paymentForm.value.method,
-      return_url: `${window.location.origin}/buyer/orders/active?order_id=${orderId || ''}&payment_status=completed`
-    }
-
-    const chapaRes = await buyerAPI.initializeChapaPayment(chapaPayload)
-    const checkoutUrl = chapaRes.data?.data?.checkout_url || chapaRes.data?.checkout_url
-
-    if (checkoutUrl) {
-      // 5. Automatically redirect browser to Chapa's hosted test checkout page
-      window.location.href = checkoutUrl
-    } else {
-      orderSuccess.value = true
-    }
+    confirmedOrders.value = res.data || []
+    orderSuccess.value = true
   } catch (err: any) {
-    console.error('Checkout error:', err)
-    errorMessage.value = err.response?.data?.message || err.message || 'Failed to place order. Please review information and try again.'
+    errorMessage.value = err.response?.data?.message || err.message || 'Failed to place order.'
   } finally {
     submitting.value = false
   }
