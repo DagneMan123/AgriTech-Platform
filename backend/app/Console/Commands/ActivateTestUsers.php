@@ -24,11 +24,13 @@ class ActivateTestUsers extends Command
         $farmer = User::updateOrCreate(
             ['email' => 'farmer@agritech.com'],
             [
-                'name' => 'Sample Farmer',
-                'phone' => '251911111111',
+                'name' => 'Bahir Dar Agro Farmers Cooperative',
+                'phone' => '251934318549',
                 'password' => Hash::make('password'),
                 'role' => 'farmer',
-                'region' => 'Oromia',
+                'region' => 'Amhara',
+                'zone' => 'West Gojjam',
+                'woreda' => 'Bahir Dar',
                 'is_active' => true,
             ]
         );
@@ -38,10 +40,10 @@ class ActivateTestUsers extends Command
             ['user_id' => $farmer->id],
             [
                 'farmer_registration_number' => 'FRM-' . $farmer->id . '-' . time(),
-                'farm_name' => 'Sample Farm',
-                'region' => 'Oromia',
-                'zone' => 'West',
-                'woreda' => 'Ambo',
+                'farm_name' => 'Lake Tana Agro Producers Union',
+                'region' => 'Amhara',
+                'zone' => 'West Gojjam',
+                'woreda' => 'Bahir Dar',
             ]
         );
 

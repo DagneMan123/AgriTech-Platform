@@ -1367,8 +1367,12 @@ const getOrderDeliveryFee = (order: any): number => {
 }
 
 const getOrderSupplier = (order: any): string => {
-  if (!order) return 'Direct Producer'
-  return order.farmer?.user?.name || order.farmer?.farm_name || order.supplier?.name || order.supplier_name || 'Direct Producer'
+  if (!order) return 'Bahir Dar Agro Farmers Cooperative'
+  const name = order.farmer?.name || order.farmer?.user?.name || order.farmer?.farm_name || order.supplier?.name || order.supplier_name
+  if (!name || name === 'Sample Farmer') {
+    return order.farmer?.farm_name || 'Bahir Dar Agro Farmers Cooperative'
+  }
+  return name
 }
 
 const getOrderItems = (order: any): any[] => {
@@ -1617,12 +1621,17 @@ const getVehicleType = (order: any): string => {
 }
 
 const getFarmerPhone = (order: any): string => {
-  return (
+  const phone = (
     order?.farmer?.phone_number ||
     order?.farmer?.user?.phone ||
     order?.farmer?.phone ||
+    order?.supplier?.phone ||
     ''
   )
+  if (!phone || phone === '251911111111') {
+    return '251934318549'
+  }
+  return phone
 }
 
 const cleanPhoneForDialing = (phone: string): string => {
@@ -1647,7 +1656,7 @@ const formatPhoneNumber = (phone: string): string => {
     return `+251 ${cleaned.slice(4, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`
   }
   if (cleaned.startsWith('09') && cleaned.length === 10) {
-    return `09${cleaned.slice(2, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`
+    return `+251 ${cleaned.slice(1, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`
   }
   return phone
 }
