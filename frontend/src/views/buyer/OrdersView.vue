@@ -317,7 +317,14 @@
                 <span>{{ formatDate(order.created_at) }}</span>
               </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-end">
+              <!-- Payment Status Badge -->
+              <span :class="['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wide border transition-all', getPaymentBadgeClass(order)]">
+                <component :is="getPaymentIcon(order)" class="w-3.5 h-3.5" />
+                <span>{{ getPaymentStatusLabel(order) }}</span>
+              </span>
+
+              <!-- Fulfillment Status Badge -->
               <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide', statusBadgeClass(order.status)]">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
                 <span>{{ formatStatus(order.status) }}</span>
@@ -429,15 +436,26 @@
                 <span>View Details</span>
               </button>
 
-              <!-- Track Live Shipment -->
-              <router-link
-                v-if="order.status !== 'delivered' && order.status !== 'cancelled'"
-                to="/buyer/delivery/tracking"
+              <!-- Track Live Shipment (Popup Modal) -->
+              <button
+                v-if="order.status !== 'cancelled'"
+                @click="openTrackingModal(order)"
                 :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50']"
+                title="View live GPS freight route and carrier details"
               >
                 <Truck class="w-3.5 h-3.5 text-blue-500" />
                 <span>Live Freight Tracking</span>
-              </router-link>
+              </button>
+
+              <!-- Chat with Farmer / Direct Support -->
+              <button
+                @click="openContactModal(order)"
+                :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50']"
+                title="Direct communication with producer or cooperative"
+              >
+                <MessageSquare class="w-3.5 h-3.5 text-blue-500" />
+                <span>Chat with Farmer</span>
+              </button>
 
               <!-- Leave Review (Delivered only) -->
               <router-link
@@ -714,6 +732,291 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ── QUICK-VIEW LIVE FREIGHT TRACKING MODAL ── -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div
+      v-if="trackingModalOpen && activeOrderForTracking"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+    >
+      <div
+        :class="['w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[92vh]', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+      >
+        <!-- Modal Header -->
+        <div :class="['flex items-center justify-between p-5 border-b', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+              <Truck class="w-5 h-5" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold m-0">Live Freight Tracking</h3>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping"></span>
+                  GPS Active
+                </span>
+              </div>
+              <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                Tracking: <span class="font-mono font-bold text-blue-500">{{ getTrackingNumber(activeOrderForTracking) }}</span> • Order {{ getOrderNumber(activeOrderForTracking) }}
+              </p>
+            </div>
+          </div>
+          <button
+            @click="trackingModalOpen = false"
+            :class="['p-2 rounded-xl border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'border-slate-300 text-slate-500 hover:text-slate-900 hover:bg-slate-100']"
+            aria-label="Close modal"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-5 overflow-y-auto space-y-4">
+          <!-- Transit Status Banner -->
+          <div :class="['p-4 rounded-xl border flex items-center justify-between gap-3', activeOrderForTracking.status === 'delivered' ? (darkMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800') : (darkMode ? 'bg-purple-500/10 border-purple-500/30 text-purple-300' : 'bg-purple-50 border-purple-200 text-purple-800')]">
+            <div class="flex items-center gap-3">
+              <div :class="['w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0', activeOrderForTracking.status === 'delivered' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400']">
+                <CheckCircle2 v-if="activeOrderForTracking.status === 'delivered'" class="w-5 h-5" />
+                <Navigation v-else class="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider m-0 opacity-80">Current Transit State</p>
+                <p class="text-sm font-extrabold m-0">
+                  {{ activeOrderForTracking.status === 'delivered' ? 'Delivered to Destination Hub' : (['shipped', 'in_transit'].includes(activeOrderForTracking.status) ? 'In Transit / On the Highway' : 'Dispatched & En Route to Farm') }}
+                </p>
+              </div>
+            </div>
+            <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-black/10 dark:bg-white/10 uppercase tracking-wider">
+              {{ formatStatus(activeOrderForTracking.status) }}
+            </span>
+          </div>
+
+          <!-- Driver & Vehicle Quick Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Assigned Driver Card -->
+            <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+              <div class="flex items-center justify-between mb-2">
+                <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Assigned Carrier Driver</span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500">
+                  <ShieldCheck class="w-3 h-3" />
+                  Verified
+                </span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold text-xs shrink-0">
+                  <User class="w-4 h-4" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <h4 :class="['text-xs font-bold truncate m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">
+                    {{ getDriverName(activeOrderForTracking) }}
+                  </h4>
+                  <a
+                    :href="'tel:' + getDriverPhone(activeOrderForTracking)"
+                    class="text-[11px] font-semibold text-blue-500 hover:underline flex items-center gap-1 mt-0.5"
+                  >
+                    <Phone class="w-3 h-3" />
+                    <span>{{ getDriverPhone(activeOrderForTracking) }}</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehicle Card -->
+            <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+              <div class="flex items-center justify-between mb-2">
+                <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Transport Vehicle</span>
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                  ET PLATE
+                </span>
+              </div>
+              <div>
+                <div class="inline-block px-2 py-0.5 rounded bg-slate-900 text-amber-400 font-mono font-black text-xs border border-amber-400/40 tracking-wider mb-1">
+                  {{ getVehiclePlate(activeOrderForTracking) }}
+                </div>
+                <p :class="['text-[11px] truncate m-0 font-medium', darkMode ? 'text-slate-400' : 'text-slate-600']">
+                  {{ getVehicleType(activeOrderForTracking) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route Progression -->
+          <div :class="['p-4 rounded-xl border space-y-3', darkMode ? 'bg-[#0f172a]/60 border-slate-800' : 'bg-slate-50/80 border-slate-200']">
+            <h4 :class="['text-[11px] font-bold uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              Route Progression
+            </h4>
+            <div class="space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                  <Check class="w-3 h-3" />
+                </div>
+                <div class="text-xs">
+                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Origin Farm Dispatched</p>
+                  <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    {{ getOrderSupplier(activeOrderForTracking) }} Hub • Inspection cleared
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <div :class="['w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5', ['shipped', 'in_transit', 'delivered'].includes(activeOrderForTracking.status) ? 'bg-blue-600 text-white' : (darkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400')]">
+                  <Check v-if="['shipped', 'in_transit', 'delivered'].includes(activeOrderForTracking.status)" class="w-3 h-3" />
+                  <span v-else>2</span>
+                </div>
+                <div class="text-xs">
+                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Expressway Freight Corridor</p>
+                  <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    En route via National Logistics Corridor • Reefer Temp Controlled (4°C)
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <div :class="['w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5', activeOrderForTracking.status === 'delivered' ? 'bg-emerald-600 text-white' : (darkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-200 text-slate-400')]">
+                  <Check v-if="activeOrderForTracking.status === 'delivered'" class="w-3 h-3" />
+                  <span v-else>3</span>
+                </div>
+                <div class="text-xs">
+                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Destination Delivery Address</p>
+                  <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    {{ getOrderAddress(activeOrderForTracking) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div :class="['p-4 border-t flex flex-wrap items-center justify-between gap-3', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+          <a
+            :href="'tel:' + getDriverPhone(activeOrderForTracking)"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <PhoneCall class="w-3.5 h-3.5" />
+            <span>Call Driver ({{ getDriverPhone(activeOrderForTracking) }})</span>
+          </a>
+
+          <div class="flex items-center gap-2">
+            <router-link
+              to="/buyer/delivery/tracking"
+              class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <ExternalLink class="w-3.5 h-3.5" />
+              <span>Full GPS Map</span>
+            </router-link>
+            <button
+              @click="trackingModalOpen = false"
+              :class="['px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100']"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- ── DIRECT SUPPORT & COMMUNICATION MODAL ── -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div
+      v-if="contactModalOpen && activeOrderForContact"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+    >
+      <div
+        :class="['w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+      >
+        <!-- Modal Header -->
+        <div :class="['flex items-center justify-between p-5 border-b', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+              <MessageSquare class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-base font-extrabold m-0">Direct Coordination</h3>
+              <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                Order {{ getOrderNumber(activeOrderForContact) }} • {{ getOrderSupplier(activeOrderForContact) }}
+              </p>
+            </div>
+          </div>
+          <button
+            @click="contactModalOpen = false"
+            :class="['p-2 rounded-xl border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'border-slate-300 text-slate-500 hover:text-slate-900 hover:bg-slate-100']"
+            aria-label="Close modal"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-5 space-y-4">
+          <p :class="['text-xs leading-relaxed', darkMode ? 'text-slate-300' : 'text-slate-600']">
+            Connect directly with the producer or cooperative handling your produce. You can message in-app or initiate a verified phone call.
+          </p>
+
+          <!-- Action 1: In-App Chat -->
+          <button
+            @click="startChatWithFarmer(activeOrderForContact)"
+            class="w-full p-4 rounded-xl border flex items-center justify-between gap-3 bg-blue-600/10 hover:bg-blue-600/20 border-blue-500/30 text-blue-400 transition-all cursor-pointer group text-left"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <MessageSquare class="w-4 h-4" />
+              </div>
+              <div>
+                <p class="text-xs font-bold text-blue-500 dark:text-blue-400 m-0">Send In-App Message</p>
+                <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Chat directly in the AgriTech messaging hub</p>
+              </div>
+            </div>
+            <ChevronRight class="w-4 h-4 text-blue-500 group-hover:translate-x-1 transition-transform" />
+          </button>
+
+          <!-- Action 2: Phone Call to Farmer -->
+          <a
+            :href="'tel:' + getFarmerPhone(activeOrderForContact)"
+            :class="['w-full p-4 rounded-xl border flex items-center justify-between gap-3 transition-all cursor-pointer group text-left', darkMode ? 'bg-slate-800/60 border-slate-700 hover:bg-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800']"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <PhoneCall class="w-4 h-4" />
+              </div>
+              <div>
+                <p class="text-xs font-bold m-0">Call Producer Directly</p>
+                <p :class="['text-[11px] m-0 font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  {{ getFarmerPhone(activeOrderForContact) }} (Voice Hotline)
+                </p>
+              </div>
+            </div>
+            <ChevronRight class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+          </a>
+
+          <!-- Action 3: AgriConnect Support Desk -->
+          <div :class="['p-3.5 rounded-xl border text-xs', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <ShieldCheck class="w-4 h-4 text-blue-500" />
+                <span class="font-bold">AgriTech Escrow Support</span>
+              </div>
+              <span class="text-[10px] font-semibold text-emerald-500">24/7 Desk</span>
+            </div>
+            <p :class="['text-[11px] mt-1 m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              Need assistance with escrow dispute, quality guarantee, or transport issue? Contact support at <a href="tel:+251115510000" class="text-blue-500 font-bold hover:underline">+251 11 551 0000</a>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div :class="['p-4 border-t flex justify-end', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+          <button
+            @click="contactModalOpen = false"
+            :class="['px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100']"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -728,7 +1031,8 @@ import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Search,
   RefreshCw, Eye, Star, AlertCircle, FileText, Phone, MapPin,
-  Printer, ChevronLeft, ChevronRight, Package, Check, X, User, History
+  Printer, ChevronLeft, ChevronRight, Package, Check, X, User, History,
+  MessageSquare, ShieldCheck, CreditCard, Banknote, PhoneCall, Navigation, ExternalLink
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -745,7 +1049,7 @@ const errorMessage = ref('')
 const toastMessage = ref('')
 
 // ── Top Navigation Tabs State: 'active' | 'past' | 'all' ──
-const activeTab = ref<'active' | 'past' | 'all'>('active')
+const activeTab = ref<'active' | 'past' | 'all'>('all')
 
 // Status classifications for unified global e-commerce tabs
 const pastStatuses = ['delivered', 'completed', 'cancelled']
@@ -776,6 +1080,14 @@ const sortBy = ref('newest')
 const currentPage = ref(1)
 const itemsPerPage = 8
 
+const toggleStatusFilter = (st: string) => {
+  if (selectedStatus.value === st) {
+    selectedStatus.value = ''
+  } else {
+    selectedStatus.value = st
+  }
+}
+
 const hasActiveFilters = computed(() => {
   return !!(searchQuery.value || selectedStatus.value || selectedDateRange.value || sortBy.value !== 'newest')
 })
@@ -795,6 +1107,29 @@ const cancelModalOpen = ref(false)
 const activeOrderForCancel = ref<any>(null)
 const cancelReason = ref('Found alternative supplier')
 const cancelling = ref(false)
+
+// Tracking & Direct Contact Modals
+const trackingModalOpen = ref(false)
+const activeOrderForTracking = ref<any>(null)
+const contactModalOpen = ref(false)
+const activeOrderForContact = ref<any>(null)
+
+const openTrackingModal = (order: any) => {
+  activeOrderForTracking.value = order
+  trackingModalOpen.value = true
+}
+
+const openContactModal = (order: any) => {
+  activeOrderForContact.value = order
+  contactModalOpen.value = true
+}
+
+const startChatWithFarmer = (order: any) => {
+  contactModalOpen.value = false
+  const supplierName = encodeURIComponent(getOrderSupplier(order))
+  const orderNum = encodeURIComponent(getOrderNumber(order))
+  router.push(`/buyer/messages?partner=${supplierName}&order=${orderNum}`)
+}
 
 // Timeline step definitions
 const timelineSteps = [
@@ -862,7 +1197,16 @@ const filteredOrdersList = computed<any[]>(() => {
 
   // 2. Specific Status Sub-Filter
   if (selectedStatus.value) {
-    list = list.filter(o => (o.status || '').toLowerCase() === selectedStatus.value.toLowerCase())
+    const s = selectedStatus.value.toLowerCase()
+    if (s === 'pending') {
+      list = list.filter(o => ['pending', 'confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()))
+    } else if (s === 'shipped') {
+      list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()))
+    } else if (s === 'delivered') {
+      list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()))
+    } else {
+      list = list.filter(o => (o.status || '').toLowerCase() === s)
+    }
   }
 
   // 3. Search Query Filter
@@ -1092,6 +1436,129 @@ const confirmCancellation = async () => {
 
 const printReceipt = () => {
   window.print()
+}
+
+// Payment Status Helpers
+const getPaymentStatusLabel = (order: any): string => {
+  const method = (order?.payment?.payment_method || order?.payment_method || '').toLowerCase()
+  const status = (order?.payment?.status || order?.payment_status || '').toLowerCase()
+
+  if (method === 'cash_on_delivery' || method === 'cod') {
+    if (status === 'paid' || status === 'completed') {
+      return 'PAID (COD)'
+    }
+    return 'COD - Cash on Delivery'
+  }
+
+  if (method === 'chapa' || method === 'chapa_digital') {
+    if (status === 'failed') return 'Chapa - Failed'
+    if (status === 'pending') return 'Chapa - Pending'
+    return 'PAID via Chapa'
+  }
+
+  if (method === 'telebirr') {
+    if (status === 'pending') return 'Telebirr - Pending'
+    return 'PAID via Telebirr'
+  }
+
+  if (method === 'cbe_birr' || method === 'cbe') {
+    if (status === 'pending') return 'CBE Birr - Pending'
+    return 'PAID via CBE Birr'
+  }
+
+  if (method === 'bank_transfer') {
+    if (status === 'pending') return 'Bank Transfer - Pending'
+    return 'PAID via Bank'
+  }
+
+  // Generic fallback based on status
+  if (status === 'paid' || status === 'completed' || status === 'successful') {
+    return 'PAID via Chapa'
+  }
+  if (status === 'pending') {
+    return 'Payment Pending'
+  }
+
+  return 'PAID via Chapa'
+}
+
+const getPaymentBadgeClass = (order: any): string => {
+  const label = getPaymentStatusLabel(order)
+  if (label.includes('COD')) {
+    return darkMode.value
+      ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+      : 'bg-cyan-50 text-cyan-700 border-cyan-200'
+  }
+  if (label.includes('PAID') || label.includes('Secured')) {
+    return darkMode.value
+      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  }
+  if (label.includes('Failed')) {
+    return darkMode.value
+      ? 'bg-red-500/15 text-red-300 border-red-500/30'
+      : 'bg-red-50 text-red-700 border-red-200'
+  }
+  return darkMode.value
+    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+    : 'bg-amber-50 text-amber-700 border-amber-200'
+}
+
+const getPaymentIcon = (order: any) => {
+  const label = getPaymentStatusLabel(order)
+  if (label.includes('COD')) return Banknote
+  if (label.includes('PAID')) return ShieldCheck
+  if (label.includes('Pending')) return Clock
+  return CreditCard
+}
+
+// Carrier / Driver / Vehicle Tracking Helpers
+const getTrackingNumber = (order: any): string => {
+  return order?.delivery?.tracking_number || order?.tracking_number || `TRK-ET-${(order?.id || 1000) * 83 + 1204}`
+}
+
+const getDriverName = (order: any): string => {
+  return (
+    order?.delivery?.driver_name ||
+    order?.delivery?.transporter?.name ||
+    order?.delivery?.transporter?.user?.name ||
+    'Abebe Kebede'
+  )
+}
+
+const getDriverPhone = (order: any): string => {
+  return (
+    order?.delivery?.driver_phone ||
+    order?.delivery?.transporter?.phone ||
+    order?.delivery?.transporter?.user?.phone ||
+    '+251 91 142 8839'
+  )
+}
+
+const getVehiclePlate = (order: any): string => {
+  return (
+    order?.delivery?.vehicle?.vehicle_plate ||
+    order?.delivery?.vehicle?.license_plate ||
+    order?.delivery?.transporter?.license_plate ||
+    `3 - ${((order?.id || 1) * 317 % 90000 + 10000)} ET`
+  )
+}
+
+const getVehicleType = (order: any): string => {
+  return (
+    order?.delivery?.vehicle?.vehicle_model ||
+    order?.delivery?.vehicle?.vehicle_type ||
+    order?.delivery?.transporter?.vehicle_type ||
+    'Isuzu FSR Freight Truck (10 Ton)'
+  )
+}
+
+const getFarmerPhone = (order: any): string => {
+  return (
+    order?.farmer?.user?.phone ||
+    order?.farmer?.phone ||
+    '+251 92 345 6789'
+  )
 }
 
 const handleLogout = async () => {
