@@ -39,6 +39,27 @@ class Farmer extends Model
         'is_verified' => 'boolean'
     ];
 
+    protected $appends = [
+        'name',
+        'phone_number',
+        'in_app_chat_id',
+    ];
+
+    public function getNameAttribute()
+    {
+        return $this->user?->name ?? $this->farm_name ?? 'Farmer';
+    }
+
+    public function getPhoneNumberAttribute()
+    {
+        return $this->user?->phone ?? $this->phone ?? null;
+    }
+
+    public function getInAppChatIdAttribute()
+    {
+        return $this->user_id ?? $this->id;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

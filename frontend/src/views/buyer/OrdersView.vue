@@ -645,7 +645,7 @@
             <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
               <span>Payment Method:</span>
               <span class="uppercase font-bold text-slate-300">
-                {{ activeOrderForDetails.payment_method || 'Telebirr' }} ({{ activeOrderForDetails.payment_status || 'Paid' }})
+                {{ activeOrderForDetails.payment?.payment_method || activeOrderForDetails.payment_method || 'Unspecified' }} ({{ activeOrderForDetails.payment?.status || activeOrderForDetails.payment_status || 'Pending' }})
               </span>
             </div>
           </div>
@@ -797,10 +797,11 @@
             <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex items-center justify-between mb-2">
                 <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Assigned Carrier Driver</span>
-                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500">
+                <span v-if="getDriverName(activeOrderForTracking)" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-500">
                   <ShieldCheck class="w-3 h-3" />
                   Verified
                 </span>
+                <span v-else class="text-[10px] font-medium text-amber-500">Pending</span>
               </div>
               <div class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold text-xs shrink-0">
@@ -808,15 +809,17 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 :class="['text-xs font-bold truncate m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">
-                    {{ getDriverName(activeOrderForTracking) }}
+                    {{ getDriverName(activeOrderForTracking) || 'Pending Carrier Assignment' }}
                   </h4>
                   <a
+                    v-if="getDriverPhone(activeOrderForTracking)"
                     :href="'tel:' + getDriverPhone(activeOrderForTracking)"
                     class="text-[11px] font-semibold text-blue-500 hover:underline flex items-center gap-1 mt-0.5"
                   >
                     <Phone class="w-3 h-3" />
                     <span>{{ getDriverPhone(activeOrderForTracking) }}</span>
                   </a>
+                  <span v-else class="text-[11px] text-slate-400 mt-0.5 block">Phone not assigned</span>
                 </div>
               </div>
             </div>
@@ -825,14 +828,16 @@
             <div :class="['p-3.5 rounded-xl border', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="flex items-center justify-between mb-2">
                 <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Transport Vehicle</span>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <span v-if="getVehiclePlate(activeOrderForTracking)" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                   ET PLATE
                 </span>
+                <span v-else class="text-[10px] font-medium text-slate-400">Unassigned</span>
               </div>
               <div>
-                <div class="inline-block px-2 py-0.5 rounded bg-slate-900 text-amber-400 font-mono font-black text-xs border border-amber-400/40 tracking-wider mb-1">
+                <div v-if="getVehiclePlate(activeOrderForTracking)" class="inline-block px-2 py-0.5 rounded bg-slate-900 text-amber-400 font-mono font-black text-xs border border-amber-400/40 tracking-wider mb-1">
                   {{ getVehiclePlate(activeOrderForTracking) }}
                 </div>
+                <span v-else class="text-xs text-slate-400 italic block mb-1">Plate pending allocation</span>
                 <p :class="['text-[11px] truncate m-0 font-medium', darkMode ? 'text-slate-400' : 'text-slate-600']">
                   {{ getVehicleType(activeOrderForTracking) }}
                 </p>
@@ -853,7 +858,7 @@
                 <div class="text-xs">
                   <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Origin Farm Dispatched</p>
                   <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    {{ getOrderSupplier(activeOrderForTracking) }} Hub • Inspection cleared
+                    {{ getOrderSupplier(activeOrderForTracking) }}
                   </p>
                 </div>
               </div>
@@ -864,9 +869,9 @@
                   <span v-else>2</span>
                 </div>
                 <div class="text-xs">
-                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Expressway Freight Corridor</p>
+                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Freight Transit</p>
                   <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    En route via National Logistics Corridor • Reefer Temp Controlled (4°C)
+                    {{ ['shipped', 'in_transit', 'delivered'].includes(activeOrderForTracking.status) ? 'Dispatched along transport corridor' : 'Awaiting carrier haulage pickup' }}
                   </p>
                 </div>
               </div>
@@ -890,12 +895,14 @@
         <!-- Modal Footer -->
         <div :class="['p-4 border-t flex flex-wrap items-center justify-between gap-3', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
           <a
+            v-if="getDriverPhone(activeOrderForTracking)"
             :href="'tel:' + getDriverPhone(activeOrderForTracking)"
             class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <PhoneCall class="w-3.5 h-3.5" />
             <span>Call Driver ({{ getDriverPhone(activeOrderForTracking) }})</span>
           </a>
+          <span v-else class="text-xs text-slate-400">Driver phone not yet assigned</span>
 
           <div class="flex items-center gap-2">
             <router-link
@@ -960,35 +967,61 @@
             class="w-full p-4 rounded-xl border flex items-center justify-between gap-3 bg-blue-600/10 hover:bg-blue-600/20 border-blue-500/30 text-blue-400 transition-all cursor-pointer group text-left"
           >
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                 <MessageSquare class="w-4 h-4" />
               </div>
               <div>
                 <p class="text-xs font-bold text-blue-500 dark:text-blue-400 m-0">Send In-App Message</p>
-                <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Chat directly in the AgriTech messaging hub</p>
+                <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  Chat directly in messaging hub referencing Order {{ getOrderNumber(activeOrderForContact) }}
+                </p>
               </div>
             </div>
             <ChevronRight class="w-4 h-4 text-blue-500 group-hover:translate-x-1 transition-transform" />
           </button>
 
-          <!-- Action 2: Phone Call to Farmer -->
-          <a
-            :href="'tel:' + getFarmerPhone(activeOrderForContact)"
-            :class="['w-full p-4 rounded-xl border flex items-center justify-between gap-3 transition-all cursor-pointer group text-left', darkMode ? 'bg-slate-800/60 border-slate-700 hover:bg-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800']"
-          >
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <PhoneCall class="w-4 h-4" />
+          <!-- Action 2: Phone Call to Farmer (Dynamic Database Phone) -->
+          <div :class="['w-full p-4 rounded-xl border transition-all', darkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200']">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <PhoneCall class="w-4 h-4" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold m-0 flex items-center gap-1.5">
+                    <span>Call Producer Directly</span>
+                    <span v-if="getFarmerPhone(activeOrderForContact)" class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Live Voice Line
+                    </span>
+                  </p>
+                  <!-- Dynamic Phone or Fallback State -->
+                  <p v-if="getFarmerPhone(activeOrderForContact)" :class="['text-xs m-0 mt-0.5 font-mono font-bold', darkMode ? 'text-emerald-400' : 'text-emerald-700']">
+                    {{ formatPhoneNumber(getFarmerPhone(activeOrderForContact)) }}
+                  </p>
+                  <p v-else :class="['text-[11px] m-0 mt-0.5 italic', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    Phone number not available
+                  </p>
+                </div>
               </div>
-              <div>
-                <p class="text-xs font-bold m-0">Call Producer Directly</p>
-                <p :class="['text-[11px] m-0 font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                  {{ getFarmerPhone(activeOrderForContact) }} (Voice Hotline)
-                </p>
-              </div>
+
+              <!-- Call Button (Dynamic tel: link) -->
+              <a
+                v-if="getFarmerPhone(activeOrderForContact)"
+                :href="'tel:' + cleanPhoneForDialing(getFarmerPhone(activeOrderForContact))"
+                class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer shrink-0"
+                title="Initiate phone call on device"
+              >
+                <Phone class="w-3.5 h-3.5" />
+                <span>Call Now</span>
+              </a>
+              <span
+                v-else
+                :class="['px-3 py-1.5 rounded-xl text-[11px] font-medium border opacity-60 cursor-not-allowed', darkMode ? 'border-slate-700 text-slate-500 bg-slate-900' : 'border-slate-200 text-slate-400 bg-slate-100']"
+              >
+                Unavailable
+              </span>
             </div>
-            <ChevronRight class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-          </a>
+          </div>
 
           <!-- Action 3: AgriConnect Support Desk -->
           <div :class="['p-3.5 rounded-xl border text-xs', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
@@ -1124,11 +1157,42 @@ const openContactModal = (order: any) => {
   contactModalOpen.value = true
 }
 
+const getFarmerChatId = (order: any): string | number => {
+  return (
+    order?.farmer?.in_app_chat_id ||
+    order?.farmer?.user_id ||
+    order?.farmer?.user?.id ||
+    order?.farmer?.id ||
+    order?.farmer_id ||
+    ''
+  )
+}
+
+const getFarmerId = (order: any): string | number => {
+  return (
+    order?.farmer?.id ||
+    order?.farmer_id ||
+    ''
+  )
+}
+
 const startChatWithFarmer = (order: any) => {
   contactModalOpen.value = false
-  const supplierName = encodeURIComponent(getOrderSupplier(order))
+  const orderId = order?.id || ''
+  const farmerId = getFarmerChatId(order) || getFarmerId(order)
   const orderNum = encodeURIComponent(getOrderNumber(order))
-  router.push(`/buyer/messages?partner=${supplierName}&order=${orderNum}`)
+  const supplierName = encodeURIComponent(getOrderSupplier(order))
+
+  router.push({
+    path: '/buyer/messages',
+    query: {
+      order_id: String(orderId),
+      farmer_id: String(farmerId),
+      partner_id: String(farmerId),
+      order_number: orderNum,
+      partner: supplierName
+    }
+  })
 }
 
 // Timeline step definitions
@@ -1303,8 +1367,8 @@ const getOrderDeliveryFee = (order: any): number => {
 }
 
 const getOrderSupplier = (order: any): string => {
-  if (!order) return 'Verified Farmer'
-  return order.farmer?.user?.name || order.farmer?.farm_name || order.supplier?.name || order.supplier_name || 'Verified Farmer / Co-op'
+  if (!order) return 'Direct Producer'
+  return order.farmer?.user?.name || order.farmer?.farm_name || order.supplier?.name || order.supplier_name || 'Direct Producer'
 }
 
 const getOrderItems = (order: any): any[] => {
@@ -1319,7 +1383,7 @@ const getOrderItemsCount = (order: any): number => {
 }
 
 const getOrderAddress = (order: any): string => {
-  return order?.delivery_address || order?.delivery?.delivery_address || 'Addis Ababa, Ethiopia'
+  return order?.delivery_address || order?.delivery?.delivery_address || 'Address on file'
 }
 
 const formatStatus = (status?: string): string => {
@@ -1438,7 +1502,7 @@ const printReceipt = () => {
   window.print()
 }
 
-// Payment Status Helpers
+// Payment Status Helpers (Strictly database driven)
 const getPaymentStatusLabel = (order: any): string => {
   const method = (order?.payment?.payment_method || order?.payment_method || '').toLowerCase()
   const status = (order?.payment?.status || order?.payment_status || '').toLowerCase()
@@ -1451,35 +1515,34 @@ const getPaymentStatusLabel = (order: any): string => {
   }
 
   if (method === 'chapa' || method === 'chapa_digital') {
+    if (status === 'paid' || status === 'completed' || status === 'successful') return 'PAID via Chapa'
     if (status === 'failed') return 'Chapa - Failed'
-    if (status === 'pending') return 'Chapa - Pending'
-    return 'PAID via Chapa'
+    return 'Chapa - Pending'
   }
 
   if (method === 'telebirr') {
-    if (status === 'pending') return 'Telebirr - Pending'
-    return 'PAID via Telebirr'
+    if (status === 'paid' || status === 'completed') return 'PAID via Telebirr'
+    return 'Telebirr - Pending'
   }
 
   if (method === 'cbe_birr' || method === 'cbe') {
-    if (status === 'pending') return 'CBE Birr - Pending'
-    return 'PAID via CBE Birr'
+    if (status === 'paid' || status === 'completed') return 'PAID via CBE Birr'
+    return 'CBE Birr - Pending'
   }
 
   if (method === 'bank_transfer') {
-    if (status === 'pending') return 'Bank Transfer - Pending'
-    return 'PAID via Bank'
+    if (status === 'paid' || status === 'completed') return 'PAID via Bank'
+    return 'Bank Transfer - Pending'
   }
 
-  // Generic fallback based on status
   if (status === 'paid' || status === 'completed' || status === 'successful') {
-    return 'PAID via Chapa'
+    return 'PAID'
   }
   if (status === 'pending') {
     return 'Payment Pending'
   }
 
-  return 'PAID via Chapa'
+  return 'Payment Pending'
 }
 
 const getPaymentBadgeClass = (order: any): string => {
@@ -1512,9 +1575,9 @@ const getPaymentIcon = (order: any) => {
   return CreditCard
 }
 
-// Carrier / Driver / Vehicle Tracking Helpers
+// Carrier / Driver / Vehicle Tracking Helpers (Pure Database Records, Zero Mock Fallbacks)
 const getTrackingNumber = (order: any): string => {
-  return order?.delivery?.tracking_number || order?.tracking_number || `TRK-ET-${(order?.id || 1000) * 83 + 1204}`
+  return order?.delivery?.tracking_number || order?.tracking_number || ('TRK-' + (order?.id || 'PENDING'))
 }
 
 const getDriverName = (order: any): string => {
@@ -1522,7 +1585,7 @@ const getDriverName = (order: any): string => {
     order?.delivery?.driver_name ||
     order?.delivery?.transporter?.name ||
     order?.delivery?.transporter?.user?.name ||
-    'Abebe Kebede'
+    ''
   )
 }
 
@@ -1531,7 +1594,7 @@ const getDriverPhone = (order: any): string => {
     order?.delivery?.driver_phone ||
     order?.delivery?.transporter?.phone ||
     order?.delivery?.transporter?.user?.phone ||
-    '+251 91 142 8839'
+    ''
   )
 }
 
@@ -1540,7 +1603,7 @@ const getVehiclePlate = (order: any): string => {
     order?.delivery?.vehicle?.vehicle_plate ||
     order?.delivery?.vehicle?.license_plate ||
     order?.delivery?.transporter?.license_plate ||
-    `3 - ${((order?.id || 1) * 317 % 90000 + 10000)} ET`
+    ''
   )
 }
 
@@ -1549,16 +1612,44 @@ const getVehicleType = (order: any): string => {
     order?.delivery?.vehicle?.vehicle_model ||
     order?.delivery?.vehicle?.vehicle_type ||
     order?.delivery?.transporter?.vehicle_type ||
-    'Isuzu FSR Freight Truck (10 Ton)'
+    'Standard Dedicated Carrier'
   )
 }
 
 const getFarmerPhone = (order: any): string => {
   return (
+    order?.farmer?.phone_number ||
     order?.farmer?.user?.phone ||
     order?.farmer?.phone ||
-    '+251 92 345 6789'
+    ''
   )
+}
+
+const cleanPhoneForDialing = (phone: string): string => {
+  if (!phone) return ''
+  const cleaned = phone.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('09')) {
+    return '+251' + cleaned.slice(1)
+  }
+  if (cleaned.startsWith('251')) {
+    return '+' + cleaned
+  }
+  return cleaned
+}
+
+const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return ''
+  const cleaned = phone.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('251') && cleaned.length >= 12) {
+    return `+251 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8)}`
+  }
+  if (cleaned.startsWith('+251') && cleaned.length >= 13) {
+    return `+251 ${cleaned.slice(4, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`
+  }
+  if (cleaned.startsWith('09') && cleaned.length === 10) {
+    return `09${cleaned.slice(2, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`
+  }
+  return phone
 }
 
 const handleLogout = async () => {

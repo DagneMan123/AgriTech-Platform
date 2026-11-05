@@ -297,6 +297,9 @@
               :class="['w-full px-3.5 py-2.5 rounded-xl border text-xs focus:outline-none focus:ring-2 focus:ring-blue-500', darkMode ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
             >
               <option value="" disabled>Choose a farmer, supplier, or contact...</option>
+              <option v-if="newChatForm.partner_id && !contactsList.some(c => String(c.id) === String(newChatForm.partner_id))" :value="newChatForm.partner_id">
+                {{ targetPartnerName || 'Assigned Producer' }} (PRODUCER)
+              </option>
               <option v-for="c in contactsList" :key="c.id" :value="c.id">
                 {{ c.name }} ({{ c.role.toUpperCase() }}) - {{ c.region || 'Ethiopia' }}
               </option>
@@ -339,7 +342,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
@@ -351,6 +354,7 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
 const darkMode = computed(() => themeStore.isDark)
@@ -495,7 +499,45 @@ const filteredConversations = computed(() => {
   })
 })
 
-onMounted(() => {
-  fetchConversations()
+const targetPartnerName = ref('')
+
+const handleIncomingQueryRoute = async () => {
+  const farmerId = (route.query.farmer_id || route.query.partner_id) as string
+  const orderId = route.query.order_id as string
+  const orderNumber = (route.query.order_number ? decodeURIComponent(route.query.order_number as string) : '') || (orderId ? `Order #${orderId}` : '')
+  const partnerName = (route.query.partner ? decodeURIComponent(route.query.partner as string) : '')
+  if (partnerName) {
+    targetPartnerName.value = partnerName
+  }
+
+  if (!farmerId && !partnerName && !orderId) return
+
+  // 1. Check if conversation already exists with this partner
+  const existingConv = conversations.value.find(c => {
+    if (farmerId && String(c.partner_id) === String(farmerId)) return true
+    if (partnerName && (c.partner_name || '').toLowerCase() === partnerName.toLowerCase()) return true
+    return false
+  })
+
+  if (existingConv) {
+    await selectConversation(existingConv)
+    if (orderNumber && !replyText.value) {
+      replyText.value = `Regarding ${orderNumber}: `
+    }
+  } else {
+    // 2. Open new chat modal pre-filled with this farmer and order context
+    await openNewChatModal()
+    if (farmerId) {
+      newChatForm.value.partner_id = farmerId
+    }
+    if (orderNumber) {
+      newChatForm.value.message = `Hello${partnerName ? ' ' + partnerName : ''}, I am reaching out regarding ${orderNumber}.`
+    }
+  }
+}
+
+onMounted(async () => {
+  await fetchConversations()
+  await handleIncomingQueryRoute()
 })
 </script>

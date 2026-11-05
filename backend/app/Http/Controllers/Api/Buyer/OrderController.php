@@ -19,7 +19,7 @@ class OrderController extends Controller
         $userId = Auth::id() ?? auth()->id();
         $query = Order::where('buyer_id', $userId)
             ->with([
-                'items.product',
+                'items.product.farmer.user',
                 'delivery.transporter',
                 'delivery.vehicle',
                 'payment',
@@ -33,6 +33,17 @@ class OrderController extends Controller
 
         $limit = (int) $request->get('limit', 100);
         $orders = $query->paginate($limit);
+
+        // Ensure every order has assigned farmer profile loaded
+        $orders->getCollection()->transform(function ($order) {
+            if (!$order->farmer && $order->items->isNotEmpty()) {
+                $itemFarmer = $order->items->first()?->product?->farmer;
+                if ($itemFarmer) {
+                    $order->setRelation('farmer', $itemFarmer);
+                }
+            }
+            return $order;
+        });
 
         return response()->json([
             'success' => true,
@@ -138,7 +149,7 @@ class OrderController extends Controller
                     $q->where('order_number', $id);
                 }
             })
-            ->with(['items.product', 'delivery.transporter', 'delivery.vehicle', 'payment', 'farmer.user', 'buyer'])
+            ->with(['items.product.farmer.user', 'delivery.transporter', 'delivery.vehicle', 'payment', 'farmer.user', 'buyer'])
             ->first();
 
         if (!$order) {
@@ -146,6 +157,13 @@ class OrderController extends Controller
                 'success' => false,
                 'message' => 'Order not found',
             ], 404);
+        }
+
+        if (!$order->farmer && $order->items->isNotEmpty()) {
+            $itemFarmer = $order->items->first()?->product?->farmer;
+            if ($itemFarmer) {
+                $order->setRelation('farmer', $itemFarmer);
+            }
         }
 
         return response()->json([
