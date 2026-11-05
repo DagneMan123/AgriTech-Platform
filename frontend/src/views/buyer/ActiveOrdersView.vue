@@ -25,6 +25,21 @@
               <Menu class="w-5 h-5" />
             </button>
             <div>
+              <!-- Live Fulfillment Breadcrumb Header -->
+              <div class="flex items-center gap-2.5 mb-2 flex-wrap">
+                <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Fulfillment
+                </span>
+                <nav class="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <router-link to="/buyer/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Buyer Portal</router-link>
+                  <span class="mx-1.5 text-slate-400">&gt;</span>
+                  <router-link to="/buyer/orders" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Orders</router-link>
+                  <span class="mx-1.5 text-slate-400">&gt;</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-semibold">Active</span>
+                </nav>
+              </div>
+
               <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 tracking-tight flex items-center gap-2', darkMode ? 'text-slate-100' : 'text-slate-900']">
                 Active Orders
               </h1>

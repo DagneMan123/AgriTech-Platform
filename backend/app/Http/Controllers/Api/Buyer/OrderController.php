@@ -16,14 +16,27 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $orders = Order::where('buyer_id', Auth::id())
-            ->with('items.product', 'delivery', 'payment')
-            ->latest()
-            ->paginate($request->get('limit', 20));
+        $userId = Auth::id() ?? auth()->id();
+        $query = Order::where('buyer_id', $userId)
+            ->with([
+                'items.product',
+                'delivery.transporter',
+                'payment',
+                'farmer.user'
+            ])
+            ->latest();
+
+        if ($request->filled('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        $limit = (int) $request->get('limit', 100);
+        $orders = $query->paginate($limit);
 
         return response()->json([
             'success' => true,
             'data' => $orders,
+            'orders' => $orders->items(),
         ]);
     }
 
@@ -113,44 +126,75 @@ class OrderController extends Controller
     /**
      * Get order details
      */
-    public function show(Order $order)
+    public function show($id)
     {
-        $this->authorize('view', $order);
+        $userId = Auth::id() ?? auth()->id();
+        $order = Order::where('buyer_id', $userId)
+            ->where(function ($q) use ($id) {
+                if (is_numeric($id)) {
+                    $q->where('id', $id)->orWhere('order_number', $id);
+                } else {
+                    $q->where('order_number', $id);
+                }
+            })
+            ->with(['items.product', 'delivery.transporter', 'payment', 'farmer.user', 'buyer'])
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $order->load('items.product', 'delivery', 'payment', 'seller', 'buyer'),
+            'data' => $order,
         ]);
     }
 
     /**
      * Cancel order
      */
-    public function cancel(Request $request, Order $order)
+    public function cancel(Request $request, $id)
     {
-        $this->authorize('update', $order);
+        $userId = Auth::id() ?? auth()->id();
+        $order = Order::where('buyer_id', $userId)
+            ->where(function ($q) use ($id) {
+                if (is_numeric($id)) {
+                    $q->where('id', $id)->orWhere('order_number', $id);
+                } else {
+                    $q->where('order_number', $id);
+                }
+            })
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
 
         if (!in_array($order->status, ['pending', 'confirmed'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order cannot be cancelled',
+                'message' => 'Order cannot be cancelled in current status (' . $order->status . ')',
             ], 422);
         }
 
-        $validated = $request->validate([
-            'reason' => 'required|string',
-        ]);
+        $reason = $request->input('reason', 'Cancelled by buyer');
 
         $order->update([
             'status' => 'cancelled',
-            'cancellation_reason' => $validated['reason'],
+            'notes' => ($order->notes ? $order->notes . ' | ' : '') . 'Cancellation: ' . $reason,
             'cancelled_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Order cancelled successfully',
-            'data' => $order,
+            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user']),
         ]);
     }
 

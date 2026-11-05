@@ -18,13 +18,13 @@ export const buyerAPI = {
   checkout: (data: any) => apiClient.post('/buyer/cart/checkout', data),
 
   // Orders
-  getOrders: () => apiClient.get('/buyer/orders'),
+  getOrders: (params?: any) => apiClient.get('/buyer/orders', { params }),
   
-  getOrder: (id: number) => apiClient.get(`/buyer/orders/${id}`),
+  getOrder: (id: number | string) => apiClient.get(`/buyer/orders/${id}`),
   
   createOrder: (data: any) => apiClient.post('/buyer/orders', data),
   
-  cancelOrder: (id: number) => apiClient.post(`/buyer/orders/${id}/cancel`),
+  cancelOrder: (id: number | string, data?: any) => apiClient.post(`/buyer/orders/${id}/cancel`, data || {}),
 
   // Payments
   getPayments: () => apiClient.get('/buyer/payments'),

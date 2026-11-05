@@ -80,12 +80,15 @@ export const useBuyerStore = defineStore('buyer', () => {
   }
 
   // Orders
-  const fetchOrders = async () => {
+  const fetchOrders = async (params?: any) => {
     loading.value = true
+    error.value = null
     try {
-      const response = await buyerAPI.getOrders()
-      orders.value = response.data.data || response.data
-      return orders.value
+      const response = await buyerAPI.getOrders(params)
+      const raw = response.data?.orders || response.data?.data || response.data
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
+      orders.value = list
+      return list
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch orders'
       throw err
@@ -94,14 +97,15 @@ export const useBuyerStore = defineStore('buyer', () => {
     }
   }
 
-  const cancelOrder = async (id: number) => {
+  const cancelOrder = async (id: number | string, reason = 'Cancelled by buyer') => {
     try {
-      const response = await buyerAPI.cancelOrder(id)
-      const index = orders.value.findIndex(o => o.id === id)
-      if (index > -1) {
-        orders.value[index] = response.data.data || response.data
+      const response = await buyerAPI.cancelOrder(id, { reason })
+      const updated = response.data?.data || response.data
+      const index = orders.value.findIndex(o => o.id === id || o.order_number === id)
+      if (index > -1 && updated) {
+        orders.value[index] = { ...orders.value[index], ...updated, status: 'cancelled' }
       }
-      return response.data.data || response.data
+      return updated
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to cancel order'
       throw err
