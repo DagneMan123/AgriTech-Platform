@@ -224,7 +224,7 @@
                     {{ item.tracking_number || item.delivery_number || ('TRK-' + item.id) }}
                   </span>
                   <router-link
-                    to="/buyer/orders/active"
+                    to="/buyer/orders?tab=active"
                     class="text-xs font-semibold text-blue-400 hover:underline"
                   >
                     Order #{{ item.order?.order_number || item.order_id || item.id }}

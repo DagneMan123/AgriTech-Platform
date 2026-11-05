@@ -435,14 +435,12 @@ const routes: RouteRecordRaw[] = [
         path: 'orders/active',
         alias: ['active-orders'],
         name: 'buyer-active-orders',
-        component: BuyerActiveOrdersView,
-        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Active Orders' }
+        redirect: { name: 'buyer-orders', query: { tab: 'active' } }
       },
       {
         path: 'orders/history',
         name: 'buyer-order-history',
-        component: BuyerOrderHistoryView,
-        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Order History' }
+        redirect: { name: 'buyer-orders', query: { tab: 'past' } }
       },
       {
         path: 'returns',

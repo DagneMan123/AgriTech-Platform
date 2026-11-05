@@ -46,17 +46,13 @@
           <component :is="expandedSections.orders ? ChevronDown : ChevronRight" class="toggle-icon" />
         </button>
         <div v-show="expandedSections.orders" class="section-items">
-          <router-link to="/buyer/orders" class="menu-item sub-item" exact-active-class="active">
+          <router-link
+            to="/buyer/orders"
+            class="menu-item sub-item"
+            :class="{ 'active': $route.path === '/buyer/orders' || $route.path.startsWith('/buyer/orders/') }"
+          >
             <ShoppingBag class="sub-icon" />
             <span>My Orders</span>
-          </router-link>
-          <router-link to="/buyer/orders/active" class="menu-item sub-item" active-class="active">
-            <Clock class="sub-icon" />
-            <span>Active Orders</span>
-          </router-link>
-          <router-link to="/buyer/orders/history" class="menu-item sub-item" active-class="active">
-            <History class="sub-icon" />
-            <span>Order History</span>
           </router-link>
           <router-link to="/buyer/returns" class="menu-item sub-item" active-class="active">
             <RotateCcw class="sub-icon" />

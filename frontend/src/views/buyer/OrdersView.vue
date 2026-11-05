@@ -24,11 +24,22 @@
             <Menu class="w-5 h-5" />
           </button>
           <div>
+            <!-- Breadcrumb Navigation -->
+            <div class="flex items-center gap-2 mb-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <router-link to="/buyer/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Buyer Portal</router-link>
+              <span class="text-slate-400">&gt;</span>
+              <span class="font-semibold text-slate-700 dark:text-slate-200">My Orders</span>
+              <span class="text-slate-400">&gt;</span>
+              <span class="text-blue-600 dark:text-blue-400 font-bold">
+                {{ activeTab === 'active' ? 'Active Orders' : (activeTab === 'past' ? 'Past Orders / History' : 'All Orders') }}
+              </span>
+            </div>
+
             <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 mb-1 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">
               My Orders
             </h1>
             <p :class="['text-xs lg:text-sm m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">
-              Track, inspect, and manage your produce purchases and fulfillment in real-time
+              Unified tracking hub for active agricultural shipments, order receipts, and purchase history
             </p>
           </div>
         </div>
@@ -47,6 +58,96 @@
           <BuyerHeaderNav />
         </div>
       </div>
+
+      <!-- ── Unified Interactive Top Navigation Tabs Bar ── -->
+      <nav
+        :class="['rounded-2xl border p-1.5 mb-6 shadow-2xs transition-all flex items-center gap-1.5 overflow-x-auto no-scrollbar', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']"
+        aria-label="Order Status Navigation Tabs"
+      >
+        <!-- 1. Active Orders Tab -->
+        <button
+          type="button"
+          @click="setTab('active')"
+          :class="[
+            'flex-1 min-w-[155px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border',
+            activeTab === 'active'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/30'
+              : darkMode
+                ? 'bg-transparent text-slate-400 border-transparent hover:text-slate-100 hover:bg-slate-800/60'
+                : 'bg-transparent text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100'
+          ]"
+        >
+          <span class="relative flex h-2.5 w-2.5 shrink-0">
+            <span v-if="activeOrdersCount > 0" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+            <span :class="['relative inline-flex rounded-full h-2.5 w-2.5', activeTab === 'active' ? 'bg-emerald-300' : 'bg-emerald-500']"></span>
+          </span>
+          <span>Active Orders</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors shrink-0',
+              activeTab === 'active'
+                ? 'bg-white/20 text-white'
+                : darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ activeOrdersCount }}
+          </span>
+        </button>
+
+        <!-- 2. Past Orders / History Tab -->
+        <button
+          type="button"
+          @click="setTab('past')"
+          :class="[
+            'flex-1 min-w-[185px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border',
+            activeTab === 'past'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/30'
+              : darkMode
+                ? 'bg-transparent text-slate-400 border-transparent hover:text-slate-100 hover:bg-slate-800/60'
+                : 'bg-transparent text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100'
+          ]"
+        >
+          <History class="w-4 h-4 shrink-0" />
+          <span>Past Orders / History</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors shrink-0',
+              activeTab === 'past'
+                ? 'bg-white/20 text-white'
+                : darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ pastOrdersCount }}
+          </span>
+        </button>
+
+        <!-- 3. All Orders Tab -->
+        <button
+          type="button"
+          @click="setTab('all')"
+          :class="[
+            'flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border',
+            activeTab === 'all'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/30'
+              : darkMode
+                ? 'bg-transparent text-slate-400 border-transparent hover:text-slate-100 hover:bg-slate-800/60'
+                : 'bg-transparent text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100'
+          ]"
+        >
+          <ShoppingBag class="w-4 h-4 shrink-0" />
+          <span>All Orders</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors shrink-0',
+              activeTab === 'all'
+                ? 'bg-white/20 text-white'
+                : darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ totalOrders }}
+          </span>
+        </button>
+      </nav>
 
       <!-- Toast Notification -->
       <transition
@@ -91,47 +192,75 @@
       <!-- ── Database Stats Summary Cards ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Orders -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-indigo-500' : 'bg-white border-slate-200 text-slate-900 !border-l-indigo-600']">
+        <article
+          @click="setTab('all')"
+          :class="[
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-indigo-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-indigo-600 hover:bg-slate-50',
+            activeTab === 'all' ? 'ring-2 ring-indigo-500/60' : ''
+          ]"
+        >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Orders</h3>
             <p class="text-2xl font-black">{{ totalOrders }}</p>
-            <span class="text-[10px] text-indigo-500 font-medium">All database records</span>
+            <span class="text-[10px] text-indigo-500 font-medium">Master database catalog</span>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600']">
             <ShoppingBag class="w-6 h-6" />
           </div>
         </article>
 
-        <!-- Pending / In Preparation -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600']">
+        <!-- Active Orders in Preparation -->
+        <article
+          @click="setTab('active')"
+          :class="[
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600 hover:bg-slate-50',
+            activeTab === 'active' ? 'ring-2 ring-blue-500/60' : ''
+          ]"
+        >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Pending</h3>
-            <p class="text-2xl font-black">{{ pendingOrders }}</p>
-            <span class="text-[10px] text-amber-500 font-medium">Awaiting fulfillment</span>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Active In-Flight</h3>
+            <p class="text-2xl font-black text-blue-500">{{ activeOrdersCount }}</p>
+            <span class="text-[10px] text-blue-500 font-medium">Pending & confirmed</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600']">
+          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
             <Clock class="w-6 h-6" />
           </div>
         </article>
 
         <!-- In Transit -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600']">
+        <article
+          @click="setTab('active'); selectedStatus = 'shipped'"
+          :class="[
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600 hover:bg-slate-50',
+            activeTab === 'active' && selectedStatus === 'shipped' ? 'ring-2 ring-purple-500/60' : ''
+          ]"
+        >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In Transit</h3>
-            <p class="text-2xl font-black">{{ shippedOrders }}</p>
-            <span class="text-[10px] text-purple-500 font-medium">Dispatched & on road</span>
+            <p class="text-2xl font-black text-purple-500">{{ shippedOrders }}</p>
+            <span class="text-[10px] text-purple-500 font-medium">Dispatched freight</span>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600']">
             <Truck class="w-6 h-6" />
           </div>
         </article>
 
-        <!-- Delivered -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <!-- Past Orders / Delivered -->
+        <article
+          @click="setTab('past')"
+          :class="[
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600 hover:bg-slate-50',
+            activeTab === 'past' ? 'ring-2 ring-emerald-500/60' : ''
+          ]"
+        >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivered</h3>
-            <p class="text-2xl font-black text-emerald-500">{{ deliveredOrders }}</p>
-            <span class="text-[10px] text-emerald-500 font-medium">Successfully completed</span>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Past Completed</h3>
+            <p class="text-2xl font-black text-emerald-500">{{ pastOrdersCount }}</p>
+            <span class="text-[10px] text-emerald-500 font-medium">Delivered &amp; completed</span>
           </div>
           <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <CheckCircle2 class="w-6 h-6" />
@@ -153,18 +282,31 @@
             />
           </div>
 
-          <!-- Status Filter -->
+          <!-- Adaptive Status Filter based on Current Tab -->
           <div>
             <select
               v-model="selectedStatus"
               :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer font-medium', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100 focus:border-blue-500' : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-blue-500']"
             >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending Confirmation</option>
-              <option value="confirmed">Confirmed / Preparing</option>
-              <option value="shipped">In Transit / Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <template v-if="activeTab === 'active'">
+                <option value="">All Active Statuses ({{ activeOrdersCount }})</option>
+                <option value="pending">Pending Confirmation</option>
+                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="shipped">In Transit / Shipped</option>
+              </template>
+              <template v-else-if="activeTab === 'past'">
+                <option value="">All Past Statuses ({{ pastOrdersCount }})</option>
+                <option value="delivered">Delivered / Fulfilled</option>
+                <option value="cancelled">Cancelled</option>
+              </template>
+              <template v-else>
+                <option value="">All Statuses ({{ totalOrders }})</option>
+                <option value="pending">Pending Confirmation</option>
+                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="shipped">In Transit / Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </template>
             </select>
           </div>
 
@@ -195,7 +337,7 @@
             </select>
 
             <button
-              v-if="searchQuery || selectedStatus || selectedDateRange || sortBy !== 'newest'"
+              v-if="hasActiveFilters"
               @click="clearFilters"
               class="px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-700 hover:bg-slate-800 shrink-0 cursor-pointer transition-all"
               title="Clear all filters"
@@ -233,21 +375,55 @@
         :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']"
       >
         <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-400']">
-          <ShoppingBag class="w-8 h-8" />
+          <Clock v-if="activeTab === 'active'" class="w-8 h-8 text-blue-500" />
+          <History v-else-if="activeTab === 'past'" class="w-8 h-8 text-emerald-500" />
+          <ShoppingBag v-else class="w-8 h-8 text-indigo-500" />
         </div>
         <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">
-          {{ totalOrders === 0 ? 'No orders recorded yet' : 'No matching orders found' }}
+          <template v-if="activeTab === 'active'">
+            {{ activeOrdersCount === 0 ? 'No active orders in progress' : 'No matching active orders found' }}
+          </template>
+          <template v-else-if="activeTab === 'past'">
+            {{ pastOrdersCount === 0 ? 'No past orders recorded yet' : 'No matching past orders found' }}
+          </template>
+          <template v-else>
+            {{ totalOrders === 0 ? 'No orders recorded yet' : 'No matching orders found' }}
+          </template>
         </h3>
         <p :class="['text-xs max-w-sm mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
-          {{ totalOrders === 0 ? 'Start sourcing verified fresh produce from Ethiopian farmers and cooperatives.' : 'Try adjusting your search query, status filters, or date range.' }}
+          <template v-if="activeTab === 'active'">
+            {{ activeOrdersCount === 0 ? 'All your produce purchases have been fulfilled or you have not placed a new order yet.' : 'Try adjusting your search query or status filter.' }}
+          </template>
+          <template v-else-if="activeTab === 'past'">
+            {{ pastOrdersCount === 0 ? 'Delivered produce and past completed transactions will be archived here.' : 'Try adjusting your search query or date range.' }}
+          </template>
+          <template v-else>
+            {{ totalOrders === 0 ? 'Start sourcing verified fresh produce directly from Ethiopian farmers and cooperatives.' : 'Try adjusting your search query, status filters, or date range.' }}
+          </template>
         </p>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-center">
           <button
-            v-if="totalOrders > 0"
+            v-if="hasActiveFilters"
             @click="clearFilters"
             class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
           >
-            Clear Filters
+            Reset Filters
+          </button>
+          <button
+            v-if="activeTab === 'active' && activeOrdersCount === 0 && pastOrdersCount > 0"
+            @click="setTab('past')"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <History class="w-3.5 h-3.5 text-emerald-400" />
+            <span>View Past Orders ({{ pastOrdersCount }})</span>
+          </button>
+          <button
+            v-if="activeTab === 'past' && pastOrdersCount === 0 && activeOrdersCount > 0"
+            @click="setTab('active')"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <Clock class="w-3.5 h-3.5 text-blue-400" />
+            <span>View Active Orders ({{ activeOrdersCount }})</span>
           </button>
           <router-link
             to="/buyer/marketplace"
@@ -396,11 +572,12 @@
 
               <!-- Track Live Shipment -->
               <router-link
-                to="/buyer/orders/active"
+                v-if="isOrderActive(order)"
+                to="/buyer/delivery/tracking"
                 :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50']"
               >
                 <Truck class="w-3.5 h-3.5 text-blue-500" />
-                <span>Live Tracking</span>
+                <span>Live Freight Tracking</span>
               </router-link>
 
               <!-- Leave Review (Delivered only) -->
@@ -683,7 +860,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
@@ -692,10 +869,11 @@ import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Search,
   RefreshCw, Eye, Star, AlertCircle, FileText, Phone, MapPin,
-  Printer, ChevronLeft, ChevronRight, Package, Check, X, User
+  Printer, ChevronLeft, ChevronRight, Package, Check, X, User, History
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
@@ -707,6 +885,30 @@ const loading = ref(false)
 const errorMessage = ref('')
 const toastMessage = ref('')
 
+// ── Top Navigation Tabs State: 'active' | 'past' | 'all' ──
+const activeTab = ref<'active' | 'past' | 'all'>('active')
+
+// Status classifications for unified global e-commerce tabs
+const pastStatuses = ['delivered', 'completed', 'cancelled']
+
+const isOrderActive = (order: any): boolean => {
+  const st = (order?.status || '').toLowerCase()
+  if (pastStatuses.includes(st)) return false
+  return true
+}
+
+const isOrderPast = (order: any): boolean => {
+  const st = (order?.status || '').toLowerCase()
+  return pastStatuses.includes(st)
+}
+
+const setTab = (tab: 'active' | 'past' | 'all') => {
+  activeTab.value = tab
+  selectedStatus.value = '' // Clear status sub-filter to prevent conflicting states
+  currentPage.value = 1
+  router.replace({ query: { ...route.query, tab } })
+}
+
 // Search & Filter State
 const searchQuery = ref('')
 const selectedStatus = ref('')
@@ -714,6 +916,18 @@ const selectedDateRange = ref('')
 const sortBy = ref('newest')
 const currentPage = ref(1)
 const itemsPerPage = 8
+
+const hasActiveFilters = computed(() => {
+  return !!(searchQuery.value || selectedStatus.value || selectedDateRange.value || sortBy.value !== 'newest')
+})
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  selectedStatus.value = ''
+  selectedDateRange.value = ''
+  sortBy.value = 'newest'
+  currentPage.value = 1
+}
 
 // Modals
 const detailsModalOpen = ref(false)
@@ -733,7 +947,25 @@ const timelineSteps = [
 
 onMounted(async () => {
   themeStore.initializeTheme()
+  const qTab = (route.query.tab as string) || ''
+  if (qTab === 'past' || qTab === 'history') {
+    activeTab.value = 'past'
+  } else if (qTab === 'all') {
+    activeTab.value = 'all'
+  } else if (qTab === 'active') {
+    activeTab.value = 'active'
+  }
   await refreshOrders()
+})
+
+watch(() => route.query.tab, (newTab) => {
+  if (newTab === 'past' || newTab === 'history') {
+    activeTab.value = 'past'
+  } else if (newTab === 'all') {
+    activeTab.value = 'all'
+  } else if (newTab === 'active') {
+    activeTab.value = 'active'
+  }
 })
 
 // Refresh database orders
@@ -762,12 +994,19 @@ const ordersArray = computed<any[]>(() => {
 const filteredOrdersList = computed<any[]>(() => {
   let list = [...ordersArray.value]
 
-  // Status Filter
+  // 1. Tab-level filtering
+  if (activeTab.value === 'active') {
+    list = list.filter(isOrderActive)
+  } else if (activeTab.value === 'past') {
+    list = list.filter(isOrderPast)
+  }
+
+  // 2. Specific Status Sub-Filter
   if (selectedStatus.value) {
     list = list.filter(o => (o.status || '').toLowerCase() === selectedStatus.value.toLowerCase())
   }
 
-  // Search Filter
+  // 3. Search Query Filter
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
     list = list.filter(o => {
@@ -779,7 +1018,7 @@ const filteredOrdersList = computed<any[]>(() => {
     })
   }
 
-  // Date Range Filter
+  // 4. Date Range Filter
   if (selectedDateRange.value) {
     const cutoff = new Date()
     switch (selectedDateRange.value) {
@@ -799,7 +1038,7 @@ const filteredOrdersList = computed<any[]>(() => {
     list = list.filter(o => o.created_at && new Date(o.created_at) >= cutoff)
   }
 
-  // Sorting
+  // 5. Sorting
   switch (sortBy.value) {
     case 'oldest':
       list.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
@@ -834,6 +1073,8 @@ watch([searchQuery, selectedStatus, selectedDateRange, sortBy], () => {
 
 // Statistics computation
 const totalOrders = computed(() => ordersArray.value.length)
+const activeOrdersCount = computed(() => ordersArray.value.filter(isOrderActive).length)
+const pastOrdersCount = computed(() => ordersArray.value.filter(isOrderPast).length)
 const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase())).length)
 const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase())).length)
 const deliveredOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'delivered').length)
@@ -959,14 +1200,6 @@ const formatNumber = (num: number): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(num || 0)
-}
-
-const clearFilters = () => {
-  searchQuery.value = ''
-  selectedStatus.value = ''
-  selectedDateRange.value = ''
-  sortBy.value = 'newest'
-  currentPage.value = 1
 }
 
 // Modals management

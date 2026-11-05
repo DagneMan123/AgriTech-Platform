@@ -132,11 +132,11 @@
         <!-- Action Links -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
           <router-link
-            to="/buyer/orders/active"
+            to="/buyer/orders?tab=active"
             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
           >
             <Truck class="w-4 h-4" />
-            <span>Track in Active Orders</span>
+            <span>Track in My Orders</span>
           </router-link>
           <router-link
             to="/buyer/marketplace"
