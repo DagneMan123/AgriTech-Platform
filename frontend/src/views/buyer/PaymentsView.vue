@@ -306,13 +306,6 @@
               <p :class="['text-xs leading-relaxed max-w-3xl m-0', darkMode ? 'text-slate-300' : 'text-slate-600']">
                 All buyer payments made through Chapa (Telebirr, CBE Birr, Awash, Cards) are held securely in escrow. Funds are disbursed to the farmer or agricultural supplier only after you inspect and accept produce delivery at your designated warehouse.
               </p>
-              <button
-                @click="openChapaPayModal"
-                class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-sm cursor-pointer"
-              >
-                <CreditCard class="w-3.5 h-3.5" />
-                <span>Initiate Escrow Deposit (Chapa)</span>
-              </button>
             </div>
           </div>
         </div>

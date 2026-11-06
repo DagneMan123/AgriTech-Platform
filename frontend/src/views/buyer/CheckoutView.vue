@@ -497,35 +497,45 @@
 
           <!-- SECTION 3: PAYMENT METHOD -->
           <section :class="['rounded-2xl border p-5 sm:p-6 shadow-2xs transition-all', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-            <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <CreditCard class="w-4 h-4" />
+            <div class="flex items-center justify-between gap-2.5 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex-wrap">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <CreditCard class="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 class="text-sm font-bold tracking-tight">3. Payment Channel &amp; Settlement</h2>
+                  <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Integrated with Chapa Ethiopian payment gateway &amp; saved profile accounts</p>
+                </div>
               </div>
-              <div>
-                <h2 class="text-sm font-bold tracking-tight">3. Payment Channel &amp; Settlement</h2>
-                <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Integrated with Chapa Ethiopian payment gateway</p>
-              </div>
+              <router-link
+                to="/buyer/payments"
+                class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+              >
+                Manage Profile Methods &rarr;
+              </router-link>
             </div>
 
-            <!-- Primary Payment Method Banner -->
+            <!-- Primary Payment Method Banner (Highlighted Active Settlement) -->
             <div
               v-if="primaryPaymentMethod"
               :class="[
-                'mb-4 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all',
-                darkMode ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'
+                'mb-5 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all',
+                selectedSavedMethodId === primaryPaymentMethod.id
+                  ? (darkMode ? 'bg-emerald-950/30 border-emerald-500/50 ring-1 ring-emerald-500/30' : 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-500/20')
+                  : (darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200')
               ]"
             >
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <CheckCircle2 class="w-5 h-5" />
+                  <Star class="w-5 h-5 fill-current text-amber-500" />
                 </div>
                 <div>
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-slate-900 dark:text-slate-100">
                       {{ primaryPaymentMethod.bank_name }}
                     </span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs">
-                      Default Primary Method
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs">
+                      <Star class="w-2.5 h-2.5 fill-current" /> PRIMARY DEFAULT METHOD
                     </span>
                   </div>
                   <p :class="['text-[11px] mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
@@ -535,57 +545,132 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-3 self-end sm:self-auto">
-                <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                  <Check class="w-3.5 h-3.5" /> Pre-Selected
-                </span>
-                <router-link
-                  to="/buyer/payments"
-                  class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+              <div class="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  type="button"
+                  v-if="selectedSavedMethodId !== primaryPaymentMethod.id"
+                  @click="selectSavedPaymentMethod(primaryPaymentMethod)"
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer"
                 >
-                  Manage Methods &rarr;
-                </router-link>
+                  Use Primary Method
+                </button>
+                <span
+                  v-else
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5"
+                >
+                  <CheckCircle2 class="w-3.5 h-3.5" /> Pre-Selected for Settlement
+                </span>
               </div>
             </div>
 
-            <!-- Payment Options Radio Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-              <label
-                v-for="pm in paymentMethodsList"
-                :key="pm.key"
-                :class="[
-                  'relative rounded-xl border p-4 cursor-pointer transition-all flex items-start gap-3',
-                  paymentForm.method === pm.key
-                    ? (darkMode ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20')
-                    : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
-                ]"
-              >
-                <input
-                  type="radio"
-                  v-model="paymentForm.method"
-                  :value="pm.key"
-                  class="mt-1 text-blue-600 focus:ring-blue-500"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold">{{ pm.title }}</span>
-                    <span v-if="pm.badge" class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-500 border border-blue-500/30">
-                      {{ pm.badge }}
+            <!-- Saved Payment Methods Grid (From User Profile / Settings) -->
+            <div v-if="savedPaymentMethods.length > 0" class="mb-5">
+              <div class="flex items-center justify-between mb-2.5">
+                <label class="text-xs font-bold flex items-center gap-1.5">
+                  <span>Saved Payment Methods (From Profile &amp; Settings)</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                    {{ savedPaymentMethods.length }} Registered
+                  </span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div
+                  v-for="pm in savedPaymentMethods"
+                  :key="pm.id"
+                  @click="selectSavedPaymentMethod(pm)"
+                  :class="[
+                    'p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between relative',
+                    selectedSavedMethodId === pm.id
+                      ? (darkMode ? 'border-blue-500 bg-blue-500/15 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-600/30')
+                      : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
+                  ]"
+                >
+                  <div>
+                    <div class="flex items-start justify-between gap-1 mb-1.5">
+                      <span class="text-xs font-bold truncate max-w-[170px]" :title="pm.bank_name">
+                        {{ pm.bank_name }}
+                      </span>
+                      <span
+                        v-if="pm.is_primary"
+                        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0"
+                      >
+                        <Star class="w-2.5 h-2.5 fill-current" /> PRIMARY
+                      </span>
+                    </div>
+
+                    <p class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 mb-1">
+                      {{ maskAccountNumber(pm.account_number) }}
+                    </p>
+
+                    <p class="text-[10px] text-slate-400 truncate">
+                      Holder: <span class="font-medium text-slate-700 dark:text-slate-300">{{ pm.account_holder }}</span>
+                    </p>
+                  </div>
+
+                  <div class="flex items-center justify-between pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 text-[10px]">
+                    <span :class="selectedSavedMethodId === pm.id ? 'text-blue-500 font-bold flex items-center gap-1' : 'text-slate-400'">
+                      <Check v-if="selectedSavedMethodId === pm.id" class="w-3 h-3" />
+                      {{ selectedSavedMethodId === pm.id ? 'Active Settlement' : 'Click to Select' }}
+                    </span>
+                    <span class="uppercase tracking-wider text-[9px] text-slate-400">
+                      {{ pm.type === 'bank_transfer' ? 'Bank' : 'Mobile' }}
                     </span>
                   </div>
-                  <p :class="['text-[11px] leading-tight', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    {{ pm.desc }}
-                  </p>
                 </div>
+              </div>
+            </div>
+
+            <!-- Standard Payment Options -->
+            <div class="mb-5">
+              <label class="block text-xs font-bold mb-2 text-slate-700 dark:text-slate-300">
+                Or Select Another Payment Channel:
               </label>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label
+                  v-for="pm in paymentMethodsList"
+                  :key="pm.key"
+                  @click="selectStandardPaymentMethod(pm.key)"
+                  :class="[
+                    'relative rounded-xl border p-4 cursor-pointer transition-all flex items-start gap-3',
+                    paymentForm.method === pm.key && !selectedSavedMethodId
+                      ? (darkMode ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30' : 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20')
+                      : (darkMode ? 'border-slate-800 bg-[#0b0f19] hover:border-slate-700' : 'border-slate-200 bg-white hover:border-slate-300')
+                  ]"
+                >
+                  <input
+                    type="radio"
+                    :checked="paymentForm.method === pm.key && !selectedSavedMethodId"
+                    @change="selectStandardPaymentMethod(pm.key)"
+                    class="mt-1 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-xs font-bold">{{ pm.title }}</span>
+                      <span v-if="pm.badge" class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-500 border border-blue-500/30">
+                        {{ pm.badge }}
+                      </span>
+                    </div>
+                    <p :class="['text-[11px] leading-tight', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                      {{ pm.desc }}
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <!-- Dynamic Payment Details Panel -->
             <div :class="['rounded-xl p-4 border transition-all text-xs', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div v-if="paymentForm.method === 'telebirr'" class="space-y-3">
-                <div class="flex items-center gap-2 text-blue-600 font-bold">
-                  <Phone class="w-4 h-4" />
-                  <span>Telebirr Instant Payment</span>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2 text-blue-600 font-bold">
+                    <Smartphone class="w-4 h-4" />
+                    <span>Telebirr Instant Payment (Chapa)</span>
+                  </div>
+                  <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile Wallet: {{ selectedSavedMethod.bank_name }}
+                  </span>
                 </div>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">Telebirr Mobile Number:</label>
@@ -598,9 +683,14 @@
                 </div>
               </div>
               <div v-else-if="paymentForm.method === 'cbe_birr'" class="space-y-3">
-                <div class="flex items-center gap-2 text-blue-500 font-bold">
-                  <Building class="w-4 h-4" />
-                  <span>CBE Birr Mobile Money</span>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2 text-blue-500 font-bold">
+                    <Building class="w-4 h-4" />
+                    <span>CBE Birr Mobile Money</span>
+                  </div>
+                  <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile Account: {{ selectedSavedMethod.bank_name }}
+                  </span>
                 </div>
                 <div class="max-w-xs">
                   <label class="block text-[11px] font-bold text-slate-400 mb-1">CBE Birr Mobile Number:</label>
@@ -613,16 +703,21 @@
                 </div>
               </div>
               <div v-else-if="paymentForm.method === 'bank_transfer'" class="space-y-3">
-                <div class="flex items-center gap-2 text-blue-500 font-bold">
-                  <Building class="w-4 h-4" />
-                  <span>Direct Bank Transfer</span>
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2 text-blue-500 font-bold">
+                    <Building class="w-4 h-4" />
+                    <span>Direct Bank Transfer via Chapa Escrow</span>
+                  </div>
+                  <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile A/C: {{ selectedSavedMethod.bank_name }}
+                  </span>
                 </div>
-                <div class="max-w-xs">
-                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Transfer Transaction Reference:</label>
+                <div class="max-w-md">
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Transfer Transaction Reference / Account Number:</label>
                   <input
                     v-model="paymentForm.bank_ref"
                     type="text"
-                    placeholder="e.g. FT26301ABC..."
+                    placeholder="e.g. FT26301ABC... or bank account number"
                     :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
@@ -630,14 +725,20 @@
               <div v-else-if="paymentForm.method === 'card'" class="space-y-3">
                 <div class="flex items-center gap-2 text-blue-500 font-bold">
                   <CreditCard class="w-4 h-4" />
-                  <span>Debit / Credit Card (Chapa Secured)</span>
+                  <span>Debit / Credit Card (Chapa Secured Gateway)</span>
                 </div>
+                <p class="text-[11px] text-slate-400">
+                  You will be securely redirected to the Chapa encrypted payment portal to authorize payment with your Visa, Mastercard, or local Ethiopian debit card.
+                </p>
               </div>
               <div v-else class="space-y-2">
                 <div class="flex items-center gap-2 text-amber-500 font-bold">
                   <ShieldCheck class="w-4 h-4" />
                   <span>Agro-Escrow / Cash on Delivery</span>
                 </div>
+                <p class="text-[11px] text-slate-400">
+                  Produce will be staged and delivered to your designated warehouse. Payment is finalized upon physical quality inspection.
+                </p>
               </div>
             </div>
           </section>
@@ -799,6 +900,15 @@
                 <span class="font-bold">-ETB {{ formatNumber(summaryDiscount) }}</span>
               </div>
 
+              <!-- Payment Settlement Channel Row -->
+              <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                <span>Payment Settlement:</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-right">
+                  <span class="truncate max-w-[150px]" :title="currentSelectedPaymentTitle">{{ currentSelectedPaymentTitle }}</span>
+                  <span v-if="selectedSavedMethod?.is_primary" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">PRIMARY</span>
+                </span>
+              </div>
+
               <!-- Grand Total -->
               <div class="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center">
                 <div>
@@ -872,7 +982,8 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Plus, Minus, Trash2, Info, ChevronDown, Pencil, ListFilter
+  Plus, Minus, Trash2, Info, ChevronDown, Pencil, ListFilter,
+  Star, Smartphone
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1092,11 +1203,71 @@ const handleRemoveItem = async (itemId: number) => {
 }
 
 const primaryPaymentMethod = ref<any>(null)
+const savedPaymentMethods = ref<any[]>([])
+const loadingPaymentMethods = ref(false)
+const selectedSavedMethodId = ref<number | string | null>(null)
+
 const maskAccountNumber = (num: string | number) => {
   if (!num) return ''
   const str = String(num).trim()
   return str.length <= 4 ? str : '•••• ' + str.slice(-4)
 }
+
+const selectSavedPaymentMethod = (method: any) => {
+  if (!method) return
+  selectedSavedMethodId.value = method.id
+
+  const mType = (method.type || '').toLowerCase()
+  const bName = (method.bank_name || '').toLowerCase()
+
+  if (mType === 'bank_transfer' || bName.includes('commercial bank') || bName.includes('cbe') || bName.includes('bank')) {
+    paymentForm.value.method = 'bank_transfer'
+    paymentForm.value.bank_ref = method.account_number || ''
+  } else if (mType === 'mobile_money' && (bName.includes('cbe birr') || bName.includes('cbe-birr'))) {
+    paymentForm.value.method = 'cbe_birr'
+    paymentForm.value.cbe_phone = method.account_number || ''
+  } else if (mType === 'mobile_money' || bName.includes('telebirr') || bName.includes('chapa')) {
+    paymentForm.value.method = 'telebirr'
+    paymentForm.value.telebirr_phone = method.account_number || ''
+  } else if (mType === 'card' || bName.includes('card')) {
+    paymentForm.value.method = 'card'
+  } else {
+    paymentForm.value.method = 'bank_transfer'
+    paymentForm.value.bank_ref = method.account_number || ''
+  }
+}
+
+const selectStandardPaymentMethod = (key: string) => {
+  paymentForm.value.method = key
+  // Check if standard key corresponds to one of the saved methods
+  const matched = savedPaymentMethods.value.find((m: any) => {
+    const mType = (m.type || '').toLowerCase()
+    const bName = (m.bank_name || '').toLowerCase()
+    if (key === 'bank_transfer' && (mType === 'bank_transfer' || bName.includes('bank'))) return true
+    if (key === 'telebirr' && (bName.includes('telebirr') || bName.includes('chapa'))) return true
+    if (key === 'cbe_birr' && bName.includes('cbe')) return true
+    if (key === 'card' && (mType === 'card' || bName.includes('card'))) return true
+    return false
+  })
+  if (matched) {
+    selectedSavedMethodId.value = matched.id
+  } else {
+    selectedSavedMethodId.value = null
+  }
+}
+
+const selectedSavedMethod = computed(() => {
+  if (!selectedSavedMethodId.value) return null
+  return savedPaymentMethods.value.find((m: any) => m.id === selectedSavedMethodId.value) || null
+})
+
+const currentSelectedPaymentTitle = computed(() => {
+  if (selectedSavedMethod.value) {
+    return `${selectedSavedMethod.value.bank_name} (${maskAccountNumber(selectedSavedMethod.value.account_number)})`
+  }
+  const match = paymentMethodsList.value.find(p => p.key === paymentForm.value.method)
+  return match ? match.title : paymentForm.value.method
+})
 
 const paymentMethodsList = computed(() => [
   { key: 'telebirr', title: 'Telebirr (Chapa)', desc: 'Instant mobile wallet payment', badge: 'POPULAR' },
@@ -1107,7 +1278,7 @@ const paymentMethodsList = computed(() => [
 ])
 
 const paymentForm = ref({
-  method: 'telebirr',
+  method: 'bank_transfer',
   telebirr_phone: '',
   cbe_phone: '',
   bank_ref: ''
@@ -1171,6 +1342,25 @@ onMounted(async () => {
   } catch (e) {
     savedAddresses.value = []
   }
+
+  // Fetch saved payment methods from database and auto-select PRIMARY
+  loadingPaymentMethods.value = true
+  try {
+    const pRes = await buyerAPI.getPaymentMethods()
+    const pList = pRes?.data?.data || pRes?.data || []
+    if (Array.isArray(pList) && pList.length > 0) {
+      savedPaymentMethods.value = pList
+      const primary = pList.find((m: any) => m.is_primary) || pList[0]
+      if (primary) {
+        primaryPaymentMethod.value = primary
+        selectSavedPaymentMethod(primary)
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load profile payment methods:', e)
+  } finally {
+    loadingPaymentMethods.value = false
+  }
 })
 
 const handlePlaceOrder = async () => {
@@ -1195,6 +1385,10 @@ const handlePlaceOrder = async () => {
       delivery_fee: selectedShippingFee.value,
       shipping_type: selectedShipping.value,
       payment_method: paymentForm.value.method,
+      payment_reference: selectedSavedMethod.value
+        ? `${selectedSavedMethod.value.bank_name} - ${selectedSavedMethod.value.account_number}`
+        : (paymentForm.value.bank_ref || 'CHAPA-' + Date.now()),
+      payment_method_id: selectedSavedMethodId.value || null,
       tax_amount: 0, // Tax-free agricultural produce
       promo_discount: summaryDiscount.value,
       notes: addressForm.value.notes
