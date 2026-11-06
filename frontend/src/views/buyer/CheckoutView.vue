@@ -235,28 +235,14 @@
               </div>
 
               <div>
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="mb-1.5">
                   <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
                     Delivery Destination (Hub &amp; Region) *
                   </label>
-                  <button
-                    type="button"
-                    @click="toggleDestinationMode"
-                    class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <template v-if="destinationInputMode === 'dropdown'">
-                      <Pencil class="w-3.5 h-3.5" />
-                      <span>Use Custom Address</span>
-                    </template>
-                    <template v-else>
-                      <ListFilter class="w-3.5 h-3.5" />
-                      <span>Pick from Hubs</span>
-                    </template>
-                  </button>
                 </div>
 
-                <!-- ── Hybrid Input: Dropdown Mode (Pre-existing Options) ── -->
-                <div v-if="destinationInputMode === 'dropdown'" class="relative">
+                <!-- Delivery Destination Dropdown -->
+                <div class="relative">
                   <select
                     v-model="selectedDestination"
                     @change="handleDestinationDropdownChange"
@@ -273,7 +259,6 @@
                     >
                       {{ d.label }}
                     </option>
-                    <option value="__custom__">✏️ Use Custom Address (Type manually)...</option>
                   </select>
                   <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
                     <span
@@ -284,29 +269,6 @@
                     </span>
                     <ChevronDown class="w-4 h-4 text-slate-400" />
                   </div>
-                </div>
-
-                <!-- ── Hybrid Input: Text Field Mode (Manual Custom Entry) ── -->
-                <div v-else class="relative">
-                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                  <input
-                    v-model="customDestinationText"
-                    type="text"
-                    placeholder="Type custom delivery city, town, or address (e.g. Bishoftu, Oromia)..."
-                    required
-                    @input="handleCustomDestinationInput"
-                    :class="[
-                      'w-full pl-9 pr-24 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none focus:border-blue-500 transition',
-                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
-                    ]"
-                  />
-                  <button
-                    type="button"
-                    @click="switchToDropdown"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2 py-1 rounded-lg transition border border-blue-200 dark:border-blue-800/50 cursor-pointer"
-                  >
-                    Hubs List
-                  </button>
                 </div>
               </div>
 
@@ -1024,7 +986,7 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Plus, Minus, Trash2, Info, ChevronDown, Pencil, ListFilter,
+  Plus, Minus, Trash2, Info, ChevronDown,
   Star, Smartphone
 } from 'lucide-vue-next'
 
