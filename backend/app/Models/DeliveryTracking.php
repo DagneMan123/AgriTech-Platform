@@ -10,6 +10,8 @@ class DeliveryTracking extends Model
 {
     use HasFactory;
 
+    protected $table = 'delivery_tracking';
+
     protected $fillable = [
         'delivery_id',
         'status',

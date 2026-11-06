@@ -244,6 +244,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useRouter } from 'vue-router'
+import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
@@ -462,12 +463,9 @@ async function fetchDashboardData() {
   loading.value = true
   error.value = ''
   try {
-    const res = await fetch('/api/buyer/dashboard', {
-      headers: { Authorization: `Bearer ${auth.token}` }
-    })
-    if (!res.ok) throw new Error(`Request failed (${res.status})`)
-    const data = await res.json()
-    dashboard.value = data
+    const res = await buyerAPI.getDashboard()
+    const raw = res.data
+    dashboard.value = (raw && raw.summary) ? raw : (raw?.data || raw || {})
   } catch (err) {
     console.error('Error fetching dashboard:', err)
     error.value = 'Unable to load dashboard data. Please try again.'
