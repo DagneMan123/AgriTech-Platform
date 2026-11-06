@@ -39,6 +39,39 @@
         </div>
       </div>
 
+      <!-- Escrow Confirmation Banner (on return from Chapa gateway) -->
+      <transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform -translate-y-2 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+      >
+        <div
+          v-if="escrowConfirmedBanner"
+          :class="['mb-6 p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm', darkMode ? 'bg-[#122329] border-emerald-500/50 text-slate-100' : 'bg-emerald-50/70 border-emerald-300 text-emerald-950']"
+        >
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck class="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <h3 class="text-sm font-bold text-emerald-700 dark:text-emerald-400">Payment Authorized &amp; Locked in Chapa Escrow Custody</h3>
+                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500 text-white">ESCROW LOCKED</span>
+              </div>
+              <p :class="['text-xs leading-relaxed max-w-2xl', darkMode ? 'text-slate-300' : 'text-slate-600']">
+                Your payment is safely held in neutral agricultural escrow. Funds are 100% protected and will only be disbursed to the farmer once you physically inspect and accept produce delivery at your designated warehouse depot.
+              </p>
+            </div>
+          </div>
+          <button
+            @click="escrowConfirmedBanner = false"
+            :class="['text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all self-end sm:self-center cursor-pointer shrink-0', darkMode ? 'border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10' : 'border-emerald-300 text-emerald-800 hover:bg-emerald-100']"
+          >
+            Dismiss
+          </button>
+        </div>
+      </transition>
+
       <!-- Toast Notification -->
       <transition
         enter-active-class="transition duration-200 ease-out"
@@ -608,10 +641,10 @@
               <span
                 v-else-if="['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-blue-950/30 border-blue-900/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700']"
-                title="Cooperative actively weighing, packaging, and staging produce for logistics pickup"
+                title="Farmer actively weighing, packaging, and staging produce for logistics pickup"
               >
                 <Package class="w-3.5 h-3.5 text-blue-500" />
-                <span>Co-op Preparing Produce</span>
+                <span>Farmer Preparing Produce</span>
               </span>
 
               <span
@@ -1278,6 +1311,7 @@ const sidebarOpen = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 const toastMessage = ref('')
+const escrowConfirmedBanner = ref(false)
 
 // ── Top Navigation Tabs State: 'active' | 'past' | 'all' ──
 // Defaults to 'active' so buyers immediately track ongoing shipments (Amazon standard)
@@ -1532,7 +1566,10 @@ onMounted(async () => {
   // Handle Return from Chapa Payment Gateway
   const txRef = (route.query.tx_ref as string) || (route.query.trx_ref as string)
   const paymentSuccess = route.query.payment_success === 'true'
+  const escrowLocked = route.query.escrow_locked === 'true'
+
   if (txRef && txRef !== 'auto') {
+    escrowConfirmedBanner.value = true
     try {
       const res = await buyerAPI.verifyChapaPayment(txRef)
       if (res?.data?.success) {
@@ -1543,7 +1580,8 @@ onMounted(async () => {
     } catch (e) {
       console.warn('Auto Chapa verification error:', e)
     }
-  } else if (paymentSuccess) {
+  } else if (paymentSuccess || escrowLocked) {
+    escrowConfirmedBanner.value = true
     toastMessage.value = 'Chapa payment completed successfully! Your order is active.'
     router.replace({ query: { tab: activeTab.value } })
   }

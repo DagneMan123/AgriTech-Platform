@@ -185,14 +185,14 @@
                 </div>
               </div>
 
-              <!-- Saved Addresses Quick Select with Use Custom Address option -->
-              <div class="relative">
+              <!-- Saved Addresses Quick Select -->
+              <div class="relative" v-if="savedAddresses && savedAddresses.length > 0">
                 <select
                   v-model="selectedSavedAddressId"
                   @change="applySavedAddress"
                   :class="['px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-800']"
                 >
-                  <option :value="null">Use Custom Address</option>
+                  <option :value="null">Saved Delivery Addresses</option>
                   <option v-for="addr in savedAddresses" :key="addr.id" :value="addr.id">
                     {{ addr.title || addr.label || addr.street_address || 'Saved Address' }} ({{ formatHierarchicalLocation(addr) }})
                   </option>
@@ -235,16 +235,10 @@
               </div>
 
               <div>
-                <div class="mb-1.5 flex items-center justify-between">
+                <div class="mb-1.5">
                   <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
                     Delivery Destination (Hub &amp; Region)
                   </label>
-                  <span
-                    v-if="isSetInCart"
-                    class="text-[10px] text-blue-500 font-bold tracking-wide uppercase px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
-                  >
-                    Set in Cart
-                  </span>
                 </div>
 
                 <!-- Single Destination Display (No multi-option dropdown) -->
@@ -931,7 +925,7 @@
               <RefreshCw v-if="submitting" class="w-4 h-4 animate-spin" />
               <Lock v-else class="w-4 h-4" />
               <span>
-                {{ submitting ? 'Redirecting to Chapa Gateway...' : `Confirm Order & Pay (ETB ${formatNumber(summaryGrandTotal)})` }}
+                {{ submitting ? submittingMessage : `Confirm Order & Pay (ETB ${formatNumber(summaryGrandTotal)})` }}
               </span>
             </button>
 
@@ -989,6 +983,7 @@ const themeStore = useThemeStore()
 const darkMode = computed(() => themeStore.isDark)
 const sidebarOpen = ref(false)
 const submitting = ref(false)
+const submittingMessage = ref('Processing Secure Escrow Payment...')
 const orderSuccess = ref(false)
 const errorMessage = ref<string | null>(null)
 const confirmedOrders = ref<any[]>([])
@@ -1360,6 +1355,7 @@ onMounted(async () => {
 const handlePlaceOrder = async () => {
   errorMessage.value = null
   submitting.value = true
+  submittingMessage.value = 'Processing Secure Escrow Payment...'
 
   try {
     const formattedAddress = formatHierarchicalAddress({
@@ -1375,7 +1371,7 @@ const handlePlaceOrder = async () => {
       delivery_region: addressForm.value.region,
       delivery_zone: addressForm.value.zone,
       delivery_woreda: addressForm.value.woreda,
-      phone: addressForm.value.phone,
+      phone: addressForm.value.phone || authStore.user?.phone || '0934318549',
       delivery_fee: selectedShippingFee.value,
       shipping_type: selectedShipping.value,
       payment_method: paymentForm.value.method,
@@ -1388,12 +1384,14 @@ const handlePlaceOrder = async () => {
       notes: addressForm.value.notes
     }
 
+    submittingMessage.value = 'Connecting to Chapa Escrow Gateway...'
     const res = await buyerStore.checkout(payload)
-    confirmedOrders.value = res.data || []
+    confirmedOrders.value = res.data || res.orders || []
 
     // If Chapa hosted checkout URL was provided by server, seamlessly forward to Chapa gateway
     const chapaCheckoutUrl = res?.checkout_url || res?.data?.checkout_url
     if (chapaCheckoutUrl) {
+      submittingMessage.value = 'Redirecting to Official Chapa Payment...'
       window.location.href = chapaCheckoutUrl
       return
     }
@@ -1402,6 +1400,7 @@ const handlePlaceOrder = async () => {
     const isDigitalChapa = ['telebirr', 'cbe_birr', 'card', 'chapa', 'bank_transfer'].includes(paymentForm.value.method)
     if (isDigitalChapa && confirmedOrders.value.length > 0) {
       try {
+        submittingMessage.value = 'Initializing Chapa Escrow Session...'
         const orderList = Array.isArray(confirmedOrders.value) ? confirmedOrders.value : [confirmedOrders.value]
         const orderIds = orderList.map((o: any) => o.id)
         const initRes = await buyerAPI.initializeChapaPayment({
@@ -1410,10 +1409,11 @@ const handlePlaceOrder = async () => {
           channel: paymentForm.value.method,
           phone_number: addressForm.value.phone || authStore.user?.phone || '0934318549',
           email: authStore.user?.email || 'aydenfudagne@gmail.com',
-          return_url: `${window.location.origin}/buyer/orders?tab=active&payment_success=true`
+          return_url: `${window.location.origin}/buyer/orders?tab=active&payment_success=true&escrow_locked=true`
         })
         const directUrl = initRes.data?.data?.checkout_url || initRes.data?.checkout_url
         if (directUrl) {
+          submittingMessage.value = 'Redirecting to Official Chapa Payment...'
           window.location.href = directUrl
           return
         }

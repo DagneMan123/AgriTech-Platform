@@ -183,6 +183,9 @@ class ChapaPaymentController extends Controller
             if ($payment) {
                 $payment->update([
                     'status' => 'completed',
+                    'escrow_status' => 'held',
+                    'escrow_held_at' => $payment->escrow_held_at ?: now(),
+                    'escrow_custody_account' => 'AgriConnect & Chapa Agricultural Escrow Custody Account',
                     'reference' => $txRef,
                     'paid_at' => now(),
                     'completed_at' => now(),
@@ -205,7 +208,9 @@ class ChapaPaymentController extends Controller
                     Order::whereIn('id', $targetOrderIds)->update([
                         'payment_status' => 'paid',
                         'payment_reference' => $txRef,
-                        'status' => 'confirmed'
+                        'status' => 'confirmed',
+                        'escrow_status' => 'held',
+                        'escrow_held_at' => now(),
                     ]);
                 }
 
@@ -275,6 +280,9 @@ class ChapaPaymentController extends Controller
                 if ($verification['success'] ?? false) {
                     $payment->update([
                         'status' => 'completed',
+                        'escrow_status' => 'held',
+                        'escrow_held_at' => $payment->escrow_held_at ?: now(),
+                        'escrow_custody_account' => 'AgriConnect & Chapa Agricultural Escrow Custody Account',
                         'paid_at' => now(),
                         'completed_at' => now(),
                         'payment_details' => array_merge($payment->payment_details ?? [], [
@@ -296,7 +304,9 @@ class ChapaPaymentController extends Controller
                         Order::whereIn('id', $targetOrderIds)->update([
                             'payment_status' => 'paid',
                             'payment_reference' => $txRef,
-                            'status' => 'confirmed'
+                            'status' => 'confirmed',
+                            'escrow_status' => 'held',
+                            'escrow_held_at' => now(),
                         ]);
                     }
 

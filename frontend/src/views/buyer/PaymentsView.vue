@@ -559,7 +559,7 @@
               <CreditCard class="w-4 h-4" />
             </div>
             <div>
-              <h2 class="text-base font-bold m-0">Chapa Escrow Deposit</h2>
+              <h2 class="text-base font-bold m-0">Secure Escrow Payment</h2>
               <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 Secure Ethiopian payment gateway (Telebirr, CBE Birr, Card)
               </p>

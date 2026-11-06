@@ -1137,7 +1137,7 @@ const getStatusTextColor = (status: string) => {
 
 const formatStatusLabel = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (norm === 'pending') return 'Pending Acceptance'
+  if (norm === 'pending') return 'Waiting Farmer Acceptance'
   if (norm === 'confirmed') return 'Confirmed / Packing'
   if (norm === 'shipped' || norm === 'in_transit') return 'In Transit'
   if (norm === 'out_for_delivery') return 'Out for Delivery'

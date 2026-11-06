@@ -316,6 +316,8 @@ class CartController extends Controller
                     'delivery_phone' => $request->input('phone', $request->input('delivery_phone', $user->phone ?? '')),
                     'payment_method' => $request->input('payment_method', 'telebirr'),
                     'payment_status' => 'pending',
+                    'escrow_status' => 'held',
+                    'escrow_held_at' => now(),
                     'payment_reference' => $request->input('payment_reference', 'REF-' . strtoupper(Str::random(10))),
                     'notes' => $request->input('notes', $request->input('delivery_instructions')),
                 ]);
@@ -357,7 +359,7 @@ class CartController extends Controller
                     $allOrderIds = array_map(fn ($o) => $o->id, $createdOrders);
                     $txRef = 'AGRI-CHAPA-' . time() . '-' . rand(1000, 9999);
 
-                    // Pre-create payment record in database
+                    // Pre-create payment record in database with neutral escrow custody
                     $payment = \App\Models\Payment::create([
                         'user_id' => $userId,
                         'order_id' => $primaryOrder->id,
@@ -368,6 +370,9 @@ class CartController extends Controller
                         'transaction_id' => $txRef,
                         'status' => 'pending',
                         'reference' => 'chapa_ref_' . time(),
+                        'escrow_status' => 'held',
+                        'escrow_held_at' => now(),
+                        'escrow_custody_account' => 'AgriConnect & Chapa Agricultural Escrow Custody Account',
                         'payment_details' => [
                             'channel' => $paymentMethod,
                             'phone' => $request->input('phone', $user->phone ?? '0911000000'),
@@ -380,15 +385,17 @@ class CartController extends Controller
                         $o->update([
                             'payment_reference' => $txRef,
                             'payment_method' => $paymentMethod,
+                            'escrow_status' => 'held',
+                            'escrow_held_at' => now(),
                         ]);
                     }
 
                     $chapaService = app(\App\Services\ChapaService::class);
                     $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-                    $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true');
+                    $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true&escrow_locked=true');
                     if (!str_contains($returnUrl, 'tx_ref=')) {
                         $separator = str_contains($returnUrl, '?') ? '&' : '?';
-                        $returnUrl .= $separator . 'tx_ref=' . $txRef;
+                        $returnUrl .= $separator . 'tx_ref=' . $txRef . '&payment_success=true&escrow_locked=true';
                     }
 
                     $names = explode(' ', trim($user->name ?: 'Buyer User'));
