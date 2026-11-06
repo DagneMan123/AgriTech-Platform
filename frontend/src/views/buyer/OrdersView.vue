@@ -486,9 +486,9 @@
 
           <!-- Order Visual Progress Stepper -->
           <div :class="['px-5 py-4 border-b overflow-x-auto', darkMode ? 'border-slate-800 bg-[#0b0f19]/30' : 'border-slate-100 bg-slate-50/30']">
-            <div class="flex items-center min-w-[420px] gap-0">
+            <div class="flex items-center min-w-[500px] gap-0">
               <template v-for="(step, idx) in timelineSteps" :key="step.status">
-                <div class="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <div class="flex flex-col items-center gap-1 flex-shrink-0" :title="step.operationalLogic">
                   <div
                     :class="[
                       'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all',
@@ -502,19 +502,29 @@
                   </div>
                   <span
                     :class="[
-                      'text-[10px] font-semibold whitespace-nowrap',
+                      'text-[10px] sm:text-[11px] font-bold whitespace-nowrap',
                       isStatusReached(step.status, order.status)
-                        ? (darkMode ? 'text-slate-100 font-bold' : 'text-slate-900 font-bold')
+                        ? (darkMode ? 'text-slate-100' : 'text-slate-900')
                         : (darkMode ? 'text-slate-500' : 'text-slate-400')
                     ]"
                   >
                     {{ step.label }}
                   </span>
+                  <span
+                    :class="[
+                      'text-[9px] font-medium whitespace-nowrap',
+                      isStatusReached(step.status, order.status)
+                        ? 'text-blue-500 dark:text-blue-400 font-semibold'
+                        : (darkMode ? 'text-slate-600' : 'text-slate-400')
+                    ]"
+                  >
+                    {{ step.subLabel }}
+                  </span>
                 </div>
                 <div
                   v-if="idx < timelineSteps.length - 1"
                   :class="[
-                    'flex-1 h-0.5 mb-5 mx-2 min-w-[24px]',
+                    'flex-1 h-0.5 mb-6 mx-2 min-w-[28px]',
                     isStatusReached(timelineSteps[idx + 1].status, order.status)
                       ? 'bg-blue-600'
                       : (darkMode ? 'bg-slate-800' : 'bg-slate-200')
@@ -522,6 +532,20 @@
                 ></div>
               </template>
             </div>
+          </div>
+
+          <!-- Operational State Context Banner -->
+          <div :class="['px-5 py-2.5 text-xs border-b flex items-center justify-between gap-3 flex-wrap', getOperationalBannerStyle(order.status)]">
+            <div class="flex items-center gap-2 min-w-0">
+              <span :class="['w-2 h-2 rounded-full shrink-0', getOperationalDotStyle(order.status)]"></span>
+              <p class="m-0 text-[11px] leading-snug">
+                <strong class="font-bold mr-1">{{ getStatusOperationalInfo(order.status).title }}:</strong>
+                <span :class="darkMode ? 'text-slate-300' : 'text-slate-600'">{{ getStatusOperationalInfo(order.status).description }}</span>
+              </p>
+            </div>
+            <span v-if="order.status === 'delivered'" class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 shrink-0">
+              <CheckCircle2 class="w-3.5 h-3.5" /> Stepper Complete
+            </span>
           </div>
 
           <!-- Order Actions -->
@@ -540,10 +564,22 @@
                 <span>{{ payingOrderId === order.id ? 'Connecting...' : 'Pay with Chapa' }}</span>
               </button>
 
-              <!-- View Full Details -->
+              <!-- View Full Receipt (Delivered Orders) -->
               <button
+                v-if="order.status === 'delivered'"
                 @click="openDetailsModal(order)"
-                class="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                title="View full official delivery receipt and tax invoice"
+              >
+                <FileText class="w-3.5 h-3.5" />
+                <span>View Full Receipt</span>
+              </button>
+
+              <!-- View Full Details (Non-Delivered Orders) -->
+              <button
+                v-else
+                @click="openDetailsModal(order)"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
               >
                 <Eye class="w-3.5 h-3.5" />
                 <span>View Details</span>
@@ -647,18 +683,21 @@
         <!-- Modal Header -->
         <div :class="['flex items-center justify-between p-5 border-b', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-              <ShoppingBag class="w-5 h-5" />
+            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0', activeOrderForDetails.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500']">
+              <FileText v-if="activeOrderForDetails.status === 'delivered'" class="w-5 h-5" />
+              <ShoppingBag v-else class="w-5 h-5" />
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold m-0">Order {{ getOrderNumber(activeOrderForDetails) }}</h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-extrabold m-0">
+                  {{ activeOrderForDetails.status === 'delivered' ? 'Official Delivery Receipt' : `Order ${getOrderNumber(activeOrderForDetails)}` }}
+                </h3>
                 <span :class="['px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase', statusBadgeClass(activeOrderForDetails.status)]">
                   {{ formatStatus(activeOrderForDetails.status) }}
                 </span>
               </div>
               <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                Placed on {{ formatDate(activeOrderForDetails.created_at) }}
+                {{ activeOrderForDetails.status === 'delivered' ? `Final terminal delivery confirmed for Order ${getOrderNumber(activeOrderForDetails)}` : `Placed on ${formatDate(activeOrderForDetails.created_at)}` }}
               </p>
             </div>
           </div>
@@ -1420,12 +1459,36 @@ const startChatWithFarmer = (order: any) => {
   })
 }
 
-// Timeline step definitions
+// Timeline step definitions aligning with domain operational logic
 const timelineSteps = [
-  { status: 'pending',   label: 'Placed' },
-  { status: 'confirmed', label: 'Confirmed' },
-  { status: 'shipped',   label: 'In Transit' },
-  { status: 'delivered', label: 'Delivered' }
+  {
+    status: 'pending',
+    label: 'Placed',
+    subLabel: 'Pending Confirmation',
+    fullTitle: 'Pending Confirmation / Placed',
+    operationalLogic: 'Triggered when order is placed and awaits payment confirmation (Telebirr/Chapa). Producing farmers\' cooperative prepares to review and fulfill request.'
+  },
+  {
+    status: 'confirmed',
+    label: 'Preparing',
+    subLabel: 'Confirmed',
+    fullTitle: 'Confirmed / Preparing',
+    operationalLogic: 'Automatically transitions once payment is verified. Producing farmers\' cooperative is actively weighing, packaging, and staging produce for transport.'
+  },
+  {
+    status: 'shipped',
+    label: 'In Transit',
+    subLabel: 'Shipped',
+    fullTitle: 'In Transit / Shipped',
+    operationalLogic: 'Preparation complete and logistics fleet/driver assigned. Cargo departs regional hub; live route telemetry and checkpoints active.'
+  },
+  {
+    status: 'delivered',
+    label: 'Delivered',
+    subLabel: 'Handed Over',
+    fullTitle: 'Delivered',
+    operationalLogic: 'Cargo arrived safely at destination depot and officially handed over with final system confirmation. Stepper complete; view receipt and leave review.'
+  }
 ]
 
 onMounted(async () => {
@@ -1650,17 +1713,86 @@ const getOrderAddress = (order: any): string => {
 const formatStatus = (status?: string): string => {
   const s = (status || '').toLowerCase()
   const map: Record<string, string> = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    processing: 'Processing',
-    preparing: 'Preparing',
-    shipped: 'In Transit',
-    in_transit: 'In Transit',
-    out_for_delivery: 'Out for Delivery',
+    pending: 'Pending Confirmation / Placed',
+    placed: 'Pending Confirmation / Placed',
+    confirmed: 'Confirmed / Preparing',
+    processing: 'Confirmed / Preparing',
+    preparing: 'Confirmed / Preparing',
+    shipped: 'In Transit / Shipped',
+    in_transit: 'In Transit / Shipped',
+    out_for_delivery: 'In Transit / Out for Delivery',
     delivered: 'Delivered',
     cancelled: 'Cancelled'
   }
-  return map[s] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending')
+  return map[s] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending Confirmation / Placed')
+}
+
+const getStatusOperationalInfo = (status?: string) => {
+  const s = (status || 'pending').toLowerCase()
+  if (s === 'delivered') {
+    return {
+      title: 'Delivered',
+      stage: 'Terminal State Reached',
+      color: 'emerald',
+      description: 'The cargo has arrived safely at destination depot and was officially handed over to the receiver with final system confirmation.'
+    }
+  }
+  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) {
+    return {
+      title: 'In Transit / Shipped',
+      stage: 'Logistics Fleet Dispatched',
+      color: 'purple',
+      description: 'Cargo has departed regional hub with assigned logistics fleet and driver credentials. Live route telemetry and GPS checkpoints are actively tracking.'
+    }
+  }
+  if (['confirmed', 'processing', 'preparing'].includes(s)) {
+    return {
+      title: 'Confirmed / Preparing',
+      stage: 'Producer Staging Produce',
+      color: 'blue',
+      description: 'Payment verified. The producing farmers\' cooperative is actively weighing, packaging, and staging produce for transport dispatch.'
+    }
+  }
+  if (s === 'cancelled') {
+    return {
+      title: 'Cancelled',
+      stage: 'Order Cancelled',
+      color: 'red',
+      description: 'This order was cancelled and closed. No further fulfillment actions will take place.'
+    }
+  }
+  return {
+    title: 'Pending Confirmation / Placed',
+    stage: 'Awaiting Payment & Review',
+    color: 'amber',
+    description: 'Buyer placed order and awaits payment confirmation (Telebirr/Chapa). Producing farmers\' cooperative prepares to review and fulfill request.'
+  }
+}
+
+const getOperationalBannerStyle = (status?: string): string => {
+  const s = (status || 'pending').toLowerCase()
+  if (s === 'delivered') {
+    return darkMode.value ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-300' : 'bg-emerald-50/70 border-emerald-200 text-emerald-800'
+  }
+  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) {
+    return darkMode.value ? 'bg-purple-950/20 border-purple-900/40 text-purple-300' : 'bg-purple-50/70 border-purple-200 text-purple-800'
+  }
+  if (['confirmed', 'processing', 'preparing'].includes(s)) {
+    return darkMode.value ? 'bg-blue-950/20 border-blue-900/40 text-blue-300' : 'bg-blue-50/70 border-blue-200 text-blue-800'
+  }
+  if (s === 'cancelled') {
+    return darkMode.value ? 'bg-red-950/20 border-red-900/40 text-red-300' : 'bg-red-50/70 border-red-200 text-red-800'
+  }
+  return darkMode.value ? 'bg-amber-950/20 border-amber-900/40 text-amber-300' : 'bg-amber-50/70 border-amber-200 text-amber-800'
+}
+
+const getOperationalDotStyle = (status?: string): string => {
+  const s = (status || 'pending').toLowerCase()
+  if (s === 'delivered') return 'bg-emerald-500'
+  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) return 'bg-purple-500 animate-pulse'
+  if (['confirmed', 'processing', 'preparing'].includes(s)) return 'bg-blue-500'
+  if (s === 'cancelled') return 'bg-red-500'
+  return 'bg-amber-500'
 }
 
 const statusBadgeClass = (status?: string): string => {
@@ -1668,7 +1800,7 @@ const statusBadgeClass = (status?: string): string => {
   if (['delivered'].includes(s)) return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
   if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) return 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
   if (['confirmed', 'processing', 'preparing'].includes(s)) return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-  if (['pending'].includes(s)) return 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+  if (['pending', 'placed'].includes(s)) return 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
   if (['cancelled'].includes(s)) return 'bg-red-500/15 text-red-400 border border-red-500/30'
   return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
 }
@@ -1678,7 +1810,7 @@ const getOrderBorderColor = (status?: string): string => {
   if (['delivered'].includes(s)) return '#10b981'
   if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) return '#a855f7'
   if (['confirmed', 'processing', 'preparing'].includes(s)) return '#3b82f6'
-  if (['pending'].includes(s)) return '#f59e0b'
+  if (['pending', 'placed'].includes(s)) return '#f59e0b'
   if (['cancelled'].includes(s)) return '#ef4444'
   return '#6366f1'
 }
@@ -1687,6 +1819,7 @@ const isStatusReached = (checkStatus: string, orderStatus?: string): boolean => 
   const s = (orderStatus || 'pending').toLowerCase()
   const orderRank: Record<string, number> = {
     pending: 1,
+    placed: 1,
     confirmed: 2,
     processing: 2,
     preparing: 2,
@@ -1698,8 +1831,11 @@ const isStatusReached = (checkStatus: string, orderStatus?: string): boolean => 
   }
   const checkRank: Record<string, number> = {
     pending: 1,
+    placed: 1,
     confirmed: 2,
+    preparing: 2,
     shipped: 3,
+    in_transit: 3,
     delivered: 4
   }
   return (orderRank[s] || 0) >= (checkRank[checkStatus] || 0)

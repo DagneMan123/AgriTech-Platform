@@ -98,10 +98,14 @@ class Order extends Model
     public function getStatusLabelAttribute()
     {
         $statuses = [
-            'pending' => 'Pending',
-            'approved' => 'Approved',
-            'processing' => 'Processing',
-            'shipped' => 'Shipped',
+            'pending' => 'Pending Confirmation / Placed',
+            'placed' => 'Pending Confirmation / Placed',
+            'confirmed' => 'Confirmed / Preparing',
+            'approved' => 'Confirmed / Preparing',
+            'processing' => 'Confirmed / Preparing',
+            'preparing' => 'Confirmed / Preparing',
+            'shipped' => 'In Transit / Shipped',
+            'in_transit' => 'In Transit / Shipped',
             'delivered' => 'Delivered',
             'cancelled' => 'Cancelled'
         ];
