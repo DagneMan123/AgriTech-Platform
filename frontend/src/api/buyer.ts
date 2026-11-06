@@ -26,6 +26,8 @@ export const buyerAPI = {
   
   cancelOrder: (id: number | string, data?: any) => apiClient.post(`/buyer/orders/${id}/cancel`, data || {}),
 
+  confirmOrderInspection: (id: number | string) => apiClient.post(`/buyer/orders/${id}/confirm-inspection`),
+
   // Payments
   getPayments: () => apiClient.get('/buyer/payments'),
   

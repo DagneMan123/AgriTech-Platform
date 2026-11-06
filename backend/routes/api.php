@@ -565,6 +565,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 SalesReportController::class,
                 'revenueByCategory'
             ]);
+
+            // Farmer Payout Settings & Escrow Settlements
+            Route::get('/payout-settings', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'index']);
+            Route::post('/payout-settings', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'store']);
+            Route::put('/payout-settings/{id}/primary', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'setDefault']);
+            Route::delete('/payout-settings/{id}', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'destroy']);
+            Route::post('/orders/{id}/disburse-escrow', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'disburseOrder']);
         });
 
 
@@ -636,6 +643,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/orders/{id}/cancel', [
                 BuyerOrderController::class,
                 'cancel'
+            ]);
+
+            Route::post('/orders/{id}/confirm-inspection', [
+                BuyerOrderController::class,
+                'confirmInspection'
             ]);
 
             Route::apiResource('/payments', BuyerPaymentController::class);

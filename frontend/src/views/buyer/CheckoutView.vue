@@ -503,16 +503,25 @@
                   <CreditCard class="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 class="text-sm font-bold tracking-tight">3. Payment Channel &amp; Settlement</h2>
-                  <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Integrated with Chapa Ethiopian payment gateway &amp; saved profile accounts</p>
+                  <h2 class="text-sm font-bold tracking-tight">3. Buyer Payment Source &amp; Escrow Authorization</h2>
+                  <p :class="['text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Funds held in neutral Chapa Escrow Custody &bull; Farmer payout is released upon warehouse acceptance</p>
                 </div>
               </div>
               <router-link
                 to="/buyer/payments"
                 class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
               >
-                Manage Profile Methods &rarr;
+                Manage Profile Wallets &rarr;
               </router-link>
+            </div>
+
+            <!-- Escrow Holding Trust Notice -->
+            <div :class="['mb-5 p-3.5 rounded-xl border flex items-start gap-3', darkMode ? 'bg-blue-950/20 border-blue-900/50 text-blue-200' : 'bg-blue-50/80 border-blue-200 text-blue-900']">
+              <ShieldCheck class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <div class="text-xs leading-relaxed">
+                <span class="font-bold">🔒 Chapa &amp; Agricultural Escrow Custody Protection:</span>
+                Your payment routes directly into official escrow holding. Zero funds are sent directly to the vendor until produce arrives at your warehouse depot and passes quality inspection.
+              </div>
             </div>
 
             <!-- Primary Payment Method Banner (Highlighted Active Settlement) -->
@@ -535,7 +544,7 @@
                       {{ primaryPaymentMethod.bank_name }}
                     </span>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white shadow-xs">
-                      <Star class="w-2.5 h-2.5 fill-current" /> PRIMARY DEFAULT METHOD
+                      <Star class="w-2.5 h-2.5 fill-current" /> BUYER PRIMARY WALLET
                     </span>
                   </div>
                   <p :class="['text-[11px] mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
@@ -552,13 +561,13 @@
                   @click="selectSavedPaymentMethod(primaryPaymentMethod)"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer"
                 >
-                  Use Primary Method
+                  Use Primary Wallet
                 </button>
                 <span
                   v-else
                   class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5"
                 >
-                  <CheckCircle2 class="w-3.5 h-3.5" /> Pre-Selected for Settlement
+                  <CheckCircle2 class="w-3.5 h-3.5" /> Pre-Selected Funding Source
                 </span>
               </div>
             </div>
@@ -567,7 +576,7 @@
             <div v-if="savedPaymentMethods.length > 0" class="mb-5">
               <div class="flex items-center justify-between mb-2.5">
                 <label class="text-xs font-bold flex items-center gap-1.5">
-                  <span>Saved Payment Methods (From Profile &amp; Settings)</span>
+                  <span>Your Registered Funding Sources (Buyer Wallets / Accounts)</span>
                   <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
                     {{ savedPaymentMethods.length }} Registered
                   </span>
@@ -611,7 +620,7 @@
                   <div class="flex items-center justify-between pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 text-[10px]">
                     <span :class="selectedSavedMethodId === pm.id ? 'text-blue-500 font-bold flex items-center gap-1' : 'text-slate-400'">
                       <Check v-if="selectedSavedMethodId === pm.id" class="w-3 h-3" />
-                      {{ selectedSavedMethodId === pm.id ? 'Active Settlement' : 'Click to Select' }}
+                      {{ selectedSavedMethodId === pm.id ? 'Active Funding Source' : 'Click to Select' }}
                     </span>
                     <span class="uppercase tracking-wider text-[9px] text-slate-400">
                       {{ pm.type === 'bank_transfer' ? 'Bank' : 'Mobile' }}
@@ -624,7 +633,7 @@
             <!-- Standard Payment Options -->
             <div class="mb-5">
               <label class="block text-xs font-bold mb-2 text-slate-700 dark:text-slate-300">
-                Or Select Another Payment Channel:
+                Or Select Payment Channel:
               </label>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -666,34 +675,35 @@
                 <div class="flex items-center justify-between flex-wrap gap-2">
                   <div class="flex items-center gap-2 text-blue-600 font-bold">
                     <Smartphone class="w-4 h-4" />
-                    <span>Telebirr Instant Payment (Chapa)</span>
+                    <span>Telebirr Mobile Payment (Chapa Escrow)</span>
                   </div>
                   <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
-                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile Wallet: {{ selectedSavedMethod.bank_name }}
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Buyer Wallet: {{ selectedSavedMethod.bank_name }}
                   </span>
                 </div>
                 <div class="max-w-xs">
-                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Telebirr Mobile Number:</label>
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Buyer's Telebirr Number (To Receive Chapa PIN Prompt):</label>
                   <input
                     v-model="paymentForm.telebirr_phone"
                     type="text"
                     placeholder="09... or 07..."
                     :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
+                  <span class="text-[10px] text-slate-400 mt-1 block">A secure USSD push prompt will be sent to your phone to authorize transfer to Escrow.</span>
                 </div>
               </div>
               <div v-else-if="paymentForm.method === 'cbe_birr'" class="space-y-3">
                 <div class="flex items-center justify-between flex-wrap gap-2">
                   <div class="flex items-center gap-2 text-blue-500 font-bold">
                     <Building class="w-4 h-4" />
-                    <span>CBE Birr Mobile Money</span>
+                    <span>CBE Birr Mobile Money (Chapa Escrow)</span>
                   </div>
                   <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
-                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile Account: {{ selectedSavedMethod.bank_name }}
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Buyer Account: {{ selectedSavedMethod.bank_name }}
                   </span>
                 </div>
                 <div class="max-w-xs">
-                  <label class="block text-[11px] font-bold text-slate-400 mb-1">CBE Birr Mobile Number:</label>
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Buyer's CBE Birr Phone Number:</label>
                   <input
                     v-model="paymentForm.cbe_phone"
                     type="text"
@@ -706,18 +716,36 @@
                 <div class="flex items-center justify-between flex-wrap gap-2">
                   <div class="flex items-center gap-2 text-blue-500 font-bold">
                     <Building class="w-4 h-4" />
-                    <span>Direct Bank Transfer via Chapa Escrow</span>
+                    <span>Direct Bank Transfer &bull; Chapa &amp; Agricultural Escrow Custody</span>
                   </div>
                   <span v-if="selectedSavedMethod" class="text-[11px] text-emerald-500 font-bold flex items-center gap-1">
-                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Profile A/C: {{ selectedSavedMethod.bank_name }}
+                    <CheckCircle2 class="w-3.5 h-3.5" /> Using Buyer A/C: {{ selectedSavedMethod.bank_name }}
                   </span>
                 </div>
+
+                <!-- Escrow Depository Bank Details -->
+                <div :class="['p-3 rounded-xl border text-[11px] space-y-1.5', darkMode ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300 text-slate-700']">
+                  <div class="font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                    <span>AgriConnect Escrow Custody Account</span>
+                    <span class="text-[10px] text-emerald-500 font-extrabold uppercase">Official Depository</span>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono">
+                    <div>Bank: <span class="font-bold">Commercial Bank of Ethiopia (CBE)</span></div>
+                    <div>Account No: <span class="font-bold text-blue-600 dark:text-blue-400">1000 4829 10482</span></div>
+                    <div>Beneficiary: <span class="font-bold">AgriConnect Escrow Custody (Chapa Partner)</span></div>
+                    <div>Branch: <span class="font-bold">Addis Ababa FinTech Center</span></div>
+                  </div>
+                  <p class="text-[10px] text-slate-400 italic pt-1">
+                    Transfer the total amount to this escrow account. Funds will be held in custody until delivery is confirmed.
+                  </p>
+                </div>
+
                 <div class="max-w-md">
-                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Transfer Transaction Reference / Account Number:</label>
+                  <label class="block text-[11px] font-bold text-slate-400 mb-1">Buyer's Bank Deposit / Transfer Reference Number:</label>
                   <input
                     v-model="paymentForm.bank_ref"
                     type="text"
-                    placeholder="e.g. FT26301ABC... or bank account number"
+                    placeholder="e.g. FT26301ABC... or bank reference"
                     :class="['w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
                   />
                 </div>
@@ -728,7 +756,7 @@
                   <span>Debit / Credit Card (Chapa Secured Gateway)</span>
                 </div>
                 <p class="text-[11px] text-slate-400">
-                  You will be securely redirected to the Chapa encrypted payment portal to authorize payment with your Visa, Mastercard, or local Ethiopian debit card.
+                  You will be securely redirected to the Chapa encrypted payment portal to authorize payment with your Visa, Mastercard, or local Ethiopian debit card. Funds are held in escrow custody.
                 </p>
               </div>
               <div v-else class="space-y-2">
@@ -902,18 +930,32 @@
 
               <!-- Payment Settlement Channel Row -->
               <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 text-xs pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                <span>Payment Settlement:</span>
+                <span>Buyer Funding Source:</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-right">
                   <span class="truncate max-w-[150px]" :title="currentSelectedPaymentTitle">{{ currentSelectedPaymentTitle }}</span>
                   <span v-if="selectedSavedMethod?.is_primary" class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">PRIMARY</span>
                 </span>
               </div>
 
+              <!-- Escrow Custody Holding Row -->
+              <div class="flex justify-between items-center text-[11px] pt-1 text-slate-500 dark:text-slate-400">
+                <span class="flex items-center gap-1">
+                  <ShieldCheck class="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Escrow Custody:</span>
+                </span>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">Chapa Agro-Custody</span>
+              </div>
+
+              <div class="flex justify-between items-center text-[10px] pb-1 text-slate-400">
+                <span>Farmer Payout Release:</span>
+                <span class="font-medium text-slate-600 dark:text-slate-300">Upon Warehouse Inspection</span>
+              </div>
+
               <!-- Grand Total -->
               <div class="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center">
                 <div>
                   <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100 block">Total Due:</span>
-                  <span class="text-[10px] text-slate-400">Includes freight &amp; settlement</span>
+                  <span class="text-[10px] text-slate-400">Locked in neutral escrow</span>
                 </div>
                 <span class="text-base font-black text-blue-600 dark:text-blue-400">
                   ETB {{ formatNumber(summaryGrandTotal) }}

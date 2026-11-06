@@ -218,6 +218,30 @@ class OrderController extends Controller
     }
 
     /**
+     * Buyer confirms delivery receipt & quality inspection at warehouse.
+     * Triggers Chapa Escrow disbursement directly to farmer's registered payout account.
+     */
+    public function confirmInspection(Request $request, $id, \App\Services\EscrowSettlementService $escrowService)
+    {
+        $userId = Auth::id() ?? auth()->id();
+        $order = Order::where('buyer_id', $userId)->findOrFail($id);
+
+        $order->update([
+            'status' => 'delivered',
+            'delivered_at' => $order->delivered_at ?: now(),
+        ]);
+
+        $settlement = $escrowService->disburseFarmerPayout($order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Delivery and warehouse inspection confirmed. Chapa Escrow funds released to farmer payout account.',
+            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user']),
+            'settlement' => $settlement
+        ]);
+    }
+
+    /**
      * Get orders by status
      */
     public function byStatus(Request $request, string $status)

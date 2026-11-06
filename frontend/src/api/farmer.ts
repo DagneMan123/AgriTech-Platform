@@ -98,7 +98,14 @@ export const farmerAPI = {
 
   // Dashboard
   getDashboard: (timeRange?: string | number) => {
-    const params = timeRange ? { time_range: timeRange } : {};
-    return apiClient.get('/farmer/dashboard', { params });
+    const params = timeRange ? { time_range: timeRange } : {}
+    return apiClient.get('/farmer/dashboard', { params })
   },
+
+  // Payout Settings & Escrow Settlements
+  getPayoutSettings: () => apiClient.get('/farmer/payout-settings'),
+  addPayoutMethod: (data: any) => apiClient.post('/farmer/payout-settings', data),
+  setPrimaryPayoutMethod: (id: number) => apiClient.put(`/farmer/payout-settings/${id}/primary`),
+  deletePayoutMethod: (id: number) => apiClient.delete(`/farmer/payout-settings/${id}`),
+  disburseEscrowOrder: (orderId: number) => apiClient.post(`/farmer/orders/${orderId}/disburse-escrow`)
 }

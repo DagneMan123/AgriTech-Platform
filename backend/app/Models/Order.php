@@ -30,6 +30,11 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'payment_reference',
+        'escrow_status',
+        'escrow_held_at',
+        'escrow_disbursed_at',
+        'payout_reference',
+        'payout_account_details',
         'notes',
         'delivered_at',
         'cancelled_at'
@@ -41,6 +46,9 @@ class Order extends Model
         'tax' => 'decimal:2',
         'discount' => 'decimal:2',
         'grand_total' => 'decimal:2',
+        'escrow_held_at' => 'datetime',
+        'escrow_disbursed_at' => 'datetime',
+        'payout_account_details' => 'array',
         'delivered_at' => 'datetime',
         'cancelled_at' => 'datetime'
     ];

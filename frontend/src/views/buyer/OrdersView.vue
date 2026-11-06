@@ -571,6 +571,28 @@
                 <span>View Details</span>
               </button>
 
+              <!-- Warehouse Inspection & Escrow Release Action (Delivered Orders) -->
+              <button
+                v-if="order.status === 'delivered' && order.escrow_status !== 'disbursed'"
+                @click="confirmWarehouseInspection(order)"
+                :disabled="confirmingInspectionId === order.id"
+                class="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95 disabled:opacity-60"
+                title="Confirm warehouse inspection to disburse Chapa escrow funds to farmer"
+              >
+                <RefreshCw v-if="confirmingInspectionId === order.id" class="w-3.5 h-3.5 animate-spin" />
+                <ShieldCheck v-else class="w-3.5 h-3.5" />
+                <span>{{ confirmingInspectionId === order.id ? 'Releasing Payout...' : 'Confirm Inspection & Release Escrow' }}</span>
+              </button>
+
+              <span
+                v-else-if="order.status === 'delivered' && order.escrow_status === 'disbursed'"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                title="Funds disbursed from Chapa Escrow to farmer account"
+              >
+                <CheckCircle2 class="w-3.5 h-3.5 text-emerald-500" />
+                <span>Escrow Disbursed to Farmer</span>
+              </span>
+
               <!-- Track Live Shipment: ONLY when Transport is explicitly Assigned & Dispatched -->
               <button
                 v-if="hasAssignedTransport(order)"
@@ -1895,6 +1917,33 @@ const payWithChapa = async (order: any) => {
     alert(err?.response?.data?.message || 'Failed to connect to Chapa payment gateway. Please check connection.')
   } finally {
     payingOrderId.value = null
+  }
+}
+
+const confirmingInspectionId = ref<number | null>(null)
+
+const confirmWarehouseInspection = async (order: any) => {
+  if (!order || confirmingInspectionId.value === order.id) return
+  const confirmed = window.confirm(
+    `Confirm warehouse quality inspection for Order #${getOrderNumber(order)}?\n\nThis will trigger Chapa Escrow settlement and disburse ETB ${formatNumber(getOrderAmount(order))} directly to the farmer/cooperative's registered receiving bank account.`
+  )
+  if (!confirmed) return
+
+  confirmingInspectionId.value = order.id
+  try {
+    const res = await buyerAPI.confirmOrderInspection(order.id)
+    if (res.data?.success) {
+      order.escrow_status = 'disbursed'
+      order.escrow_disbursed_at = new Date().toISOString()
+      alert('Inspection confirmed! Funds released from Chapa Escrow to the farmer: ' + (res.data.payout_reference || 'Settlement Approved'))
+    } else {
+      alert(res.data?.message || 'Inspection recorded.')
+    }
+  } catch (err: any) {
+    console.error('Failed to confirm inspection:', err)
+    alert(err?.response?.data?.message || 'Failed to confirm inspection and release escrow.')
+  } finally {
+    confirmingInspectionId.value = null
   }
 }
 

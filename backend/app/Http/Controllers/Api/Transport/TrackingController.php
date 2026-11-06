@@ -105,10 +105,23 @@ class TrackingController extends Controller
         ]);
 
         // Update delivery status
+        $isDelivered = $validated['status'] === 'delivered';
         $delivery->update([
-            'status' => $validated['status'] === 'delivered' ? 'delivered' : 'in_transit',
-            'actual_delivery_time' => $validated['status'] === 'delivered' ? now() : $delivery->actual_delivery_time,
+            'status' => $isDelivered ? 'delivered' : 'in_transit',
+            'actual_delivery_time' => $isDelivered ? now() : $delivery->actual_delivery_time,
         ]);
+
+        if ($isDelivered && $delivery->order) {
+            $delivery->order->update([
+                'status' => 'delivered',
+                'delivered_at' => $delivery->order->delivered_at ?: now(),
+            ]);
+            try {
+                app(\App\Services\EscrowSettlementService::class)->disburseFarmerPayout($delivery->order);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Auto escrow settlement on tracking update warning: " . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'success' => true,

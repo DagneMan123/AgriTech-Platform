@@ -24,6 +24,10 @@ class Payment extends Model
         'reference',
         'reference_number',
         'status',
+        'escrow_status',
+        'escrow_held_at',
+        'escrow_disbursed_at',
+        'escrow_custody_account',
         'payment_details',
         'transaction_data',
         'error_message',
@@ -35,6 +39,8 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'transaction_data' => 'array',
         'payment_details' => 'array',
+        'escrow_held_at' => 'datetime',
+        'escrow_disbursed_at' => 'datetime',
         'paid_at' => 'datetime',
         'completed_at' => 'datetime'
     ];
