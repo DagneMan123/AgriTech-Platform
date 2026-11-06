@@ -4,7 +4,7 @@
     <BuyerSidebar @logout="handleLogout" />
 
     <!-- Main Content -->
-    <div class="cart-container">
+    <div class="cart-container" :class="{ 'dark': isDark }">
       <!-- Header Section -->
       <div class="cart-header">
         <div>
@@ -196,7 +196,7 @@
                     </label>
 
                     <!-- Self-Pickup / Farm-Gate Option (Styled identically to standard options) -->
-                    <label class="radio-option border-t pt-2 mt-2 border-slate-200">
+                    <label class="radio-option border-t pt-2 mt-2 border-slate-200 dark:border-slate-800">
                       <input
                         type="radio"
                         v-model="shippingType"
@@ -265,7 +265,7 @@ import { useAuthStore } from '@/stores/authStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import { formatImageUrl } from '@/utils/helpers'
-import { useTheme } from '@/composables/useTheme'
+import { useThemeStore } from '@/stores/themeStore'
 import {
   getDynamicShippingOptions,
   calculateOriginDestinationDistanceKm,
@@ -281,8 +281,9 @@ import {
 // Stores and Router
 const buyerStore = useBuyerStore()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 const router = useRouter()
-const { isDark } = useTheme()
+const isDark = computed(() => themeStore.isDark)
 
 // State
 const deliveryDestinations = ETHIOPIAN_DELIVERY_DESTINATIONS
@@ -330,6 +331,7 @@ const selectedShippingFee = computed(() => {
 const shippingCost = selectedShippingFee
 
 onMounted(async () => {
+  themeStore.initializeTheme()
   try {
     await buyerStore.fetchCart()
   } catch (error) {
@@ -1007,4 +1009,332 @@ const handleLogout = async () => {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ════════════════════════════════════════════════════════════════ */
+/* ── COMPREHENSIVE DARK MODE THEME STYLES ── */
+/* ════════════════════════════════════════════════════════════════ */
+.buyer-layout.dark,
+:global(html.dark) .buyer-layout {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .cart-container,
+.cart-container.dark,
+:global(html.dark) .cart-container {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .cart-header,
+:global(html.dark) .cart-header {
+  background-color: #131b2e;
+  border-bottom: 1px solid #1e293b;
+}
+
+.buyer-layout.dark .page-title,
+:global(html.dark) .page-title {
+  color: #f8fafc;
+}
+
+.buyer-layout.dark .page-subtitle,
+:global(html.dark) .page-subtitle {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .empty-cart,
+:global(html.dark) .empty-cart {
+  background: #131b2e;
+  border-color: #334155;
+}
+
+.buyer-layout.dark .empty-icon,
+:global(html.dark) .empty-icon {
+  color: #475569;
+}
+
+.buyer-layout.dark .empty-cart h2,
+:global(html.dark) .empty-cart h2 {
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .empty-cart p,
+:global(html.dark) .empty-cart p {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .cart-main,
+:global(html.dark) .cart-main {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.buyer-layout.dark .cart-items-header,
+:global(html.dark) .cart-items-header {
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+}
+
+.buyer-layout.dark .badge,
+:global(html.dark) .badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.buyer-layout.dark .cart-item,
+:global(html.dark) .cart-item {
+  background: #131b2e;
+  border-bottom: 1px solid #1e293b;
+}
+
+.buyer-layout.dark .cart-item:hover,
+:global(html.dark) .cart-item:hover {
+  background: #1a233a;
+}
+
+.buyer-layout.dark .cart-item.selected,
+:global(html.dark) .cart-item.selected {
+  background: rgba(30, 58, 138, 0.28);
+}
+
+.buyer-layout.dark .item-image,
+:global(html.dark) .item-image {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+}
+
+.buyer-layout.dark .no-image,
+:global(html.dark) .no-image {
+  color: #475569;
+}
+
+.buyer-layout.dark .item-name,
+:global(html.dark) .item-name {
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .item-supplier,
+:global(html.dark) .item-supplier {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .item-sku,
+:global(html.dark) .item-sku {
+  color: #64748b;
+}
+
+.buyer-layout.dark .unit-price,
+:global(html.dark) .unit-price {
+  color: #e2e8f0;
+}
+
+.buyer-layout.dark .item-quantity,
+:global(html.dark) .item-quantity {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.buyer-layout.dark .qty-btn,
+:global(html.dark) .qty-btn {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .qty-btn:hover,
+:global(html.dark) .qty-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.buyer-layout.dark .qty-input,
+:global(html.dark) .qty-input {
+  color: #f1f5f9;
+  background: transparent;
+}
+
+.buyer-layout.dark .subtotal-amount,
+:global(html.dark) .subtotal-amount {
+  color: #60a5fa;
+}
+
+.buyer-layout.dark .action-btn,
+:global(html.dark) .action-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .action-btn:hover,
+:global(html.dark) .action-btn:hover {
+  color: #60a5fa;
+  border-color: #3b82f6;
+  background: #1e293b;
+}
+
+.buyer-layout.dark .action-btn.danger:hover,
+:global(html.dark) .action-btn.danger:hover {
+  color: #f87171;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.buyer-layout.dark .action-btn.wishlist-active,
+:global(html.dark) .action-btn.wishlist-active {
+  color: #f87171;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.buyer-layout.dark .cart-item-actions,
+:global(html.dark) .cart-item-actions {
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+}
+
+.buyer-layout.dark .summary-card,
+:global(html.dark) .summary-card {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.buyer-layout.dark .summary-title,
+:global(html.dark) .summary-title {
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .summary-row,
+:global(html.dark) .summary-row {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .summary-row .value,
+:global(html.dark) .summary-row .value {
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .region-select,
+:global(html.dark) .region-select {
+  background-color: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .region-select option,
+:global(html.dark) .region-select option {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .radio-option,
+:global(html.dark) .radio-option {
+  color: #e2e8f0;
+}
+
+.buyer-layout.dark .radio-option:hover,
+:global(html.dark) .radio-option:hover {
+  color: #60a5fa;
+}
+
+.buyer-layout.dark .radio-option.border-t,
+:global(html.dark) .radio-option.border-t {
+  border-color: #1e293b !important;
+}
+
+.buyer-layout.dark .discount-section,
+:global(html.dark) .discount-section {
+  border-top-color: #1e293b;
+}
+
+.buyer-layout.dark .discount-section label,
+:global(html.dark) .discount-section label {
+  color: #94a3b8;
+}
+
+.buyer-layout.dark .promo-input,
+:global(html.dark) .promo-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .promo-input::placeholder,
+:global(html.dark) .promo-input::placeholder {
+  color: #64748b;
+}
+
+.buyer-layout.dark .summary-divider,
+:global(html.dark) .summary-divider {
+  background: #1e293b;
+}
+
+.buyer-layout.dark .summary-total,
+:global(html.dark) .summary-total {
+  border-top-color: #1e293b;
+  border-bottom-color: #1e293b;
+}
+
+.buyer-layout.dark .total-label,
+:global(html.dark) .total-label {
+  color: #f1f5f9;
+}
+
+.buyer-layout.dark .total-amount,
+:global(html.dark) .total-amount {
+  color: #60a5fa;
+}
+
+.buyer-layout.dark .btn-secondary,
+:global(html.dark) .btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+.buyer-layout.dark .btn-secondary:hover,
+:global(html.dark) .btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.buyer-layout.dark .btn-danger,
+:global(html.dark) .btn-danger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.buyer-layout.dark .btn-danger:hover,
+:global(html.dark) .btn-danger:hover {
+  background: rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* ── RESPONSIVE MEDIA QUERIES ── */
+/* ════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .cart-container {
+    margin-left: 0;
+  }
+
+  .cart-content {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-header {
+    padding: 16px 20px;
+  }
+
+  .cart-body {
+    padding: 20px 16px 40px;
+  }
+
+  .cart-item {
+    grid-template-columns: 32px 70px minmax(100px, 1fr) auto;
+    gap: 10px;
+  }
+}
+
 </style>
