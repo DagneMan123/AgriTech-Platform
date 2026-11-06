@@ -534,20 +534,6 @@
             </div>
           </div>
 
-          <!-- Operational State Context Banner -->
-          <div :class="['px-5 py-2.5 text-xs border-b flex items-center justify-between gap-3 flex-wrap', getOperationalBannerStyle(order.status)]">
-            <div class="flex items-center gap-2 min-w-0">
-              <span :class="['w-2 h-2 rounded-full shrink-0', getOperationalDotStyle(order.status)]"></span>
-              <p class="m-0 text-[11px] leading-snug">
-                <strong class="font-bold mr-1">{{ getStatusOperationalInfo(order.status).title }}:</strong>
-                <span :class="darkMode ? 'text-slate-300' : 'text-slate-600'">{{ getStatusOperationalInfo(order.status).description }}</span>
-              </p>
-            </div>
-            <span v-if="order.status === 'delivered'" class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 shrink-0">
-              <CheckCircle2 class="w-3.5 h-3.5" /> Stepper Complete
-            </span>
-          </div>
-
           <!-- Order Actions -->
           <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
             <div class="flex items-center gap-2 flex-wrap">
@@ -1725,74 +1711,6 @@ const formatStatus = (status?: string): string => {
     cancelled: 'Cancelled'
   }
   return map[s] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending Confirmation / Placed')
-}
-
-const getStatusOperationalInfo = (status?: string) => {
-  const s = (status || 'pending').toLowerCase()
-  if (s === 'delivered') {
-    return {
-      title: 'Delivered',
-      stage: 'Terminal State Reached',
-      color: 'emerald',
-      description: 'The cargo has arrived safely at destination depot and was officially handed over to the receiver with final system confirmation.'
-    }
-  }
-  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) {
-    return {
-      title: 'In Transit / Shipped',
-      stage: 'Logistics Fleet Dispatched',
-      color: 'purple',
-      description: 'Cargo has departed regional hub with assigned logistics fleet and driver credentials. Live route telemetry and GPS checkpoints are actively tracking.'
-    }
-  }
-  if (['confirmed', 'processing', 'preparing'].includes(s)) {
-    return {
-      title: 'Confirmed / Preparing',
-      stage: 'Producer Staging Produce',
-      color: 'blue',
-      description: 'Payment verified. The producing farmers\' cooperative is actively weighing, packaging, and staging produce for transport dispatch.'
-    }
-  }
-  if (s === 'cancelled') {
-    return {
-      title: 'Cancelled',
-      stage: 'Order Cancelled',
-      color: 'red',
-      description: 'This order was cancelled and closed. No further fulfillment actions will take place.'
-    }
-  }
-  return {
-    title: 'Pending Confirmation / Placed',
-    stage: 'Awaiting Payment & Review',
-    color: 'amber',
-    description: 'Buyer placed order and awaits payment confirmation (Telebirr/Chapa). Producing farmers\' cooperative prepares to review and fulfill request.'
-  }
-}
-
-const getOperationalBannerStyle = (status?: string): string => {
-  const s = (status || 'pending').toLowerCase()
-  if (s === 'delivered') {
-    return darkMode.value ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-300' : 'bg-emerald-50/70 border-emerald-200 text-emerald-800'
-  }
-  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) {
-    return darkMode.value ? 'bg-purple-950/20 border-purple-900/40 text-purple-300' : 'bg-purple-50/70 border-purple-200 text-purple-800'
-  }
-  if (['confirmed', 'processing', 'preparing'].includes(s)) {
-    return darkMode.value ? 'bg-blue-950/20 border-blue-900/40 text-blue-300' : 'bg-blue-50/70 border-blue-200 text-blue-800'
-  }
-  if (s === 'cancelled') {
-    return darkMode.value ? 'bg-red-950/20 border-red-900/40 text-red-300' : 'bg-red-50/70 border-red-200 text-red-800'
-  }
-  return darkMode.value ? 'bg-amber-950/20 border-amber-900/40 text-amber-300' : 'bg-amber-50/70 border-amber-200 text-amber-800'
-}
-
-const getOperationalDotStyle = (status?: string): string => {
-  const s = (status || 'pending').toLowerCase()
-  if (s === 'delivered') return 'bg-emerald-500'
-  if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) return 'bg-purple-500 animate-pulse'
-  if (['confirmed', 'processing', 'preparing'].includes(s)) return 'bg-blue-500'
-  if (s === 'cancelled') return 'bg-red-500'
-  return 'bg-amber-500'
 }
 
 const statusBadgeClass = (status?: string): string => {
