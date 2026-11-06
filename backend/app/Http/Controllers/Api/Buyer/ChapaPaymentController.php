@@ -27,21 +27,28 @@ class ChapaPaymentController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:1',
-            'order_id' => 'nullable|exists:orders,id',
+            'order_id' => 'nullable',
+            'order_ids' => 'nullable|array',
             'phone_number' => 'nullable|string',
             'email' => 'nullable|email',
-            'channel' => 'nullable|string'
+            'channel' => 'nullable|string',
+            'return_url' => 'nullable|string'
         ]);
 
         $amount = (float)$request->input('amount');
         $orderId = $request->input('order_id');
+        $orderIds = $request->input('order_ids', []);
+        if ($orderId && empty($orderIds)) {
+            $orderIds = [$orderId];
+        }
+        $primaryOrderId = !empty($orderIds) ? $orderIds[0] : $orderId;
         $txRef = 'AGRI-CHAPA-' . time() . '-' . rand(1000, 9999);
         $channel = $request->input('channel', 'telebirr');
 
         // Pre-create payment record in database
         $payment = Payment::create([
             'user_id' => $user->id,
-            'order_id' => $orderId,
+            'order_id' => $primaryOrderId,
             'amount' => $amount,
             'currency' => 'ETB',
             'payment_gateway' => 'chapa',
@@ -53,8 +60,17 @@ class ChapaPaymentController extends Controller
                 'channel' => $channel,
                 'phone' => $request->input('phone_number', $user->phone),
                 'email' => $request->input('email', $user->email),
+                'order_ids' => $orderIds,
             ]
         ]);
+
+        // Link orders to transaction reference
+        if (!empty($orderIds)) {
+            Order::whereIn('id', $orderIds)->update([
+                'payment_reference' => $txRef,
+                'payment_method' => $channel ?: 'telebirr',
+            ]);
+        }
 
         // Automatically set/update card on payment methods page for this buyer
         $phoneInput = $request->input('phone_number', $user->phone ?? '0911000000');
@@ -83,6 +99,7 @@ class ChapaPaymentController extends Controller
             ->where('bank_name', '!=', $channelTitle)
             ->update(['is_primary' => false]);
 
+        $defaultReturnUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true';
         $res = $this->chapa->initializePayment([
             'amount' => $amount,
             'currency' => 'ETB',
@@ -91,7 +108,7 @@ class ChapaPaymentController extends Controller
             'last_name' => $user->name && count(explode(' ', $user->name)) > 1 ? explode(' ', $user->name)[1] : 'Buyer',
             'phone_number' => $request->input('phone_number', $user->phone ?? '0911000000'),
             'tx_ref' => $txRef,
-            'return_url' => $request->input('return_url') ?: (env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/orders/active?tx_ref=' . $txRef . '&payment_success=true'),
+            'return_url' => $request->input('return_url') ?: $defaultReturnUrl,
         ]);
 
         if (empty($res['success']) || empty($res['checkout_url'])) {
@@ -103,6 +120,7 @@ class ChapaPaymentController extends Controller
                 'success' => false,
                 'message' => $res['message'] ?? 'Failed to initialize payment with Chapa.',
             ], 400);
+        }
         }
 
         return response()->json([
@@ -141,10 +159,19 @@ class ChapaPaymentController extends Controller
                     ])
                 ]);
 
-                if ($payment->order_id) {
-                    Order::where('id', $payment->order_id)->update([
-                        'payment_id' => $payment->id,
+                if (!empty($payment->order_id)) {
+                    $targetOrderIds = [$payment->order_id];
+                } else {
+                    $targetOrderIds = [];
+                }
+                if (!empty($payment->payment_details['order_ids']) && is_array($payment->payment_details['order_ids'])) {
+                    $targetOrderIds = array_unique(array_merge($targetOrderIds, $payment->payment_details['order_ids']));
+                }
+
+                if (!empty($targetOrderIds)) {
+                    Order::whereIn('id', $targetOrderIds)->update([
                         'payment_status' => 'paid',
+                        'payment_reference' => $txRef,
                         'status' => 'confirmed'
                     ]);
                 }
@@ -225,10 +252,19 @@ class ChapaPaymentController extends Controller
                         ])
                     ]);
 
-                    if ($payment->order_id) {
-                        Order::where('id', $payment->order_id)->update([
-                            'payment_id' => $payment->id,
+                    if (!empty($payment->order_id)) {
+                        $targetOrderIds = [$payment->order_id];
+                    } else {
+                        $targetOrderIds = [];
+                    }
+                    if (!empty($payment->payment_details['order_ids']) && is_array($payment->payment_details['order_ids'])) {
+                        $targetOrderIds = array_unique(array_merge($targetOrderIds, $payment->payment_details['order_ids']));
+                    }
+
+                    if (!empty($targetOrderIds)) {
+                        Order::whereIn('id', $targetOrderIds)->update([
                             'payment_status' => 'paid',
+                            'payment_reference' => $txRef,
                             'status' => 'confirmed'
                         ]);
                     }

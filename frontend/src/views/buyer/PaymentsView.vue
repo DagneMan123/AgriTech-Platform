@@ -36,7 +36,13 @@
 
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-            
+            <button
+              @click="openChapaPayModal"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 transition-all transform active:scale-95 cursor-pointer"
+            >
+              <CreditCard class="w-4 h-4" />
+              <span>Chapa Escrow Deposit</span>
+            </button>
             <button
               @click="openAddModal"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
@@ -307,6 +313,13 @@
               <p :class="['text-xs leading-relaxed max-w-3xl m-0', darkMode ? 'text-slate-300' : 'text-slate-600']">
                 All buyer payments made through Chapa (Telebirr, CBE Birr, Awash, Cards) are held securely in escrow. Funds are disbursed to the farmer or agricultural supplier only after you inspect and accept produce delivery at your designated warehouse.
               </p>
+              <button
+                @click="openChapaPayModal"
+                class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-sm cursor-pointer"
+              >
+                <CreditCard class="w-3.5 h-3.5" />
+                <span>Initiate Escrow Deposit (Chapa)</span>
+              </button>
             </div>
           </div>
         </div>
@@ -545,6 +558,141 @@
       </div>
     </div>
 
+    <!-- ── MODAL: CHAPA DIRECT ESCROW PAYMENT ── -->
+    <div
+      v-if="chapaPayModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      @click.self="chapaPayModalOpen = false"
+    >
+      <div
+        :class="['rounded-2xl border w-full max-w-md overflow-hidden shadow-2xl transition-all', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+      >
+        <div :class="['px-6 py-4 border-b flex items-center justify-between', darkMode ? 'border-slate-800 bg-[#0f172a]' : 'border-slate-200 bg-slate-50']">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+              <CreditCard class="w-4 h-4" />
+            </div>
+            <div>
+              <h2 class="text-base font-bold m-0">Chapa Escrow Deposit</h2>
+              <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                Secure Ethiopian payment gateway (Telebirr, CBE Birr, Card)
+              </p>
+            </div>
+          </div>
+          <button
+            @click="chapaPayModalOpen = false"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <form @submit.prevent="initiateChapaPayment" class="p-6 space-y-4 text-xs">
+          <div>
+            <label :class="['block font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Select Payment Channel *
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                @click="chapaForm.channel = 'telebirr'"
+                :class="['p-3 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer', chapaForm.channel === 'telebirr' ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-bold ring-1 ring-emerald-500/30' : (darkMode ? 'border-slate-700 bg-slate-900/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700')]"
+              >
+                <Smartphone class="w-4 h-4 text-emerald-500 shrink-0" />
+                <span class="truncate">Telebirr</span>
+              </button>
+              <button
+                type="button"
+                @click="chapaForm.channel = 'cbe_birr'"
+                :class="['p-3 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer', chapaForm.channel === 'cbe_birr' ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-bold ring-1 ring-emerald-500/30' : (darkMode ? 'border-slate-700 bg-slate-900/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700')]"
+              >
+                <Building2 class="w-4 h-4 text-purple-500 shrink-0" />
+                <span class="truncate">CBE Birr</span>
+              </button>
+              <button
+                type="button"
+                @click="chapaForm.channel = 'card'"
+                :class="['p-3 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer', chapaForm.channel === 'card' ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-bold ring-1 ring-emerald-500/30' : (darkMode ? 'border-slate-700 bg-slate-900/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700')]"
+              >
+                <CreditCard class="w-4 h-4 text-blue-500 shrink-0" />
+                <span class="truncate">Card (Visa/MC)</span>
+              </button>
+              <button
+                type="button"
+                @click="chapaForm.channel = 'awash'"
+                :class="['p-3 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer', chapaForm.channel === 'awash' ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-bold ring-1 ring-emerald-500/30' : (darkMode ? 'border-slate-700 bg-slate-900/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700')]"
+              >
+                <Building2 class="w-4 h-4 text-amber-500 shrink-0" />
+                <span class="truncate">Awash Birr</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label :class="['block font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Deposit Amount (ETB) *
+            </label>
+            <input
+              v-model.number="chapaForm.amount"
+              type="number"
+              min="10"
+              step="1"
+              required
+              :class="['w-full px-3 py-2.5 rounded-xl border text-xs outline-none focus:border-emerald-500 font-mono font-bold', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
+            />
+            <div class="flex items-center gap-2 mt-2">
+              <button
+                v-for="amt in [250, 500, 1000, 2500]"
+                :key="amt"
+                type="button"
+                @click="chapaForm.amount = amt"
+                :class="['px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition', chapaForm.amount === amt ? 'bg-emerald-600 border-emerald-500 text-white' : (darkMode ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700')]"
+              >
+                ETB {{ amt }}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label :class="['block font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
+              Payer Phone Number *
+            </label>
+            <input
+              v-model="chapaForm.phone"
+              type="text"
+              placeholder="e.g. 0911234567"
+              required
+              :class="['w-full px-3 py-2.5 rounded-xl border text-xs outline-none focus:border-emerald-500 font-mono', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-900']"
+            />
+          </div>
+
+          <div :class="['p-3 rounded-xl border flex items-center gap-2.5 text-[11px]', darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600']">
+            <ShieldCheck class="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>Funds are held securely by Chapa in Ethiopian Agro-Escrow until delivery.</span>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3">
+            <button
+              type="button"
+              @click="chapaPayModalOpen = false"
+              :class="['px-4 py-2.5 rounded-xl font-bold border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100']"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="chapaSubmitting"
+              class="px-5 py-2.5 rounded-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw v-if="chapaSubmitting" class="w-4 h-4 animate-spin" />
+              <CreditCard v-else class="w-4 h-4" />
+              <span>{{ chapaSubmitting ? 'Redirecting...' : `Pay ETB ${formatNumber(chapaForm.amount)} via Chapa` }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- ── TOAST NOTIFICATION ── -->
     <div
       v-if="toastMessage"
@@ -601,6 +749,51 @@ const form = ref({
   account_holder: '',
   is_primary: false
 })
+
+// Chapa Direct Escrow Modal State
+const chapaPayModalOpen = ref(false)
+const chapaSubmitting = ref(false)
+const chapaForm = ref({
+  channel: 'telebirr',
+  amount: 500,
+  phone: ''
+})
+
+const openChapaPayModal = () => {
+  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
+  chapaForm.value = {
+    channel: 'telebirr',
+    amount: 500,
+    phone: userPhone
+  }
+  chapaPayModalOpen.value = true
+}
+
+const initiateChapaPayment = async () => {
+  if (chapaSubmitting.value) return
+  chapaSubmitting.value = true
+  try {
+    const res = await buyerAPI.initializeChapaPayment({
+      amount: chapaForm.value.amount,
+      channel: chapaForm.value.channel,
+      phone_number: chapaForm.value.phone,
+      email: authStore.user?.email || 'aydenfudagne@gmail.com',
+      return_url: `${window.location.origin}/buyer/payments?tx_ref=auto&payment_success=true`
+    })
+
+    const checkoutUrl = res.data?.data?.checkout_url || res.data?.checkout_url
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl
+    } else {
+      alert(res.data?.message || 'Failed to initialize Chapa payment.')
+    }
+  } catch (err: any) {
+    console.error('Failed to initiate Chapa payment:', err)
+    alert(err?.response?.data?.message || 'Failed to connect to Chapa payment gateway. Please check connection.')
+  } finally {
+    chapaSubmitting.value = false
+  }
+}
 
 const toastMessage = ref('')
 let toastTimer: any = null

@@ -543,6 +543,19 @@
           <!-- Order Actions -->
           <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
             <div class="flex items-center gap-2 flex-wrap">
+              <!-- Pay with Chapa Action (Unpaid Orders) -->
+              <button
+                v-if="isOrderUnpaid(order)"
+                @click="payWithChapa(order)"
+                :disabled="payingOrderId === order.id"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95 disabled:opacity-60"
+                title="Pay securely via Chapa (Telebirr, CBE Birr, Card)"
+              >
+                <RefreshCw v-if="payingOrderId === order.id" class="w-3.5 h-3.5 animate-spin" />
+                <CreditCard v-else class="w-3.5 h-3.5" />
+                <span>{{ payingOrderId === order.id ? 'Connecting...' : 'Pay with Chapa' }}</span>
+              </button>
+
               <!-- View Full Details -->
               <button
                 @click="openDetailsModal(order)"
@@ -776,12 +789,24 @@
             <Printer class="w-3.5 h-3.5" />
             <span>Print Receipt</span>
           </button>
-          <button
-            @click="detailsModalOpen = false"
-            class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-          >
-            Close
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="isOrderUnpaid(activeOrderForDetails)"
+              @click="payWithChapa(activeOrderForDetails)"
+              :disabled="payingOrderId === activeOrderForDetails?.id"
+              class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw v-if="payingOrderId === activeOrderForDetails?.id" class="w-3.5 h-3.5 animate-spin" />
+              <CreditCard v-else class="w-3.5 h-3.5" />
+              <span>{{ payingOrderId === activeOrderForDetails?.id ? 'Connecting to Chapa...' : `Pay with Chapa (ETB ${formatNumber(getOrderAmount(activeOrderForDetails))})` }}</span>
+            </button>
+            <button
+              @click="detailsModalOpen = false"
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1181,6 +1206,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
@@ -1428,6 +1454,26 @@ onMounted(async () => {
   } else {
     activeTab.value = 'active'
   }
+
+  // Handle Return from Chapa Payment Gateway
+  const txRef = (route.query.tx_ref as string) || (route.query.trx_ref as string)
+  const paymentSuccess = route.query.payment_success === 'true'
+  if (txRef && txRef !== 'auto') {
+    try {
+      const res = await buyerAPI.verifyChapaPayment(txRef)
+      if (res?.data?.success) {
+        toastMessage.value = 'Chapa payment confirmed and verified in database! Your order is now confirmed.'
+        // Clean query params from URL so reload doesn't repeat verification
+        router.replace({ query: { tab: activeTab.value } })
+      }
+    } catch (e) {
+      console.warn('Auto Chapa verification error:', e)
+    }
+  } else if (paymentSuccess) {
+    toastMessage.value = 'Chapa payment completed successfully! Your order is active.'
+    router.replace({ query: { tab: activeTab.value } })
+  }
+
   await refreshOrders()
 })
 
@@ -1732,6 +1778,48 @@ const confirmCancellation = async () => {
 
 const printReceipt = () => {
   window.print()
+}
+
+// ── Functional Chapa Payment Handler ──
+const payingOrderId = ref<number | null>(null)
+
+const isOrderUnpaid = (order: any): boolean => {
+  if (!order) return false
+  const status = (order.status || '').toLowerCase()
+  if (['cancelled', 'delivered', 'completed', 'refunded'].includes(status)) return false
+  const payStatus = (order.payment?.status || order.payment_status || '').toLowerCase()
+  return !['paid', 'completed', 'successful'].includes(payStatus)
+}
+
+const payWithChapa = async (order: any) => {
+  if (!order || payingOrderId.value === order.id) return
+  payingOrderId.value = order.id
+  try {
+    const amount = getOrderAmount(order)
+    const channel = order.payment_method || 'telebirr'
+    const returnUrl = `${window.location.origin}/buyer/orders?tab=active&order_id=${order.id}&payment_success=true`
+
+    const res = await buyerAPI.initializeChapaPayment({
+      order_id: order.id,
+      amount: amount,
+      channel: channel,
+      phone_number: order.delivery_phone || authStore.user?.phone || '0911000000',
+      email: authStore.user?.email || 'aydenfudagne@gmail.com',
+      return_url: returnUrl
+    })
+
+    const checkoutUrl = res.data?.data?.checkout_url || res.data?.checkout_url
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl
+    } else {
+      alert(res.data?.message || 'Failed to initialize Chapa payment.')
+    }
+  } catch (err: any) {
+    console.error('Chapa initialization failed:', err)
+    alert(err?.response?.data?.message || 'Failed to connect to Chapa payment gateway. Please check connection.')
+  } finally {
+    payingOrderId.value = null
+  }
 }
 
 // Payment Status Helpers (Strictly database driven)

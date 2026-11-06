@@ -108,7 +108,8 @@ class PaymentController extends Controller
             // Update orders
             foreach ($orders as $order) {
                 $order->update([
-                    'payment_id' => $paymentRecord->id,
+                    'payment_reference' => $paymentRecord->transaction_id,
+                    'payment_status' => 'paid',
                     'status' => 'confirmed',
                 ]);
             }

@@ -1202,6 +1202,38 @@ const handlePlaceOrder = async () => {
 
     const res = await buyerStore.checkout(payload)
     confirmedOrders.value = res.data || []
+
+    // If Chapa hosted checkout URL was provided by server, seamlessly forward to Chapa gateway
+    const chapaCheckoutUrl = res?.checkout_url || res?.data?.checkout_url
+    if (chapaCheckoutUrl) {
+      window.location.href = chapaCheckoutUrl
+      return
+    }
+
+    // Client-side fallback initialization if backend didn't return checkout_url directly
+    const isDigitalChapa = ['telebirr', 'cbe_birr', 'card', 'chapa'].includes(paymentForm.value.method)
+    if (isDigitalChapa && confirmedOrders.value.length > 0) {
+      try {
+        const orderList = Array.isArray(confirmedOrders.value) ? confirmedOrders.value : [confirmedOrders.value]
+        const orderIds = orderList.map((o: any) => o.id)
+        const initRes = await buyerAPI.initializeChapaPayment({
+          order_ids: orderIds,
+          amount: summaryGrandTotal.value,
+          channel: paymentForm.value.method,
+          phone_number: addressForm.value.phone,
+          email: authStore.user?.email || 'aydenfudagne@gmail.com',
+          return_url: `${window.location.origin}/buyer/orders?tab=active&payment_success=true`
+        })
+        const directUrl = initRes.data?.data?.checkout_url || initRes.data?.checkout_url
+        if (directUrl) {
+          window.location.href = directUrl
+          return
+        }
+      } catch (chapaErr) {
+        console.warn('Fallback Chapa init warning:', chapaErr)
+      }
+    }
+
     orderSuccess.value = true
   } catch (err: any) {
     errorMessage.value = err.response?.data?.message || err.message || 'Failed to place order.'

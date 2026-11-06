@@ -345,10 +345,75 @@ class CartController extends Controller
 
             DB::commit();
 
+            $paymentMethod = strtolower($request->input('payment_method', 'telebirr'));
+            $isChapa = in_array($paymentMethod, ['telebirr', 'cbe_birr', 'card', 'cards', 'chapa', 'chapa_digital', 'awash']);
+            $checkoutUrl = null;
+            $txRef = null;
+
+            if ($isChapa && !empty($createdOrders)) {
+                try {
+                    $totalAmount = array_sum(array_map(fn ($o) => (float) $o->grand_total, $createdOrders));
+                    $primaryOrder = $createdOrders[0];
+                    $allOrderIds = array_map(fn ($o) => $o->id, $createdOrders);
+                    $txRef = 'AGRI-CHAPA-' . time() . '-' . rand(1000, 9999);
+
+                    // Pre-create payment record in database
+                    $payment = \App\Models\Payment::create([
+                        'user_id' => $userId,
+                        'order_id' => $primaryOrder->id,
+                        'amount' => $totalAmount,
+                        'currency' => 'ETB',
+                        'payment_gateway' => 'chapa',
+                        'payment_method' => $paymentMethod,
+                        'transaction_id' => $txRef,
+                        'status' => 'pending',
+                        'reference' => 'chapa_ref_' . time(),
+                        'payment_details' => [
+                            'channel' => $paymentMethod,
+                            'phone' => $request->input('phone', $user->phone ?? '0911000000'),
+                            'email' => $user->email,
+                            'order_ids' => $allOrderIds,
+                        ]
+                    ]);
+
+                    foreach ($createdOrders as $o) {
+                        $o->update([
+                            'payment_reference' => $txRef,
+                            'payment_method' => $paymentMethod,
+                        ]);
+                    }
+
+                    $chapaService = app(\App\Services\ChapaService::class);
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+                    $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true');
+
+                    $chapaRes = $chapaService->initializePayment([
+                        'amount' => $totalAmount,
+                        'currency' => 'ETB',
+                        'email' => $user->email ?? 'aydenfudagne@gmail.com',
+                        'first_name' => $user->name ? explode(' ', $user->name)[0] : 'Ayden',
+                        'last_name' => $user->name && count(explode(' ', $user->name)) > 1 ? explode(' ', $user->name)[1] : 'Buyer',
+                        'phone_number' => $request->input('phone', $user->phone ?? '0911000000'),
+                        'tx_ref' => $txRef,
+                        'return_url' => $returnUrl,
+                    ]);
+
+                    if (!empty($chapaRes['success']) && !empty($chapaRes['checkout_url'])) {
+                        $checkoutUrl = $chapaRes['checkout_url'];
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Chapa auto-init on checkout failed: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order placed successfully',
                 'data' => $createdOrders,
+                'orders' => $createdOrders,
+                'checkout_url' => $checkoutUrl,
+                'tx_ref' => $txRef,
+                'is_chapa' => $isChapa,
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
