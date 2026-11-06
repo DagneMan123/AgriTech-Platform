@@ -235,40 +235,30 @@
               </div>
 
               <div>
-                <div class="mb-1.5">
+                <div class="mb-1.5 flex items-center justify-between">
                   <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Delivery Destination (Hub &amp; Region) *
+                    Delivery Destination (Hub &amp; Region)
                   </label>
+                  <span
+                    v-if="isSetInCart"
+                    class="text-[10px] text-blue-500 font-bold tracking-wide uppercase px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
+                  >
+                    Set in Cart
+                  </span>
                 </div>
 
-                <!-- Delivery Destination Dropdown -->
+                <!-- Single Destination Display (No multi-option dropdown) -->
                 <div class="relative">
-                  <select
-                    v-model="selectedDestination"
-                    @change="handleDestinationDropdownChange"
+                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    :value="destinationDisplayName || selectedDestination"
+                    readonly
                     :class="[
-                      'w-full px-3 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none focus:border-blue-500 transition appearance-none cursor-pointer',
-                      isSetInCart ? 'pr-32' : 'pr-10',
-                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+                      'w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-bold cursor-default select-none focus:outline-none transition',
+                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-800'
                     ]"
-                  >
-                    <option
-                      v-for="d in deliveryDestinations"
-                      :key="d.city + '-' + d.region"
-                      :value="d.city + ', ' + d.region"
-                    >
-                      {{ d.label }}
-                    </option>
-                  </select>
-                  <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                    <span
-                      v-if="isSetInCart"
-                      class="text-[10px] text-blue-500 font-bold tracking-wide uppercase px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
-                    >
-                      Set in Cart
-                    </span>
-                    <ChevronDown class="w-4 h-4 text-slate-400" />
-                  </div>
+                  />
                 </div>
               </div>
 
