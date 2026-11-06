@@ -37,13 +37,6 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
-              @click="openChapaPayModal"
-              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 transition-all transform active:scale-95 cursor-pointer"
-            >
-              <CreditCard class="w-4 h-4" />
-              <span>Chapa Escrow Deposit</span>
-            </button>
-            <button
               @click="openAddModal"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all transform active:scale-95 cursor-pointer"
             >
