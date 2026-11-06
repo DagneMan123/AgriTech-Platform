@@ -346,7 +346,7 @@ class CartController extends Controller
             DB::commit();
 
             $paymentMethod = strtolower($request->input('payment_method', 'telebirr'));
-            $isChapa = in_array($paymentMethod, ['telebirr', 'cbe_birr', 'card', 'cards', 'chapa', 'chapa_digital', 'awash']);
+            $isChapa = !in_array($paymentMethod, ['cash_on_delivery', 'cod']);
             $checkoutUrl = null;
             $txRef = null;
 
@@ -386,13 +386,21 @@ class CartController extends Controller
                     $chapaService = app(\App\Services\ChapaService::class);
                     $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
                     $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true');
+                    if (!str_contains($returnUrl, 'tx_ref=')) {
+                        $separator = str_contains($returnUrl, '?') ? '&' : '?';
+                        $returnUrl .= $separator . 'tx_ref=' . $txRef;
+                    }
+
+                    $names = explode(' ', trim($user->name ?: 'Buyer User'));
+                    $firstName = $names[0] ?? 'Buyer';
+                    $lastName = count($names) > 1 ? end($names) : 'User';
 
                     $chapaRes = $chapaService->initializePayment([
                         'amount' => $totalAmount,
                         'currency' => 'ETB',
                         'email' => $user->email ?? 'aydenfudagne@gmail.com',
-                        'first_name' => $user->name ? explode(' ', $user->name)[0] : 'Ayden',
-                        'last_name' => $user->name && count(explode(' ', $user->name)) > 1 ? explode(' ', $user->name)[1] : 'Buyer',
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
                         'phone_number' => $request->input('phone', $user->phone ?? '0911000000'),
                         'tx_ref' => $txRef,
                         'return_url' => $returnUrl,

@@ -1405,7 +1405,7 @@ const handlePlaceOrder = async () => {
     }
 
     // Client-side fallback initialization if backend didn't return checkout_url directly
-    const isDigitalChapa = ['telebirr', 'cbe_birr', 'card', 'chapa'].includes(paymentForm.value.method)
+    const isDigitalChapa = ['telebirr', 'cbe_birr', 'card', 'chapa', 'bank_transfer'].includes(paymentForm.value.method)
     if (isDigitalChapa && confirmedOrders.value.length > 0) {
       try {
         const orderList = Array.isArray(confirmedOrders.value) ? confirmedOrders.value : [confirmedOrders.value]
@@ -1414,7 +1414,7 @@ const handlePlaceOrder = async () => {
           order_ids: orderIds,
           amount: summaryGrandTotal.value,
           channel: paymentForm.value.method,
-          phone_number: addressForm.value.phone,
+          phone_number: addressForm.value.phone || authStore.user?.phone || '0934318549',
           email: authStore.user?.email || 'aydenfudagne@gmail.com',
           return_url: `${window.location.origin}/buyer/orders?tab=active&payment_success=true`
         })

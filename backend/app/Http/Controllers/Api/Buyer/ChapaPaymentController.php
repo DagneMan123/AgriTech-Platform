@@ -72,7 +72,7 @@ class ChapaPaymentController extends Controller
             ]);
         }
 
-        // Automatically set/update card on payment methods page for this buyer
+        // Register payment method on buyer profile without overriding existing primary method
         $phoneInput = $request->input('phone_number', $user->phone ?? '0911000000');
         $channelTitle = match ($channel) {
             'cbe_birr' => 'CBE Birr (Chapa)',
@@ -82,7 +82,8 @@ class ChapaPaymentController extends Controller
         };
         $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
 
-        \App\Models\PaymentMethod::updateOrCreate(
+        $hasPrimary = \App\Models\PaymentMethod::where('user_id', $user->id)->where('is_primary', true)->exists();
+        \App\Models\PaymentMethod::firstOrCreate(
             [
                 'user_id' => $user->id,
                 'bank_name' => $channelTitle,
@@ -91,15 +92,18 @@ class ChapaPaymentController extends Controller
                 'type' => $methodType,
                 'account_number' => $phoneInput,
                 'account_holder' => $user->name ?: ($user->email ?? 'Account Holder'),
-                'is_primary' => true,
+                'is_primary' => !$hasPrimary,
                 'is_active' => true,
             ]
         );
-        \App\Models\PaymentMethod::where('user_id', $user->id)
-            ->where('bank_name', '!=', $channelTitle)
-            ->update(['is_primary' => false]);
 
         $defaultReturnUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true';
+        $returnUrl = $request->input('return_url') ?: $defaultReturnUrl;
+        if (!str_contains($returnUrl, 'tx_ref=')) {
+            $separator = str_contains($returnUrl, '?') ? '&' : '?';
+            $returnUrl .= $separator . 'tx_ref=' . $txRef;
+        }
+
         $names = explode(' ', trim($user->name ?: 'Buyer User'));
         $firstName = $names[0] ?? 'Buyer';
         $lastName = count($names) > 1 ? end($names) : 'User';
@@ -112,7 +116,7 @@ class ChapaPaymentController extends Controller
             'last_name' => $lastName,
             'phone_number' => $request->input('phone_number', $user->phone),
             'tx_ref' => $txRef,
-            'return_url' => $request->input('return_url') ?: $defaultReturnUrl,
+            'return_url' => $returnUrl,
         ]);
 
         if (empty($res['success']) || empty($res['checkout_url'])) {
@@ -124,7 +128,6 @@ class ChapaPaymentController extends Controller
                 'success' => false,
                 'message' => $res['message'] ?? 'Failed to initialize payment with Chapa.',
             ], 400);
-        }
         }
 
         return response()->json([
@@ -150,7 +153,33 @@ class ChapaPaymentController extends Controller
         $verification = $this->chapa->verifyPayment($txRef);
 
         if ($verification['success']) {
-            $payment = Payment::where('transaction_id', $txRef)->first();
+            $payment = Payment::where('transaction_id', $txRef)
+                ->orWhere('reference', $txRef)
+                ->first();
+
+            if (!$payment) {
+                $matchedOrders = Order::where('payment_reference', $txRef)->get();
+                if ($matchedOrders->isNotEmpty()) {
+                    $payment = Payment::create([
+                        'user_id' => $matchedOrders->first()->buyer_id,
+                        'order_id' => $matchedOrders->first()->id,
+                        'amount' => $matchedOrders->sum('grand_total'),
+                        'currency' => 'ETB',
+                        'payment_gateway' => 'chapa',
+                        'payment_method' => $matchedOrders->first()->payment_method ?: 'telebirr',
+                        'transaction_id' => $txRef,
+                        'status' => 'completed',
+                        'reference' => $txRef,
+                        'paid_at' => now(),
+                        'completed_at' => now(),
+                        'payment_details' => [
+                            'order_ids' => $matchedOrders->pluck('id')->toArray(),
+                            'verified_at' => now()->toIso8601String()
+                        ]
+                    ]);
+                }
+            }
+
             if ($payment) {
                 $payment->update([
                     'status' => 'completed',
@@ -180,7 +209,7 @@ class ChapaPaymentController extends Controller
                     ]);
                 }
 
-                // Set the card on the payment methods page for this buyer
+                // Register payment method on buyer profile without overriding existing primary method
                 $channel = $payment->payment_method ?: 'telebirr';
                 $channelTitle = match ($channel) {
                     'cbe_birr' => 'CBE Birr (Chapa)',
@@ -191,7 +220,8 @@ class ChapaPaymentController extends Controller
                 $phone = $payment->payment_details['phone'] ?? $user?->phone ?? '0911000000';
                 $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
 
-                \App\Models\PaymentMethod::updateOrCreate(
+                $hasPrimary = \App\Models\PaymentMethod::where('user_id', $payment->user_id)->where('is_primary', true)->exists();
+                \App\Models\PaymentMethod::firstOrCreate(
                     [
                         'user_id' => $payment->user_id,
                         'bank_name' => $channelTitle,
@@ -200,13 +230,10 @@ class ChapaPaymentController extends Controller
                         'type' => $methodType,
                         'account_number' => $phone,
                         'account_holder' => $user?->name ?: 'Account Holder',
-                        'is_primary' => true,
+                        'is_primary' => !$hasPrimary,
                         'is_active' => true
                     ]
                 );
-                \App\Models\PaymentMethod::where('user_id', $payment->user_id)
-                    ->where('bank_name', '!=', $channelTitle)
-                    ->update(['is_primary' => false]);
             }
 
             return response()->json([
@@ -273,7 +300,7 @@ class ChapaPaymentController extends Controller
                         ]);
                     }
 
-                    // Set the card on the payment methods page
+                    // Register payment method on buyer profile without overriding existing primary method
                     $channel = $payment->payment_method ?: 'telebirr';
                     $channelTitle = match ($channel) {
                         'cbe_birr' => 'CBE Birr (Chapa)',
@@ -284,7 +311,8 @@ class ChapaPaymentController extends Controller
                     $phone = $payment->payment_details['phone'] ?? '0911000000';
                     $methodType = in_array($channel, ['card', 'cards']) ? 'card' : 'mobile_money';
 
-                    \App\Models\PaymentMethod::updateOrCreate(
+                    $hasPrimary = \App\Models\PaymentMethod::where('user_id', $payment->user_id)->where('is_primary', true)->exists();
+                    \App\Models\PaymentMethod::firstOrCreate(
                         [
                             'user_id' => $payment->user_id,
                             'bank_name' => $channelTitle,
@@ -293,13 +321,10 @@ class ChapaPaymentController extends Controller
                             'type' => $methodType,
                             'account_number' => $phone,
                             'account_holder' => $payment->user?->name ?: 'Account Holder',
-                            'is_primary' => true,
+                            'is_primary' => !$hasPrimary,
                             'is_active' => true,
                         ]
                     );
-                    \App\Models\PaymentMethod::where('user_id', $payment->user_id)
-                        ->where('bank_name', '!=', $channelTitle)
-                        ->update(['is_primary' => false]);
                 }
             }
         }

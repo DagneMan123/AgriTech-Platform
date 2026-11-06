@@ -32,11 +32,17 @@ class ChapaService
             $rawEmail = env('MAIL_FROM_ADDRESS', 'aydenfudagne@gmail.com');
         }
 
-        // 2. Sanitize Phone: Chapa rejects numbers with spaces or special characters
+        // 2. Sanitize Phone: Chapa expects standard Ethiopian local format 09... or 07...
         $rawPhone = trim($data['phone_number'] ?? '');
-        $cleanPhone = preg_replace('/[^0-9+]/', '', $rawPhone);
-        if (empty($cleanPhone) || strlen(preg_replace('/[^0-9]/', '', $cleanPhone)) < 9) {
-            $cleanPhone = '0911000000';
+        $digits = preg_replace('/[^0-9]/', '', $rawPhone);
+        if (str_starts_with($digits, '251') && strlen($digits) >= 12) {
+            $cleanPhone = '0' . substr($digits, 3);
+        } elseif (strlen($digits) === 9 && (str_starts_with($digits, '9') || str_starts_with($digits, '7'))) {
+            $cleanPhone = '0' . $digits;
+        } elseif (strlen($digits) === 10 && (str_starts_with($digits, '09') || str_starts_with($digits, '07'))) {
+            $cleanPhone = $digits;
+        } else {
+            $cleanPhone = strlen($digits) >= 9 ? ('0' . substr($digits, -9)) : '0911000000';
         }
 
         // 3. Split Name
