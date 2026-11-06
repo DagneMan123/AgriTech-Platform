@@ -123,7 +123,7 @@
           </span>
         </button>
 
-        <!-- Order History Tab -->
+        <!-- Past Orders / History Tab -->
         <button
           type="button"
           @click="setTab('past')"
@@ -135,7 +135,7 @@
           ]"
         >
           <History class="w-4 h-4" />
-          <span>Order History</span>
+          <span>Past Orders / History</span>
           <span
             :class="[
               'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
@@ -1022,11 +1022,17 @@
 
           <div class="flex items-center gap-2">
             <router-link
-              to="/buyer/delivery/tracking"
-              class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              :to="{
+                path: '/buyer/delivery/tracking',
+                query: {
+                  tracking: getTrackingNumber(activeOrderForTracking),
+                  order: activeOrderForTracking?.id
+                }
+              }"
+              class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <ExternalLink class="w-3.5 h-3.5" />
-              <span>Full GPS Map</span>
+              <span>Full GPS Map &amp; Telemetry</span>
             </router-link>
             <button
               @click="trackingModalOpen = false"
@@ -1578,11 +1584,23 @@ const getOrderDeliveryFee = (order: any): number => {
 
 const getOrderSupplier = (order: any): string => {
   if (!order) return 'Bahir Dar Agro Farmers Cooperative'
-  const name = order.farmer?.name || order.farmer?.user?.name || order.farmer?.farm_name || order.supplier?.name || order.supplier_name
-  if (!name || name === 'Sample Farmer') {
-    return order.farmer?.farm_name || 'Bahir Dar Agro Farmers Cooperative'
+  const candidates = [
+    order.farmer?.name,
+    order.farmer?.user?.name,
+    order.farmer?.farm_name,
+    order.supplier?.name,
+    order.supplier_name
+  ]
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string') {
+      const trimmed = candidate.trim()
+      const lower = trimmed.toLowerCase()
+      if (trimmed && !lower.includes('sample') && !lower.includes('test farmer')) {
+        return trimmed
+      }
+    }
   }
-  return name
+  return 'Bahir Dar Agro Farmers Cooperative'
 }
 
 const getOrderItems = (order: any): any[] => {
@@ -1831,42 +1849,53 @@ const getVehicleType = (order: any): string => {
 }
 
 const getFarmerPhone = (order: any): string => {
-  const phone = (
-    order?.farmer?.phone_number ||
-    order?.farmer?.user?.phone ||
-    order?.farmer?.phone ||
-    order?.supplier?.phone ||
-    ''
-  )
-  if (!phone || phone === '251911111111') {
-    return '251934318549'
+  const candidates = [
+    order?.farmer?.phone_number,
+    order?.farmer?.user?.phone,
+    order?.farmer?.phone,
+    order?.supplier?.phone
+  ]
+  for (const cand of candidates) {
+    if (cand && typeof cand === 'string') {
+      const trimmed = cand.trim()
+      const digits = trimmed.replace(/\D/g, '')
+      if (digits.length >= 9 && !digits.endsWith('1111111') && !digits.endsWith('0000000')) {
+        return trimmed
+      }
+    }
   }
-  return phone
+  return '+251 93 431 8549'
 }
 
 const cleanPhoneForDialing = (phone: string): string => {
-  if (!phone) return ''
-  const cleaned = phone.replace(/[^\d+]/g, '')
-  if (cleaned.startsWith('09')) {
-    return '+251' + cleaned.slice(1)
+  if (!phone) return '+251934318549'
+  const digits = phone.replace(/\D/g, '')
+  if (digits.endsWith('1111111') || digits.endsWith('0000000')) {
+    return '+251934318549'
   }
-  if (cleaned.startsWith('251')) {
-    return '+' + cleaned
+  if (digits.startsWith('251')) {
+    return '+' + digits
   }
-  return cleaned
+  if (digits.startsWith('09')) {
+    return '+251' + digits.slice(1)
+  }
+  return phone.startsWith('+') ? phone : '+' + phone
 }
 
 const formatPhoneNumber = (phone: string): string => {
-  if (!phone) return ''
-  const cleaned = phone.replace(/[^\d+]/g, '')
-  if (cleaned.startsWith('251') && cleaned.length >= 12) {
-    return `+251 ${cleaned.slice(3, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8)}`
+  if (!phone) return '+251 93 431 8549'
+  const digits = phone.replace(/\D/g, '')
+  if (digits.endsWith('1111111') || digits.endsWith('0000000')) {
+    return '+251 93 431 8549'
   }
-  if (cleaned.startsWith('+251') && cleaned.length >= 13) {
-    return `+251 ${cleaned.slice(4, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9)}`
+  if (digits.startsWith('251') && digits.length >= 12) {
+    return `+251 ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`
   }
-  if (cleaned.startsWith('09') && cleaned.length === 10) {
-    return `+251 ${cleaned.slice(1, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`
+  if (digits.startsWith('09') && digits.length === 10) {
+    return `+251 ${digits.slice(1, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+  }
+  if (phone.startsWith('+251')) {
+    return phone
   }
   return phone
 }

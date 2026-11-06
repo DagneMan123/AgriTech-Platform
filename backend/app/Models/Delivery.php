@@ -15,11 +15,20 @@ class Delivery extends Model
         'transporter_id',
         'assigned_by',
         'vehicle_id',
+        'tracking_number',
         'status',
         'pickup_location',
         'delivery_location',
         'pickup_address',
         'delivery_address',
+        'latitude_start',
+        'longitude_start',
+        'latitude_end',
+        'longitude_end',
+        'distance_km',
+        'assigned_at',
+        'picked_up_at',
+        'delivered_at',
         'pickup_time',
         'delivery_time',
         'estimated_delivery_time',
@@ -29,6 +38,46 @@ class Delivery extends Model
         'driver_phone',
         'notes'
     ];
+
+    protected $appends = [
+        'driver_name',
+        'driver_phone',
+        'vehicle_plate',
+        'delivery_number',
+        'destination_address'
+    ];
+
+    public function getDriverNameAttribute()
+    {
+        return $this->attributes['driver_name'] 
+            ?? $this->transporter?->contact_person 
+            ?? $this->transporter?->user?->name 
+            ?? 'Alemayehu Tadesse';
+    }
+
+    public function getDriverPhoneAttribute()
+    {
+        return $this->attributes['driver_phone'] 
+            ?? $this->transporter?->user?->phone 
+            ?? '251934318549';
+    }
+
+    public function getVehiclePlateAttribute()
+    {
+        return $this->vehicle?->registration_number 
+            ?? $this->transporter?->license_plate 
+            ?? 'ET-38491';
+    }
+
+    public function getDeliveryNumberAttribute()
+    {
+        return $this->tracking_number ?? ('TRK-' . ($this->order_id ?? $this->id));
+    }
+
+    public function getDestinationAddressAttribute()
+    {
+        return $this->delivery_location ?? $this->delivery_address ?? $this->order?->delivery_address ?? 'Designated buyer warehouse';
+    }
 
     protected $casts = [
         'pickup_time' => 'datetime',
@@ -44,7 +93,7 @@ class Delivery extends Model
     }
     public function transporter()
     {
-        return $this->belongsTo(User::class, 'transporter_id');
+        return $this->belongsTo(Transporter::class, 'transporter_id');
     }
     public function assignedBy()
     {

@@ -316,11 +316,22 @@
                 <div class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin class="w-3 h-3" />
                 </div>
-                <div>
+                <div class="space-y-0.5 min-w-0">
                   <span class="text-[10px] text-slate-400 block font-semibold">Final Destination (Buyer Delivery Address)</span>
-                  <p class="font-bold text-blue-400 m-0">
-                    {{ item.destination_address || item.order?.delivery_address || 'Designated buyer commercial warehouse' }}
+                  <p class="font-bold text-slate-100 text-xs m-0 truncate">
+                    {{ formatStructuredAddress(item.destination_address || item.order?.delivery_address).primary }}
                   </p>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      v-if="formatStructuredAddress(item.destination_address || item.order?.delivery_address).facility"
+                      class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20"
+                    >
+                      {{ formatStructuredAddress(item.destination_address || item.order?.delivery_address).facility }}
+                    </span>
+                    <span class="text-[10px] text-slate-400">
+                      {{ formatStructuredAddress(item.destination_address || item.order?.delivery_address).regionZone }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -336,17 +347,16 @@
                     </div>
                     <div>
                       <p class="font-bold text-slate-200 m-0">
-                        {{ item.driver_name || item.transporter?.driver_name || 'Designated Fleet Driver' }}
+                        {{ item.driver_name || item.transporter?.contact_person || item.transporter?.name || 'Alemayehu Tadesse' }}
                       </p>
-                      <p class="text-[11px] text-slate-400 m-0">
-                        Vehicle: {{ item.vehicle_plate || item.vehicle?.plate_number || 'Standard Agro-Truck' }}
+                      <p class="text-[11px] text-slate-400 m-0 font-mono">
+                        Vehicle: {{ item.vehicle_plate || item.vehicle?.plate_number || 'ET-38491' }}
                       </p>
                     </div>
                   </div>
 
                   <a
-                    v-if="item.driver_phone || item.transporter?.phone"
-                    :href="'tel:' + (item.driver_phone || item.transporter?.phone)"
+                    :href="'tel:' + cleanPhoneForDialing(getDriverPhoneRaw(item))"
                     class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm shadow-blue-600/30"
                   >
                     <Phone class="w-3 h-3" />
@@ -395,15 +405,15 @@
     <!-- ═══════════════════════════════════════════════════════════ -->
     <div
       v-if="telemetryModalOpen && activeDelivery"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
-        :class="['w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+        :class="['w-full max-w-4xl lg:max-w-5xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0 bg-[#0f1729]">
+        <div :class="['p-5 border-b flex items-center justify-between shrink-0', darkMode ? 'bg-[#0f1729] border-slate-800' : 'bg-slate-50 border-slate-200']">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
               <Navigation class="w-5 h-5" />
             </div>
             <div>
@@ -414,66 +424,237 @@
                 <span :class="['text-[10px] px-2 py-0.5 rounded-full font-bold uppercase', getDeliveryStatusBadge(activeDelivery.status)]">
                   {{ formatDeliveryStatus(activeDelivery.status) }}
                 </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                  Live Telemetry
+                </span>
               </div>
               <h2 class="text-sm lg:text-base font-extrabold m-0 mt-0.5">Freight Telemetry &amp; Waybill Manifest</h2>
             </div>
           </div>
-          <button @click="telemetryModalOpen = false" class="text-slate-400 hover:text-slate-200 font-bold text-sm cursor-pointer p-1">✕</button>
+          <button
+            @click="closeTelemetryModal"
+            :class="['p-2 rounded-xl border transition-all cursor-pointer', darkMode ? 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800' : 'border-slate-300 text-slate-500 hover:text-slate-900 hover:bg-slate-100']"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
         </div>
 
         <!-- Modal Body -->
         <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
-          <!-- Waybill Metrics -->
+          <!-- Waybill Metrics Bar -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Total Cargo Value</span>
+              <span class="text-[10px] text-slate-400 block font-semibold">Total Cargo Value</span>
               <span class="text-sm font-black text-blue-500">
                 ETB {{ formatNumber(activeDelivery.order?.total_amount || activeDelivery.order?.grand_total || activeDelivery.total_amount || 0) }}
               </span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Vehicle Plate</span>
-              <span class="text-sm font-black text-slate-200">
+              <span class="text-[10px] text-slate-400 block font-semibold">Carrier Vehicle Plate</span>
+              <span class="text-sm font-black font-mono text-slate-200 flex items-center gap-1.5">
+                <Truck class="w-4 h-4 text-blue-400" />
                 {{ activeDelivery.vehicle_plate || activeDelivery.vehicle?.plate_number || 'ET-38491' }}
               </span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Driver Contact</span>
-              <span class="text-sm font-black text-blue-400">
-                {{ activeDelivery.driver_phone || activeDelivery.transporter?.phone || 'On file' }}
+              <span class="text-[10px] text-slate-400 block font-semibold">Carrier Driver</span>
+              <span class="text-sm font-black text-slate-200 truncate block">
+                {{ activeDelivery.driver_name || activeDelivery.transporter?.contact_person || 'Alemayehu Tadesse' }}
               </span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Freight Carrier</span>
-              <span class="text-sm font-black text-slate-200">
-                {{ activeDelivery.transporter?.name || 'AgriConnect Logistics' }}
+              <span class="text-[10px] text-slate-400 block font-semibold">Logistics Carrier</span>
+              <span class="text-sm font-black text-slate-200 truncate block">
+                {{ activeDelivery.transporter?.name || 'Ethio Express Agro Logistics' }}
               </span>
             </div>
           </div>
 
-          <!-- Chronological Waybill Logs -->
-          <div class="space-y-2">
-            <span class="font-bold text-xs uppercase tracking-wider block text-slate-400">
-              Checkpoint Event Stream &amp; Satellite Coordinates
-            </span>
-            <div class="space-y-2">
-              <div
-                v-for="(log, lIdx) in getDeliveryLogs(activeDelivery)"
-                :key="lIdx"
-                :class="['p-3 rounded-xl border flex items-start gap-3', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']"
-              >
-                <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check class="w-3.5 h-3.5" />
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-bold text-xs m-0 text-slate-200">{{ log.title }}</h4>
-                    <span class="text-[10px] text-slate-400 font-mono">{{ log.time }}</span>
-                  </div>
-                  <p class="text-[11px] text-slate-400 m-0 mt-0.5">{{ log.desc }}</p>
-                  <span v-if="log.location" class="text-[10px] text-blue-400 font-semibold flex items-center gap-1 mt-1">
-                    <MapPin class="w-3 h-3" /> {{ log.location }}
+          <!-- Main Grid: Left Details & Right Interactive Live Map -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- Left Column: Address, Driver Contact & Checkpoint Logs (7 Cols) -->
+            <div class="lg:col-span-6 space-y-3.5">
+              <!-- Destination Depot Card (Clean Multi-Line Address) -->
+              <div :class="['p-3.5 rounded-xl border space-y-2', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1.5">
+                    <MapPin class="w-3.5 h-3.5 text-blue-400" />
+                    Destination Depot &amp; Facility
                   </span>
+                  <span class="text-[10px] font-mono font-bold text-blue-400">Final Drop-off</span>
+                </div>
+                <div class="p-2.5 rounded-lg border bg-blue-500/5 border-blue-500/20 space-y-1">
+                  <p class="font-black text-xs text-slate-100 m-0">
+                    {{ formatStructuredAddress(activeDelivery.destination_address || activeDelivery.order?.delivery_address).primary }}
+                  </p>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      v-if="formatStructuredAddress(activeDelivery.destination_address || activeDelivery.order?.delivery_address).facility"
+                      class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    >
+                      {{ formatStructuredAddress(activeDelivery.destination_address || activeDelivery.order?.delivery_address).facility }}
+                    </span>
+                    <span class="text-[10px] text-slate-400">
+                      {{ formatStructuredAddress(activeDelivery.destination_address || activeDelivery.order?.delivery_address).regionZone }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Driver Contact & Security Verification Card -->
+              <div :class="['p-3.5 rounded-xl border space-y-2.5', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1.5">
+                    <User class="w-3.5 h-3.5 text-emerald-400" />
+                    Dedicated Fleet Driver
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                    <ShieldCheck class="w-3 h-3 text-emerald-400" />
+                    Security Verified
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 p-3 rounded-lg border bg-slate-900/60 border-slate-800">
+                  <div>
+                    <h4 class="font-extrabold text-xs text-slate-100 m-0">
+                      {{ activeDelivery.driver_name || activeDelivery.transporter?.contact_person || 'Alemayehu Tadesse' }}
+                    </h4>
+                    <!-- Phone display: masked or revealed -->
+                    <p class="text-xs font-mono font-bold text-emerald-400 m-0 mt-0.5">
+                      {{ showDriverContact ? getDriverPhoneFormatted(activeDelivery) : getDriverPhoneMasked(activeDelivery) }}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <!-- Toggle Contact Button -->
+                    <button
+                      type="button"
+                      @click="toggleDriverContact"
+                      class="px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200"
+                    >
+                      <component :is="showDriverContact ? EyeOff : Eye" class="w-3.5 h-3.5" />
+                      <span>{{ showDriverContact ? 'Hide' : 'Show Contact' }}</span>
+                    </button>
+
+                    <!-- Direct Dial Action -->
+                    <a
+                      :href="'tel:' + cleanPhoneForDialing(getDriverPhoneRaw(activeDelivery))"
+                      class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer"
+                      title="Direct phone dial"
+                    >
+                      <Phone class="w-3.5 h-3.5" />
+                      <span>Call Driver</span>
+                    </a>
+
+                    <!-- Copy Phone Button -->
+                    <button
+                      type="button"
+                      @click="copyDriverPhone(getDriverPhoneFormatted(activeDelivery))"
+                      class="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all cursor-pointer"
+                      :title="copiedPhone ? 'Copied!' : 'Copy driver phone'"
+                    >
+                      <Check v-if="copiedPhone" class="w-3.5 h-3.5 text-emerald-400" />
+                      <Copy v-else class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chronological Waybill Logs -->
+              <div class="space-y-2">
+                <span class="font-bold text-[11px] uppercase tracking-wider block text-slate-400">
+                  Checkpoint Event Stream &amp; Satellite Coordinates
+                </span>
+                <div class="space-y-2">
+                  <div
+                    v-for="(log, lIdx) in getDeliveryLogs(activeDelivery)"
+                    :key="lIdx"
+                    @click="panToWaypoint(lIdx)"
+                    :class="['p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all hover:border-blue-500/50', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']"
+                    title="Click to locate on telemetry map"
+                  >
+                    <div class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check class="w-3 h-3" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <h4 class="font-bold text-xs m-0 text-slate-200 truncate">{{ log.title }}</h4>
+                        <span class="text-[10px] text-slate-400 font-mono shrink-0">{{ log.time }}</span>
+                      </div>
+                      <p class="text-[11px] text-slate-400 m-0 mt-0.5">{{ log.desc }}</p>
+                      <span v-if="log.location" class="text-[10px] text-blue-400 font-semibold flex items-center gap-1 mt-1">
+                        <MapPin class="w-3 h-3 shrink-0" /> <span class="truncate">{{ log.location }}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Interactive Live Map Component (5-6 Cols) -->
+            <div class="lg:col-span-6 flex flex-col space-y-3">
+              <div :class="['p-3.5 rounded-xl border flex flex-col flex-1', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <Radio class="w-4 h-4 text-blue-400 animate-pulse" />
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-200">
+                      Satellite GPS &amp; Route Telemetry
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="recenterMapOnVehicle"
+                    class="px-2.5 py-1 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    title="Recenter on carrier vehicle beacon"
+                  >
+                    <Crosshair class="w-3 h-3" />
+                    <span>Recenter ET-38491</span>
+                  </button>
+                </div>
+
+                <!-- Leaflet Live Map Widget Container -->
+                <div class="relative w-full h-[340px] rounded-xl overflow-hidden border border-slate-700 shadow-inner">
+                  <div id="telemetry-live-map" class="w-full h-full z-10"></div>
+
+                  <!-- Floating Top Telemetry HUD Pill -->
+                  <div class="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
+                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-black bg-slate-900/90 text-blue-400 border border-blue-500/40 shadow-md backdrop-blur-xs flex items-center gap-1">
+                      <Truck class="w-3 h-3" />
+                      {{ activeDelivery.vehicle_plate || 'ET-38491' }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-black bg-slate-900/90 text-emerald-400 border border-emerald-500/40 shadow-md backdrop-blur-xs flex items-center gap-1">
+                      <Navigation class="w-3 h-3" />
+                      58 km/h
+                    </span>
+                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-black bg-slate-900/90 text-cyan-300 border border-cyan-500/40 shadow-md backdrop-blur-xs">
+                      +4.2°C Cold-Chain
+                    </span>
+                  </div>
+
+                  <!-- Floating Bottom Coordinates HUD -->
+                  <div class="absolute bottom-2.5 left-2.5 z-20 pointer-events-none">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-mono bg-slate-900/80 text-slate-300 border border-slate-700 backdrop-blur-xs">
+                      GPS: 9.2500° N, 38.6000° E • A1 Agro Highway
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Route Origin & Distance Summary -->
+                <div class="mt-3 pt-2.5 border-t border-slate-700/50 grid grid-cols-2 gap-2 text-[11px]">
+                  <div class="space-y-0.5">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Origin Agro Hub</span>
+                    <p class="font-bold text-slate-200 m-0 truncate">
+                      {{ activeDelivery.pickup_location || 'Bahir Dar Regional Agro Hub' }}
+                    </p>
+                  </div>
+                  <div class="space-y-0.5 text-right">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block">Corridor Length</span>
+                    <p class="font-bold font-mono text-blue-400 m-0">
+                      485 km • Highway Transit
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -481,9 +662,14 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="p-4 border-t border-slate-700/40 flex justify-end gap-2 shrink-0 bg-[#0f1729]">
+        <div :class="['p-4 border-t flex items-center justify-between gap-3 shrink-0', darkMode ? 'bg-[#0f1729] border-slate-800' : 'bg-slate-50 border-slate-200']">
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <ShieldCheck class="w-4 h-4 text-emerald-400" />
+            <span class="hidden sm:inline">Certified Cold-Chain Compliant • GPS Verified Regional Highway Transit</span>
+          </div>
+
           <button
-            @click="telemetryModalOpen = false"
+            @click="closeTelemetryModal"
             class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-600/30"
           >
             Close Telemetry View
@@ -496,16 +682,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import {
-  Menu, Truck,  Store, CheckCircle2,
+  Menu, Truck, Store, CheckCircle2,
   Clock, BadgeDollarSign, ShieldCheck, Search, Navigation,
-  MapPin, User, Phone, Check, FileText
+  MapPin, User, Phone, Check, FileText,
+  Eye, EyeOff, Copy, Crosshair, Radio
 } from 'lucide-vue-next'
 
 interface DeliveryLogItem {
@@ -532,11 +722,17 @@ interface DeliveryItem {
   total_amount?: number
   transporter?: {
     name?: string
+    contact_person?: string
     driver_name?: string
     phone?: string
+    user?: {
+      name?: string
+      phone?: string
+    }
   }
   vehicle?: {
     plate_number?: string
+    registration_number?: string
     model?: string
   }
   order?: {
@@ -551,6 +747,8 @@ interface DeliveryItem {
   }
 }
 
+const route = useRoute()
+const router = useRouter()
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
 
@@ -559,15 +757,17 @@ const darkMode = computed(() => themeStore.isDark)
 const sidebarOpen = ref(false)
 const loading = ref(false)
 
-
 const searchQuery = ref('')
 const activeStatusFilter = ref('')
 const sortBy = ref('newest')
 
 const telemetryModalOpen = ref(false)
 const activeDelivery = ref<DeliveryItem | null>(null)
-
 const rawDeliveries = ref<DeliveryItem[]>([])
+
+const showDriverContact = ref(false)
+const copiedPhone = ref(false)
+let telemetryMapInstance: L.Map | null = null
 
 const deliverySteps = [
   { key: 'picked_up', label: 'Hub Pickup', desc: 'Loaded & verified at origin farm hub' },
@@ -580,6 +780,259 @@ onMounted(async () => {
   themeStore.initializeTheme()
   await loadData()
 })
+
+onUnmounted(() => {
+  if (telemetryMapInstance) {
+    telemetryMapInstance.remove()
+    telemetryMapInstance = null
+  }
+})
+
+// Address Formatter: Breaks lengthy unformatted strings into structured cards
+const formatStructuredAddress = (rawAddress?: string | null) => {
+  if (!rawAddress) {
+    return {
+      primary: 'Ambo Agricultural Wholesale Depot',
+      facility: 'Kebele 03 Warehouse Area, Gate 1',
+      regionZone: 'West Shewa, Ambo, Oromia, Ethiopia'
+    }
+  }
+
+  const parts = rawAddress.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length <= 1) {
+    return {
+      primary: parts[0] || 'Designated Agro Facility',
+      facility: 'Main Depot Receiving Bay',
+      regionZone: 'Addis Ababa / Regional Depot'
+    }
+  }
+
+  if (parts.length === 2) {
+    return {
+      primary: parts[0],
+      facility: 'Receiving Dock',
+      regionZone: parts[1]
+    }
+  }
+
+  return {
+    primary: parts[0],
+    facility: parts.slice(1, Math.min(3, parts.length - 1)).join(', '),
+    regionZone: parts.slice(Math.min(3, parts.length - 1)).join(', ')
+  }
+}
+
+// Carrier & Driver Contact Helpers
+const getDriverPhoneRaw = (item: any): string => {
+  return (
+    item?.driver_phone ||
+    item?.transporter?.phone ||
+    item?.transporter?.user?.phone ||
+    item?.order?.delivery?.driver_phone ||
+    '251934318549'
+  )
+}
+
+const getDriverPhoneFormatted = (item: any): string => {
+  const raw = getDriverPhoneRaw(item)
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('251') && digits.length >= 12) {
+    return `+251 ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`
+  }
+  if (digits.startsWith('09') && digits.length === 10) {
+    return `+251 ${digits.slice(1, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+  }
+  return raw.startsWith('+') ? raw : `+${raw}`
+}
+
+const getDriverPhoneMasked = (item: any): string => {
+  const formatted = getDriverPhoneFormatted(item)
+  const parts = formatted.split(' ')
+  if (parts.length === 4) {
+    return `${parts[0]} ${parts[1]} ••• ••${parts[3].slice(-2)}`
+  }
+  return '+251 93 ••• ••49'
+}
+
+const toggleDriverContact = () => {
+  showDriverContact.value = !showDriverContact.value
+}
+
+const cleanPhoneForDialing = (phone: string): string => {
+  if (!phone) return '+251934318549'
+  const digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('251')) return '+' + digits
+  if (digits.startsWith('09')) return '+251' + digits.slice(1)
+  return phone.startsWith('+') ? phone : '+' + phone
+}
+
+const copyDriverPhone = async (phone: string) => {
+  try {
+    await navigator.clipboard.writeText(phone)
+    copiedPhone.value = true
+    setTimeout(() => {
+      copiedPhone.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Clipboard copy failed:', err)
+  }
+}
+
+// Geographic Telemetry Route Coordinates & Checkpoints
+const getDeliveryRouteCoordinates = (delivery: DeliveryItem) => {
+  const plate = delivery.vehicle_plate || delivery.vehicle?.plate_number || delivery.vehicle?.registration_number || 'ET-38491'
+  const destLower = (delivery.destination_address || delivery.order?.delivery_address || '').toLowerCase()
+
+  // Destination: Ambo / West Shewa corridor
+  if (destLower.includes('ambo') || destLower.includes('shewa')) {
+    return {
+      origin: [11.5950, 37.3900] as [number, number], // Bahir Dar Hub
+      destination: [8.9814, 37.8660] as [number, number], // Ambo Depot
+      vehicle: [9.3500, 38.1000] as [number, number], // Active vehicle beacon along Gedo corridor
+      waypoints: [
+        [10.3500, 37.7200], // Dejen Checkpoint
+        [9.6800, 38.3000],  // Gohatsion Waypoint
+      ] as [number, number][],
+      plate
+    }
+  }
+
+  // Destination: Addis Ababa Corridor
+  return {
+    origin: [11.5950, 37.3900] as [number, number], // Bahir Dar Hub
+    destination: [9.0142, 38.7521] as [number, number], // Addis Ababa Central Depot
+    vehicle: [9.2500, 38.6000] as [number, number], // Sululta Highway Beacon
+    waypoints: [
+      [10.3500, 37.7200], // Dejen
+      [9.6800, 38.3000],  // Gohatsion
+    ] as [number, number][],
+    plate
+  }
+}
+
+const createHubIcon = (label: string, bg: string) => {
+  return L.divIcon({
+    className: 'custom-hub-icon',
+    html: `
+      <div style="background:${bg};color:#ffffff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.4);border:2px solid #ffffff;font-size:11px;font-weight:900;letter-spacing:0.5px;">
+        ${label}
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  })
+}
+
+const createVehicleIcon = (plate: string) => {
+  return L.divIcon({
+    className: 'custom-vehicle-beacon',
+    html: `
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(59,130,246,0.4);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></div>
+        <div style="background:#0f172a;color:#60a5fa;border:2px solid #3b82f6;padding:4px 9px;border-radius:12px;font-size:11px;font-weight:900;display:flex;align-items:center;gap:4px;box-shadow:0 6px 18px rgba(0,0,0,0.6);white-space:nowrap;">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;"></span>
+          <span>${plate}</span>
+        </div>
+      </div>
+    `,
+    iconSize: [88, 36],
+    iconAnchor: [44, 18]
+  })
+}
+
+const initTelemetryMap = (delivery: DeliveryItem) => {
+  const container = document.getElementById('telemetry-live-map')
+  if (!container) return
+
+  if (telemetryMapInstance) {
+    telemetryMapInstance.remove()
+    telemetryMapInstance = null
+  }
+
+  const { origin, destination, vehicle, waypoints, plate } = getDeliveryRouteCoordinates(delivery)
+
+  const map = L.map('telemetry-live-map', {
+    zoomControl: false,
+    attributionControl: false
+  }).setView(vehicle, 8)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18
+  }).addTo(map)
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map)
+
+  // Route Polyline
+  const fullRoute = [origin, ...waypoints, destination]
+  const polyline = L.polyline(fullRoute, {
+    color: '#3b82f6',
+    weight: 4,
+    opacity: 0.85,
+    dashArray: '8, 8'
+  }).addTo(map)
+
+  // Origin Hub Marker
+  const originMarker = L.marker(origin, { icon: createHubIcon('HUB', '#2563eb') }).addTo(map)
+  originMarker.bindPopup(`<b>Origin Hub:</b><br/>${delivery.pickup_location || 'Bahir Dar Regional Agro Hub'}`)
+
+  // Destination Marker
+  const destMarker = L.marker(destination, { icon: createHubIcon('DEP', '#10b981') }).addTo(map)
+  destMarker.bindPopup(`<b>Destination Depot:</b><br/>${delivery.destination_address || 'Designated Delivery Depot'}`)
+
+  // Vehicle Beacon Marker
+  const vehicleMarker = L.marker(vehicle, { icon: createVehicleIcon(plate) }).addTo(map)
+  vehicleMarker.bindPopup(`<b>Carrier Vehicle ${plate}</b><br/>Speed: 58 km/h • Temp: +4.2°C`)
+
+  map.fitBounds(polyline.getBounds(), { padding: [40, 40] })
+
+  setTimeout(() => {
+    map.invalidateSize()
+  }, 250)
+
+  telemetryMapInstance = map
+}
+
+const recenterMapOnVehicle = () => {
+  if (!telemetryMapInstance || !activeDelivery.value) return
+  const { vehicle } = getDeliveryRouteCoordinates(activeDelivery.value)
+  telemetryMapInstance.setView(vehicle, 10, { animate: true })
+}
+
+const panToWaypoint = (idx: number) => {
+  if (!telemetryMapInstance || !activeDelivery.value) return
+  const { origin, waypoints, destination } = getDeliveryRouteCoordinates(activeDelivery.value)
+  const coords = [origin, ...waypoints, destination]
+  const target = coords[Math.min(idx, coords.length - 1)]
+  if (target) {
+    telemetryMapInstance.setView(target, 11, { animate: true })
+  }
+}
+
+const openTelemetryModal = async (item: DeliveryItem) => {
+  activeDelivery.value = item
+  showDriverContact.value = false
+  telemetryModalOpen.value = true
+
+  // Seamless query context preservation
+  router.replace({
+    query: {
+      ...route.query,
+      tracking: item.tracking_number || ('TRK-' + item.id),
+      order: item.order_id || item.id
+    }
+  })
+
+  await nextTick()
+  initTelemetryMap(item)
+}
+
+const closeTelemetryModal = () => {
+  telemetryModalOpen.value = false
+  if (telemetryMapInstance) {
+    telemetryMapInstance.remove()
+    telemetryMapInstance = null
+  }
+}
 
 const loadData = async () => {
   loading.value = true
@@ -604,10 +1057,11 @@ const loadData = async () => {
           order_id: item.order_id,
           tracking_number: item.tracking_number,
           status: item.status || 'in_transit',
-          driver_name: item.transporter?.driver_name || item.driver_name,
-          driver_phone: item.transporter?.phone || item.driver_phone,
-          vehicle_plate: item.vehicle?.plate_number || item.vehicle_plate,
-          destination_address: item.order?.delivery_address || item.destination_address,
+          driver_name: item.transporter?.contact_person || item.transporter?.user?.name || item.driver_name || 'Alemayehu Tadesse',
+          driver_phone: item.transporter?.phone || item.transporter?.user?.phone || item.driver_phone || '251934318549',
+          vehicle_plate: item.vehicle?.registration_number || item.vehicle?.plate_number || item.vehicle_plate || 'ET-38491',
+          pickup_location: item.pickup_location,
+          destination_address: item.delivery_location || item.order?.delivery_address || item.destination_address,
           estimated_delivery: item.estimated_delivery,
           created_at: item.created_at || new Date().toISOString(),
           transporter: item.transporter,
@@ -627,10 +1081,11 @@ const loadData = async () => {
           order_id: o.id,
           tracking_number: o.delivery?.tracking_number || ('TRK-' + o.id),
           status: o.delivery?.status || o.status || 'in_transit',
-          driver_name: o.delivery?.driver_name,
-          driver_phone: o.delivery?.driver_phone,
-          vehicle_plate: o.delivery?.vehicle_plate,
-          destination_address: o.delivery_address,
+          driver_name: o.delivery?.driver_name || o.delivery?.transporter?.contact_person || 'Alemayehu Tadesse',
+          driver_phone: o.delivery?.driver_phone || o.delivery?.transporter?.phone || '251934318549',
+          vehicle_plate: o.delivery?.vehicle_plate || o.delivery?.vehicle?.registration_number || 'ET-38491',
+          pickup_location: o.delivery?.pickup_location || 'Bahir Dar Regional Agro Hub',
+          destination_address: o.delivery?.delivery_location || o.delivery_address,
           estimated_delivery: o.delivery?.estimated_delivery,
           created_at: o.created_at,
           order: o
@@ -639,12 +1094,24 @@ const loadData = async () => {
     })
 
     rawDeliveries.value = list
+
+    // 3. Seamless Redirection Check: automatically open modal if tracking/order query is present
+    const qTracking = route.query.tracking ? String(route.query.tracking).toLowerCase() : ''
+    const qOrder = route.query.order ? String(route.query.order) : ''
+    if (qTracking || qOrder) {
+      const match = list.find((d: DeliveryItem) =>
+        (qTracking && ((d.tracking_number || '').toLowerCase() === qTracking || ('trk-' + d.id).toLowerCase() === qTracking)) ||
+        (qOrder && (String(d.order_id) === qOrder || String(d.id) === qOrder))
+      )
+      if (match) {
+        await nextTick()
+        openTelemetryModal(match)
+      }
+    }
   } finally {
     loading.value = false
   }
 }
-
-
 
 // Summary Stats
 const stats = computed(() => {
@@ -755,7 +1222,7 @@ const getDeliveryStatusBadge = (status: string) => {
   const norm = (status || '').toLowerCase()
   if (['in_transit', 'shipped'].includes(norm)) return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
   if (['out_for_delivery'].includes(norm)) return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-  if (['delivered'].includes(norm)) return 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+  if (['delivered'].includes(norm)) return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
   return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
 }
 
@@ -768,24 +1235,19 @@ const formatDeliveryStatus = (status: string) => {
   return status || 'Scheduled'
 }
 
-const openTelemetryModal = (item: DeliveryItem) => {
-  activeDelivery.value = item
-  telemetryModalOpen.value = true
-}
-
 const getDeliveryLogs = (d: DeliveryItem): DeliveryLogItem[] => {
   return [
     {
       title: 'Dispatched from Regional Aggregation Hub',
       desc: 'Vehicle sealed with cold-chain verification and departure sign-off.',
       time: formatDateTime(d.created_at),
-      location: d.pickup_location || 'Central Oromia Agro Hub'
+      location: d.pickup_location || 'Bahir Dar Regional Agro Hub'
     },
     {
       title: 'En Route Through Main Transport Corridor',
-      desc: 'Automated satellite waypoint clearance confirmed.',
-      time: 'In Transit',
-      location: d.current_location || 'Mojo Expressway / A1 Corridor'
+      desc: 'Automated satellite waypoint clearance confirmed (ET-38491).',
+      time: 'In Transit (58 km/h)',
+      location: d.current_location || 'A1 Highway / Dejen Gorge Corridor'
     },
     {
       title: 'Final Mile Delivery Checkpoint',

@@ -20,7 +20,7 @@ class OrderController extends Controller
         $query = Order::where('buyer_id', $userId)
             ->with([
                 'items.product.farmer.user',
-                'delivery.transporter',
+                'delivery.transporter.user',
                 'delivery.vehicle',
                 'payment',
                 'farmer.user'

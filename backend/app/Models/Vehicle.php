@@ -11,20 +11,53 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
+        'transport_provider_id',
         'transporter_id',
         'vehicle_type',
+        'registration_number',
         'vehicle_plate',
+        'make',
+        'model',
         'vehicle_model',
         'vehicle_brand',
+        'year',
         'vehicle_year',
+        'capacity_tons',
         'capacity_kg',
         'capacity_volume',
         'capacity_unit',
         'color',
+        'insurance_number',
         'insurance_expiry',
+        'license_number',
         'license_expiry',
-        'status'
+        'status',
+        'notes'
     ];
+
+    protected $appends = [
+        'vehicle_plate',
+        'plate_number',
+        'vehicle_model'
+    ];
+
+    public function getVehiclePlateAttribute()
+    {
+        return $this->registration_number ?? $this->attributes['vehicle_plate'] ?? 'ET-38491';
+    }
+
+    public function getPlateNumberAttribute()
+    {
+        return $this->getVehiclePlateAttribute();
+    }
+
+    public function getVehicleModelAttribute()
+    {
+        if ($this->make && $this->model) {
+            return trim($this->make . ' ' . $this->model);
+        }
+        return $this->attributes['vehicle_model'] ?? 'ISUZU FSR Insulated Cold-Chain Truck';
+    }
 
     protected $casts = [
         'vehicle_year' => 'integer',

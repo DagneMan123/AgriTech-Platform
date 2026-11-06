@@ -195,7 +195,7 @@ class DashboardController extends Controller
         $buyer = $request->user();
 
         $deliveries = Delivery::whereHas('order', fn($q) => $q->where('buyer_id', $buyer->id))
-            ->with(['order', 'tracking', 'transporter', 'vehicle'])
+            ->with(['order.farmer.user', 'tracking', 'transporter.user', 'vehicle'])
             ->latest()
             ->paginate(20);
 
