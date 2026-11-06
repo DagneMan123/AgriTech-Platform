@@ -95,80 +95,171 @@
         </button>
       </div>
 
-      <!-- ── Database Stats Summary Cards ── -->
+      <!-- ── Unified Main Content Navigation Tabs ── -->
+      <nav
+        aria-label="Order Lifecycle Categories"
+        :class="['flex items-center gap-2 p-1.5 rounded-2xl border mb-6 transition-all overflow-x-auto shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']"
+      >
+        <!-- Active Orders Tab -->
+        <button
+          type="button"
+          @click="setTab('active')"
+          :class="[
+            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
+            activeTab === 'active'
+              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
+              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
+          ]"
+        >
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Active Orders</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
+              activeTab === 'active' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
+            ]"
+          >
+            {{ activeOrdersCount }}
+          </span>
+        </button>
+
+        <!-- Order History Tab -->
+        <button
+          type="button"
+          @click="setTab('past')"
+          :class="[
+            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
+            activeTab === 'past'
+              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
+              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
+          ]"
+        >
+          <History class="w-4 h-4" />
+          <span>Order History</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
+              activeTab === 'past' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
+            ]"
+          >
+            {{ pastOrdersCount }}
+          </span>
+        </button>
+
+        <!-- All Orders Tab -->
+        <button
+          type="button"
+          @click="setTab('all')"
+          :class="[
+            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
+            activeTab === 'all'
+              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
+              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
+          ]"
+        >
+          <Package class="w-4 h-4" />
+          <span>All Orders</span>
+          <span
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
+              activeTab === 'all' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
+            ]"
+          >
+            {{ totalOrders }}
+          </span>
+        </button>
+      </nav>
+
+      <!-- ── Database Stats Summary Cards (Interactive Filters) ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Orders -->
         <article
-          @click="selectedStatus = ''"
+          @click="handleCardFilter('total')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-indigo-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-indigo-600 hover:bg-slate-50',
-            !selectedStatus ? 'ring-2 ring-indigo-500/60' : ''
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-indigo-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-indigo-600 hover:bg-slate-50',
+            activeTab === 'all' && !selectedStatus ? 'ring-2 ring-indigo-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
           ]"
+          title="Click to view all order records"
         >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Orders</h3>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              <span>Total Orders</span>
+              <span v-if="activeTab === 'all' && !selectedStatus" class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+            </h3>
             <p class="text-2xl font-black">{{ totalOrders }}</p>
             <span class="text-[10px] text-indigo-500 font-medium">All database records</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600']">
             <ShoppingBag class="w-6 h-6" />
           </div>
         </article>
 
         <!-- Pending / In Preparation -->
         <article
-          @click="toggleStatusFilter('pending')"
+          @click="handleCardFilter('pending')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600 hover:bg-slate-50',
-            selectedStatus === 'pending' ? 'ring-2 ring-amber-500/60' : ''
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600 hover:bg-slate-50',
+            activeTab === 'active' && selectedStatus === 'pending' ? 'ring-2 ring-amber-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
           ]"
+          title="Click to filter active orders to pending confirmation"
         >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Pending</h3>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              <span>Pending</span>
+              <span v-if="activeTab === 'active' && selectedStatus === 'pending'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            </h3>
             <p class="text-2xl font-black text-amber-500">{{ pendingOrders }}</p>
             <span class="text-[10px] text-amber-500 font-medium">Awaiting fulfillment</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600']">
             <Clock class="w-6 h-6" />
           </div>
         </article>
 
         <!-- In Transit -->
         <article
-          @click="toggleStatusFilter('shipped')"
+          @click="handleCardFilter('shipped')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600 hover:bg-slate-50',
-            selectedStatus === 'shipped' ? 'ring-2 ring-purple-500/60' : ''
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600 hover:bg-slate-50',
+            activeTab === 'active' && selectedStatus === 'shipped' ? 'ring-2 ring-purple-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
           ]"
+          title="Click to filter active orders to freight in transit"
         >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In Transit</h3>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              <span>In Transit</span>
+              <span v-if="activeTab === 'active' && selectedStatus === 'shipped'" class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+            </h3>
             <p class="text-2xl font-black text-purple-500">{{ shippedOrders }}</p>
             <span class="text-[10px] text-purple-500 font-medium">Dispatched freight</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600']">
             <Truck class="w-6 h-6" />
           </div>
         </article>
 
         <!-- Delivered -->
         <article
-          @click="toggleStatusFilter('delivered')"
+          @click="handleCardFilter('delivered')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500 hover:bg-slate-800/50' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600 hover:bg-slate-50',
-            selectedStatus === 'delivered' ? 'ring-2 ring-emerald-500/60' : ''
+            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
+            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600 hover:bg-slate-50',
+            activeTab === 'past' && selectedStatus === 'delivered' ? 'ring-2 ring-emerald-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
           ]"
+          title="Click to view delivered orders in order history"
         >
           <div>
-            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivered</h3>
+            <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+              <span>Delivered</span>
+              <span v-if="activeTab === 'past' && selectedStatus === 'delivered'" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            </h3>
             <p class="text-2xl font-black text-emerald-500">{{ deliveredOrders }}</p>
             <span class="text-[10px] text-emerald-500 font-medium">Delivered &amp; completed</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
             <CheckCircle2 class="w-6 h-6" />
           </div>
         </article>
@@ -194,12 +285,25 @@
               v-model="selectedStatus"
               :class="['w-full px-3 py-2 rounded-xl text-xs border outline-none transition-all cursor-pointer font-medium', darkMode ? 'bg-[#0f172a] border-slate-700 text-slate-100 focus:border-blue-500' : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-blue-500']"
             >
-              <option value="">All Statuses ({{ totalOrders }})</option>
-              <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
-              <option value="confirmed">Confirmed / Preparing</option>
-              <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
-              <option value="delivered">Delivered ({{ deliveredOrders }})</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="">
+                {{ activeTab === 'active' ? `All Active Orders (${activeOrdersCount})` : (activeTab === 'past' ? `All Past Records (${pastOrdersCount})` : `All Statuses (${totalOrders})`) }}
+              </option>
+              <template v-if="activeTab === 'active'">
+                <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
+                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
+              </template>
+              <template v-else-if="activeTab === 'past'">
+                <option value="delivered">Delivered ({{ deliveredOrders }})</option>
+                <option value="cancelled">Cancelled Orders</option>
+              </template>
+              <template v-else>
+                <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
+                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
+                <option value="delivered">Delivered ({{ deliveredOrders }})</option>
+                <option value="cancelled">Cancelled Orders</option>
+              </template>
             </select>
           </div>
 
@@ -1158,11 +1262,71 @@ const sortBy = ref('newest')
 const currentPage = ref(1)
 const itemsPerPage = 8
 
+/**
+ * UI Card & Metric Synchronization:
+ * Clicking a summary metric card intelligently switches tabs and applies the appropriate filter:
+ * - 'total': Switches to All Orders view and resets specific sub-filters.
+ * - 'pending': Ensures Active Orders tab and toggles pending status filter.
+ * - 'shipped': Ensures Active Orders tab and toggles in-transit status filter.
+ * - 'delivered': Ensures Order History (past tab) and toggles delivered status filter.
+ */
+const handleCardFilter = (type: 'total' | 'pending' | 'shipped' | 'delivered') => {
+  currentPage.value = 1
+  if (type === 'total') {
+    if (activeTab.value === 'all' && !selectedStatus.value) {
+      setTab('active')
+    } else {
+      setTab('all')
+    }
+    return
+  }
+
+  if (type === 'pending') {
+    if (activeTab.value === 'active' && selectedStatus.value === 'pending') {
+      selectedStatus.value = ''
+    } else {
+      activeTab.value = 'active'
+      selectedStatus.value = 'pending'
+      router.replace({ query: { ...route.query, tab: 'active' } })
+    }
+    return
+  }
+
+  if (type === 'shipped') {
+    if (activeTab.value === 'active' && selectedStatus.value === 'shipped') {
+      selectedStatus.value = ''
+    } else {
+      activeTab.value = 'active'
+      selectedStatus.value = 'shipped'
+      router.replace({ query: { ...route.query, tab: 'active' } })
+    }
+    return
+  }
+
+  if (type === 'delivered') {
+    if (activeTab.value === 'past' && selectedStatus.value === 'delivered') {
+      selectedStatus.value = ''
+    } else {
+      activeTab.value = 'past'
+      selectedStatus.value = 'delivered'
+      router.replace({ query: { ...route.query, tab: 'past' } })
+    }
+    return
+  }
+}
+
 const toggleStatusFilter = (st: string) => {
-  if (selectedStatus.value === st) {
-    selectedStatus.value = ''
+  if (st === 'pending' || st === 'shipped') {
+    handleCardFilter(st as any)
+  } else if (st === 'delivered') {
+    handleCardFilter('delivered')
   } else {
-    selectedStatus.value = st
+    if (selectedStatus.value === st) {
+      selectedStatus.value = ''
+    } else {
+      selectedStatus.value = st
+    }
+    currentPage.value = 1
   }
 }
 
