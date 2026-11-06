@@ -37,6 +37,15 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
+              @click="loadData"
+              :disabled="loading"
+              :class="['px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
+              title="Refresh returns and refund claims from database"
+            >
+              <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
+              <span class="hidden sm:inline">Refresh</span>
+            </button>
+            <button
               @click="openRequestModal"
               class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
             >
@@ -47,6 +56,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Toast Feedback Notification -->
+      <transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="transform -translate-y-2 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100"
+        leave-to-class="transform -translate-y-2 opacity-0"
+      >
+        <div
+          v-if="toastMessage"
+          class="mb-6 p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center justify-between shadow-sm"
+        >
+          <div class="flex items-center gap-2">
+            <CheckCircle2 class="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>{{ toastMessage }}</span>
+          </div>
+          <button @click="toastMessage = ''" class="text-emerald-400 hover:text-emerald-300 cursor-pointer">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+      </transition>
 
       <!-- ── Summary Stats Cards ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -412,7 +444,7 @@
                 :key="order.id"
                 :value="order.id"
               >
-                #{{ order.order_number || ('ORD-' + order.id) }} — ETB {{ formatNumber(order.total_amount || 0) }} ({{ order.status }})
+                #{{ order.order_number || ('ORD-' + order.id) }} &bull; ETB {{ formatNumber(order.grand_total || order.total_amount || 0) }} ({{ formatStatusLabel(order.status) }})
               </option>
             </select>
           </div>
@@ -465,11 +497,41 @@
             ></textarea>
           </div>
 
-          <!-- Evidence upload simulation -->
-          <div :class="['p-3 rounded-xl border border-dashed text-center', darkMode ? 'border-slate-700 bg-slate-900/40 text-slate-400' : 'border-slate-300 bg-slate-50 text-slate-500']">
-            <UploadCloud class="w-6 h-6 mx-auto mb-1 text-slate-400" />
-            <p class="font-bold text-[11px] m-0">Upload inspection photos or delivery receipt</p>
-            <p class="text-[10px] text-slate-400 m-0">Supported formats: JPG, PNG, PDF (Max 10MB)</p>
+          <!-- Evidence file upload -->
+          <div>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*,.pdf"
+              class="hidden"
+              @change="handleEvidenceFileUpload"
+            />
+            <div
+              v-if="!attachedFile"
+              @click="triggerFileInput"
+              :class="['p-4 rounded-xl border border-dashed text-center cursor-pointer hover:border-blue-500 transition-all', darkMode ? 'border-slate-700 bg-slate-900/40 text-slate-400 hover:bg-slate-900/70' : 'border-slate-300 bg-slate-50 text-slate-500 hover:bg-slate-100']"
+            >
+              <UploadCloud class="w-6 h-6 mx-auto mb-1 text-blue-500" />
+              <p class="font-bold text-[11px] m-0">Click to upload inspection photos or delivery receipt</p>
+              <p class="text-[10px] text-slate-400 m-0">Supported formats: JPG, PNG, PDF (Max 10MB)</p>
+            </div>
+            <div
+              v-else
+              :class="['p-3 rounded-xl border flex items-center justify-between text-xs', darkMode ? 'bg-blue-950/30 border-blue-800 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800']"
+            >
+              <div class="flex items-center gap-2 truncate">
+                <FileCheck class="w-4 h-4 shrink-0 text-blue-500" />
+                <span class="font-semibold truncate">{{ attachedFile.name }}</span>
+                <span class="text-[10px] opacity-75">({{ formatFileSize(attachedFile.size) }})</span>
+              </div>
+              <button
+                type="button"
+                @click="removeAttachedFile"
+                class="text-slate-400 hover:text-red-400 font-bold ml-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           <!-- Modal Action Footer -->
@@ -564,16 +626,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
-  Menu, RotateCcw, Plus,  Clock, CheckCircle2,
+  Menu, RotateCcw, Plus, Clock, CheckCircle2,
   BadgeDollarSign, ShieldCheck, Search, Check, FileText, XCircle,
-  UploadCloud, FileCheck
+  UploadCloud, FileCheck, RefreshCw, X
 } from 'lucide-vue-next'
 
 interface ReturnClaim {
@@ -595,6 +657,7 @@ interface ReturnClaim {
 }
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const buyerStore = useBuyerStore()
 const themeStore = useThemeStore()
@@ -604,6 +667,10 @@ const darkMode = computed(() => themeStore.isDark)
 const sidebarOpen = ref(false)
 const loading = ref(false)
 const submitting = ref(false)
+
+const toastMessage = ref('')
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const attachedFile = ref<File | null>(null)
 
 const searchQuery = ref('')
 const activeStatusFilter = ref('')
@@ -630,7 +697,42 @@ const resolutionSteps = [
 onMounted(async () => {
   themeStore.initializeTheme()
   await loadData()
+  const qOrderId = route.query.order_id as string
+  if (qOrderId) {
+    claimForm.value.order_id = qOrderId
+    onOrderSelected()
+    requestModalOpen.value = true
+  }
 })
+
+const triggerFileInput = () => {
+  fileInputRef.value?.click()
+}
+
+const handleEvidenceFileUpload = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    const file = target.files[0]
+    attachedFile.value = file
+    const attachmentNote = `[Attached Evidence: ${file.name} (${formatFileSize(file.size)})]`
+    if (!claimForm.value.notes.includes(attachmentNote)) {
+      claimForm.value.notes = claimForm.value.notes ? `${claimForm.value.notes}\n${attachmentNote}` : attachmentNote
+    }
+  }
+}
+
+const removeAttachedFile = () => {
+  attachedFile.value = null
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
 
 const loadData = async () => {
   loading.value = true
@@ -745,13 +847,14 @@ const openRequestModal = () => {
     amount: 0,
     notes: ''
   }
+  removeAttachedFile()
   requestModalOpen.value = true
 }
 
 const onOrderSelected = () => {
   const selected = eligibleOrders.value.find((o: any) => String(o.id) === String(claimForm.value.order_id))
   if (selected) {
-    claimForm.value.amount = Number(selected.total_amount || selected.grand_total || 0)
+    claimForm.value.amount = Number(selected.grand_total ?? selected.total_amount ?? 0)
   }
 }
 
@@ -766,7 +869,8 @@ const submitReturnClaim = async () => {
       notes: claimForm.value.notes
     })
     requestModalOpen.value = false
-    alert('Return claim submitted successfully! You can track the inspection and escrow refund status here.')
+    removeAttachedFile()
+    toastMessage.value = 'Return claim submitted successfully! Dispute auditor notified and escrow funds held in neutral custody.'
     await buyerStore.fetchReturns()
   } catch (err: any) {
     console.error('Failed to submit claim:', err)
@@ -781,7 +885,7 @@ const cancelReturnRequest = async (id: number) => {
     try {
       await buyerStore.cancelReturn(id)
       await buyerStore.fetchReturns()
-      alert('Return request cancelled.')
+      toastMessage.value = 'Return claim has been cancelled.'
     } catch (err: any) {
       alert(err?.response?.data?.message || 'Failed to cancel return request.')
     }

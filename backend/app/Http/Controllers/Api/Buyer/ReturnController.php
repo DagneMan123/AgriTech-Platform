@@ -18,7 +18,7 @@ class ReturnController extends Controller
     {
         $userId = Auth::id();
         $returns = Refund::where('requested_by_user_id', $userId)
-            ->with(['order.items.product', 'order.farmer'])
+            ->with(['order.items.product', 'order.farmer', 'payment'])
             ->latest()
             ->paginate($request->get('limit', 20));
 
@@ -48,27 +48,41 @@ class ReturnController extends Controller
         $payment = Payment::where('order_id', $order->id)->first();
         if (!$payment) {
             $payment = Payment::create([
+                'user_id' => $userId,
                 'order_id' => $order->id,
                 'amount' => $order->grand_total ?? $order->subtotal ?? 0,
+                'currency' => 'ETB',
                 'payment_method' => $order->payment_method ?? 'telebirr',
                 'status' => 'completed',
+                'escrow_status' => $order->escrow_status ?? 'held',
+                'escrow_held_at' => now(),
+                'transaction_id' => 'PAY-REF-' . time() . '-' . rand(100, 999),
             ]);
         }
+
+        $claimAmount = isset($validated['amount']) && (float)$validated['amount'] > 0
+            ? (float)$validated['amount']
+            : (float)($order->grand_total ?? $order->subtotal ?? 0);
 
         $refund = Refund::create([
             'order_id' => $order->id,
             'payment_id' => $payment->id,
             'requested_by_user_id' => $userId,
-            'amount' => $validated['amount'] ?? $order->grand_total ?? $order->subtotal ?? 0,
+            'amount' => $claimAmount,
             'reason' => $validated['reason'],
             'admin_notes' => $validated['notes'] ?? null,
             'status' => 'requested',
         ]);
 
+        // Protect escrow funds from premature release during active dispute
+        $order->update([
+            'escrow_status' => 'held'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Return request submitted successfully',
-            'data' => $refund->load('order'),
+            'data' => $refund->load(['order.items.product', 'order.farmer', 'payment']),
         ], 201);
     }
 
@@ -80,7 +94,7 @@ class ReturnController extends Controller
         $userId = Auth::id();
         $refund = Refund::where('id', $id)
             ->where('requested_by_user_id', $userId)
-            ->with(['order.items.product', 'order.farmer'])
+            ->with(['order.items.product', 'order.farmer', 'payment'])
             ->firstOrFail();
 
         return response()->json([
@@ -114,7 +128,7 @@ class ReturnController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Return request cancelled successfully',
-            'data' => $refund,
+            'data' => $refund->load(['order.items.product', 'order.farmer', 'payment']),
         ]);
     }
 }

@@ -124,8 +124,10 @@ export const useBuyerStore = defineStore('buyer', () => {
     loading.value = true
     try {
       const response = await buyerAPI.getReturns()
-      returns.value = response.data.data || response.data
-      return returns.value
+      const raw = response.data?.data || response.data
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
+      returns.value = list
+      return list
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch returns'
       throw err
@@ -137,7 +139,10 @@ export const useBuyerStore = defineStore('buyer', () => {
   const createReturn = async (data: any) => {
     try {
       const response = await buyerAPI.createReturn(data)
-      const newRet = response.data.data || response.data
+      const newRet = response.data?.data || response.data
+      if (!Array.isArray(returns.value)) {
+        returns.value = []
+      }
       returns.value.unshift(newRet)
       return newRet
     } catch (err: any) {
@@ -149,10 +154,12 @@ export const useBuyerStore = defineStore('buyer', () => {
   const cancelReturn = async (id: number) => {
     try {
       const response = await buyerAPI.cancelReturn(id)
-      const updated = response.data.data || response.data
-      const index = returns.value.findIndex(r => r.id === id)
-      if (index > -1) {
-        returns.value[index] = updated
+      const updated = response.data?.data || response.data
+      if (Array.isArray(returns.value)) {
+        const index = returns.value.findIndex(r => r.id === id)
+        if (index > -1) {
+          returns.value[index] = updated
+        }
       }
       return updated
     } catch (err: any) {

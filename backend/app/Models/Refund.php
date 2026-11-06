@@ -45,6 +45,11 @@ class Refund extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'requested_by_user_id');
