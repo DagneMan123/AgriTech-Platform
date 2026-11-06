@@ -1933,7 +1933,7 @@ const payWithChapa = async (order: any) => {
   try {
     const amount = getOrderAmount(order)
     const channel = order.payment_method || 'telebirr'
-    const returnUrl = `${window.location.origin}/buyer/payment/receipt?order_id=${order.id}&amount=${amount}&payment_success=true&escrow_locked=true`
+    const returnUrl = `${window.location.origin}/buyer/orders?tab=active&order_id=${order.id}&payment_success=true&escrow_locked=true`
 
     const res = await buyerAPI.initializeChapaPayment({
       order_id: order.id,

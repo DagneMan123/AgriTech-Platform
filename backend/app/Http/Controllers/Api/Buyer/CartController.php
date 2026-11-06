@@ -392,7 +392,7 @@ class CartController extends Controller
 
                     $chapaService = app(\App\Services\ChapaService::class);
                     $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-                    $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/payment/receipt?tx_ref=' . $txRef . '&payment_success=true&escrow_locked=true');
+                    $returnUrl = $request->input('return_url') ?: ($frontendUrl . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true&escrow_locked=true');
                     if (!str_contains($returnUrl, 'tx_ref=')) {
                         $separator = str_contains($returnUrl, '?') ? '&' : '?';
                         $returnUrl .= $separator . 'tx_ref=' . $txRef . '&payment_success=true&escrow_locked=true';
