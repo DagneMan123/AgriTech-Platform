@@ -37,15 +37,6 @@
           <!-- Header Right Actions -->
           <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
             <button
-              @click="loadData"
-              :disabled="loading"
-              :class="['px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer', darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
-              title="Refresh returns and refund claims from database"
-            >
-              <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
-              <span class="hidden sm:inline">Refresh</span>
-            </button>
-            <button
               @click="openRequestModal"
               class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
             >
@@ -635,7 +626,7 @@ import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
   Menu, RotateCcw, Plus, Clock, CheckCircle2,
   BadgeDollarSign, ShieldCheck, Search, Check, FileText, XCircle,
-  UploadCloud, FileCheck, RefreshCw, X
+  UploadCloud, FileCheck, X
 } from 'lucide-vue-next'
 
 interface ReturnClaim {
