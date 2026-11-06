@@ -1409,7 +1409,7 @@ const handlePlaceOrder = async () => {
           channel: paymentForm.value.method,
           phone_number: addressForm.value.phone || authStore.user?.phone || '0934318549',
           email: authStore.user?.email || 'aydenfudagne@gmail.com',
-          return_url: `${window.location.origin}/buyer/orders?tab=active&payment_success=true&escrow_locked=true`
+          return_url: `${window.location.origin}/buyer/payment/receipt?payment_success=true&escrow_locked=true`
         })
         const directUrl = initRes.data?.data?.checkout_url || initRes.data?.checkout_url
         if (directUrl) {

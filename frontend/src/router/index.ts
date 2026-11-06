@@ -83,6 +83,7 @@ const BuyerPurchaseReportsView = () => import('@/views/buyer/PurchaseReportsView
 const BuyerExpenseAnalysisView = () => import('@/views/buyer/ExpenseAnalysisView.vue')
 const BuyerNotificationsView = () => import('@/views/buyer/NotificationsView.vue')
 const BuyerMessagesView = () => import('@/views/buyer/MessagesView.vue')
+const BuyerPaymentReceiptView = () => import('@/views/buyer/PaymentReceiptView.vue')
 
 const SupplierDashboardView = () => import('@/views/supplier/SupplierDashboard.vue')
 const SupplierProductsView = () => import('@/views/supplier/ProductsView.vue')
@@ -129,6 +130,14 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/products',
     redirect: (to: any) => ({ name: 'buyer-marketplace', query: to.query })
+  },
+  {
+    path: '/payment/receipt',
+    redirect: (to: any) => ({ name: 'buyer-payment-receipt', query: to.query })
+  },
+  {
+    path: '/payment-receipt',
+    redirect: (to: any) => ({ name: 'buyer-payment-receipt', query: to.query })
   },
 
   
@@ -495,6 +504,18 @@ const routes: RouteRecordRaw[] = [
         name: 'buyer-categories',
         component: BuyerCategoriesView,
         meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Categories' }
+      },
+      {
+        path: 'payment/receipt',
+        name: 'buyer-payment-receipt',
+        component: BuyerPaymentReceiptView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Chapa Escrow Payment Receipt' }
+      },
+      {
+        path: 'payment-receipt',
+        name: 'buyer-payment-receipt-alias',
+        component: BuyerPaymentReceiptView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Chapa Escrow Payment Receipt' }
       },
       {
         path: 'payments',

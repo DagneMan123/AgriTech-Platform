@@ -764,7 +764,7 @@ const initiateChapaPayment = async () => {
       channel: chapaForm.value.channel,
       phone_number: chapaForm.value.phone,
       email: authStore.user?.email || 'aydenfudagne@gmail.com',
-      return_url: `${window.location.origin}/buyer/payments?tx_ref=auto&payment_success=true`
+      return_url: `${window.location.origin}/buyer/payment/receipt?payment_success=true&escrow_locked=true`
     })
 
     const checkoutUrl = res.data?.data?.checkout_url || res.data?.checkout_url

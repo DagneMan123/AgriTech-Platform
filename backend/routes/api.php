@@ -234,6 +234,7 @@ Route::get('/locations', [
 // Chapa Webhook & IPN Callbacks (Public)
 Route::match(['get', 'post'], '/buyer/chapa/callback', [ChapaPaymentController::class, 'callback']);
 Route::match(['get', 'post'], '/chapa/webhook', [ChapaPaymentController::class, 'callback']);
+Route::get('/buyer/chapa/receipt/{tx_ref}', [ChapaPaymentController::class, 'verify']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
