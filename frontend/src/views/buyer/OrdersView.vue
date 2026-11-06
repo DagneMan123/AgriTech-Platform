@@ -274,19 +274,19 @@
               </option>
               <template v-if="activeTab === 'active'">
                 <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
-                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="confirmed">Confirmed / Preparing ({{ confirmedOrders }})</option>
                 <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
               </template>
               <template v-else-if="activeTab === 'past'">
                 <option value="delivered">Delivered ({{ deliveredOrders }})</option>
-                <option value="cancelled">Cancelled Orders</option>
+                <option value="cancelled">Cancelled Orders ({{ cancelledOrders }})</option>
               </template>
               <template v-else>
                 <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
-                <option value="confirmed">Confirmed / Preparing</option>
+                <option value="confirmed">Confirmed / Preparing ({{ confirmedOrders }})</option>
                 <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
                 <option value="delivered">Delivered ({{ deliveredOrders }})</option>
-                <option value="cancelled">Cancelled Orders</option>
+                <option value="cancelled">Cancelled Orders ({{ cancelledOrders }})</option>
               </template>
             </select>
           </div>
@@ -571,16 +571,35 @@
                 <span>View Details</span>
               </button>
 
-              <!-- Track Live Shipment (Popup Modal) -->
+              <!-- Track Live Shipment: ONLY when Transport is explicitly Assigned & Dispatched -->
               <button
-                v-if="order.status !== 'cancelled'"
+                v-if="hasAssignedTransport(order)"
                 @click="openTrackingModal(order)"
-                :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50']"
+                :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs active:scale-95', darkMode ? 'bg-purple-950/40 border-purple-800/60 text-purple-300 hover:bg-purple-900/60 hover:text-white' : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100']"
                 title="View live GPS freight route and carrier details"
               >
-                <Truck class="w-3.5 h-3.5 text-blue-500" />
+                <Truck class="w-3.5 h-3.5 text-purple-500" />
                 <span>Live Freight Tracking</span>
               </button>
+
+              <!-- State-Aware Stage Badge: Before transport dispatch -->
+              <span
+                v-else-if="['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
+                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-blue-950/30 border-blue-900/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700']"
+                title="Cooperative actively weighing, packaging, and staging produce for logistics pickup"
+              >
+                <Package class="w-3.5 h-3.5 text-blue-500" />
+                <span>Co-op Preparing Produce</span>
+              </span>
+
+              <span
+                v-else-if="['pending', 'placed'].includes((order.status || '').toLowerCase())"
+                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-amber-950/30 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700']"
+                title="Order placed and awaiting cooperative review and acceptance"
+              >
+                <Clock class="w-3.5 h-3.5 text-amber-500" />
+                <span>Awaiting Co-op Acceptance</span>
+              </span>
 
               <!-- Chat with Farmer / Direct Support -->
               <button
@@ -1558,11 +1577,15 @@ const filteredOrdersList = computed<any[]>(() => {
   if (selectedStatus.value) {
     const s = selectedStatus.value.toLowerCase()
     if (s === 'pending') {
-      list = list.filter(o => ['pending', 'confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()))
+      list = list.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()))
+    } else if (s === 'confirmed') {
+      list = list.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()))
     } else if (s === 'shipped') {
       list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()))
     } else if (s === 'delivered') {
       list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()))
+    } else if (s === 'cancelled') {
+      list = list.filter(o => (o.status || '').toLowerCase() === 'cancelled')
     } else {
       list = list.filter(o => (o.status || '').toLowerCase() === s)
     }
@@ -1633,13 +1656,15 @@ watch([searchQuery, selectedStatus, selectedDateRange, sortBy], () => {
   currentPage.value = 1
 })
 
-// Statistics computation
+// Statistics computation - Synchronized with genuine database records
 const totalOrders = computed(() => ordersArray.value.length)
 const activeOrdersCount = computed(() => ordersArray.value.filter(isOrderActive).length)
 const pastOrdersCount = computed(() => ordersArray.value.filter(isOrderPast).length)
-const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase())).length)
+const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase())).length)
+const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase())).length)
 const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase())).length)
-const deliveredOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'delivered').length)
+const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length)
+const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled').length)
 
 // Field normalization helpers
 const getOrderNumber = (order: any): string => {
@@ -1711,6 +1736,20 @@ const formatStatus = (status?: string): string => {
     cancelled: 'Cancelled'
   }
   return map[s] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending Confirmation / Placed')
+}
+
+const hasAssignedTransport = (order: any): boolean => {
+  if (!order) return false
+  const status = (order.status || '').toLowerCase()
+  // Active freight tracking requires order to be dispatched with assigned carrier
+  if (['shipped', 'in_transit', 'out_for_delivery'].includes(status)) {
+    return true
+  }
+  const delStatus = (order.delivery?.status || '').toLowerCase()
+  if (['shipped', 'in_transit', 'out_for_delivery'].includes(delStatus)) {
+    return true
+  }
+  return false
 }
 
 const statusBadgeClass = (status?: string): string => {
