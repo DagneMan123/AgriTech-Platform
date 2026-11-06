@@ -72,6 +72,13 @@ export const useBuyerStore = defineStore('buyer', () => {
     try {
       const response = await buyerAPI.checkout(data)
       cart.value = []
+      // Prepend newly placed order(s) immediately to reactive store so they appear in Active Orders without reloading
+      const resData = response.data?.data || response.data?.orders || response.data
+      if (Array.isArray(resData) && resData.length > 0) {
+        orders.value = [...resData, ...orders.value]
+      } else if (resData && typeof resData === 'object' && resData.id) {
+        orders.value = [resData, ...orders.value]
+      }
       return response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to checkout'
@@ -102,8 +109,8 @@ export const useBuyerStore = defineStore('buyer', () => {
       const response = await buyerAPI.cancelOrder(id, { reason })
       const updated = response.data?.data || response.data
       const index = orders.value.findIndex(o => o.id === id || o.order_number === id)
-      if (index > -1 && updated) {
-        orders.value[index] = { ...orders.value[index], ...updated, status: 'cancelled' }
+      if (index > -1) {
+        orders.value[index] = { ...orders.value[index], ...(updated || {}), status: 'cancelled' }
       }
       return updated
     } catch (err: any) {

@@ -271,12 +271,24 @@
           <ShoppingBag class="w-8 h-8 text-slate-400" />
         </div>
         <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">
-          {{ totalOrders === 0 ? 'No orders recorded yet' : 'No matching orders found' }}
+          {{ totalOrders === 0 ? 'No orders recorded yet' : (activeTab === 'active' ? 'No active orders in progress' : (activeTab === 'past' ? 'No past orders or history' : 'No matching orders found')) }}
         </h3>
         <p :class="['text-xs max-w-sm mb-4', darkMode ? 'text-slate-400' : 'text-slate-500']">
-          {{ totalOrders === 0 ? 'Start sourcing verified fresh produce directly from Ethiopian farmers and cooperatives.' : 'Try adjusting your search query, status filters, or date range.' }}
+          {{ totalOrders === 0 
+              ? 'Start sourcing verified fresh produce directly from Ethiopian farmers and cooperatives.' 
+              : (activeTab === 'active' 
+                  ? 'All your shipments are completed or historical. Check past orders to view receipts.' 
+                  : 'Try adjusting your search query, status filters, or date range.') }}
         </p>
         <div class="flex items-center gap-2 flex-wrap justify-center">
+          <button
+            v-if="activeTab === 'active' && pastOrdersCount > 0"
+            @click="setTab('past')"
+            class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <History class="w-3.5 h-3.5 text-blue-400" />
+            <span>View Past Orders ({{ pastOrdersCount }})</span>
+          </button>
           <button
             v-if="hasActiveFilters"
             @click="clearFilters"
@@ -1082,20 +1094,53 @@ const errorMessage = ref('')
 const toastMessage = ref('')
 
 // ── Top Navigation Tabs State: 'active' | 'past' | 'all' ──
-const activeTab = ref<'active' | 'past' | 'all'>('all')
+// Defaults to 'active' so buyers immediately track ongoing shipments (Amazon standard)
+const activeTab = ref<'active' | 'past' | 'all'>('active')
 
-// Status classifications for unified global e-commerce tabs
-const pastStatuses = ['delivered', 'completed', 'cancelled']
+// Terminal / Completed historical states (strictly excluded from Active)
+const pastStatuses = ['delivered', 'completed', 'cancelled', 'rejected', 'failed', 'refunded', 'closed', 'voided']
 
+// Explicit in-progress and active lifecycle stages
+const activeLifecycleStatuses = [
+  'pending', 'placed', 'confirmed', 'approved', 'processing',
+  'preparing', 'packing', 'shipped', 'in_transit', 'out_for_delivery', 'pickup_ready', 'at_depot'
+]
+
+// Active payment verification states (e.g., Telebirr pending, Chapa pending, awaiting settlement)
+const activePaymentStates = ['pending', 'awaiting_payment', 'unpaid', 'processing']
+
+/**
+ * Categorization Rule 1: Active Orders Criteria
+ * An order is classified under 'Active' if:
+ * 1. It is NOT in a terminal/historical state (delivered, completed, cancelled, refunded, rejected, failed).
+ * 2. AND it matches an active fulfillment stage (e.g., Placed, Confirmed, Packing, In Transit),
+ *    OR has pending payment verification (e.g., Telebirr Pending, Chapa Pending, COD verification).
+ */
 const isOrderActive = (order: any): boolean => {
-  const st = (order?.status || '').toLowerCase()
-  if (pastStatuses.includes(st)) return false
+  if (!order) return false
+  const status = (order.status || '').toLowerCase()
+  // Terminal states strictly belong in History / Past
+  if (pastStatuses.includes(status)) return false
+
+  // Explicit active stages
+  if (activeLifecycleStatuses.includes(status)) return true
+
+  // Payment in-progress / verification states (e.g. Telebirr Pending)
+  const payStatus = (order.payment_status || order.payment?.status || '').toLowerCase()
+  if (activePaymentStates.includes(payStatus)) return true
+
+  // Fallback: any non-terminal order is active
   return true
 }
 
+/**
+ * Categorization Rule 2: History & Completion Separation
+ * Completed (Delivered) or Cancelled orders are strictly separated from Active and grouped into Past Orders / History.
+ */
 const isOrderPast = (order: any): boolean => {
-  const st = (order?.status || '').toLowerCase()
-  return pastStatuses.includes(st)
+  if (!order) return false
+  const status = (order.status || '').toLowerCase()
+  return pastStatuses.includes(status)
 }
 
 const setTab = (tab: 'active' | 'past' | 'all') => {
@@ -1205,23 +1250,24 @@ const timelineSteps = [
 
 onMounted(async () => {
   themeStore.initializeTheme()
-  const qTab = (route.query.tab as string) || ''
+  const qTab = ((route.query.tab as string) || '').toLowerCase()
   if (qTab === 'past' || qTab === 'history') {
     activeTab.value = 'past'
   } else if (qTab === 'all') {
     activeTab.value = 'all'
-  } else if (qTab === 'active') {
+  } else {
     activeTab.value = 'active'
   }
   await refreshOrders()
 })
 
 watch(() => route.query.tab, (newTab) => {
-  if (newTab === 'past' || newTab === 'history') {
+  const qTab = (newTab as string || '').toLowerCase()
+  if (qTab === 'past' || qTab === 'history') {
     activeTab.value = 'past'
-  } else if (newTab === 'all') {
+  } else if (qTab === 'all') {
     activeTab.value = 'all'
-  } else if (newTab === 'active') {
+  } else {
     activeTab.value = 'active'
   }
 })
