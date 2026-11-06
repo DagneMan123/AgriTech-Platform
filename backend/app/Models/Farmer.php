@@ -47,20 +47,12 @@ class Farmer extends Model
 
     public function getNameAttribute()
     {
-        $name = $this->user?->name;
-        if ($name && $name !== 'Sample Farmer') {
-            return $name;
-        }
-        return $this->farm_name ?: 'Bahir Dar Agro Farmers Cooperative';
+        return $this->user?->name ?: ($this->farm_name ?: '');
     }
 
     public function getPhoneNumberAttribute()
     {
-        $phone = $this->user?->phone ?? $this->phone;
-        if ($phone && $phone !== '251911111111') {
-            return $phone;
-        }
-        return '251934318549';
+        return $this->user?->phone ?? $this->phone ?? '';
     }
 
     public function getInAppChatIdAttribute()

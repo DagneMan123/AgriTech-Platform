@@ -90,7 +90,7 @@ class ChapaPaymentController extends Controller
             [
                 'type' => $methodType,
                 'account_number' => $phoneInput,
-                'account_holder' => $user->name ?: 'Sample Buyer',
+                'account_holder' => $user->name ?: ($user->email ?? 'Account Holder'),
                 'is_primary' => true,
                 'is_active' => true,
             ]
@@ -100,13 +100,17 @@ class ChapaPaymentController extends Controller
             ->update(['is_primary' => false]);
 
         $defaultReturnUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/buyer/orders?tab=active&tx_ref=' . $txRef . '&payment_success=true';
+        $names = explode(' ', trim($user->name ?: 'Buyer User'));
+        $firstName = $names[0] ?? 'Buyer';
+        $lastName = count($names) > 1 ? end($names) : 'User';
+
         $res = $this->chapa->initializePayment([
             'amount' => $amount,
             'currency' => 'ETB',
-            'email' => $request->input('email', $user->email ?? 'aydenfudagne@gmail.com'),
-            'first_name' => $user->name ? explode(' ', $user->name)[0] : 'Ayden',
-            'last_name' => $user->name && count(explode(' ', $user->name)) > 1 ? explode(' ', $user->name)[1] : 'Buyer',
-            'phone_number' => $request->input('phone_number', $user->phone ?? '0911000000'),
+            'email' => $request->input('email', $user->email),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'phone_number' => $request->input('phone_number', $user->phone),
             'tx_ref' => $txRef,
             'return_url' => $request->input('return_url') ?: $defaultReturnUrl,
         ]);
@@ -195,7 +199,7 @@ class ChapaPaymentController extends Controller
                     [
                         'type' => $methodType,
                         'account_number' => $phone,
-                        'account_holder' => $user?->name ?: 'Sample Buyer',
+                        'account_holder' => $user?->name ?: 'Account Holder',
                         'is_primary' => true,
                         'is_active' => true
                     ]
@@ -288,7 +292,7 @@ class ChapaPaymentController extends Controller
                         [
                             'type' => $methodType,
                             'account_number' => $phone,
-                            'account_holder' => 'Sample Buyer',
+                            'account_holder' => $payment->user?->name ?: 'Account Holder',
                             'is_primary' => true,
                             'is_active' => true,
                         ]

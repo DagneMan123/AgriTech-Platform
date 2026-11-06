@@ -760,7 +760,7 @@ const chapaForm = ref({
 })
 
 const openChapaPayModal = () => {
-  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
+  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : ''
   chapaForm.value = {
     channel: 'telebirr',
     amount: 500,
@@ -895,7 +895,7 @@ const loadData = async () => {
 }
 
 const openAddModal = () => {
-  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : '0911000000'
+  const userPhone = authStore.user?.phone ? authStore.user.phone.replace(/[^0-9+]/g, '') : ''
   form.value = {
     type: 'mobile_money',
     bank_name: 'Telebirr (Ethio Telecom)',

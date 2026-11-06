@@ -24,13 +24,6 @@
             <Menu class="w-5 h-5" />
           </button>
           <div>
-            <!-- Breadcrumb Navigation -->
-            <div class="flex items-center gap-2 mb-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <router-link to="/buyer/dashboard" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Buyer Portal</router-link>
-              <span class="text-slate-400">&gt;</span>
-              <span class="font-semibold text-slate-700 dark:text-slate-200">My Orders</span>
-            </div>
-
             <h1 :class="['text-[26px] lg:text-[28px] font-[800] m-0 mb-1 tracking-tight', darkMode ? 'text-slate-100' : 'text-slate-900']">
               My Orders
             </h1>
@@ -40,17 +33,8 @@
           </div>
         </div>
 
-        <!-- Header Actions: Refresh DB & Header Navigation -->
+        <!-- Header Actions -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-          <button
-            @click="refreshOrders"
-            :disabled="loading"
-            :class="['px-3 py-2 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-all cursor-pointer shadow-xs', darkMode ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50']"
-            title="Fetch latest orders from database"
-          >
-            <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin text-blue-500' : 'text-slate-400']" />
-            <span class="hidden sm:inline">{{ loading ? 'Syncing...' : 'Sync DB' }}</span>
-          </button>
           <BuyerHeaderNav />
         </div>
       </div>
@@ -1629,24 +1613,23 @@ const getOrderDeliveryFee = (order: any): number => {
 }
 
 const getOrderSupplier = (order: any): string => {
-  if (!order) return 'Bahir Dar Agro Farmers Cooperative'
+  if (!order) return ''
   const candidates = [
-    order.farmer?.name,
-    order.farmer?.user?.name,
     order.farmer?.farm_name,
+    order.farmer?.user?.name,
+    order.farmer?.name,
     order.supplier?.name,
     order.supplier_name
   ]
   for (const candidate of candidates) {
     if (candidate && typeof candidate === 'string') {
       const trimmed = candidate.trim()
-      const lower = trimmed.toLowerCase()
-      if (trimmed && !lower.includes('sample') && !lower.includes('test farmer')) {
+      if (trimmed && !trimmed.toLowerCase().includes('sample')) {
         return trimmed
       }
     }
   }
-  return 'Bahir Dar Agro Farmers Cooperative'
+  return 'Producer on file'
 }
 
 const getOrderItems = (order: any): any[] => {
@@ -1803,8 +1786,8 @@ const payWithChapa = async (order: any) => {
       order_id: order.id,
       amount: amount,
       channel: channel,
-      phone_number: order.delivery_phone || authStore.user?.phone || '0911000000',
-      email: authStore.user?.email || 'aydenfudagne@gmail.com',
+      phone_number: order.delivery_phone || authStore.user?.phone || '',
+      email: authStore.user?.email || '',
       return_url: returnUrl
     })
 
@@ -1952,14 +1935,14 @@ const getFarmerPhone = (order: any): string => {
       }
     }
   }
-  return '+251 93 431 8549'
+  return ''
 }
 
 const cleanPhoneForDialing = (phone: string): string => {
-  if (!phone) return '+251934318549'
+  if (!phone) return ''
   const digits = phone.replace(/\D/g, '')
-  if (digits.endsWith('1111111') || digits.endsWith('0000000')) {
-    return '+251934318549'
+  if (!digits || digits.endsWith('1111111') || digits.endsWith('0000000')) {
+    return ''
   }
   if (digits.startsWith('251')) {
     return '+' + digits
@@ -1971,10 +1954,10 @@ const cleanPhoneForDialing = (phone: string): string => {
 }
 
 const formatPhoneNumber = (phone: string): string => {
-  if (!phone) return '+251 93 431 8549'
+  if (!phone) return ''
   const digits = phone.replace(/\D/g, '')
-  if (digits.endsWith('1111111') || digits.endsWith('0000000')) {
-    return '+251 93 431 8549'
+  if (!digits || digits.endsWith('1111111') || digits.endsWith('0000000')) {
+    return ''
   }
   if (digits.startsWith('251') && digits.length >= 12) {
     return `+251 ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`

@@ -1146,12 +1146,12 @@ const applySavedAddress = () => {
   if (!selectedSavedAddressId.value) return
   const addr = savedAddresses.value.find(a => a.id === selectedSavedAddressId.value)
   if (addr) {
-    addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || 'Verified Buyer'
-    addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || '+251 911 234 567'
-    addressForm.value.region = addr.region || 'Addis Ababa'
-    addressForm.value.zone = addr.sub_city || addr.zone || 'Bole Subcity'
-    addressForm.value.woreda = addr.woreda_kebele || addr.woreda || 'Woreda 03'
-    addressForm.value.address = addr.street_address || addr.address_line || 'Commercial Agro-Distribution Depot'
+    addressForm.value.recipient_name = addr.contact_name || addr.recipient_name || authStore.user?.name || ''
+    addressForm.value.phone = addr.contact_phone || addr.phone || authStore.user?.phone || ''
+    addressForm.value.region = addr.region || ''
+    addressForm.value.zone = addr.sub_city || addr.zone || ''
+    addressForm.value.woreda = addr.woreda_kebele || addr.woreda || ''
+    addressForm.value.address = addr.street_address || addr.address_line || addr.address || ''
   }
 }
 
