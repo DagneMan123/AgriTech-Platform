@@ -9,10 +9,6 @@
           <p>Track and manage your product sales and revenue</p>
         </div>
         <div class="header-actions">
-          <button @click="openFilters" class="btn-filter">
-            <Sliders size="16" />
-            <span>Filters</span>
-          </button>
           <button @click="exportData" class="btn-export">
             <Download size="16" />
             <span>Export</span>
