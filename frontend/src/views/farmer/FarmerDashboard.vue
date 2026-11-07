@@ -2,183 +2,364 @@
   <div class="farmer-layout" :class="{ 'light': isLight, 'dark': isDark }">
     <FarmerSidebar @logout="handleLogout" />
     <div class="farmer-dashboard">
+      <!-- Header Section -->
       <div class="dashboard-header-wrapper">
         <div class="dashboard-header">
-          <h1>Farmer Dashboard</h1>
-          <p>Manage your farms, crops, and agricultural business</p>
+          <div class="title-row">
+            <h1>Farmer Dashboard</h1>
+            <span class="live-pill">
+              <span class="pulse-dot"></span>
+              Live Synced
+            </span>
+          </div>
+          <p>Real-time telemetry, crop operations, order pipeline, and revenue insights</p>
         </div>
-        <button
-          @click="toggleTheme"
-          class="theme-toggle-btn"
-          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-        >
-          <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+        <div class="header-actions">
+          <button
+            @click="fetchDashboardData"
+            class="action-btn btn-refresh"
+            :disabled="loading"
+            title="Refresh dashboard data"
+          >
+            <RefreshCw size="16" :class="{ 'animate-spin': loading }" />
+            <span>Sync</span>
+          </button>
+          <button
+            @click="router.push('/farmer/products')"
+            class="action-btn btn-primary"
+            title="Add a new marketplace product"
+          >
+            <Plus size="16" />
+            <span>Add Product</span>
+          </button>
+          <button
+            @click="toggleTheme"
+            class="theme-toggle-btn"
+            :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Shortcuts Bar -->
+      <div class="shortcuts-bar">
+        <button @click="router.push('/farmer/farms')" class="shortcut-chip">
+          <Building2 size="14" />
+          <span>Farms ({{ dashboard?.summary?.total_farms || 0 }})</span>
+        </button>
+        <button @click="router.push('/farmer/crops')" class="shortcut-chip">
+          <Sprout size="14" />
+          <span>Active Crops ({{ dashboard?.summary?.active_crops || 0 }})</span>
+        </button>
+        <button @click="router.push('/farmer/harvests')" class="shortcut-chip">
+          <Package size="14" />
+          <span>Harvest Logs</span>
+        </button>
+        <button @click="router.push('/farmer/customer-orders')" class="shortcut-chip">
+          <ShoppingCart size="14" />
+          <span>Customer Orders ({{ dashboard?.summary?.pending_orders || 0 }} pending)</span>
+        </button>
+        <button @click="router.push('/farmer/my-sales')" class="shortcut-chip">
+          <Banknote size="14" />
+          <span>Sales & Revenue</span>
+        </button>
+        <button @click="router.push('/farmer/consultations')" class="shortcut-chip">
+          <MessageSquare size="14" />
+          <span>Advisory</span>
         </button>
       </div>
 
-      <div v-if="loading" class="loading-container">
+      <!-- Loading State -->
+      <div v-if="loading && !dashboard" class="loading-container">
         <div class="spinner"></div>
-        <p>Loading dashboard data...</p>
+        <p>Loading real-time agricultural telemetry...</p>
       </div>
 
+      <!-- Error State -->
       <div v-if="error && !loading" class="error-container">
-        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
+        <AlertCircle size="40" class="error-icon" />
         <p class="error-message">{{ error }}</p>
         <button @click="fetchDashboardData" class="btn-retry">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 4v6h6M23 20v-6h-6"></path>
-            <path d="M20.49 9A9 9 0 0 0 5.64 5.64M3.51 15A9 9 0 0 0 18.36 18.36"></path>
-          </svg>
-          Retry
+          <RefreshCw size="16" />
+          <span>Retry Sync</span>
         </button>
       </div>
 
-      <div v-if="!loading && !error" class="stats-section">
-        <div class="stat-card stat-farms">
-          <div class="stat-header">
-            <h3>Total Farms</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <!-- Main Dashboard Content -->
+      <div v-if="dashboard" class="dashboard-content">
+        <!-- Interactive Metric Cards -->
+        <div class="stats-section">
+          <!-- Total Farms -->
+          <div class="stat-card stat-farms clickable" @click="router.push('/farmer/farms')">
+            <div class="stat-header">
+              <h3>Total Farms</h3>
+              <div class="stat-icon-wrapper">
+                <Building2 size="18" />
+              </div>
+            </div>
+            <p class="stat-value">{{ dashboard?.summary?.total_farms || 0 }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">{{ dashboard?.summary?.total_farm_area_hectares || 0 }} hectares cultivated</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
           </div>
-          <p class="stat-value">{{ dashboard?.summary?.total_farms || 0 }}</p>
-          <p class="stat-subtitle">{{ dashboard?.summary?.total_farm_area_hectares || 0 }} hectares</p>
+
+          <!-- Active Crops -->
+          <div class="stat-card stat-crops clickable" @click="router.push('/farmer/crops')">
+            <div class="stat-header">
+              <h3>Active Crops</h3>
+              <div class="stat-icon-wrapper">
+                <Sprout size="18" />
+              </div>
+            </div>
+            <p class="stat-value">{{ dashboard?.summary?.active_crops || 0 }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">of {{ dashboard?.summary?.total_crops || 0 }} varieties planted</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
+          </div>
+
+          <!-- Listed Products -->
+          <div class="stat-card stat-products clickable" @click="router.push('/farmer/products')">
+            <div class="stat-header">
+              <h3>Market Products</h3>
+              <div class="stat-icon-wrapper">
+                <Package size="18" />
+              </div>
+            </div>
+            <p class="stat-value">{{ dashboard?.summary?.active_products || 0 }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">of {{ dashboard?.summary?.total_products || 0 }} products on sale</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
+          </div>
+
+          <!-- Customer Orders -->
+          <div class="stat-card stat-orders clickable" @click="router.push('/farmer/customer-orders')">
+            <div class="stat-header">
+              <h3>Pending Orders</h3>
+              <div class="stat-icon-wrapper">
+                <ShoppingCart size="18" />
+              </div>
+            </div>
+            <p class="stat-value">{{ dashboard?.summary?.pending_orders || 0 }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">{{ dashboard?.summary?.total_orders || 0 }} total orders placed</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
+          </div>
+
+          <!-- Total Revenue -->
+          <div class="stat-card stat-revenue clickable" @click="router.push('/farmer/my-sales')">
+            <div class="stat-header">
+              <h3>Sales Revenue</h3>
+              <div class="stat-icon-wrapper">
+                <Banknote size="18" />
+              </div>
+            </div>
+            <p class="stat-value">ETB {{ formatNumber(dashboard?.summary?.total_sales || 0) }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">{{ dashboard?.summary?.completed_orders || 0 }} orders fulfilled</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
+          </div>
+
+          <!-- Advisory / Consultations -->
+          <div class="stat-card stat-consultations clickable" @click="router.push('/farmer/consultations')">
+            <div class="stat-header">
+              <h3>Agronomy Advisory</h3>
+              <div class="stat-icon-wrapper">
+                <MessageSquare size="18" />
+              </div>
+            </div>
+            <p class="stat-value">{{ dashboard?.summary?.pending_consultations || 0 }}</p>
+            <div class="stat-footer">
+              <span class="stat-subtitle">{{ dashboard?.summary?.total_consultations || 0 }} total sessions</span>
+              <ChevronRight size="14" class="stat-arrow" />
+            </div>
+          </div>
         </div>
 
-        <div class="stat-card stat-crops">
-          <div class="stat-header">
-            <h3>Active Crops</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2c1.1 0 2 .9 2 2 0 1-2 6-2 6s-2-5-2-6c0-1.1.9-2 2-2z"></path><path d="M12 10c-5.5 0-10 5-10 10s4.5 10 10 10 10-5 10-10-4.5-10-10-10z"></path></svg>
+        <!-- Charts & Analytics Section -->
+        <div class="charts-section">
+          <!-- Full Width Area Chart: Revenue Trend -->
+          <div class="chart-card full-width">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <h2>Revenue Trend</h2>
+                <span class="chart-subtitle">Aggregate revenue tracked in Ethiopian Birr (ETB)</span>
+              </div>
+              <div class="time-filter-buttons">
+                <button
+                  v-for="option in timeRangeOptions"
+                  :key="option.value"
+                  @click="onTimeRangeChange(option.value)"
+                  :class="['filter-btn', { active: selectedTimeRange === option.value }]"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+            <div class="chart-container">
+              <Line :data="chartData" :options="chartOptions" />
+            </div>
           </div>
-          <p class="stat-value">{{ dashboard?.summary?.active_crops || 0 }}</p>
-          <p class="stat-subtitle">of {{ dashboard?.summary?.total_crops || 0 }} total</p>
+
+          <!-- Grid: Donut Distribution & Recent Transactions -->
+          <div class="chart-grid">
+            <!-- Crop Sales Distribution Donut Chart -->
+            <div class="chart-card">
+              <div class="card-header-row">
+                <h2>Commodity Sales Breakdown</h2>
+                <span class="badge-pill">Volume Share</span>
+              </div>
+              <div class="doughnut-container">
+                <Doughnut :data="doughnutData" :options="doughnutOptions" />
+              </div>
+            </div>
+
+            <!-- Recent Sales Ledger Table -->
+            <div class="transactions-card">
+              <div class="card-header-row">
+                <h2>Recent Transactions</h2>
+                <button @click="router.push('/farmer/my-sales')" class="view-all-link">
+                  <span>View All Sales</span>
+                  <ArrowUpRight size="14" />
+                </button>
+              </div>
+              <div class="transactions-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Commodity</th>
+                      <th>Qty</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="tx in dashboard?.recent_transactions?.slice(0, 6)"
+                      :key="tx.id"
+                      class="transaction-row clickable-row"
+                      @click="router.push('/farmer/my-sales')"
+                    >
+                      <td class="tx-id">
+                        <span class="id-tag">{{ tx.id }}</span>
+                      </td>
+                      <td class="tx-crop font-semibold">{{ tx.crop }}</td>
+                      <td class="tx-qty">{{ tx.quantity }}</td>
+                      <td class="tx-price text-emerald-600 font-bold">ETB {{ formatNumber(tx.price) }}</td>
+                      <td class="tx-date text-slate-400">{{ formatDate(tx.date) }}</td>
+                    </tr>
+                    <tr v-if="!dashboard?.recent_transactions?.length" class="empty-row">
+                      <td colspan="5">
+                        <div class="empty-state-mini">
+                          <p>No recent sales transactions recorded</p>
+                          <button @click="router.push('/farmer/products')" class="btn-xs">Create Product</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="stat-card stat-products">
-          <div class="stat-header">
-            <h3>Products</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-          </div>
-          <p class="stat-value">{{ dashboard?.summary?.active_products || 0 }}</p>
-          <p class="stat-subtitle">of {{ dashboard?.summary?.total_products || 0 }} total</p>
-        </div>
+        <!-- Recent Activity Cards Section -->
+        <div class="recent-section">
+          <!-- Recent Harvests -->
+          <div class="recent-card">
+            <div class="card-header-row">
+              <div class="flex items-center gap-2">
+                <Sprout size="18" class="text-emerald-500" />
+                <h2>Recent Field Harvests</h2>
+              </div>
+              <button @click="router.push('/farmer/harvests')" class="view-all-link">
+                <span>View All</span>
+                <ChevronRight size="14" />
+              </button>
+            </div>
 
-        <div class="stat-card stat-orders">
-          <div class="stat-header">
-            <h3>Orders</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4m0-18v18m0-18h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-10"></path></svg>
-          </div>
-          <p class="stat-value">{{ dashboard?.summary?.pending_orders || 0 }}</p>
-          <p class="stat-subtitle">pending</p>
-        </div>
-
-        <div class="stat-card stat-revenue">
-          <div class="stat-header">
-            <h3>Revenue</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
-          </div>
-          <p class="stat-value">{{ formatNumber(dashboard?.summary?.total_sales || 0) }}</p>
-          <p class="stat-subtitle">total sales</p>
-        </div>
-
-        <div class="stat-card stat-consultations">
-          <div class="stat-header">
-            <h3>Consultations</h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          </div>
-          <p class="stat-value">{{ dashboard?.summary?.pending_consultations || 0 }}</p>
-          <p class="stat-subtitle">pending</p>
-        </div>
-      </div>
-
-      <div v-if="!loading && !error" class="charts-section">
-        <div class="chart-card full-width">
-          <div class="chart-header">
-            <h2>Revenue Trend</h2>
-            <div class="time-filter-buttons">
-              <button
-                v-for="option in timeRangeOptions"
-                :key="option.value"
-                @click="onTimeRangeChange(option.value)"
-                :class="['filter-btn', { active: selectedTimeRange === option.value }]"
+            <div v-if="dashboard?.recent_harvests?.length > 0" class="list-items">
+              <div
+                v-for="harvest in dashboard?.recent_harvests"
+                :key="harvest.id"
+                class="list-item clickable-item"
+                @click="router.push('/farmer/harvests')"
               >
-                {{ option.label }}
+                <div class="item-main">
+                  <div class="item-avatar green">
+                    <Sprout size="14" />
+                  </div>
+                  <div class="item-info">
+                    <span class="item-name">{{ harvest.crop?.name || 'Field Produce' }}</span>
+                    <span class="item-meta">{{ formatDate(harvest.harvest_date) }}</span>
+                  </div>
+                </div>
+                <div class="item-badge-wrapper">
+                  <span class="qty-badge">{{ harvest.quantity }} {{ harvest.unit || 'kg' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">
+              <Sprout size="32" class="text-slate-300 dark:text-slate-600 mb-2" />
+              <p>No field harvests recorded yet</p>
+              <button @click="router.push('/farmer/harvests')" class="btn-xs-primary">
+                <Plus size="12" />
+                <span>Log Harvest</span>
               </button>
             </div>
           </div>
-          <div class="chart-container">
-            <Line :data="chartData" :options="chartOptions" />
-          </div>
-        </div>
 
-        <div class="chart-grid">
-          <div class="chart-card">
-            <h2>Crop Sales Distribution</h2>
-            <div class="doughnut-container">
-              <Doughnut :data="doughnutData" :options="doughnutOptions" />
+          <!-- Recent Customer Orders -->
+          <div class="recent-card">
+            <div class="card-header-row">
+              <div class="flex items-center gap-2">
+                <ShoppingCart size="18" class="text-emerald-500" />
+                <h2>Recent Customer Orders</h2>
+              </div>
+              <button @click="router.push('/farmer/customer-orders')" class="view-all-link">
+                <span>View All Orders</span>
+                <ChevronRight size="14" />
+              </button>
             </div>
-          </div>
 
-          <div class="transactions-card">
-            <h2>Recent Transactions</h2>
-            <div class="transactions-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Crop</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="tx in dashboard?.recent_transactions" :key="tx.id" class="transaction-row">
-                    <td class="tx-id">{{ tx.id }}</td>
-                    <td class="tx-crop">{{ tx.crop }}</td>
-                    <td class="tx-qty">{{ tx.quantity }}</td>
-                    <td class="tx-price">{{ formatNumber(tx.price) }}</td>
-                    <td class="tx-date">{{ formatDate(tx.date) }}</td>
-                  </tr>
-                  <tr v-if="!dashboard?.recent_transactions?.length" class="empty-row">
-                    <td colspan="5">No transactions yet</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-if="dashboard?.recent_orders?.length > 0" class="list-items">
+              <div
+                v-for="order in dashboard?.recent_orders?.slice(0, 5)"
+                :key="order.id"
+                class="list-item clickable-item"
+                @click="router.push('/farmer/customer-orders')"
+              >
+                <div class="item-main">
+                  <div class="item-avatar blue">
+                    <ShoppingCart size="14" />
+                  </div>
+                  <div class="item-info">
+                    <span class="item-name">{{ order.order_number || ('Order #' + order.id) }}</span>
+                    <span class="item-meta">{{ order.customer_name || 'Direct Buyer' }} • {{ formatDate(order.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="item-end">
+                  <span class="item-amount">ETB {{ formatNumber(order.grand_total) }}</span>
+                  <span class="status-badge" :class="`status-${order.status}`">{{ order.status }}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div v-if="!loading && !error" class="recent-section">
-        <div class="recent-card">
-          <h2>Recent Harvests</h2>
-          <div v-if="dashboard?.recent_harvests?.length > 0" class="list-items">
-            <div v-for="harvest in dashboard?.recent_harvests" :key="harvest.id" class="list-item">
-              <span class="item-name">{{ harvest.crop?.name }}</span>
-              <span class="item-quantity">{{ harvest.quantity }} units</span>
-              <span class="item-date">{{ formatDate(harvest.harvest_date) }}</span>
+            <div v-else class="empty-state">
+              <ShoppingCart size="32" class="text-slate-300 dark:text-slate-600 mb-2" />
+              <p>No customer orders received yet</p>
+              <button @click="router.push('/farmer/customer-orders')" class="btn-xs-primary">
+                <span>View Orders</span>
+              </button>
             </div>
-          </div>
-          <div v-else class="empty-state">
-            <p>No harvests yet</p>
-          </div>
-        </div>
-
-        <div class="recent-card">
-          <h2>Recent Orders</h2>
-          <div v-if="dashboard?.recent_orders?.length > 0" class="list-items">
-            <div v-for="order in dashboard?.recent_orders?.slice(0, 3)" :key="order.id" class="list-item">
-              <span class="item-name">Order #{{ order.id }}</span>
-              <span class="item-amount">{{ formatNumber(order.grand_total) }}</span>
-              <span class="status-badge" :class="`status-${order.status}`">{{ order.status }}</span>
-            </div>
-          </div>
-          <div v-else class="empty-state">
-            <p>No orders yet</p>
           </div>
         </div>
       </div>
@@ -189,12 +370,19 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { Line, Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js'
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement,
+  LineElement, Title, Tooltip, Legend, Filler, ArcElement
+} from 'chart.js'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import { useRouter } from 'vue-router'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import { farmerAPI } from '@/api/farmer'
+import {
+  Building2, Sprout, Package, ShoppingCart, Banknote, MessageSquare,
+  RefreshCw, Plus, ChevronRight, ArrowUpRight, AlertCircle
+} from 'lucide-vue-next'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement)
 
@@ -213,16 +401,59 @@ const timeRangeOptions = [
   { label: '1Y', value: '365' }
 ]
 
+// Revenue Trend Chart Config
 const chartData = computed(() => {
-  if (!dashboard.value?.chart_data) {
-    return { labels: [], datasets: [] }
+  if (!dashboard.value?.chart_data?.labels?.length) {
+    return {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Revenue (ETB)',
+        data: [0, 0, 0, 0, 0, 0, 0],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        fill: true,
+        tension: 0.4,
+      }]
+    }
   }
-  return dashboard.value.chart_data
+
+  const raw = dashboard.value.chart_data
+  return {
+    labels: raw.labels,
+    datasets: raw.datasets.map(ds => ({
+      ...ds,
+      borderColor: '#10b981',
+      backgroundColor: (context) => {
+        const chart = context.chart
+        const { ctx, chartArea } = chart
+        if (!chartArea) return 'rgba(16, 185, 129, 0.15)'
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)')
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)')
+        return gradient
+      },
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#10b981',
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 7,
+    }))
+  }
 })
 
+// Crop / Produce Sales Distribution Donut
 const doughnutData = computed(() => {
-  if (!dashboard.value?.crop_sales) {
-    return { labels: [], datasets: [] }
+  if (!dashboard.value?.crop_sales?.labels?.length) {
+    return {
+      labels: ['General Agricultural Commodities'],
+      datasets: [{
+        data: [100],
+        backgroundColor: ['#10b981'],
+        borderWidth: 2,
+      }]
+    }
   }
   return dashboard.value.crop_sales
 })
@@ -234,38 +465,52 @@ const chartOptions = computed(() => ({
     legend: {
       display: true,
       position: 'top',
+      align: 'end',
       labels: {
-        color: isDark.value ? '#f3f4f6' : '#1f2937',
-        font: { size: 14, weight: '600' },
-        padding: 20,
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        font: { size: 12, weight: '600' },
+        padding: 15,
         usePointStyle: true,
+        pointStyle: 'circle'
       }
     },
     tooltip: {
-      backgroundColor: isDark.value ? 'rgba(19, 27, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      titleColor: isDark.value ? '#f3f4f6' : '#1f2937',
-      bodyColor: isDark.value ? '#f3f4f6' : '#1f2937',
-      borderColor: isDark.value ? '#1e293b' : '#e5e7eb',
+      backgroundColor: isDark.value ? '#0f172a' : '#1e293b',
+      titleColor: '#ffffff',
+      bodyColor: '#e2e8f0',
+      borderColor: isDark.value ? '#334155' : '#cbd5e1',
       borderWidth: 1,
       padding: 12,
-      displayColors: true,
+      displayColors: false,
+      callbacks: {
+        label: function(context) {
+          return ` Revenue: ETB ${new Intl.NumberFormat().format(context.parsed.y || 0)}`
+        }
+      }
     }
   },
   scales: {
     y: {
       grid: {
-        color: isDark.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        color: isDark.value ? 'rgba(148, 163, 184, 0.08)' : 'rgba(0, 0, 0, 0.04)',
       },
       ticks: {
-        color: isDark.value ? '#94a3b8' : '#6b7280',
-        font: { size: 12 },
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        font: { size: 11 },
+        callback: function(value) {
+          if (value >= 1000) {
+            return (value / 1000) + 'k'
+          }
+          return value
+        }
       }
     },
     x: {
       grid: { display: false },
       ticks: {
-        color: isDark.value ? '#94a3b8' : '#6b7280',
-        font: { size: 12 },
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        font: { size: 11 },
+        maxTicksLimit: 12
       }
     }
   }
@@ -274,26 +519,28 @@ const chartOptions = computed(() => ({
 const doughnutOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: true,
+  cutout: '68%',
   plugins: {
     legend: {
       position: 'right',
       labels: {
-        color: isDark.value ? '#f3f4f6' : '#1f2937',
-        font: { size: 13, weight: '500' },
-        padding: 15,
+        color: isDark.value ? '#cbd5e1' : '#334155',
+        font: { size: 12, weight: '500' },
+        padding: 14,
         usePointStyle: true,
+        pointStyle: 'circle'
       }
     },
     tooltip: {
-      backgroundColor: isDark.value ? 'rgba(19, 27, 46, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-      titleColor: isDark.value ? '#f3f4f6' : '#1f2937',
-      bodyColor: isDark.value ? '#f3f4f6' : '#1f2937',
-      borderColor: isDark.value ? '#1e293b' : '#e5e7eb',
+      backgroundColor: isDark.value ? '#0f172a' : '#1e293b',
+      titleColor: '#ffffff',
+      bodyColor: '#e2e8f0',
+      borderColor: isDark.value ? '#334155' : '#cbd5e1',
       borderWidth: 1,
-      padding: 12,
+      padding: 10,
       callbacks: {
         label: function(context) {
-          return context.label + ': ' + context.parsed + '%'
+          return ` ${context.label}: ${context.parsed}% of output`
         }
       }
     }
@@ -308,16 +555,9 @@ const fetchDashboardData = async () => {
   loading.value = true
   error.value = null
   try {
-    const token = localStorage.getItem('auth_token')
-    if (!token) {
-      error.value = 'No authentication token found. Please log in again.'
-      loading.value = false
-      return
-    }
-
     const res = await farmerAPI.getDashboard(selectedTimeRange.value)
     dashboard.value = res.data
-    
+
     if (!dashboard.value.summary) {
       dashboard.value.summary = {
         total_farms: 0,
@@ -339,12 +579,6 @@ const fetchDashboardData = async () => {
     console.error('Error fetching dashboard:', err)
     if (err.response?.status === 401) {
       error.value = 'Your session has expired. Please log in again.'
-    } else if (err.response?.status === 403) {
-      error.value = 'You do not have permission to access this dashboard.'
-    } else if (err.response?.status === 500) {
-      error.value = 'Server error. Please try again later or contact support.'
-    } else if (err.message === 'Network Error') {
-      error.value = 'Network error. Please check your internet connection.'
     } else {
       error.value = err.response?.data?.message || err.message || 'Failed to load dashboard data. Please try again.'
     }
@@ -359,12 +593,16 @@ const onTimeRangeChange = async (range) => {
 }
 
 const formatNumber = (num) => {
-  return new Intl.NumberFormat().format(num || 0)
+  return new Intl.NumberFormat().format(Math.round(num) || 0)
 }
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const handleLogout = async () => {
@@ -380,13 +618,13 @@ const handleLogout = async () => {
 }
 
 .farmer-layout.light {
-  background-color: #f0f2f5;
-  color: #1f2937;
+  background-color: #f8fafc;
+  color: #1e293b;
 }
 
 .farmer-layout.dark {
   background-color: #0b0f17;
-  color: #f3f4f6;
+  color: #f8fafc;
 }
 
 .farmer-dashboard {
@@ -398,32 +636,16 @@ const handleLogout = async () => {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.farmer-layout.light .farmer-dashboard {
-  background-color: #f0f2f5;
-  color: #1f2937;
-}
-
-.farmer-layout.dark .farmer-dashboard {
-  background-color: #0b0f17;
-  color: #f3f4f6;
-}
-
 .dashboard-header-wrapper {
   background: white;
-  padding: 30px;
-  margin: -32px -32px 30px -32px;
+  padding: 24px 30px;
+  margin: -30px -30px 24px -30px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 15px;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.farmer-layout.light .dashboard-header-wrapper {
-  background: white;
-  border-bottom-color: #e5e7eb;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .farmer-layout.dark .dashboard-header-wrapper {
@@ -432,117 +654,778 @@ const handleLogout = async () => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.dashboard-header {
-  flex: 1;
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .dashboard-header h1 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
-  margin: 0 0 8px 0;
-  transition: color 0.3s ease;
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .farmer-layout.light .dashboard-header h1 {
-  color: #1f2937;
+  color: #0f172a;
 }
 
 .farmer-layout.dark .dashboard-header h1 {
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 .dashboard-header p {
   margin: 0;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.farmer-layout.light .dashboard-header p {
-  color: #6b7280;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .farmer-layout.dark .dashboard-header p {
+  color: #94a3b8;
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn-refresh {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.farmer-layout.dark .btn-refresh {
+  background: #1e293b;
   color: #cbd5e1;
+  border-color: #334155;
+}
+
+.farmer-layout.dark .btn-refresh:hover:not(:disabled) {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #059669;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
 }
 
 .theme-toggle-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid;
-  background-color: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
   cursor: pointer;
-  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.farmer-layout.light .theme-toggle-btn {
-  border-color: #d1d5db;
-  background-color: #ffffff;
-  color: #1f2937;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.farmer-layout.light .theme-toggle-btn:hover {
-  background-color: #f3f4f6;
-  border-color: #10b981;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-  transform: translateY(-2px);
+  transition: all 0.2s ease;
 }
 
 .farmer-layout.dark .theme-toggle-btn {
-  border-color: #1e293b;
-  background-color: #131b2e;
-  color: #f3f4f6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-color: #334155;
+  background-color: #1e293b;
 }
 
-.farmer-layout.dark .theme-toggle-btn:hover {
-  background-color: #1e293b;
+.theme-toggle-btn:hover {
   border-color: #10b981;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+/* Shortcuts Bar */
+.shortcuts-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 24px;
+}
+
+.shortcut-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.farmer-layout.dark .shortcut-chip {
+  background: #131b2e;
+  border-color: #1e293b;
+  color: #cbd5e1;
+}
+
+.shortcut-chip:hover {
+  border-color: #10b981;
+  color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+}
+
+/* Stat Cards */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  padding: 18px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.farmer-layout.dark .stat-card {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-3px);
+  border-color: #10b981;
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+}
+
+.farmer-layout.dark .stat-card.clickable:hover {
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.35);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stat-header h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.farmer-layout.dark .stat-header h3 {
+  color: #94a3b8;
+}
+
+.stat-icon-wrapper {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+}
+
+.farmer-layout.dark .stat-value {
+  color: #f8fafc;
+}
+
+.stat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-subtitle {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.farmer-layout.dark .stat-subtitle {
+  color: #94a3b8;
+}
+
+.stat-arrow {
+  color: #94a3b8;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.stat-card:hover .stat-arrow {
+  transform: translateX(3px);
+  color: #10b981;
+}
+
+/* Charts Section */
+.charts-section {
+  margin-bottom: 28px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.farmer-layout.dark .chart-card {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.chart-title-group h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 3px 0;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.farmer-layout.dark .chart-subtitle {
+  color: #94a3b8;
+}
+
+.time-filter-buttons {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.farmer-layout.dark .time-filter-buttons {
+  background: #1e293b;
+}
+
+.filter-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.farmer-layout.dark .filter-btn {
+  color: #94a3b8;
+}
+
+.filter-btn.active {
+  background: white;
+  color: #10b981;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.farmer-layout.dark .filter-btn.active {
+  background: #0f172a;
+  color: #10b981;
+}
+
+.chart-container {
+  height: 280px;
+  position: relative;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.doughnut-container {
+  height: 240px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.farmer-layout.dark .card-header-row {
+  border-bottom-color: #1e293b;
+}
+
+.card-header-row h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.badge-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.farmer-layout.dark .badge-pill {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.view-all-link:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+/* Transactions Table Card */
+.transactions-card {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+}
+
+.farmer-layout.dark .transactions-card {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.transactions-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.farmer-layout.dark th {
+  color: #94a3b8;
+  border-bottom-color: #1e293b;
+}
+
+td {
+  padding: 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.farmer-layout.dark td {
+  border-bottom-color: #172033;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f8fafc;
+}
+
+.farmer-layout.dark .clickable-row:hover {
+  background-color: #1a233a;
+}
+
+.id-tag {
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.farmer-layout.dark .id-tag {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+/* Recent Section */
+.recent-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .recent-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recent-card {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+}
+
+.farmer-layout.dark .recent-card {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.farmer-layout.dark .list-item {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+.clickable-item {
+  cursor: pointer;
+}
+
+.clickable-item:hover {
+  border-color: #10b981;
+  transform: translateX(2px);
+}
+
+.item-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.item-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-avatar.green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.item-avatar.blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.farmer-layout.dark .item-name {
+  color: #f8fafc;
+}
+
+.item-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.farmer-layout.dark .item-meta {
+  color: #94a3b8;
+}
+
+.qty-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.item-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.item-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.farmer-layout.dark .item-amount {
+  color: #f8fafc;
+}
+
+.status-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.status-delivered,
+.status-completed {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.status-processing,
+.status-confirmed,
+.status-shipped {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.status-cancelled,
+.status-rejected {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* Empty States */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-state p {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.empty-state-mini {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-state-mini p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+}
+
+.btn-xs-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #10b981;
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-xs-primary:hover {
+  background: #059669;
+}
+
+.btn-xs {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .loading-container {
-  border-radius: 12px;
+  background: white;
+  border-radius: 14px;
   padding: 60px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  transition: background-color 0.3s ease;
-}
-
-.farmer-layout.light .loading-container {
-  background-color: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  color: #666;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
 }
 
 .farmer-layout.dark .loading-container {
-  background-color: #131b2e;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  color: #d1d5db;
-  border: 1px solid #1e293b;
+  background: #131b2e;
+  border-color: #1e293b;
+  color: #cbd5e1;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #10b981;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-.farmer-layout.light .spinner {
-  border-color: #e5e7eb;
-  border-top-color: #10b981;
 }
 
 .farmer-layout.dark .spinner {
@@ -555,530 +1438,39 @@ const handleLogout = async () => {
 }
 
 .error-container {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
   border-radius: 12px;
-  padding: 40px;
+  padding: 30px;
   text-align: center;
-  transition: all 0.3s ease;
-}
-
-.farmer-layout.light .error-container {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 2px solid #fca5a5;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+  color: #9f1239;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .farmer-layout.dark .error-container {
-  background: linear-gradient(135deg, rgba(127, 29, 29, 0.3) 0%, rgba(153, 27, 27, 0.3) 100%);
-  border: 2px solid rgba(220, 38, 38, 0.5);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  background: rgba(159, 18, 57, 0.15);
+  border-color: rgba(159, 18, 57, 0.3);
+  color: #fda4af;
 }
 
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  border-radius: 8px;
-  padding: 14px 12px;
-  transition: all 0.3s;
-  border-left: 4px solid #10b981;
-}
-
-.farmer-layout.light .stat-card {
-  background: white;
-  color: #1f2937;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.farmer-layout.dark .stat-card {
-  background: #131b2e;
-  color: #f3f4f6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid #1e293b;
-  border-left: 4px solid #10b981;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-
-.stat-header h3 {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin: 0;
-  font-weight: 700;
-  transition: color 0.3s ease;
-  flex: 1;
-}
-
-.stat-header svg {
-  width: 20px;
-  height: 20px;
-  stroke-width: 1.5;
-  flex-shrink: 0;
-  margin-left: 6px;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 4px 0 2px 0;
-}
-
-.stat-subtitle {
-  font-size: 11px;
-  margin: 0;
-  transition: color 0.3s ease;
-  opacity: 0.85;
-}
-
-.charts-section {
-  margin-bottom: 30px;
-}
-
-.chart-card {
-  border-radius: 10px;
-  padding: 18px;
-  transition: all 0.3s;
-}
-
-.farmer-layout.light .chart-card {
-  background: white;
-  color: #1f2937;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.farmer-layout.dark .chart-card {
-  background: #131b2e;
-  color: #f3f4f6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid #1e293b;
-}
-
-.chart-card.full-width {
-  grid-column: 1 / -1;
-  margin-bottom: 20px;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
+.btn-retry {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 14px;
-}
-
-.chart-header h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  transition: color 0.3s ease;
-}
-
-.farmer-layout.light .chart-header h2 {
-  color: #1f2937;
-}
-
-.farmer-layout.dark .chart-header h2 {
-  color: #ffffff;
-}
-
-.time-filter-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.filter-btn {
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 6px;
-  border: 2px solid;
-  background: transparent;
+  background: #e11d48;
+  color: white;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
-  transition: all 0.3s;
 }
 
-.farmer-layout.light .filter-btn {
-  border-color: #d1d5db;
-  color: #6b7280;
-}
-
-.farmer-layout.light .filter-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.farmer-layout.light .filter-btn.active {
-  background-color: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.farmer-layout.dark .filter-btn {
-  border-color: #1e293b;
-  color: #94a3b8;
-}
-
-.farmer-layout.dark .filter-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.farmer-layout.dark .filter-btn.active {
-  background-color: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-  margin-top: 12px;
-}
-
-.chart-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.doughnut-container {
-  position: relative;
-  height: 280px;
-  margin-top: 12px;
-}
-
-.transactions-card {
-  border-radius: 10px;
-  padding: 18px;
-  transition: all 0.3s;
-}
-
-.farmer-layout.light .transactions-card {
-  background: white;
-  color: #1f2937;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.farmer-layout.dark .transactions-card {
-  background: #131b2e;
-  color: #f3f4f6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid #1e293b;
-}
-
-.transactions-card h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0 0 14px 0;
-}
-
-.transactions-table {
-  overflow-x: auto;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-thead {
-  position: sticky;
-  top: 0;
-}
-
-.farmer-layout.light thead {
-  background-color: #f9fafb;
-}
-
-.farmer-layout.dark thead {
-  background-color: #1a2338;
-}
-
-th {
-  padding: 10px 8px;
-  text-align: left;
-  font-weight: 700;
-  border-bottom: 2px solid;
-}
-
-.farmer-layout.light th {
-  border-color: #e5e7eb;
-  color: #6b7280;
-}
-
-.farmer-layout.dark th {
-  border-color: #1e293b;
-  color: #94a3b8;
-}
-
-.transaction-row {
-  border-bottom: 1px solid;
-  transition: background-color 0.3s;
-}
-
-.farmer-layout.light .transaction-row {
-  border-color: #e5e7eb;
-}
-
-.farmer-layout.light .transaction-row:hover {
-  background-color: #f9fafb;
-}
-
-.farmer-layout.dark .transaction-row {
-  border-color: #1e293b;
-}
-
-.farmer-layout.dark .transaction-row:hover {
-  background-color: #1a2338;
-}
-
-td {
-  padding: 10px 8px;
-}
-
-.tx-id {
-  font-weight: 600;
-  color: #10b981;
-}
-
-.empty-row {
-  text-align: center;
-}
-
-.farmer-layout.light .empty-row {
-  color: #9ca3af;
-}
-
-.farmer-layout.dark .empty-row {
-  color: #64748b;
-}
-
-.recent-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-top: 30px;
-}
-
-.recent-card {
-  border-radius: 10px;
-  padding: 16px;
-  transition: all 0.3s;
-}
-
-.farmer-layout.light .recent-card {
-  background: white;
-  color: #1f2937;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.farmer-layout.dark .recent-card {
-  background: #131b2e;
-  color: #f3f4f6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid #1e293b;
-}
-
-.recent-card h2 {
-  font-size: 15px;
-  margin-bottom: 14px;
-  font-weight: 700;
-  transition: color 0.3s ease;
-}
-
-.list-items {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.list-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  border-left: 3px solid #10b981;
-  transition: all 0.3s ease;
-}
-
-.farmer-layout.light .list-item {
-  background-color: #f9fafb;
-  color: #1f2937;
-}
-
-.farmer-layout.dark .list-item {
-  background-color: #1a2338;
-  color: #e2e8f0;
-  border: 1px solid #222f46;
-  border-left: 3px solid #10b981;
-}
-
-.list-item:hover {
-  transform: translateX(2px);
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.status-badge.status-completed,
-.status-badge.status-active {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.farmer-layout.dark .status-badge.status-completed,
-.farmer-layout.dark .status-badge.status-active {
-  background-color: rgba(16, 185, 129, 0.25);
-  color: #6ee7b7;
-}
-
-.empty-state {
-  padding: 16px;
-  text-align: center;
-  font-size: 13px;
-  transition: color 0.3s ease;
-}
-
-.farmer-layout.light .empty-state {
-  color: #9ca3af;
-}
-
-.farmer-layout.dark .empty-state {
-  color: #64748b;
-}
-
-@media (max-width: 1024px) {
-  .chart-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .farmer-dashboard {
-    padding: 16px;
-  }
-
-  .stats-section {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-  }
-}
-
-@media (max-width: 768px) {
-  .farmer-dashboard {
-    margin-left: 0;
-    padding: 12px;
-  }
-
-  .dashboard-header h1 {
-    font-size: 20px;
-  }
-
-  .stats-section {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 10px 8px;
-  }
-
-  .stat-header h3 {
-    font-size: 9px;
-  }
-
-  .stat-value {
-    font-size: 16px;
-  }
-
-  .stat-subtitle {
-    font-size: 10px;
-  }
-
-  .recent-section {
-    grid-template-columns: 1fr;
-  }
-
-  .chart-container {
-    height: 220px;
-  }
-
-  .doughnut-container {
-    height: 220px;
-  }
-
-  .transactions-table {
-    font-size: 12px;
-  }
-
-  .time-filter-buttons {
-    gap: 6px;
-  }
-
-  .filter-btn {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
-
-  .stat-card {
-    padding: 8px 6px;
-  }
-
-  .stat-header h3 {
-    font-size: 8px;
-  }
-
-  .stat-value {
-    font-size: 14px;
-  }
-
-  .stat-subtitle {
-    font-size: 9px;
-  }
-
-  .dashboard-header h1 {
-    font-size: 18px;
-  }
-
-  .dashboard-header p {
-    font-size: 13px;
-  }
-
-  .chart-container {
-    height: 180px;
-  }
-
-  .doughnut-container {
-    height: 180px;
-  }
+.btn-retry:hover {
+  background: #be123c;
 }
 </style>
