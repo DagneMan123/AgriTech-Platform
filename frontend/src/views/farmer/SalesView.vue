@@ -116,51 +116,118 @@
           </div>
         </div>
 
-        <!-- Filters Section -->
-        <div v-if="showFilters" class="filters-panel">
-          <div class="filters-header">
-            <h3>Filters</h3>
-            <button @click="closeFilters" class="btn-close">
-              <X size="20" />
-            </button>
+        <!-- Professional Inline Filters (Between Charts and Recent Sales) -->
+        <div :class="['rounded-2xl border p-5 mb-8 transition-all shadow-xs', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+          <!-- Top Row: Title, Record Count & Clear Action -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div :class="['w-8 h-8 rounded-lg flex items-center justify-center shrink-0', isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+                <SlidersHorizontal class="w-4 h-4" />
+              </div>
+              <div>
+                <h3 :class="['text-sm font-bold tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
+                  Filter Sales Transactions
+                </h3>
+                <span class="text-[11px] text-slate-400 font-medium">
+                  Refine revenue, order records, and commodities
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {{ filteredSales.length }} {{ filteredSales.length === 1 ? 'Sale' : 'Sales' }} Found
+              </span>
+              <button
+                v-if="hasActiveFilters"
+                @click="clearFilters"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
+              >
+                <RotateCcw class="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
+            </div>
           </div>
-          
-          <div class="filters-content">
-            <div class="filter-group">
-              <label>Date Range</label>
-              <select v-model="filters.dateRange" class="filter-select">
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="quarter">This Quarter</option>
-                <option value="year">This Year</option>
-              </select>
+
+          <!-- Controls Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <!-- Search Input -->
+            <div class="relative">
+              <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Search
+              </label>
+              <div class="relative">
+                <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  v-model="filters.search"
+                  type="text"
+                  placeholder="Order ID, customer, produce..."
+                  :class="['w-full pl-9 pr-3.5 py-2.5 rounded-xl text-xs border font-medium transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100 placeholder:text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400']"
+                />
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label>Product</label>
-              <select v-model="filters.product" class="filter-select">
-                <option value="">All Products</option>
-                <option v-for="product in availableProducts" :key="product.id" :value="product.id">
-                  {{ product.name }}
-                </option>
-              </select>
+            <!-- Date Range Selector -->
+            <div>
+              <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Date Timeline
+              </label>
+              <div class="relative">
+                <Calendar class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  v-model="filters.dateRange"
+                  :class="['w-full pl-9 pr-8 py-2.5 rounded-xl text-xs border font-medium transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">Past 7 Days</option>
+                  <option value="month">This Month</option>
+                  <option value="quarter">This Quarter (90d)</option>
+                  <option value="year">Past 12 Months</option>
+                </select>
+                <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label>Status</label>
-              <select v-model="filters.status" class="filter-select">
-                <option value="">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+            <!-- Product / Produce Selector -->
+            <div>
+              <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Produce / Product
+              </label>
+              <div class="relative">
+                <Package class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  v-model="filters.product"
+                  :class="['w-full pl-9 pr-8 py-2.5 rounded-xl text-xs border font-medium transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']"
+                >
+                  <option value="">All Commodities</option>
+                  <option v-for="product in availableProducts" :key="product.id" :value="product.id">
+                    {{ product.name }}
+                  </option>
+                </select>
+                <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
-            <div class="filter-actions">
-              <button @click="applyFilters" class="btn-apply">Apply Filters</button>
-              <button @click="clearFilters" class="btn-clear">Clear</button>
+            <!-- Fulfillment / Payment Status Selector -->
+            <div>
+              <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Order Status
+              </label>
+              <div class="relative">
+                <CheckCircle2 class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  v-model="filters.status"
+                  :class="['w-full pl-9 pr-8 py-2.5 rounded-xl text-xs border font-medium transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="completed">Completed / Delivered</option>
+                  <option value="confirmed">Confirmed &amp; In Transit</option>
+                  <option value="pending">Pending Payment/Fulfillment</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>
@@ -355,8 +422,8 @@ ChartJS.register(
 import { farmerAPI } from '@/api/farmer'
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock, Banknote,
-  AlertCircle, RotateCcw, Sliders, Download, X, Eye, FileDown, ChevronLeft,
-  ChevronRight
+  AlertCircle, RotateCcw, Download, X, Eye, FileDown, ChevronLeft,
+  ChevronRight, SlidersHorizontal, Search, Calendar, Package, CheckCircle2, ChevronDown
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -384,9 +451,19 @@ const summaryData = ref({
 
 // Filters
 const filters = ref({
+  search: '',
   dateRange: 'all',
   product: '',
   status: ''
+})
+
+const hasActiveFilters = computed(() => {
+  return Boolean(
+    filters.value.search ||
+    filters.value.product ||
+    filters.value.status ||
+    (filters.value.dateRange && filters.value.dateRange !== 'all')
+  )
 })
 
 // Charts Computed Data
@@ -618,6 +695,15 @@ const donutChartOptions = computed(() => ({
 const filteredSales = computed(() => {
   let result = sales.value
 
+  if (filters.value.search) {
+    const q = filters.value.search.toLowerCase().trim()
+    result = result.filter(s => 
+      (s.id && s.id.toLowerCase().includes(q)) ||
+      (s.buyerName && s.buyerName.toLowerCase().includes(q)) ||
+      (s.productName && s.productName.toLowerCase().includes(q))
+    )
+  }
+
   if (filters.value.status) {
     result = result.filter(s => s.status === filters.value.status)
   }
@@ -787,10 +873,12 @@ const applyFilters = () => {
 
 const clearFilters = () => {
   filters.value = {
+    search: '',
     dateRange: 'all',
     product: '',
     status: ''
   }
+  currentPage.value = 1
 }
 
 const exportData = () => {
