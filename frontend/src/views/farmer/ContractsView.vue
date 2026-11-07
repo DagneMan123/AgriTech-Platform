@@ -43,19 +43,6 @@
         </div>
       </transition>
 
-      <!-- Institutional Escrow Guarantee Notice -->
-      <div :class="['mb-6 p-4 rounded-2xl border flex items-start gap-3.5 transition-all', isDark ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-200' : 'bg-emerald-50/70 border-emerald-200 text-emerald-900']">
-        <ShieldCheck class="w-6 h-6 text-emerald-500 shrink-0 mt-0.5" />
-        <div class="text-xs leading-relaxed">
-          <div class="font-bold text-sm text-emerald-600 dark:text-emerald-400 mb-0.5">
-            100% Escrow Guarantee for Forward Production
-          </div>
-          <div>
-            All forward agreements are legally safeguarded under neutral <span class="font-bold">Agricultural Custody</span>. When an institutional buyer or union proposes a supply agreement, their funds are locked in Escrow. Your 30% mobilization advance is unlocked upon digital signature, with remaining balances disbursed automatically following harvest grading and warehouse receipt.
-          </div>
-        </div>
-      </div>
-
       <!-- Live Summary Stats Cards -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Contracts -->
