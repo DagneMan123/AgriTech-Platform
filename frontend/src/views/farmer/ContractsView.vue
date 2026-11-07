@@ -10,30 +10,12 @@
       <div :class="['rounded-2xl border p-6 mb-6 shadow-xs transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                FORWARD CONTRACTING &amp; SUPPLY
-              </span>
-              <span class="text-xs text-slate-400 font-medium">Chapa &amp; Agricultural Escrow Protected</span>
-            </div>
             <h1 :class="['text-2xl lg:text-3xl font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
               Contracts &amp; Agreements
             </h1>
             <p :class="['text-xs lg:text-sm m-0 mt-1', isDark ? 'text-slate-400' : 'text-slate-600']">
               Review forward supply proposals from buyers and agricultural unions, track stage milestones, and digitally sign agreements.
             </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button
-              @click="loadContracts"
-              :disabled="loading"
-              :class="['px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer', isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700']"
-              title="Refresh Contracts"
-            >
-              <RotateCcw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
-              <span>Refresh</span>
-            </button>
           </div>
         </div>
       </div>
@@ -690,7 +672,7 @@ import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   FileText, CheckCircle2, Clock, ShieldCheck, BadgeDollarSign,
-  Calendar, MapPin, Search, FileSignature, X, Sprout, RotateCcw
+  Calendar, MapPin, Search, FileSignature, X, Sprout
 } from 'lucide-vue-next'
 
 const router = useRouter()
