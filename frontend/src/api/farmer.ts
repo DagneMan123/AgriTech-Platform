@@ -107,5 +107,12 @@ export const farmerAPI = {
   addPayoutMethod: (data: any) => apiClient.post('/farmer/payout-settings', data),
   setPrimaryPayoutMethod: (id: number) => apiClient.put(`/farmer/payout-settings/${id}/primary`),
   deletePayoutMethod: (id: number) => apiClient.delete(`/farmer/payout-settings/${id}`),
-  disburseEscrowOrder: (orderId: number) => apiClient.post(`/farmer/orders/${orderId}/disburse-escrow`)
+  disburseEscrowOrder: (orderId: number) => apiClient.post(`/farmer/orders/${orderId}/disburse-escrow`),
+
+  // Forward Supply Contracts & Escrow Milestones
+  getContracts: (params?: any) => apiClient.get('/farmer/contracts', { params }),
+  getContract: (id: number) => apiClient.get(`/farmer/contracts/${id}`),
+  acceptContract: (id: number, data?: { notes?: string }) => apiClient.post(`/farmer/contracts/${id}/accept`, data),
+  rejectContract: (id: number, data?: { reason?: string }) => apiClient.post(`/farmer/contracts/${id}/reject`, data),
+  completeMilestone: (contractId: number, milestoneId: number) => apiClient.post(`/farmer/contracts/${contractId}/milestones/${milestoneId}/complete`)
 }

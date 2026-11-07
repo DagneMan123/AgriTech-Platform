@@ -62,6 +62,11 @@
             <ShoppingCart class="sub-icon" />
             <span>Customer Orders</span>
           </router-link>
+          <router-link to="/farmer/contracts" class="menu-item sub-item" active-class="active">
+            <FileText class="sub-icon" />
+            <span>Contracts &amp; Agreements</span>
+            <span v-if="pendingContractsCount > 0" class="badge-pending">Pending</span>
+          </router-link>
         </div>
       </div>
 
@@ -235,7 +240,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, defineEmits } from 'vue'
+import { ref, computed, watch, onMounted, defineEmits } from 'vue'
+import { useFarmerStore } from '@/stores/farmerStore'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
@@ -253,6 +259,8 @@ const route = useRoute()
 const auth = useAuthStore()
 const { isDark, isLight, toggleTheme } = useTheme()
 const emit = defineEmits(['logout'])
+const farmerStore = useFarmerStore()
+const pendingContractsCount = computed(() => farmerStore.pendingContractsCount)
 
 const expandedSections = ref({
   farmManagement: true,
@@ -276,6 +284,7 @@ const routeSectionMap = {
   'farmer-products': 'marketplace',
   'farmer-my-sales': 'marketplace',
   'farmer-customer-orders': 'marketplace',
+  'farmer-contracts': 'marketplace',
   
   'farmer-seeds': 'farmInputs',
   'farmer-fertilizers': 'farmInputs',
@@ -320,6 +329,7 @@ const autoExpandSection = () => {
 
 watch(() => route.name, () => {
   autoExpandSection()
+  farmerStore.fetchContracts().catch(() => {})
 }, { immediate: true })
 
 const handleLogout = async () => {
@@ -338,6 +348,7 @@ const emitLogout = async () => {
 
 onMounted(() => {
   autoExpandSection()
+  farmerStore.fetchContracts().catch(() => {})
 })
 </script>
 
@@ -492,6 +503,20 @@ onMounted(() => {
   background: #10b981;
 }
 
+.badge-pending {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  line-height: 1.2;
+}
+
 .sidebar-bottom {
   padding: 10px 0;
   border-top: 1px solid #e5e7eb;
@@ -565,7 +590,13 @@ onMounted(() => {
   color: #6ee7b7 !important;
 }
 
-.sidebar.dark .sidebar-bottom {
+.sidebar.dark .badge-pending {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.sidebar-bottom {
   border-top: 1px solid #1e293b !important;
 }
 

@@ -34,6 +34,7 @@ const FarmerHarvestsView = () => import('@/views/farmer/HarvestsView.vue')
 const FarmerProductsView = () => import('@/views/farmer/ProductsView.vue')
 const FarmerSalesView = () => import('@/views/farmer/SalesView.vue')
 const FarmerCustomerOrdersView = () => import('@/views/farmer/CustomerOrdersView.vue')
+const FarmerContractsView = () => import('@/views/farmer/ContractsView.vue')
 const FarmerOrdersView = () => import('@/views/farmer/OrdersView.vue')
 const FarmerSeedsView = () => import('@/views/farmer/SeedsView.vue')
 const FarmerFertilizersView = () => import('@/views/farmer/FertilizersView.vue')
@@ -264,6 +265,12 @@ const routes: RouteRecordRaw[] = [
         name: 'farmer-customer-orders',
         component: FarmerCustomerOrdersView,
         meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Customer Orders' }
+      },
+      {
+        path: 'contracts',
+        name: 'farmer-contracts',
+        component: FarmerContractsView,
+        meta: { requiresAuth: true, requiredRole: 'farmer', title: 'Contracts & Agreements' }
       },
       {
         path: 'orders',

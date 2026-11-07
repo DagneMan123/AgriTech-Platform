@@ -956,7 +956,7 @@ import {
   getCartTotalWeightKg,
   cartHasPerishables,
   getItemWeightKg,
-  ETHIOPIAN_REGIONS_LOGISTICS,
+ 
   calculateOriginDestinationDistanceKm,
   resolveCartOriginAndDistance,
   ETHIOPIAN_DELIVERY_DESTINATIONS,

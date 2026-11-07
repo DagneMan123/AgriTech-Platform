@@ -573,6 +573,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/payout-settings/{id}/primary', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'setDefault']);
             Route::delete('/payout-settings/{id}', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'destroy']);
             Route::post('/orders/{id}/disburse-escrow', [\App\Http\Controllers\Api\Farmer\PayoutSettingsController::class, 'disburseOrder']);
+
+            // Farmer Forward Supply Contracts & Escrow Milestones
+            Route::get('/contracts', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'index']);
+            Route::get('/contracts/{id}', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'show']);
+            Route::post('/contracts/{id}/accept', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'accept']);
+            Route::post('/contracts/{id}/reject', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'reject']);
+            Route::post('/contracts/{contractId}/milestones/{milestoneId}/complete', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'completeMilestone']);
         });
 
 

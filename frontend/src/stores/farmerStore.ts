@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { farmerAPI } from '@/api/farmer'
 
 export const useFarmerStore = defineStore('farmer', () => {
@@ -10,6 +10,22 @@ export const useFarmerStore = defineStore('farmer', () => {
   const orders = ref<any[]>([])
   const consultations = ref<any[]>([])
   const loans = ref<any[]>([])
+  const contracts = ref<any[]>([])
+  const contractStats = ref<any>({
+    total_contracts: 0,
+    active_contracts: 0,
+    pending_contracts: 0,
+    completed_contracts: 0,
+    total_contracted_value: 0,
+    advance_escrow_held: 0
+  })
+  const pendingContractsCount = computed(() => {
+    if (contractStats.value && typeof contractStats.value.pending_contracts === 'number') {
+      return contractStats.value.pending_contracts
+    }
+    const list = Array.isArray(contracts.value) ? contracts.value : []
+    return list.filter(c => ['proposed', 'draft', 'pending'].includes((c.status || '').toLowerCase())).length
+  })
   const dashboard = ref<any>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -161,6 +177,63 @@ export const useFarmerStore = defineStore('farmer', () => {
     }
   }
 
+  // Forward Contracts
+  const fetchContracts = async (params?: any) => {
+    loading.value = true
+    try {
+      const response = await farmerAPI.getContracts(params)
+      const raw = response.data?.data || response.data
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
+      contracts.value = list
+      if (response.data?.stats) {
+        contractStats.value = response.data.stats
+      }
+      return list
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch contracts'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const acceptContract = async (id: number, data?: { notes?: string }) => {
+    try {
+      const response = await farmerAPI.acceptContract(id, data)
+      const updated = response.data?.data || response.data
+      const index = contracts.value.findIndex(c => c.id === id)
+      if (index > -1) {
+        contracts.value[index] = updated
+      }
+      if (contractStats.value) {
+        if (contractStats.value.pending_contracts > 0) contractStats.value.pending_contracts--
+        contractStats.value.active_contracts++
+      }
+      return updated
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to accept contract'
+      throw err
+    }
+  }
+
+  const rejectContract = async (id: number, data?: { reason?: string }) => {
+    try {
+      const response = await farmerAPI.rejectContract(id, data)
+      const updated = response.data?.data || response.data
+      const index = contracts.value.findIndex(c => c.id === id)
+      if (index > -1) {
+        contracts.value[index] = updated
+      }
+      if (contractStats.value && contractStats.value.pending_contracts > 0) {
+        contractStats.value.pending_contracts--
+      }
+      return updated
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to reject contract'
+      throw err
+    }
+  }
+
   return {
     farms,
     crops,
@@ -169,6 +242,9 @@ export const useFarmerStore = defineStore('farmer', () => {
     orders,
     consultations,
     loans,
+    contracts,
+    contractStats,
+    pendingContractsCount,
     dashboard,
     loading,
     error,
@@ -183,5 +259,8 @@ export const useFarmerStore = defineStore('farmer', () => {
     fetchOrders,
     acceptOrder,
     fetchDashboard,
+    fetchContracts,
+    acceptContract,
+    rejectContract,
   }
 })
