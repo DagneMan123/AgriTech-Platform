@@ -6,9 +6,9 @@
       <div class="page-header">
         <div class="header-content">
           <h1>Transport Requests</h1>
-          <p>Request and manage transportation for your farm produce</p>
+          <p>Request and manage produce transportation, warehouse logistics, and delivery tracking</p>
         </div>
-        <button @click="showNewRequest = true" class="btn-new">
+        <button @click="openCreateModal" class="btn-new" title="Create new transport request">
           <Plus size="16" />
           <span>New Request</span>
         </button>
@@ -17,7 +17,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
-        <p>Loading requests...</p>
+        <p>Loading transport requests from database...</p>
       </div>
 
       <!-- Error State -->
@@ -32,19 +32,19 @@
 
       <!-- Content -->
       <div v-if="!loading && !error" class="transport-content">
-        <!-- Stats -->
+        <!-- Stats KPI Grid -->
         <div class="stats-grid">
           <div class="stat-card">
             <Send size="20" class="stat-icon pending" />
             <div>
-              <span class="stat-label">Pending</span>
+              <span class="stat-label">Pending Review</span>
               <span class="stat-value">{{ stats.pending }}</span>
             </div>
           </div>
           <div class="stat-card">
             <Truck size="20" class="stat-icon confirmed" />
             <div>
-              <span class="stat-label">Confirmed</span>
+              <span class="stat-label">Assigned / Confirmed</span>
               <span class="stat-value">{{ stats.confirmed }}</span>
             </div>
           </div>
@@ -58,60 +58,102 @@
           <div class="stat-card">
             <CheckCircle size="20" class="stat-icon completed" />
             <div>
-              <span class="stat-label">Completed</span>
+              <span class="stat-label">Delivered</span>
               <span class="stat-value">{{ stats.completed }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Requests Table -->
+        <!-- Requests Table Section -->
         <div class="table-section">
           <div class="table-header">
-            <h3>Recent Requests</h3>
+            <div class="table-title-area">
+              <h3>Recent Transport Requests</h3>
+              <span class="count-pill">{{ filteredRequests.length }} requests</span>
+            </div>
             <div class="table-controls">
+              <!-- Search Input -->
+              <div class="search-box">
+                <Search size="14" class="search-icon" />
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search produce, route, ID..."
+                  class="search-input"
+                />
+              </div>
+
+              <!-- Status Filter Dropdown -->
               <select v-model="filterStatus" class="filter-select">
-                <option value="">All Status</option>
+                <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
+                <option value="confirmed">Confirmed / Assigned</option>
                 <option value="in-transit">In Transit</option>
-                <option value="completed">Completed</option>
+                <option value="completed">Completed / Delivered</option>
               </select>
             </div>
           </div>
 
+          <!-- Table Content -->
           <div v-if="filteredRequests.length > 0" class="table-wrapper">
             <table class="requests-table">
               <thead>
                 <tr>
                   <th>Request ID</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Product</th>
+                  <th>Produce</th>
                   <th>Quantity</th>
+                  <th>Pickup (From)</th>
+                  <th>Destination (To)</th>
                   <th>Date</th>
+                  <th>Transporter</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="request in filteredRequests" :key="request.id" class="table-row">
-                  <td class="td-id">{{ request.id }}</td>
-                  <td class="td-from">{{ request.from }}</td>
-                  <td class="td-to">{{ request.to }}</td>
-                  <td class="td-product">{{ request.product }}</td>
-                  <td class="td-quantity">{{ request.quantity }} {{ request.unit }}</td>
+                <tr v-for="request in filteredRequests" :key="request.rawId" class="table-row">
+                  <td class="td-id">
+                    <span class="id-badge">{{ request.id }}</span>
+                  </td>
+                  <td class="td-product font-semibold">{{ request.product }}</td>
+                  <td class="td-quantity">
+                    <span class="qty-num">{{ request.quantity }}</span>
+                    <span class="qty-unit">{{ request.unit }}</span>
+                  </td>
+                  <td class="td-from" :title="request.from">{{ request.from }}</td>
+                  <td class="td-to" :title="request.to">{{ request.to }}</td>
                   <td class="td-date">{{ formatDate(request.requestDate) }}</td>
+                  <td class="td-driver">
+                    <div v-if="request.driver" class="driver-badge">
+                      <Truck size="13" class="driver-icon" />
+                      <span>{{ request.driver }}</span>
+                    </div>
+                    <span v-else class="text-unassigned">Awaiting dispatch</span>
+                  </td>
                   <td class="td-status">
                     <span class="status-badge" :class="`status-${request.status}`">
                       {{ capitalize(request.status) }}
                     </span>
                   </td>
                   <td class="td-actions">
-                    <button @click="viewDetails(request)" class="action-btn">
-                      <Eye size="16" />
+                    <button @click="viewDetails(request)" class="action-btn view-btn" title="View Full Details">
+                      <Eye size="15" />
                     </button>
-                    <button v-if="request.status === 'pending'" @click="editRequest(request)" class="action-btn">
-                      <Edit size="16" />
+                    <button
+                      v-if="request.status === 'pending'"
+                      @click="editRequest(request)"
+                      class="action-btn edit-btn"
+                      title="Edit Request"
+                    >
+                      <Edit size="15" />
+                    </button>
+                    <button
+                      v-if="request.status === 'pending'"
+                      @click="deleteRequest(request)"
+                      class="action-btn delete-btn"
+                      title="Cancel Request"
+                    >
+                      <Trash2 size="15" />
                     </button>
                   </td>
                 </tr>
@@ -119,65 +161,169 @@
             </table>
           </div>
 
+          <!-- Empty State (No requests in database) -->
           <div v-else class="empty-state">
-            <Truck size="48" class="empty-icon" />
-            <p>No transport requests</p>
+            <div class="empty-icon-wrap">
+              <Truck size="44" class="empty-icon" />
+            </div>
+            <h4 class="empty-title">
+              {{ searchQuery || filterStatus ? 'No matching requests found' : 'No transport requests found' }}
+            </h4>
+            <p class="empty-desc">
+              {{ searchQuery || filterStatus ? 'Try adjusting your search criteria or resetting the status filter.' : 'You have not submitted any transportation requests yet. Click "New Request" to dispatch your produce to warehouses or buyers.' }}
+            </p>
+            <button
+              v-if="!searchQuery && !filterStatus"
+              @click="openCreateModal"
+              class="btn-primary empty-btn"
+            >
+              <Plus size="16" />
+              <span>Create Transport Request</span>
+            </button>
+            <button
+              v-else
+              @click="clearFilters"
+              class="btn-secondary empty-btn"
+            >
+              <span>Reset Filters</span>
+            </button>
           </div>
         </div>
 
-        <!-- New Request Modal -->
-        <div v-if="showNewRequest" class="modal-overlay" @click="showNewRequest = false">
+        <!-- Create / Edit Request Modal -->
+        <div v-if="showNewRequest" class="modal-overlay" @click="closeModal">
           <div class="modal-content" @click.stop>
             <div class="modal-header">
-              <h2>Create Transport Request</h2>
-              <button @click="showNewRequest = false" class="btn-close">
+              <h2>{{ editingRequest ? 'Edit Transport Request' : 'Create Transport Request' }}</h2>
+              <button @click="closeModal" class="btn-close">
                 <X size="20" />
               </button>
             </div>
             <div class="modal-body">
-              <form @submit.prevent="submitRequest" class="form">
+              <form @submit.prevent="saveRequest" class="form">
+                <!-- Produce Selection -->
                 <div class="form-group">
-                  <label>Pickup Location</label>
-                  <input v-model="newRequest.from" type="text" required placeholder="Farm/Location" class="form-control" />
+                  <label>Produce Item / Commodity *</label>
+                  <input
+                    v-model="requestForm.product_name"
+                    type="text"
+                    required
+                    placeholder="e.g. White Teff, Maize, Red Onion, Tomatoes"
+                    class="form-control"
+                  />
+                  <!-- Suggestions pills -->
+                  <div v-if="productSuggestions.length > 0 && !editingRequest" class="suggestion-pills">
+                    <span class="suggestion-label">Quick select:</span>
+                    <button
+                      type="button"
+                      v-for="p in productSuggestions"
+                      :key="p"
+                      @click="requestForm.product_name = p"
+                      class="suggestion-pill"
+                    >
+                      {{ p }}
+                    </button>
+                  </div>
                 </div>
 
-                <div class="form-group">
-                  <label>Delivery Location</label>
-                  <input v-model="newRequest.to" type="text" required placeholder="Destination" class="form-control" />
-                </div>
-
+                <!-- Quantity & Unit -->
                 <div class="form-row">
-                  <div class="form-group">
-                    <label>Product</label>
-                    <input v-model="newRequest.product" type="text" required placeholder="Product name" class="form-control" />
+                  <div class="form-group flex-1">
+                    <label>Quantity *</label>
+                    <input
+                      v-model.number="requestForm.quantity"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      required
+                      placeholder="e.g. 50"
+                      class="form-control"
+                    />
                   </div>
-                  <div class="form-group">
-                    <label>Quantity</label>
-                    <div class="input-group">
-                      <input v-model.number="newRequest.quantity" type="number" required class="form-control" />
-                      <select v-model="newRequest.unit" class="form-control">
-                        <option>kg</option>
-                        <option>tons</option>
-                        <option>bags</option>
-                        <option>crates</option>
-                      </select>
-                    </div>
+                  <div class="form-group w-36">
+                    <label>Unit *</label>
+                    <select v-model="requestForm.unit" class="form-control" required>
+                      <option value="kg">kg</option>
+                      <option value="tonnes">tonnes</option>
+                      <option value="bags">bags (quintal)</option>
+                      <option value="bundles">bundles</option>
+                      <option value="pieces">pieces</option>
+                    </select>
                   </div>
                 </div>
 
+                <!-- Locations -->
                 <div class="form-group">
-                  <label>Requested Date</label>
-                  <input v-model="newRequest.date" type="date" required class="form-control" />
+                  <label>Pickup Location (Farm Gate / Storehouse) *</label>
+                  <input
+                    v-model="requestForm.pickup_location"
+                    type="text"
+                    required
+                    placeholder="e.g. Bishoftu Farm Depot, Oromia"
+                    class="form-control"
+                  />
                 </div>
 
                 <div class="form-group">
-                  <label>Special Instructions</label>
-                  <textarea v-model="newRequest.instructions" placeholder="Any special handling..." class="form-control" rows="3"></textarea>
+                  <label>Delivery Destination *</label>
+                  <input
+                    v-model="requestForm.delivery_location"
+                    type="text"
+                    required
+                    placeholder="e.g. Kality Central Grain Warehouse, Addis Ababa"
+                    class="form-control"
+                  />
+                  <!-- Quick destinations -->
+                  <div class="suggestion-pills">
+                    <span class="suggestion-label">Hubs:</span>
+                    <button
+                      type="button"
+                      @click="requestForm.delivery_location = 'Kality Central Grain Warehouse, Addis Ababa'"
+                      class="suggestion-pill"
+                    >
+                      Kality Central Grain Warehouse
+                    </button>
+                    <button
+                      type="button"
+                      @click="requestForm.delivery_location = 'Adama Agricultural Logistics Terminal'"
+                      class="suggestion-pill"
+                    >
+                      Adama Logistics Terminal
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Preferred Date -->
+                <div class="form-group">
+                  <label>Preferred Pickup Date *</label>
+                  <input
+                    v-model="requestForm.preferred_date"
+                    type="date"
+                    :min="todayString"
+                    required
+                    class="form-control"
+                  />
+                </div>
+
+                <!-- Handling Instructions -->
+                <div class="form-group">
+                  <label>Handling Instructions & Notes (Optional)</label>
+                  <textarea
+                    v-model="requestForm.notes"
+                    placeholder="e.g. Perishable cargo - protect from rain and direct heat. Keep bags dry."
+                    class="form-control"
+                    rows="3"
+                  ></textarea>
                 </div>
 
                 <div class="form-actions">
-                  <button type="button" @click="showNewRequest = false" class="btn-secondary">Cancel</button>
-                  <button type="submit" class="btn-primary">Submit Request</button>
+                  <button type="button" @click="closeModal" class="btn-secondary" :disabled="submitting">
+                    Cancel
+                  </button>
+                  <button type="submit" class="btn-primary" :disabled="submitting">
+                    <span v-if="submitting">Saving...</span>
+                    <span v-else>{{ editingRequest ? 'Update Request' : 'Submit Request' }}</span>
+                  </button>
                 </div>
               </form>
             </div>
@@ -188,59 +334,105 @@
         <div v-if="selectedRequest" class="modal-overlay" @click="selectedRequest = null">
           <div class="modal-content" @click.stop>
             <div class="modal-header">
-              <h2>Request {{ selectedRequest.id }}</h2>
+              <div class="modal-header-info">
+                <h2>Transport Request Details</h2>
+                <span class="id-tag">{{ selectedRequest.id }}</span>
+              </div>
               <button @click="selectedRequest = null" class="btn-close">
                 <X size="20" />
               </button>
             </div>
+
             <div class="modal-body">
+              <!-- Status Banner -->
+              <div class="status-banner" :class="`banner-${selectedRequest.status}`">
+                <div class="banner-icon-area">
+                  <CheckCircle2 v-if="selectedRequest.status === 'completed'" size="22" />
+                  <Truck v-else-if="selectedRequest.status === 'in-transit'" size="22" />
+                  <ShieldCheck v-else-if="selectedRequest.status === 'confirmed'" size="22" />
+                  <Clock v-else size="22" />
+                </div>
+                <div>
+                  <div class="banner-title">Status: {{ capitalize(selectedRequest.status) }}</div>
+                  <div class="banner-subtitle">
+                    {{ getStatusExplanation(selectedRequest.status) }}
+                  </div>
+                </div>
+              </div>
+
               <div class="detail-grid">
                 <div class="detail-item">
-                  <span class="label">From:</span>
-                  <span class="value">{{ selectedRequest.from }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="label">To:</span>
-                  <span class="value">{{ selectedRequest.to }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="label">Product:</span>
-                  <span class="value">{{ selectedRequest.product }}</span>
+                  <span class="label">Produce Commodity:</span>
+                  <span class="value font-bold">{{ selectedRequest.product }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="label">Quantity:</span>
-                  <span class="value">{{ selectedRequest.quantity }} {{ selectedRequest.unit }}</span>
+                  <span class="value font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ selectedRequest.quantity }} {{ selectedRequest.unit }}
+                  </span>
+                </div>
+                <div class="detail-item full-width">
+                  <span class="label">Pickup Location:</span>
+                  <span class="value">{{ selectedRequest.from }}</span>
+                </div>
+                <div class="detail-item full-width">
+                  <span class="label">Delivery Destination:</span>
+                  <span class="value">{{ selectedRequest.to }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Date:</span>
+                  <span class="label">Pickup Date:</span>
                   <span class="value">{{ formatDate(selectedRequest.requestDate) }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Status:</span>
-                  <span class="status-badge" :class="`status-${selectedRequest.status}`">
-                    {{ capitalize(selectedRequest.status) }}
-                  </span>
+                  <span class="label">Delivery Date:</span>
+                  <span class="value">{{ selectedRequest.deliveryDate ? formatDate(selectedRequest.deliveryDate) : 'Pending Dispatch' }}</span>
                 </div>
               </div>
 
-              <div v-if="selectedRequest.driver" class="driver-info">
-                <h3>Driver Information</h3>
-                <p><strong>Name:</strong> {{ selectedRequest.driver }}</p>
-                <p><strong>Phone:</strong> {{ selectedRequest.driverPhone }}</p>
-                <p><strong>Vehicle:</strong> {{ selectedRequest.vehicle }}</p>
+              <!-- Driver / Transporter Section -->
+              <div class="driver-info">
+                <h3>Transporter & Vehicle Logistics</h3>
+                <div v-if="selectedRequest.driver" class="driver-details">
+                  <div class="info-row">
+                    <span class="info-label">Transporter / Driver:</span>
+                    <span class="info-val font-semibold">{{ selectedRequest.driver }}</span>
+                  </div>
+                  <div v-if="selectedRequest.driverPhone" class="info-row">
+                    <span class="info-label">Contact Phone:</span>
+                    <span class="info-val font-mono">{{ selectedRequest.driverPhone }}</span>
+                  </div>
+                  <div v-if="selectedRequest.vehicle" class="info-row">
+                    <span class="info-label">Vehicle Plate / Type:</span>
+                    <span class="info-val font-mono">{{ selectedRequest.vehicle }}</span>
+                  </div>
+                </div>
+                <div v-else class="unassigned-notice">
+                  <Clock size="16" class="text-amber-500" />
+                  <span>Waiting for regional logistics coordinator to assign a transporter vehicle.</span>
+                </div>
               </div>
 
+              <!-- Special Handling Instructions -->
               <div v-if="selectedRequest.instructions" class="instructions">
-                <h3>Special Instructions</h3>
+                <h3>Handling Instructions</h3>
                 <p>{{ selectedRequest.instructions }}</p>
               </div>
             </div>
 
             <div class="modal-footer">
               <button @click="selectedRequest = null" class="btn-secondary">Close</button>
+              <button
+                v-if="selectedRequest.status === 'pending'"
+                @click="openEditFromDetails"
+                class="btn-primary"
+              >
+                <Edit size="15" />
+                <span>Edit Request</span>
+              </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -252,124 +444,268 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import { farmerAPI } from '@/api/farmer'
 import {
-  Plus, Send, Truck, MapPin, CheckCircle, AlertCircle, RotateCcw, X, Eye, Edit
+  Plus, Send, Truck, MapPin, CheckCircle, AlertCircle, RotateCcw, X, Eye, Edit,
+  Trash2, Search, CheckCircle2, ShieldCheck, Clock
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
 const { isDark, isLight } = useTheme()
 
+// State
 const loading = ref(false)
+const submitting = ref(false)
 const error = ref(null)
 const showNewRequest = ref(false)
+const editingRequest = ref(null)
 const selectedRequest = ref(null)
 const filterStatus = ref('')
+const searchQuery = ref('')
+const productSuggestions = ref([])
 
-const newRequest = ref({
-  from: '',
-  to: '',
-  product: '',
+// Form Date Helper
+const todayString = new Date().toISOString().split('T')[0]
+
+// Real Requests Data (Initialized empty, fetched from live database)
+const requests = ref([])
+
+const requestForm = ref({
+  product_name: '',
   quantity: null,
-  unit: 'kg',
-  date: '',
-  instructions: ''
+  unit: 'bags',
+  pickup_location: '',
+  delivery_location: 'Kality Central Grain Warehouse, Addis Ababa',
+  preferred_date: todayString,
+  notes: ''
 })
 
-const mockRequests = [
-  {
-    id: 'TRN-001',
-    from: 'Green Valley Farm',
-    to: 'City Market, Central Hub',
-    product: 'Tomatoes',
-    quantity: 500,
-    unit: 'kg',
-    requestDate: '2026-09-01',
-    status: 'completed',
-    driver: 'John Smith',
-    driverPhone: '+1-555-0401',
-    vehicle: 'TRK-2024-001',
-    instructions: 'Handle with care, keep cool'
-  },
-  {
-    id: 'TRN-002',
-    from: 'Sunny Acres',
-    to: 'Regional Distribution Center',
-    product: 'Corn',
-    quantity: 1000,
-    unit: 'kg',
-    requestDate: '2026-09-02',
-    status: 'in-transit',
-    driver: 'Maria Garcia',
-    driverPhone: '+1-555-0402',
-    vehicle: 'TRK-2024-002',
-    instructions: 'Deliver by 5 PM'
-  },
-  {
-    id: 'TRN-003',
-    from: 'Harvest Farm',
-    to: 'Wholesale Center',
-    product: 'Lettuce',
-    quantity: 300,
-    unit: 'kg',
-    requestDate: '2026-09-03',
-    status: 'confirmed',
-    driver: 'Robert Wilson',
-    driverPhone: '+1-555-0403',
-    vehicle: 'TRK-2024-003',
-    instructions: ''
-  },
-  {
-    id: 'TRN-004',
-    from: 'My Farm',
-    to: 'Export Terminal',
-    product: 'Potatoes',
-    quantity: 2000,
-    unit: 'kg',
-    requestDate: '2026-09-04',
-    status: 'pending',
-    driver: null,
-    driverPhone: null,
-    vehicle: null,
-    instructions: 'Urgent delivery needed'
+// Format database record to view model
+const formatRequest = (item) => {
+  const code = `TRN-${String(item.id).padStart(4, '0')}`
+  const rawStatus = (item.status || 'pending').toLowerCase()
+  const statusNorm = rawStatus.replace('_', '-') // handles in_transit -> in-transit
+
+  return {
+    id: code,
+    rawId: item.id,
+    from: item.pickup_location || 'Farm Gate',
+    to: item.delivery_location || 'Central Warehouse',
+    product: item.product_name || item.product?.name || 'Produce',
+    quantity: Number(item.quantity || 0),
+    unit: item.unit || 'bags',
+    requestDate: item.pickup_date || item.created_at,
+    deliveryDate: item.delivery_date,
+    status: statusNorm,
+    driver: item.transporter?.name || item.transporter?.company_name || item.contact_person || (item.transporter ? 'Assigned Driver' : null),
+    driverPhone: item.transporter?.phone || item.contact_phone || null,
+    vehicle: item.vehicle?.plate_number || (item.vehicle ? `${item.vehicle.make || ''} ${item.vehicle.model || ''}`.trim() : null),
+    instructions: item.handling_instructions || '',
+    raw: item
   }
-]
+}
 
-const requests = ref(mockRequests)
-
-const filteredRequests = computed(() => {
-  if (!filterStatus.value) return requests.value
-  return requests.value.filter(r => r.status === filterStatus.value)
+// Stats computed strictly from live database records
+const stats = computed(() => {
+  const list = requests.value || []
+  return {
+    total: list.length,
+    pending: list.filter(r => r.status === 'pending').length,
+    confirmed: list.filter(r => ['confirmed', 'assigned'].includes(r.status)).length,
+    inTransit: list.filter(r => ['in-transit', 'in_transit'].includes(r.status)).length,
+    completed: list.filter(r => ['completed', 'delivered'].includes(r.status)).length
+  }
 })
 
-const stats = computed(() => ({
-  pending: requests.value.filter(r => r.status === 'pending').length,
-  confirmed: requests.value.filter(r => r.status === 'confirmed').length,
-  inTransit: requests.value.filter(r => r.status === 'in-transit').length,
-  completed: requests.value.filter(r => r.status === 'completed').length
-}))
+// Filtered Requests
+const filteredRequests = computed(() => {
+  let list = requests.value || []
 
+  if (filterStatus.value) {
+    if (filterStatus.value === 'confirmed') {
+      list = list.filter(r => ['confirmed', 'assigned'].includes(r.status))
+    } else if (filterStatus.value === 'in-transit') {
+      list = list.filter(r => ['in-transit', 'in_transit'].includes(r.status))
+    } else if (filterStatus.value === 'completed') {
+      list = list.filter(r => ['completed', 'delivered'].includes(r.status))
+    } else {
+      list = list.filter(r => r.status === filterStatus.value)
+    }
+  }
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(r =>
+      (r.id && r.id.toLowerCase().includes(q)) ||
+      (r.product && r.product.toLowerCase().includes(q)) ||
+      (r.from && r.from.toLowerCase().includes(q)) ||
+      (r.to && r.to.toLowerCase().includes(q)) ||
+      (r.driver && r.driver.toLowerCase().includes(q))
+    )
+  }
+
+  return list
+})
+
+// Methods
 const fetchRequests = async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 500))
-  loading.value = false
+  error.value = null
+  try {
+    const [transportRes, cropsRes] = await Promise.all([
+      farmerAPI.getTransportRequests(),
+      farmerAPI.getCrops().catch(() => ({ data: [] }))
+    ])
+
+    const rawData = transportRes.data?.data || transportRes.data || []
+    requests.value = (Array.isArray(rawData) ? rawData : []).map(formatRequest)
+
+    // Load available crop names for quick suggestions
+    const rawCrops = cropsRes.data?.data || cropsRes.data || []
+    if (Array.isArray(rawCrops)) {
+      const names = rawCrops.map(c => c.name || c.crop_name).filter(Boolean)
+      productSuggestions.value = Array.from(new Set(names)).slice(0, 4)
+    }
+  } catch (err) {
+    console.error('Error fetching transport requests from database:', err)
+    error.value = 'Failed to load transport requests from database. Please try again.'
+  } finally {
+    loading.value = false
+  }
 }
 
-const formatDate = (date) => new Date(date).toLocaleDateString()
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
-const viewDetails = (request) => { selectedRequest.value = request }
-const editRequest = (request) => { alert('Edit functionality for: ' + request.id) }
-const submitRequest = () => {
-  alert('Transport request submitted successfully')
-  showNewRequest.value = false
-  newRequest.value = { from: '', to: '', product: '', quantity: null, unit: 'kg', date: '', instructions: '' }
+const openCreateModal = () => {
+  editingRequest.value = null
+  requestForm.value = {
+    product_name: productSuggestions.value[0] || '',
+    quantity: null,
+    unit: 'bags',
+    pickup_location: '',
+    delivery_location: 'Kality Central Grain Warehouse, Addis Ababa',
+    preferred_date: todayString,
+    notes: ''
+  }
+  showNewRequest.value = true
 }
+
+const editRequest = (request) => {
+  editingRequest.value = request
+  const reqDate = request.requestDate ? new Date(request.requestDate).toISOString().split('T')[0] : todayString
+  requestForm.value = {
+    product_name: request.product,
+    quantity: request.quantity,
+    unit: request.unit || 'bags',
+    pickup_location: request.from,
+    delivery_location: request.to,
+    preferred_date: reqDate >= todayString ? reqDate : todayString,
+    notes: request.instructions
+  }
+  showNewRequest.value = true
+}
+
+const openEditFromDetails = () => {
+  if (!selectedRequest.value) return
+  const req = selectedRequest.value
+  selectedRequest.value = null
+  editRequest(req)
+}
+
+const closeModal = () => {
+  showNewRequest.value = false
+  editingRequest.value = null
+}
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  filterStatus.value = ''
+}
+
+const saveRequest = async () => {
+  submitting.value = true
+  try {
+    const payload = {
+      product_name: requestForm.value.product_name,
+      quantity: Number(requestForm.value.quantity),
+      unit: requestForm.value.unit,
+      pickup_location: requestForm.value.pickup_location,
+      delivery_location: requestForm.value.delivery_location,
+      preferred_date: requestForm.value.preferred_date,
+      notes: requestForm.value.notes
+    }
+
+    if (editingRequest.value) {
+      await farmerAPI.updateTransportRequest(editingRequest.value.rawId, payload)
+    } else {
+      await farmerAPI.createTransportRequest(payload)
+    }
+
+    closeModal()
+    await fetchRequests()
+  } catch (err) {
+    console.error('Error saving transport request:', err)
+    const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to save transport request. Please verify inputs.'
+    alert(msg)
+  } finally {
+    submitting.value = false
+  }
+}
+
+const deleteRequest = async (request) => {
+  if (!confirm(`Are you sure you want to cancel transport request ${request.id}?`)) return
+  try {
+    await farmerAPI.deleteTransportRequest(request.rawId)
+    await fetchRequests()
+  } catch (err) {
+    console.error('Error cancelling transport request:', err)
+    alert(err.response?.data?.message || 'Failed to cancel transport request.')
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const capitalize = (str) => {
+  if (!str) return ''
+  const clean = str.replace('-', ' ')
+  return clean.charAt(0).toUpperCase() + clean.slice(1)
+}
+
+const getStatusExplanation = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'Request submitted and awaiting logistics coordinator review and transporter allocation.'
+    case 'confirmed':
+    case 'assigned':
+      return 'Transporter and vehicle have been assigned. Dispatch scheduled.'
+    case 'in-transit':
+      return 'Vehicle has picked up the produce and is currently en route to destination.'
+    case 'completed':
+    case 'delivered':
+      return 'Produce has arrived at destination and passed inspection.'
+    default:
+      return ''
+  }
+}
+
+const viewDetails = (request) => {
+  selectedRequest.value = request
+}
+
 const handleLogout = async () => {
   await auth.logout()
   router.push('/login')
 }
 
-onMounted(() => { fetchRequests() })
+onMounted(() => {
+  fetchRequests()
+})
 </script>
 
 <style scoped>
@@ -388,62 +724,66 @@ onMounted(() => { fetchRequests() })
   min-height: 100vh;
 }
 
+/* Page Header */
 .page-header {
   background: white;
-  padding: 25px 30px;
+  padding: 24px 32px;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .header-content h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
 .header-content p {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
 .btn-new {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: #3b82f6;
+  padding: 10px 18px;
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
 }
 
 .btn-new:hover {
-  background: #2563eb;
+  background: #059669;
 }
 
+/* Loading & Error */
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 80px 20px;
-  gap: 20px;
+  gap: 16px;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  border-top-color: #10b981;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -454,29 +794,30 @@ onMounted(() => { fetchRequests() })
 
 .error-container {
   background: #fee2e2;
-  border: 2px solid #fca5a5;
-  border-radius: 12px;
-  padding: 40px;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  padding: 36px;
   margin: 30px;
   text-align: center;
 }
 
 .error-icon {
   color: #dc2626;
-  margin-bottom: 15px;
+  margin: 0 auto 12px;
 }
 
 .error-message {
   color: #991b1b;
-  font-size: 16px;
-  margin-bottom: 20px;
+  font-size: 15px;
+  margin-bottom: 16px;
+  font-weight: 600;
 }
 
 .btn-retry {
   background: #dc2626;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 9px 18px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
@@ -485,83 +826,156 @@ onMounted(() => { fetchRequests() })
   gap: 8px;
 }
 
+/* Content Area */
 .transport-content {
-  padding: 30px;
+  padding: 28px 32px;
   flex: 1;
 }
 
+/* Stats Cards */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 18px;
+  margin-bottom: 26px;
 }
 
 .stat-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 14px;
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s;
 }
 
 .stat-icon {
-  color: #d1d5db;
   flex-shrink: 0;
+  padding: 10px;
+  border-radius: 12px;
+  box-sizing: content-box;
 }
 
-.stat-icon.pending { color: #f59e0b; }
-.stat-icon.confirmed { color: #3b82f6; }
-.stat-icon.inTransit { color: #8b5cf6; }
-.stat-icon.completed { color: #10b981; }
+.stat-icon.pending { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+.stat-icon.confirmed { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+.stat-icon.inTransit { color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
+.stat-icon.completed { color: #10b981; background: rgba(16, 185, 129, 0.1); }
 
 .stat-label {
-  font-size: 12px;
-  color: #6b7280;
+  display: block;
+  font-size: 11px;
+  color: #64748b;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  margin-top: 2px;
 }
 
+/* Table Section */
 .table-section {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
 
 .table-header {
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
-.table-header h3 {
+.table-title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-title-area h3 {
   font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
 }
 
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #4b5563;
-  background: white;
-  cursor: pointer;
+.count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 20px;
 }
 
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input {
+  padding: 8px 14px 8px 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  background: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  width: 220px;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  border-color: #10b981;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.filter-select {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-select:focus {
+  border-color: #10b981;
+}
+
+/* Table */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -569,570 +983,646 @@ onMounted(() => { fetchRequests() })
 .requests-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-}
-
-.requests-table thead {
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
+  font-size: 13px;
+  text-align: left;
 }
 
 .requests-table th {
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  color: #4b5563;
+  background: #f8fafc;
+  padding: 12px 18px;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.03em;
+}
+
+.requests-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.table-row:hover td {
+  background-color: #f8fafc;
+}
+
+.id-badge {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 12px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.qty-num {
+  font-weight: 700;
+}
+
+.qty-unit {
+  margin-left: 4px;
+  color: #64748b;
   font-size: 12px;
 }
 
-.requests-table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
-  transition: background 0.2s;
+.td-from,
+.td-to {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
 }
 
-.requests-table tbody tr:hover {
-  background: #f9fafb;
+.driver-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 12px;
 }
 
-.table-row td {
-  padding: 16px;
-  color: #1f2937;
+.driver-icon {
+  color: #3b82f6;
 }
 
+.text-unassigned {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Status Badges */
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
 }
 
-.status-pending { background: #fef3c7; color: #92400e; }
-.status-confirmed { background: #dbeafe; color: #1e40af; }
-.status-in-transit { background: #e9d5ff; color: #6b21a8; }
-.status-completed { background: #d1fae5; color: #065f46; }
+.status-pending { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+.status-confirmed, .status-assigned { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.status-in-transit { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+.status-completed, .status-delivered { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.status-cancelled { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
 
+/* Action Buttons */
 .td-actions {
-  display: flex;
-  gap: 8px;
+  white-space: nowrap;
 }
 
 .action-btn {
-  background: none;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 6px 8px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 6px;
+  color: #475569;
+  transition: all 0.2s;
 }
 
 .action-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background: #eff6ff;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
+.view-btn:hover { color: #3b82f6; border-color: #bfdbfe; }
+.edit-btn:hover { color: #f59e0b; border-color: #fde68a; }
+.delete-btn:hover { color: #ef4444; border-color: #fecaca; }
+
+/* Empty State */
 .empty-state {
-  padding: 60px 20px;
+  padding: 56px 24px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.empty-icon {
-  color: #d1d5db;
-  margin-bottom: 16px;
-}
-
-.empty-state p {
-  font-size: 16px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.empty-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
-  max-width: 600px;
-  width: 90%;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 580px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .modal-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
+}
+
+.modal-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.id-tag {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 800;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .btn-close {
   background: none;
   border: none;
+  color: #94a3b8;
   cursor: pointer;
-  color: #6b7280;
-  padding: 0;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+}
+
+.btn-close:hover {
+  color: #0f172a;
+  background: #f1f5f9;
 }
 
 .modal-body {
   padding: 24px;
 }
 
-.form-group {
+/* Status Banner in Details */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
   margin-bottom: 20px;
+}
+
+.banner-pending { background: rgba(245, 158, 11, 0.12); color: #92400e; border: 1px solid rgba(245, 158, 11, 0.25); }
+.banner-confirmed, .banner-assigned { background: rgba(59, 130, 246, 0.12); color: #1e40af; border: 1px solid rgba(59, 130, 246, 0.25); }
+.banner-in-transit { background: rgba(139, 92, 246, 0.12); color: #5b21b6; border: 1px solid rgba(139, 92, 246, 0.25); }
+.banner-completed, .banner-delivered { background: rgba(16, 185, 129, 0.12); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.25); }
+
+.banner-title {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.banner-subtitle {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #4b5563;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
 }
 
 .form-control {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1f2937;
-  font-family: inherit;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+  color: #0f172a;
 }
 
 .form-control:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
 }
 
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.input-group {
   display: flex;
-  gap: 8px;
+  gap: 14px;
 }
 
-.input-group .form-control {
-  flex: 1;
+.suggestion-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.suggestion-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.suggestion-pill {
+  font-size: 11px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #047857;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.suggestion-pill:hover {
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
 .form-actions {
   display: flex;
-  gap: 12px;
   justify-content: flex-end;
+  gap: 12px;
   margin-top: 24px;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
+.btn-primary {
+  background: #10b981;
+  color: white;
   border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: all 0.2s;
 }
 
-.btn-primary {
-  background: #3b82f6;
-  color: white;
+.btn-primary:hover:not(:disabled) {
+  background: #059669;
 }
 
-.btn-primary:hover {
-  background: #2563eb;
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-secondary:hover {
-  background: #e5e7eb;
+.btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
 }
 
+/* Detail Grid */
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
+  gap: 14px;
+  background: #f8fafc;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
 }
 
 .detail-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+}
+
+.detail-item.full-width {
+  grid-column: span 2;
 }
 
 .detail-item .label {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.03em;
 }
 
 .detail-item .value {
-  font-size: 14px;
-  color: #1f2937;
-}
-
-.driver-info,
-.instructions {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-.driver-info h3,
-.instructions h3 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 12px 0;
-}
-
-.driver-info p,
-.instructions p {
-  margin: 8px 0;
   font-size: 13px;
-  color: #4b5563;
+  color: #0f172a;
+}
+
+.driver-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.driver-info h3 {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #64748b;
+}
+
+.unassigned-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748b;
+  padding: 6px 0;
+}
+
+.instructions {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.instructions h3 {
+  font-size: 12px;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+}
+
+.instructions p {
+  margin: 0;
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.4;
 }
 
 .modal-footer {
-  padding: 24px;
-  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
-@media (max-width: 768px) {
+/* ==================== DARK MODE ==================== */
+.dark.transport-layout {
+  background-color: #0b101b;
+}
+
+.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
+}
+
+.dark .header-content h1 {
+  color: #f8fafc;
+}
+
+.dark .header-content p {
+  color: #94a3b8;
+}
+
+.dark .stat-card {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.dark .stat-label {
+  color: #94a3b8;
+}
+
+.dark .stat-value {
+  color: #f8fafc;
+}
+
+.dark .table-section {
+  background: #131b2e;
+  border-color: #1e293b;
+}
+
+.dark .table-header {
+  border-bottom-color: #1e293b;
+}
+
+.dark .table-title-area h3 {
+  color: #f8fafc;
+}
+
+.dark .count-pill {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.dark .search-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dark .filter-select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dark .requests-table th {
+  background: #0b101b;
+  border-bottom-color: #1e293b;
+  color: #94a3b8;
+}
+
+.dark .requests-table td {
+  border-bottom-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .table-row:hover td {
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+.dark .action-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.dark .action-btn:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.dark .empty-icon-wrap {
+  background: #1e293b;
+  color: #64748b;
+}
+
+.dark .empty-title {
+  color: #f8fafc;
+}
+
+.dark .empty-desc {
+  color: #94a3b8;
+}
+
+.dark .modal-content {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .modal-header {
+  border-bottom-color: #1e293b;
+}
+
+.dark .modal-header h2 {
+  color: #f8fafc;
+}
+
+.dark .form-group label {
+  color: #cbd5e1;
+}
+
+.dark .form-control {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dark .detail-grid,
+.dark .driver-info {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+.dark .detail-item .value {
+  color: #f8fafc;
+}
+
+.dark .driver-info h3 {
+  color: #f8fafc;
+}
+
+.dark .info-row {
+  border-bottom-color: #1e293b;
+}
+
+.dark .modal-footer {
+  border-top-color: #1e293b;
+}
+
+.dark .btn-secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark .btn-secondary:hover:not(:disabled) {
+  background: #334155;
+}
+
+@media (max-width: 1024px) {
   .transport-container {
     margin-left: 0;
   }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn-new {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .requests-table {
-    font-size: 12px;
-  }
-
-  .requests-table th,
-  .table-row td {
-    padding: 12px 8px;
-  }
-}
-
-/* Dark Mode Styles */
-
-.transport-layout.dark {
-  background-color: #0b0f17;
-}
-
-.transport-layout.dark .transport-container {
-  background-color: #0b0f17;
-}
-
-/* Page Header - Dark Mode */
-.transport-layout.dark .page-header {
-  background: #131b2e;
-  border-bottom-color: #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.transport-layout.dark .header-content h1 {
-  color: #f1f5f9;
-}
-
-.transport-layout.dark .header-content p {
-  color: #cbd5e1;
-}
-
-/* New Request Button - Dark Mode */
-.transport-layout.dark .btn-new {
-  background: #3b82f6;
-}
-
-.transport-layout.dark .btn-new:hover {
-  background: #2563eb;
-}
-
-/* Loading State - Dark Mode */
-.transport-layout.dark .loading-container {
-  color: #cbd5e1;
-}
-
-.transport-layout.dark .spinner {
-  border-color: #2d3f52;
-  border-top-color: #3b82f6;
-}
-
-/* Error Container - Dark Mode */
-.transport-layout.dark .error-container {
-  background: #7f1d1d;
-  border-color: #b91c1c;
-}
-
-.transport-layout.dark .error-icon {
-  color: #f87171;
-}
-
-.transport-layout.dark .error-message {
-  color: #fca5a5;
-}
-
-.transport-layout.dark .btn-retry {
-  background: #ef4444;
-}
-
-.transport-layout.dark .btn-retry:hover {
-  background: #dc2626;
-}
-
-/* Stats Cards - Dark Mode */
-.transport-layout.dark .stat-card {
-  background: #1a2338;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.transport-layout.dark .stat-label {
-  color: #94a3b8;
-}
-
-.transport-layout.dark .stat-value {
-  color: #f1f5f9;
-}
-
-/* Table Section - Dark Mode */
-.transport-layout.dark .table-section {
-  background: #131b2e;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid #1e293b;
-}
-
-.transport-layout.dark .table-header {
-  border-bottom-color: #2d3f52;
-}
-
-.transport-layout.dark .table-header h3 {
-  color: #f1f5f9;
-}
-
-/* Filter Select - Dark Mode */
-.transport-layout.dark .filter-select {
-  background-color: #1a2338;
-  color: #f3f4f6;
-  border-color: #2d3f52;
-}
-
-.transport-layout.dark .filter-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Table - Dark Mode */
-.transport-layout.dark .requests-table thead {
-  background: #1a2338;
-  border-bottom-color: #2d3f52;
-}
-
-.transport-layout.dark .requests-table th {
-  color: #cbd5e1;
-}
-
-.transport-layout.dark .requests-table tbody tr {
-  border-bottom-color: #2d3f52;
-}
-
-.transport-layout.dark .requests-table tbody tr:hover {
-  background: #1a2338;
-}
-
-.transport-layout.dark .table-row td {
-  color: #f3f4f6;
-}
-
-/* Status Badges - Dark Mode */
-.transport-layout.dark .status-pending { background: #5a3a0a; color: #fbbf24; }
-.transport-layout.dark .status-confirmed { background: #0f3a66; color: #60a5fa; }
-.transport-layout.dark .status-in-transit { background: #3a2a5a; color: #c4b5fd; }
-.transport-layout.dark .status-completed { background: #0a3f2a; color: #4ade80; }
-
-/* Action Buttons - Dark Mode */
-.transport-layout.dark .action-btn {
-  border-color: #2d3f52;
-  color: #94a3b8;
-}
-
-.transport-layout.dark .action-btn:hover {
-  border-color: #3b82f6;
-  color: #60a5fa;
-  background: #0f3a66;
-}
-
-/* Empty State - Dark Mode */
-.transport-layout.dark .empty-state {
-  color: #cbd5e1;
-}
-
-.transport-layout.dark .empty-icon {
-  color: #475569;
-}
-
-.transport-layout.dark .empty-state p {
-  color: #cbd5e1;
-}
-
-/* Modal - Dark Mode */
-.transport-layout.dark .modal-overlay {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-.transport-layout.dark .modal-content {
-  background: #131b2e;
-  border: 1px solid #1e293b;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.transport-layout.dark .modal-header {
-  border-bottom-color: #2d3f52;
-  background: #1a2338;
-}
-
-.transport-layout.dark .modal-header h2 {
-  color: #f1f5f9;
-}
-
-.transport-layout.dark .btn-close {
-  color: #94a3b8;
-}
-
-.transport-layout.dark .btn-close:hover {
-  color: #cbd5e1;
-}
-
-/* Form Elements - Dark Mode */
-.transport-layout.dark .form-control {
-  background-color: #1a2338;
-  color: #f3f4f6;
-  border-color: #2d3f52;
-}
-
-.transport-layout.dark .form-control:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.transport-layout.dark .form-group label {
-  color: #cbd5e1;
-}
-
-/* Form Actions - Dark Mode */
-.transport-layout.dark .btn-primary {
-  background: #3b82f6;
-}
-
-.transport-layout.dark .btn-primary:hover {
-  background: #2563eb;
-}
-
-.transport-layout.dark .btn-secondary {
-  background: #2d3f52;
-  color: #cbd5e1;
-  border-color: #475569;
-}
-
-.transport-layout.dark .btn-secondary:hover {
-  background: #475569;
-}
-
-/* Detail Grid - Dark Mode */
-.transport-layout.dark .detail-grid {
-  background: #1a2338;
-  border-color: #2d3f52;
-}
-
-.transport-layout.dark .detail-item .label {
-  color: #94a3b8;
-}
-
-.transport-layout.dark .detail-item .value {
-  color: #f1f5f9;
-}
-
-/* Driver Info & Instructions - Dark Mode */
-.transport-layout.dark .driver-info,
-.transport-layout.dark .instructions {
-  background: #1a2338;
-  border-color: #2d3f52;
-}
-
-.transport-layout.dark .driver-info h3,
-.transport-layout.dark .instructions h3 {
-  color: #f1f5f9;
-}
-
-.transport-layout.dark .driver-info p,
-.transport-layout.dark .instructions p {
-  color: #cbd5e1;
-}
-
-/* Modal Footer - Dark Mode */
-.transport-layout.dark .modal-footer {
-  border-top-color: #2d3f52;
-  background: #1a2338;
 }
 </style>

@@ -117,5 +117,12 @@ export const farmerAPI = {
   getContract: (id: number) => apiClient.get(`/farmer/contracts/${id}`),
   acceptContract: (id: number, data?: { notes?: string }) => apiClient.post(`/farmer/contracts/${id}/accept`, data),
   rejectContract: (id: number, data?: { reason?: string }) => apiClient.post(`/farmer/contracts/${id}/reject`, data),
-  completeMilestone: (contractId: number, milestoneId: number) => apiClient.post(`/farmer/contracts/${contractId}/milestones/${milestoneId}/complete`)
+  completeMilestone: (contractId: number, milestoneId: number) => apiClient.post(`/farmer/contracts/${contractId}/milestones/${milestoneId}/complete`),
+
+  // Transport Requests
+  getTransportRequests: (params?: any) => apiClient.get('/farmer/transport-requests', { params }),
+  getTransportRequest: (id: number) => apiClient.get(`/farmer/transport-requests/${id}`),
+  createTransportRequest: (data: any) => apiClient.post('/farmer/transport-requests', data),
+  updateTransportRequest: (id: number, data: any) => apiClient.put(`/farmer/transport-requests/${id}`, data),
+  deleteTransportRequest: (id: number) => apiClient.delete(`/farmer/transport-requests/${id}`)
 }
