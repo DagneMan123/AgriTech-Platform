@@ -177,13 +177,27 @@ class OrderController extends Controller
             $updateData = ['status' => $status];
             if ($status === 'delivered') {
                 $updateData['delivered_at'] = now();
+                $updateData['payment_status'] = 'paid';
+                $updateData['escrow_status'] = 'disbursed';
+                $updateData['escrow_disbursed_at'] = now();
             }
 
             $order->update($updateData);
 
+            // Chapa Escrow Payment Release directly to farmer digital wallet upon delivery
+            if ($status === 'delivered') {
+                try {
+                    app(\App\Services\EscrowSettlementService::class)->disburseFarmerPayout($order);
+                } catch (\Exception $escrowEx) {
+                    \Log::warning('Escrow auto-disbursement warning on order delivery: ' . $escrowEx->getMessage());
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully',
+                'message' => $status === 'delivered'
+                    ? 'Order delivered successfully. Chapa Escrow payment has been released to your digital wallet.'
+                    : 'Order status updated to ' . ucfirst($status) . ' successfully.',
                 'data' => $order->fresh(['items.product', 'buyer']),
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

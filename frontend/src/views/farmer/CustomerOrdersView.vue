@@ -182,17 +182,20 @@
                     </span>
                   </td>
                   <td class="td-actions">
-                    <button @click="viewDetails(order)" class="action-btn view-btn" title="View Details">
+                    <button @click="viewDetails(order)" class="action-btn view-btn" title="Review Order Details">
                       <Eye size="16" />
                     </button>
-                    <button v-if="order.status === 'pending'" @click="updateStatus(order, 'processing')" class="action-btn process-btn" title="Mark as Processing">
-                      <Play size="16" />
+                    <!-- Step 1: Order Review & Confirmation -->
+                    <button v-if="order.status === 'pending'" @click="updateStatus(order, 'confirmed')" class="action-btn confirm-btn" title="Confirm Order">
+                      <CheckCircle size="16" />
                     </button>
-                    <button v-if="order.status === 'processing'" @click="updateStatus(order, 'shipped')" class="action-btn ship-btn" title="Mark as Shipped">
+                    <!-- Step 2: Logistics & Warehouse Fulfillment -->
+                    <button v-if="order.status === 'confirmed' || order.status === 'processing'" @click="updateStatus(order, 'shipped')" class="action-btn ship-btn" title="Ship to Warehouse (Kality Central)">
                       <Truck size="16" />
                     </button>
-                    <button @click="openActions(order)" class="action-btn menu-btn" title="More Options">
-                      <MoreVertical size="16" />
+                    <!-- Step 3: Delivery & Chapa Escrow Payment Release -->
+                    <button v-if="order.status === 'shipped'" @click="updateStatus(order, 'delivered')" class="action-btn deliver-btn" title="Mark as Delivered & Release Escrow to Wallet">
+                      <ShieldCheck size="16" />
                     </button>
                   </td>
                 </tr>
@@ -326,21 +329,31 @@
                 </div>
               </div>
 
-              <!-- Delivery Information -->
+              <!-- Delivery & Logistics Information -->
               <div class="section">
-                <h3 class="section-title">Delivery Information</h3>
+                <h3 class="section-title">Logistics & Warehouse Inspection</h3>
                 <div class="delivery-info">
                   <div class="info-item">
+                    <span class="info-label">Inspection Hub:</span>
+                    <span class="info-value font-semibold">Kality Central Grain Warehouse</span>
+                  </div>
+                  <div class="info-item">
                     <span class="info-label">Delivery Status:</span>
-                    <span class="info-value">{{ selectedOrder.deliveryStatus }}</span>
+                    <span class="info-value font-semibold">{{ selectedOrder.deliveryStatus }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Tracking Number:</span>
-                    <span class="info-value">{{ selectedOrder.trackingNumber || 'Not available' }}</span>
+                    <span class="info-label">Chapa Escrow Status:</span>
+                    <span class="info-value font-semibold" :class="selectedOrder.paymentStatus === 'paid' ? 'text-emerald-600' : 'text-amber-500'">
+                      {{ selectedOrder.paymentStatus === 'paid' ? 'Paid (Released directly to Digital Wallet)' : 'Pending (Locked in Chapa Neutral Escrow)' }}
+                    </span>
                   </div>
                   <div class="info-item">
-                    <span class="info-label">Expected Delivery:</span>
-                    <span class="info-value">{{ formatDate(selectedOrder.expectedDelivery) }}</span>
+                    <span class="info-label">Tracking / Custody Ref:</span>
+                    <span class="info-value font-mono">{{ selectedOrder.trackingNumber || ('ET-WH-' + selectedOrder.id) }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Final Destination:</span>
+                    <span class="info-value">{{ selectedOrder.deliveryAddress }}</span>
                   </div>
                 </div>
               </div>
@@ -349,18 +362,25 @@
             <div class="modal-footer">
               <button @click="selectedOrder = null" class="btn-secondary">Close</button>
               <div class="action-buttons">
-                <button v-if="selectedOrder.status === 'pending'" @click="updateStatusAndClose('processing')" class="btn-primary process">
-                  <Play size="14" />
-                  Mark as Processing
-                </button>
-                <button v-if="selectedOrder.status === 'processing'" @click="updateStatusAndClose('shipped')" class="btn-primary ship">
-                  <Truck size="14" />
-                  Mark as Shipped
-                </button>
-                <button v-if="selectedOrder.status !== 'delivered'" @click="updateStatusAndClose('delivered')" class="btn-primary deliver">
+                <!-- Step 1: Order Review & Confirmation -->
+                <button v-if="selectedOrder.status === 'pending'" @click="updateStatusAndClose('confirmed')" class="btn-primary confirm">
                   <CheckCircle size="14" />
-                  Mark as Delivered
+                  Confirm Order
                 </button>
+                <!-- Step 2: Logistics & Warehouse Fulfillment -->
+                <button v-if="selectedOrder.status === 'confirmed' || selectedOrder.status === 'processing'" @click="updateStatusAndClose('shipped')" class="btn-primary ship">
+                  <Truck size="14" />
+                  Ship to Warehouse (Kality Central)
+                </button>
+                <!-- Step 3: Delivery & Chapa Escrow Payment Release -->
+                <button v-if="selectedOrder.status === 'shipped'" @click="updateStatusAndClose('delivered')" class="btn-primary deliver">
+                  <ShieldCheck size="14" />
+                  Mark as Delivered & Release Escrow
+                </button>
+                <span v-if="selectedOrder.status === 'delivered'" class="escrow-paid-badge">
+                  <ShieldCheck size="14" />
+                  Funds Released to Digital Wallet (Paid)
+                </span>
               </div>
             </div>
           </div>
@@ -379,7 +399,7 @@ import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Download, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
-  CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight
+  CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight, ShieldCheck
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -541,7 +561,7 @@ const fetchOrders = async () => {
     summaryData.value = {
       totalOrders: orders.value.length,
       pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'in_transit'].includes(o.status)).length,
+      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'shipped', 'in_transit'].includes(o.status)).length,
       completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
     }
   } catch (err) {
@@ -620,11 +640,14 @@ const updateStatus = async (order, newStatus) => {
     if (index !== -1) {
       orders.value[index].status = newStatus
       orders.value[index].deliveryStatus = capitalize(newStatus)
+      if (newStatus === 'delivered') {
+        orders.value[index].paymentStatus = 'paid'
+      }
     }
     summaryData.value = {
       totalOrders: orders.value.length,
       pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'in_transit'].includes(o.status)).length,
+      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'shipped', 'in_transit'].includes(o.status)).length,
       completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
     }
   } catch (err) {
