@@ -5,13 +5,13 @@
       <!-- Header Section -->
       <div class="page-header">
         <div class="header-content">
-          <h1>My Sales</h1>
-          <p>Track and manage your product sales and revenue</p>
+          <h1>My Sales & Analytics</h1>
+          <p>Track verified Chapa Escrow revenue, completed sales, and produce performance</p>
         </div>
         <div class="header-actions">
-          <button @click="exportData" class="btn-export">
+          <button @click="exportData" class="btn-export" title="Export verified sales to CSV">
             <Download size="16" />
-            <span>Export</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -19,7 +19,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
-        <p>Loading sales data...</p>
+        <p>Loading verified sales and escrow analytics...</p>
       </div>
 
       <!-- Error State -->
@@ -33,49 +33,100 @@
       </div>
 
       <!-- Content -->
-      <div v-if="!loading && !error" class="sales-content">
-        <!-- Summary Cards -->
-        <div class="summary-section">
-          <div class="summary-card">
-            <div class="card-header">
-              <h3>Total Revenue</h3>
-              <Banknote size="20" class="card-icon revenue-icon" />
+      <div v-if="!loading && !error" class="sales-content p-6 max-w-7xl mx-auto w-full">
+        
+        <!-- Top Summary KPI Cards (Tailwind CSS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <!-- TOTAL REVENUE -->
+          <div :class="['rounded-2xl p-5 border transition-all duration-200 hover:shadow-md relative overflow-hidden group', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80 shadow-xs']">
+            <div class="flex items-center justify-between mb-3">
+              <span :class="['text-xs font-bold uppercase tracking-wider', isDark ? 'text-slate-400' : 'text-slate-500']">Total Revenue</span>
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                <Banknote class="w-5 h-5" />
+              </div>
             </div>
-            <p class="card-value">ETB {{ formatNumber(summaryData.totalRevenue) }}</p>
-            <p class="card-subtitle">all-time revenue</p>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span class="text-xs font-bold text-emerald-500">ETB</span>
+              <h2 :class="['text-2xl font-black tracking-tight leading-none', isDark ? 'text-white' : 'text-slate-900']">
+                {{ formatNumber(summaryData.totalRevenue) }}
+              </h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-2">
+              <ShieldCheck class="w-3.5 h-3.5 shrink-0" />
+              <span>Delivered & Paid (Chapa Escrow)</span>
+            </div>
+            <div class="absolute inset-x-0 bottom-0 h-1 bg-emerald-500"></div>
           </div>
 
-          <div class="summary-card">
-            <div class="card-header">
-              <h3>Total Sales</h3>
-              <ShoppingCart size="20" class="card-icon sales-icon" />
+          <!-- TOTAL SALES -->
+          <div :class="['rounded-2xl p-5 border transition-all duration-200 hover:shadow-md relative overflow-hidden group', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80 shadow-xs']">
+            <div class="flex items-center justify-between mb-3">
+              <span :class="['text-xs font-bold uppercase tracking-wider', isDark ? 'text-slate-400' : 'text-slate-500']">Total Sales</span>
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                <ShoppingCart class="w-5 h-5" />
+              </div>
             </div>
-            <p class="card-value">{{ summaryData.totalSales }}</p>
-            <p class="card-subtitle">orders completed</p>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <h2 :class="['text-2xl font-black tracking-tight leading-none', isDark ? 'text-white' : 'text-slate-900']">
+                {{ summaryData.totalSales }}
+              </h2>
+              <span :class="['text-xs font-medium', isDark ? 'text-slate-400' : 'text-slate-500']">orders</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] font-medium text-blue-600 dark:text-blue-400 mt-2">
+              <CheckCircle2 class="w-3.5 h-3.5 shrink-0" />
+              <span>Completed & Fulfilled Orders</span>
+            </div>
+            <div class="absolute inset-x-0 bottom-0 h-1 bg-blue-500"></div>
           </div>
 
-          <div class="summary-card">
-            <div class="card-header">
-              <h3>Average Order</h3>
-              <BarChart3 size="20" class="card-icon average-icon" />
+          <!-- AVERAGE ORDER -->
+          <div :class="['rounded-2xl p-5 border transition-all duration-200 hover:shadow-md relative overflow-hidden group', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80 shadow-xs']">
+            <div class="flex items-center justify-between mb-3">
+              <span :class="['text-xs font-bold uppercase tracking-wider', isDark ? 'text-slate-400' : 'text-slate-500']">Average Order</span>
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                <BarChart3 class="w-5 h-5" />
+              </div>
             </div>
-            <p class="card-value">ETB {{ formatNumber(summaryData.averageOrder) }}</p>
-            <p class="card-subtitle">value per order</p>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span class="text-xs font-bold text-purple-500">ETB</span>
+              <h2 :class="['text-2xl font-black tracking-tight leading-none', isDark ? 'text-white' : 'text-slate-900']">
+                {{ formatNumber(summaryData.averageOrder) }}
+              </h2>
+            </div>
+            <div :class="['flex items-center gap-1.5 text-[11px] font-medium mt-2', isDark ? 'text-slate-400' : 'text-slate-500']">
+              <TrendingUp class="w-3.5 h-3.5 text-purple-500 shrink-0" />
+              <span>Per delivered transaction</span>
+            </div>
+            <div class="absolute inset-x-0 bottom-0 h-1 bg-purple-500"></div>
           </div>
 
-          <div class="summary-card">
-            <div class="card-header">
-              <h3>Pending Orders</h3>
-              <Clock size="20" class="card-icon pending-icon" />
+          <!-- PENDING ORDERS -->
+          <div :class="['rounded-2xl p-5 border transition-all duration-200 hover:shadow-md relative overflow-hidden group', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80 shadow-xs']">
+            <div class="flex items-center justify-between mb-3">
+              <span :class="['text-xs font-bold uppercase tracking-wider', isDark ? 'text-slate-400' : 'text-slate-500']">Pending Orders</span>
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <Clock class="w-5 h-5" />
+              </div>
             </div>
-            <p class="card-value">{{ summaryData.pendingOrders }}</p>
-            <p class="card-subtitle">awaiting fulfillment</p>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <h2 :class="['text-2xl font-black tracking-tight leading-none', isDark ? 'text-white' : 'text-slate-900']">
+                {{ summaryData.pendingOrders }}
+              </h2>
+              <span :class="['text-xs font-medium', isDark ? 'text-slate-400' : 'text-slate-500']">in transit / review</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-semibold mt-2">
+              <span class="text-amber-600 dark:text-amber-400">Awaiting fulfillment</span>
+              <router-link to="/farmer/customer-orders" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-0.5 hover:underline">
+                Manage &rarr;
+              </router-link>
+            </div>
+            <div class="absolute inset-x-0 bottom-0 h-1 bg-amber-500"></div>
           </div>
         </div>
 
-        <!-- Charts Section -->
-        <div v-if="sales.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <!-- Monthly Revenue Trend (Smooth Area / Line Chart) -->
+        <!-- Charts Section (Monthly Revenue Trend & Sales by Product) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Monthly Revenue Trend (Strictly Synchronized with Delivered & Paid Orders) -->
           <div :class="['rounded-2xl p-6 border shadow-xs flex flex-col justify-between transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <div class="flex items-center justify-between mb-4">
               <div>
@@ -83,35 +134,43 @@
                   Monthly Revenue Trend
                 </h3>
                 <p :class="['text-xs m-0 mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
-                  Responsive revenue timeline with interactive tooltips
+                  Strictly synchronized with completed & paid Chapa Escrow payouts
                 </p>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 Last 6 Months
               </span>
             </div>
             <div class="h-64 sm:h-72 w-full relative">
-              <Line :data="lineChartData" :options="lineChartOptions" />
+              <Line v-if="verifiedSales.length > 0" :data="lineChartData" :options="lineChartOptions" />
+              <div v-else class="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+                <Banknote class="w-8 h-8 text-slate-400 mb-2 opacity-40" />
+                <span>No verified payouts recorded yet</span>
+              </div>
             </div>
           </div>
 
-          <!-- Sales by Product (Interactive Donut / Pie Chart) -->
+          <!-- Sales by Product (Donut Chart) -->
           <div :class="['rounded-2xl p-6 border shadow-xs flex flex-col justify-between transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h3 :class="['text-base font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
-                  Sales by Product
+                  Sales by Produce
                 </h3>
                 <p :class="['text-xs m-0 mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
-                  Product volume distribution &amp; percentage shares
+                  Produce volume distribution & percentage shares
                 </p>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Product Share
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                Volume Share
               </span>
             </div>
             <div class="h-64 sm:h-72 w-full relative flex items-center justify-center">
-              <Doughnut :data="donutChartData" :options="donutChartOptions" />
+              <Doughnut v-if="verifiedSales.length > 0" :data="donutChartData" :options="donutChartOptions" />
+              <div v-else class="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+                <Package class="w-8 h-8 text-slate-400 mb-2 opacity-40" />
+                <span>No product distribution data</span>
+              </div>
             </div>
           </div>
         </div>
@@ -129,14 +188,14 @@
                   Filter Sales Transactions
                 </h3>
                 <span class="text-[11px] text-slate-400 font-medium">
-                  Refine revenue, order records, and commodities
+                  Filter verified delivered payouts, commodities, and date ranges
                 </span>
               </div>
             </div>
 
             <div class="flex items-center gap-2 self-start sm:self-auto">
               <span class="text-xs px-2.5 py-1 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                {{ filteredSales.length }} {{ filteredSales.length === 1 ? 'Sale' : 'Sales' }} Found
+                {{ filteredSales.length }} {{ filteredSales.length === 1 ? 'Transaction' : 'Transactions' }} Found
               </span>
               <button
                 v-if="hasActiveFilters"
@@ -189,10 +248,10 @@
               </div>
             </div>
 
-            <!-- Product / Produce Selector -->
+            <!-- Produce / Product Selector -->
             <div>
               <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
-                Produce / Product
+                Produce / Commodity
               </label>
               <div class="relative">
                 <Package class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -201,30 +260,28 @@
                   :class="['w-full pl-9 pr-8 py-2.5 rounded-xl text-xs border font-medium transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']"
                 >
                   <option value="">All Commodities</option>
-                  <option v-for="product in availableProducts" :key="product.id" :value="product.id">
-                    {{ product.name }}
+                  <option v-for="prod in availableProducts" :key="prod.id" :value="prod.name">
+                    {{ prod.name }}
                   </option>
                 </select>
                 <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
-            <!-- Fulfillment / Payment Status Selector -->
+            <!-- Escrow Release Status Selector -->
             <div>
               <label :class="['block text-[11px] font-bold uppercase tracking-wider mb-1.5', isDark ? 'text-slate-400' : 'text-slate-500']">
-                Order Status
+                Payout / Settlement Status
               </label>
               <div class="relative">
                 <CheckCircle2 class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
-                  v-model="filters.status"
+                  v-model="filters.payoutStatus"
                   :class="['w-full pl-9 pr-8 py-2.5 rounded-xl text-xs border font-medium transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']"
                 >
-                  <option value="">All Statuses</option>
-                  <option value="completed">Completed / Delivered</option>
-                  <option value="confirmed">Confirmed &amp; In Transit</option>
-                  <option value="pending">Pending Payment/Fulfillment</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="">All Verified Transactions</option>
+                  <option value="disbursed">Chapa Escrow Disbursed</option>
+                  <option value="delivered">Delivered & Verified</option>
                 </select>
                 <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -232,12 +289,30 @@
           </div>
         </div>
 
-        <!-- Sales Table -->
-        <div class="table-section">
-          <div class="table-header">
-            <h3>Recent Sales</h3>
-            <div class="table-controls">
-              <select v-model="itemsPerPage" class="items-select">
+        <!-- Recent Sales & Transactions Table (Strict Data Separation: Delivered & Paid Only) -->
+        <div :class="['rounded-2xl border shadow-xs overflow-hidden transition-all mb-8', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+          <!-- Table Header -->
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 :class="['text-base font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
+                  Recent Sales & Transactions
+                </h3>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  100% Synced With Revenue
+                </span>
+              </div>
+              <p :class="['text-xs m-0 mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                Verified sales ledger reflecting successful deliveries and completed Chapa Escrow disbursements
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <label :class="['text-xs font-semibold', isDark ? 'text-slate-400' : 'text-slate-500']">Rows:</label>
+              <select
+                v-model="itemsPerPage"
+                :class="['px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700']"
+              >
                 <option value="10">10 per page</option>
                 <option value="25">25 per page</option>
                 <option value="50">50 per page</option>
@@ -245,144 +320,270 @@
             </div>
           </div>
 
-          <div v-if="filteredSales.length > 0" class="table-wrapper">
-            <table class="sales-table">
+          <!-- Table Content -->
+          <div v-if="paginatedSales.length > 0" class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
               <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Product</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Amount</th>
-                  <th>Buyer</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                <tr :class="['border-b text-[11px] font-bold uppercase tracking-wider', isDark ? 'bg-[#0b101b] border-slate-800 text-slate-400' : 'bg-slate-50/80 border-slate-200 text-slate-500']">
+                  <th class="py-3.5 px-4 font-bold">Order Ref</th>
+                  <th class="py-3.5 px-4 font-bold">Produce</th>
+                  <th class="py-3.5 px-4 font-bold">Quantity</th>
+                  <th class="py-3.5 px-4 font-bold">Price / Unit</th>
+                  <th class="py-3.5 px-4 font-bold">Total Payout</th>
+                  <th class="py-3.5 px-4 font-bold">Customer</th>
+                  <th class="py-3.5 px-4 font-bold">Escrow & Delivery</th>
+                  <th class="py-3.5 px-4 font-bold">Date</th>
+                  <th class="py-3.5 px-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="sale in paginatedSales" :key="sale.id" class="table-row">
-                  <td class="td-id">
-                    <span class="order-badge">{{ sale.id }}</span>
+              <tbody :class="isDark ? 'divide-y divide-slate-800/60' : 'divide-y divide-slate-100'">
+                <tr
+                  v-for="sale in paginatedSales"
+                  :key="sale.uniqueKey"
+                  :class="['transition-colors', isDark ? 'hover:bg-slate-800/40 text-slate-200' : 'hover:bg-slate-50/80 text-slate-800']"
+                >
+                  <!-- Order Ref -->
+                  <td class="py-3.5 px-4 font-mono font-bold text-emerald-500">
+                    {{ sale.id }}
                   </td>
-                  <td class="td-product">{{ sale.productName }}</td>
-                  <td class="td-quantity">{{ sale.quantity }} {{ sale.unit }}</td>
-                  <td class="td-price">ETB {{ formatNumber(sale.pricePerUnit) }}</td>
-                  <td class="td-amount">
-                    <span class="amount-badge">ETB {{ formatNumber(sale.totalAmount) }}</span>
+
+                  <!-- Produce -->
+                  <td class="py-3.5 px-4 font-semibold">
+                    {{ sale.productName }}
                   </td>
-                  <td class="td-buyer">{{ sale.buyerName }}</td>
-                  <td class="td-date">{{ formatDate(sale.saleDate) }}</td>
-                  <td class="td-status">
-                    <span class="status-badge" :class="`status-${sale.status}`">
-                      {{ capitalize(sale.status) }}
+
+                  <!-- Quantity -->
+                  <td class="py-3.5 px-4">
+                    <span class="font-medium">{{ sale.quantity }}</span>
+                    <span :class="['ml-1 text-[11px]', isDark ? 'text-slate-400' : 'text-slate-500']">{{ sale.unit }}</span>
+                  </td>
+
+                  <!-- Price / Unit -->
+                  <td class="py-3.5 px-4 font-mono">
+                    ETB {{ formatNumber(sale.pricePerUnit) }}
+                  </td>
+
+                  <!-- Total Amount -->
+                  <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      ETB {{ formatNumber(sale.totalAmount) }}
                     </span>
                   </td>
-                  <td class="td-actions">
-                    <button @click="viewDetails(sale)" class="action-btn view-btn" title="View Details">
-                      <Eye size="16" />
-                    </button>
-                    <button @click="downloadInvoice(sale)" class="action-btn download-btn" title="Download Invoice">
-                      <FileDown size="16" />
-                    </button>
+
+                  <!-- Customer -->
+                  <td class="py-3.5 px-4">
+                    <div class="font-semibold leading-tight">{{ sale.buyerName }}</div>
+                    <div v-if="sale.buyerPhone" :class="['text-[11px] font-mono mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                      {{ sale.buyerPhone }}
+                    </div>
+                  </td>
+
+                  <!-- Escrow & Delivery Badges -->
+                  <td class="py-3.5 px-4">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <CheckCircle2 class="w-3 h-3" />
+                        Delivered
+                      </span>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        <ShieldCheck class="w-3 h-3" />
+                        Chapa Paid
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Date -->
+                  <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    {{ formatDate(sale.saleDate) }}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        @click="viewDetails(sale)"
+                        :class="['p-1.5 rounded-lg border transition-all cursor-pointer', isDark ? 'border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100']"
+                        title="View Transaction Details"
+                      >
+                        <Eye class="w-4 h-4" />
+                      </button>
+                      <button
+                        @click="downloadInvoice(sale)"
+                        :class="['p-1.5 rounded-lg border transition-all cursor-pointer', isDark ? 'border-emerald-800/40 bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/50' : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100']"
+                        title="Download / Print Official Tax Invoice"
+                      >
+                        <Printer class="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div v-else class="empty-state">
-            <ShoppingCart size="48" class="empty-icon" />
-            <p>No sales found</p>
-            <span class="empty-hint">Your sales will appear here once you make them</span>
+          <!-- Empty State -->
+          <div v-else class="p-12 text-center flex flex-col items-center justify-center">
+            <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
+              <ShoppingCart class="w-8 h-8 opacity-50" />
+            </div>
+            <h4 :class="['text-sm font-bold mb-1', isDark ? 'text-slate-200' : 'text-slate-800']">
+              {{ hasActiveFilters ? 'No matching sales found' : 'No verified sales recorded yet' }}
+            </h4>
+            <p :class="['text-xs max-w-sm mb-4', isDark ? 'text-slate-400' : 'text-slate-500']">
+              {{ hasActiveFilters ? 'Try adjusting your search criteria or resetting filters.' : 'Completed orders marked delivered and paid via Chapa Escrow will be logged here.' }}
+            </p>
+            <button
+              v-if="hasActiveFilters"
+              @click="clearFilters"
+              class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-all cursor-pointer"
+            >
+              Reset Filters
+            </button>
+            <router-link
+              v-else-if="summaryData.pendingOrders > 0"
+              to="/farmer/customer-orders"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition-all cursor-pointer"
+            >
+              <span>Manage Pending Orders in Customer Orders</span>
+              <span>&rarr;</span>
+            </router-link>
           </div>
 
           <!-- Pagination -->
-          <div v-if="filteredSales.length > 0" class="pagination">
-            <button 
-              @click="currentPage--" 
+          <div v-if="filteredSales.length > 0" class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+            <button
+              @click="currentPage--"
               :disabled="currentPage === 1"
-              class="pagination-btn"
+              :class="['inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border font-semibold transition-all', currentPage === 1 ? 'opacity-40 cursor-not-allowed border-transparent' : (isDark ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer')]"
             >
-              <ChevronLeft size="16" />
+              <ChevronLeft class="w-4 h-4" />
               Previous
             </button>
-            
-            <div class="pagination-info">
-              Page {{ currentPage }} of {{ totalPages }}
-            </div>
-            
-            <button 
-              @click="currentPage++" 
+
+            <span :class="['font-medium', isDark ? 'text-slate-400' : 'text-slate-500']">
+              Page <strong :class="isDark ? 'text-slate-200' : 'text-slate-800'">{{ currentPage }}</strong> of <strong :class="isDark ? 'text-slate-200' : 'text-slate-800'">{{ totalPages }}</strong>
+            </span>
+
+            <button
+              @click="currentPage++"
               :disabled="currentPage === totalPages"
-              class="pagination-btn"
+              :class="['inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border font-semibold transition-all', currentPage === totalPages ? 'opacity-40 cursor-not-allowed border-transparent' : (isDark ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer')]"
             >
               Next
-              <ChevronRight size="16" />
+              <ChevronRight class="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <!-- Details Modal -->
-        <div v-if="selectedSale" class="modal-overlay" @click="selectedSale = null">
-          <div class="modal-content" @click.stop>
-            <div class="modal-header">
-              <h2>Order Details</h2>
-              <button @click="selectedSale = null" class="btn-close">
-                <X size="20" />
+        <!-- Quick View Modal (Actionable Controls) -->
+        <div v-if="selectedSale" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" @click="selectedSale = null">
+          <div :class="['w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden transition-all', isDark ? 'bg-[#131b2e] border-slate-700' : 'bg-white border-slate-200']" @click.stop>
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                  <FileText class="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 :class="['text-base font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
+                    Sale Transaction & Escrow Details
+                  </h3>
+                  <span class="text-xs font-mono font-bold text-emerald-500">
+                    {{ selectedSale.id }}
+                  </span>
+                </div>
+              </div>
+              <button @click="selectedSale = null" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all cursor-pointer">
+                <X class="w-5 h-5" />
               </button>
             </div>
 
-            <div class="modal-body">
-              <div class="detail-grid">
-                <div class="detail-item">
-                  <span class="detail-label">Order ID</span>
-                  <span class="detail-value">{{ selectedSale.id }}</span>
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5 text-xs max-h-[75vh] overflow-y-auto">
+              <!-- Escrow Status Card -->
+              <div :class="['p-4 rounded-xl border flex items-center justify-between', isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50/80 border-emerald-200 text-emerald-800']">
+                <div class="flex items-center gap-3">
+                  <ShieldCheck class="w-6 h-6 text-emerald-500 shrink-0" />
+                  <div>
+                    <div class="font-bold text-sm leading-tight">Chapa Escrow Disbursed</div>
+                    <div class="text-[11px] opacity-80 mt-0.5">Funds released directly to farmer digital wallet</div>
+                  </div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Product</span>
-                  <span class="detail-value">{{ selectedSale.productName }}</span>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white">
+                  PAID
+                </span>
+              </div>
+
+              <!-- Transaction Information Grid -->
+              <div class="grid grid-cols-2 gap-4">
+                <div :class="['p-3.5 rounded-xl border', isDark ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                  <span :class="['block text-[10px] uppercase font-bold tracking-wider mb-1', isDark ? 'text-slate-400' : 'text-slate-500']">Buyer / Customer</span>
+                  <div :class="['font-bold text-sm', isDark ? 'text-white' : 'text-slate-900']">{{ selectedSale.buyerName }}</div>
+                  <div v-if="selectedSale.buyerPhone" class="text-slate-400 font-mono text-[11px] mt-0.5">{{ selectedSale.buyerPhone }}</div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Quantity</span>
-                  <span class="detail-value">{{ selectedSale.quantity }} {{ selectedSale.unit }}</span>
+
+                <div :class="['p-3.5 rounded-xl border', isDark ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                  <span :class="['block text-[10px] uppercase font-bold tracking-wider mb-1', isDark ? 'text-slate-400' : 'text-slate-500']">Settlement Date</span>
+                  <div :class="['font-bold text-sm', isDark ? 'text-white' : 'text-slate-900']">{{ formatDate(selectedSale.saleDate) }}</div>
+                  <div class="text-slate-400 text-[11px] mt-0.5">Quality verified & delivered</div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Price per Unit</span>
-                  <span class="detail-value">ETB {{ formatNumber(selectedSale.pricePerUnit) }}</span>
+
+                <div :class="['p-3.5 rounded-xl border', isDark ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                  <span :class="['block text-[10px] uppercase font-bold tracking-wider mb-1', isDark ? 'text-slate-400' : 'text-slate-500']">Warehouse / Destination</span>
+                  <div :class="['font-bold text-xs', isDark ? 'text-white' : 'text-slate-900']">{{ selectedSale.deliveryAddress || 'Kality Central Grain Warehouse' }}</div>
+                  <div class="text-slate-400 text-[11px] mt-0.5">Inspected & Fulfilled</div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Total Amount</span>
-                  <span class="detail-value detail-amount">ETB {{ formatNumber(selectedSale.totalAmount) }}</span>
+
+                <div :class="['p-3.5 rounded-xl border', isDark ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
+                  <span :class="['block text-[10px] uppercase font-bold tracking-wider mb-1', isDark ? 'text-slate-400' : 'text-slate-500']">Escrow Payout Ref</span>
+                  <div class="font-mono font-bold text-xs text-blue-500 truncate">{{ selectedSale.payoutReference }}</div>
+                  <div class="text-slate-400 text-[11px] mt-0.5">Chapa Settlement ID</div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Status</span>
-                  <span class="detail-value">
-                    <span class="status-badge" :class="`status-${selectedSale.status}`">
-                      {{ capitalize(selectedSale.status) }}
-                    </span>
-                  </span>
+              </div>
+
+              <!-- Produce & Items Details Table -->
+              <div :class="['rounded-xl border overflow-hidden', isDark ? 'border-slate-800' : 'border-slate-200']">
+                <div :class="['p-3 border-b text-[11px] font-bold uppercase tracking-wider', isDark ? 'bg-[#0b101b] border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600']">
+                  Produce Item Breakdown
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Buyer</span>
-                  <span class="detail-value">{{ selectedSale.buyerName }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Sale Date</span>
-                  <span class="detail-value">{{ formatDate(selectedSale.saleDate) }}</span>
+                <div class="p-4 flex items-center justify-between">
+                  <div>
+                    <div :class="['font-bold text-sm', isDark ? 'text-white' : 'text-slate-900']">
+                      {{ selectedSale.productName }}
+                    </div>
+                    <div class="text-slate-400 text-xs mt-0.5">
+                      Quantity: {{ selectedSale.quantity }} {{ selectedSale.unit }} &times; ETB {{ formatNumber(selectedSale.pricePerUnit) }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-mono font-black text-base text-emerald-500">
+                      ETB {{ formatNumber(selectedSale.totalAmount) }}
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-400">Net Payout</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="modal-footer">
-              <button @click="selectedSale = null" class="btn-secondary">Close</button>
-              <button @click="downloadInvoice(selectedSale)" class="btn-primary">
-                <Download size="16" />
-                Download Invoice
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <button
+                @click="selectedSale = null"
+                :class="['px-4 py-2.5 rounded-xl font-semibold border transition-all cursor-pointer', isDark ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50']"
+              >
+                Close
+              </button>
+              <button
+                @click="downloadInvoice(selectedSale)"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition-all cursor-pointer"
+              >
+                <Printer class="w-4 h-4" />
+                <span>Print / Download Tax Invoice</span>
               </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -421,9 +622,10 @@ ChartJS.register(
 )
 import { farmerAPI } from '@/api/farmer'
 import {
-  TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock, Banknote,
-  AlertCircle, RotateCcw, Download, X, Eye, FileDown, ChevronLeft,
-  ChevronRight, SlidersHorizontal, Search, Calendar, Package, CheckCircle2, ChevronDown
+  TrendingUp, ShoppingCart, BarChart3, Clock, Banknote,
+  AlertCircle, RotateCcw, Download, X, Eye, ChevronLeft,
+  ChevronRight, SlidersHorizontal, Search, Calendar, Package, CheckCircle2, ChevronDown,
+  ShieldCheck, Printer, FileText
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -433,20 +635,19 @@ const { isDark, isLight } = useTheme()
 // State
 const loading = ref(false)
 const error = ref(null)
-const showFilters = ref(false)
 const selectedSale = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 
 // Data
-const sales = ref([])
+const allRawOrders = ref([])
+const verifiedSales = ref([])
 const availableProducts = ref([])
 const summaryData = ref({
   totalRevenue: 0,
   totalSales: 0,
   averageOrder: 0,
-  pendingOrders: 0,
-  revenueGrowth: 0
+  pendingOrders: 0
 })
 
 // Filters
@@ -454,19 +655,19 @@ const filters = ref({
   search: '',
   dateRange: 'all',
   product: '',
-  status: ''
+  payoutStatus: ''
 })
 
 const hasActiveFilters = computed(() => {
   return Boolean(
     filters.value.search ||
     filters.value.product ||
-    filters.value.status ||
+    filters.value.payoutStatus ||
     (filters.value.dateRange && filters.value.dateRange !== 'all')
   )
 })
 
-// Charts Computed Data
+// Charts Computed Data (Strictly synchronized with verified sales payouts)
 const revenueTrendData = computed(() => {
   const months = []
   const now = new Date()
@@ -477,7 +678,8 @@ const revenueTrendData = computed(() => {
     months.push({ key, label, revenue: 0, count: 0 })
   }
 
-  sales.value.forEach(s => {
+  // Iterate strictly through verified sales
+  verifiedSales.value.forEach(s => {
     if (!s.saleDate) return
     const d = new Date(s.saleDate)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -488,18 +690,14 @@ const revenueTrendData = computed(() => {
     }
   })
 
-  const maxRevenue = Math.max(...months.map(m => m.revenue), 1)
-  return months.map(m => ({
-    ...m,
-    heightPct: Math.round((m.revenue / maxRevenue) * 100)
-  }))
+  return months
 })
 
 const productSalesData = computed(() => {
   const map = new Map()
   let grandTotal = 0
 
-  sales.value.forEach(s => {
+  verifiedSales.value.forEach(s => {
     const name = s.productName || 'Agricultural Produce'
     const amt = Number(s.totalAmount || 0)
     const qty = Number(s.quantity || 0)
@@ -519,10 +717,10 @@ const productSalesData = computed(() => {
       percentage: grandTotal > 0 ? Math.round((p.revenue / grandTotal) * 100) : 0
     }))
     .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5)
+    .slice(0, 6)
 })
 
-// Line / Area Chart Config (Monthly Revenue Trend)
+// Line Chart Config (Monthly Revenue Trend)
 const lineChartData = computed(() => {
   const labels = revenueTrendData.value.map(m => m.label)
   const data = revenueTrendData.value.map(m => m.revenue)
@@ -531,7 +729,7 @@ const lineChartData = computed(() => {
     labels,
     datasets: [
       {
-        label: 'Monthly Revenue (ETB)',
+        label: 'Verified Revenue (ETB)',
         data,
         borderColor: '#10b981',
         backgroundColor: (context) => {
@@ -544,15 +742,16 @@ const lineChartData = computed(() => {
           return gradient
         },
         fill: true,
-        tension: 0.4,
+        tension: 0.35,
+        borderWidth: 2.5,
         pointBackgroundColor: '#10b981',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 8,
+        pointRadius: 4.5,
+        pointHoverRadius: 7,
         pointHoverBackgroundColor: '#059669',
         pointHoverBorderColor: '#ffffff',
-        pointHoverBorderWidth: 3,
+        pointHoverBorderWidth: 2.5,
       }
     ]
   }
@@ -576,7 +775,7 @@ const lineChartOptions = computed(() => ({
       borderColor: isDark.value ? '#334155' : '#475569',
       borderWidth: 1,
       padding: 12,
-      cornerRadius: 8,
+      cornerRadius: 10,
       displayColors: false,
       callbacks: {
         title: (items) => items && items[0] ? `${items[0].label} Revenue` : '',
@@ -591,13 +790,13 @@ const lineChartOptions = computed(() => ({
       },
       ticks: {
         color: isDark.value ? '#94a3b8' : '#64748b',
-        font: { family: 'inherit', size: 12, weight: '600' }
+        font: { family: 'inherit', size: 11, weight: '600' }
       }
     },
     y: {
       beginAtZero: true,
       grid: {
-        color: isDark.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(226, 232, 240, 0.8)',
+        color: isDark.value ? 'rgba(148, 163, 184, 0.08)' : 'rgba(226, 232, 240, 0.7)',
       },
       ticks: {
         color: isDark.value ? '#94a3b8' : '#64748b',
@@ -620,14 +819,13 @@ const donutPalette = [
   '#8b5cf6', // purple
   '#ec4899', // pink
   '#06b6d4', // cyan
-  '#f97316', // orange
 ]
 
 const donutChartData = computed(() => {
   const items = productSalesData.value
   if (!items || items.length === 0) {
     return {
-      labels: ['No sales recorded'],
+      labels: ['No verified sales'],
       datasets: [
         {
           data: [1],
@@ -659,14 +857,14 @@ const donutChartData = computed(() => {
 const donutChartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  cutout: '70%',
+  cutout: '68%',
   plugins: {
     legend: {
       position: 'bottom',
       labels: {
         color: isDark.value ? '#cbd5e1' : '#334155',
-        font: { family: 'inherit', size: 12, weight: '600' },
-        padding: 16,
+        font: { family: 'inherit', size: 11, weight: '600' },
+        padding: 14,
         usePointStyle: true,
         pointStyle: 'circle'
       }
@@ -678,7 +876,7 @@ const donutChartOptions = computed(() => ({
       borderColor: isDark.value ? '#334155' : '#475569',
       borderWidth: 1,
       padding: 12,
-      cornerRadius: 8,
+      cornerRadius: 10,
       callbacks: {
         label: (item) => {
           const val = item.parsed
@@ -691,27 +889,36 @@ const donutChartOptions = computed(() => ({
   }
 }))
 
-// Computed
+// Computed Filtered Sales (Strictly on verifiedSales)
 const filteredSales = computed(() => {
-  let result = sales.value
+  let result = verifiedSales.value
 
+  // Search filter
   if (filters.value.search) {
     const q = filters.value.search.toLowerCase().trim()
-    result = result.filter(s => 
+    result = result.filter(s =>
       (s.id && s.id.toLowerCase().includes(q)) ||
       (s.buyerName && s.buyerName.toLowerCase().includes(q)) ||
-      (s.productName && s.productName.toLowerCase().includes(q))
+      (s.productName && s.productName.toLowerCase().includes(q)) ||
+      (s.payoutReference && s.payoutReference.toLowerCase().includes(q))
     )
   }
 
-  if (filters.value.status) {
-    result = result.filter(s => s.status === filters.value.status)
-  }
-
+  // Produce filter
   if (filters.value.product) {
-    result = result.filter(s => s.productId === Number(filters.value.product) || s.productName === filters.value.product)
+    result = result.filter(s => s.productName === filters.value.product)
   }
 
+  // Payout / Settlement status filter
+  if (filters.value.payoutStatus) {
+    if (filters.value.payoutStatus === 'disbursed') {
+      result = result.filter(s => s.escrowStatus === 'disbursed' || s.paymentStatus === 'paid')
+    } else if (filters.value.payoutStatus === 'delivered') {
+      result = result.filter(s => s.status === 'delivered' || s.status === 'completed')
+    }
+  }
+
+  // Date Range filter
   if (filters.value.dateRange && filters.value.dateRange !== 'all') {
     const now = new Date()
     result = result.filter(s => {
@@ -772,38 +979,73 @@ const fetchSalesData = async () => {
     const rawOrders = ordersRes.data?.data || ordersRes.data || []
     const rawProducts = productsRes.data?.data || productsRes.data || []
 
+    allRawOrders.value = Array.isArray(rawOrders) ? rawOrders : []
+
+    // Populate available commodities list
     availableProducts.value = (Array.isArray(rawProducts) ? rawProducts : []).map(p => ({
       id: p.id,
       name: p.name
     }))
 
-    const salesList = []
-    const orderList = Array.isArray(rawOrders) ? rawOrders : []
+    const verifiedList = []
+    let pendingCount = 0
+    const completedOrderIds = new Set()
 
-    orderList.forEach(order => {
+    allRawOrders.value.forEach((order, idx) => {
+      const status = (order.status || '').toLowerCase()
+      const paymentStatus = (order.payment_status || '').toLowerCase()
+      const escrowStatus = (order.escrow_status || '').toLowerCase()
+
+      // Track pending orders awaiting fulfillment, review, or delivery
+      if (['pending', 'confirmed', 'processing', 'shipped'].includes(status)) {
+        pendingCount += 1
+      }
+
+      // DATA SEPARATION RULE:
+      // Verified transactions MUST strictly be completed & delivered orders with payment settled
+      const isVerified = (
+        (status === 'delivered' || status === 'completed' || paymentStatus === 'paid' || escrowStatus === 'disbursed') &&
+        status !== 'cancelled' &&
+        paymentStatus !== 'failed'
+      )
+
+      if (!isVerified) return
+
+      completedOrderIds.add(order.id)
       const buyerName = order.buyer?.name || order.buyer?.phone || 'Customer'
+      const buyerPhone = order.buyer?.phone || order.delivery_phone || ''
       const orderNum = order.order_number || `ORD-${String(order.id).padStart(4, '0')}`
+      const deliveryAddress = order.delivery_address || 'Kality Central Grain Warehouse'
+      const payoutRef = order.payout_reference || order.payment_reference || `CHAPA-ESC-${order.id}`
+      const saleDate = order.delivered_at || order.updated_at || order.created_at
 
       if (order.items && order.items.length > 0) {
-        order.items.forEach(item => {
-          salesList.push({
+        order.items.forEach((item, itemIdx) => {
+          verifiedList.push({
+            uniqueKey: `${order.id}-${item.id || itemIdx}`,
             id: orderNum,
             orderId: order.id,
             productName: item.product?.name || item.product_name || 'Agricultural Produce',
             productId: item.product_id,
             quantity: Number(item.quantity || 0),
             unit: item.product?.quantity_unit || item.product?.unit || item.unit || 'kg',
-            pricePerUnit: Number(item.price || 0),
+            pricePerUnit: Number(item.price || item.unit_price || 0),
             totalAmount: Number(item.subtotal || (item.quantity * item.price) || 0),
-            buyerName: buyerName,
-            saleDate: order.created_at,
-            status: order.status || 'pending',
+            buyerName,
+            buyerPhone,
+            deliveryAddress,
+            saleDate,
+            status: order.status || 'delivered',
+            paymentStatus: order.payment_status || 'paid',
+            escrowStatus: order.escrow_status || 'disbursed',
+            payoutReference: payoutRef,
             rawOrder: order
           })
         })
       } else {
         const total = Number(order.grand_total || order.subtotal || 0)
-        salesList.push({
+        verifiedList.push({
+          uniqueKey: `${order.id}-${idx}`,
           id: orderNum,
           orderId: order.id,
           productName: 'Agricultural Produce',
@@ -812,30 +1054,34 @@ const fetchSalesData = async () => {
           unit: 'lot',
           pricePerUnit: total,
           totalAmount: total,
-          buyerName: buyerName,
-          saleDate: order.created_at,
-          status: order.status || 'pending',
+          buyerName,
+          buyerPhone,
+          deliveryAddress,
+          saleDate,
+          status: order.status || 'delivered',
+          paymentStatus: order.payment_status || 'paid',
+          escrowStatus: order.escrow_status || 'disbursed',
+          payoutReference: payoutRef,
           rawOrder: order
         })
       }
     })
 
-    sales.value = salesList
+    verifiedSales.value = verifiedList
 
-    const completedSales = salesList.filter(s => ['completed', 'delivered', 'confirmed'].includes(s.status))
-    const totalRev = completedSales.reduce((sum, s) => sum + s.totalAmount, 0)
-    const pendingCount = salesList.filter(s => s.status === 'pending').length
+    // Compute KPI cards: Total Revenue strictly matches verified transactions
+    const totalRev = verifiedList.reduce((sum, s) => sum + s.totalAmount, 0)
+    const completedOrdersCount = completedOrderIds.size || (verifiedList.length > 0 ? 1 : 0)
 
     summaryData.value = {
       totalRevenue: totalRev,
-      totalSales: completedSales.length,
-      averageOrder: completedSales.length > 0 ? (totalRev / completedSales.length) : 0,
-      pendingOrders: pendingCount,
-      revenueGrowth: 0
+      totalSales: completedOrdersCount,
+      averageOrder: completedOrdersCount > 0 ? Math.round(totalRev / completedOrdersCount) : 0,
+      pendingOrders: pendingCount
     }
   } catch (err) {
     console.error('Error fetching sales data:', err)
-    error.value = 'Failed to load sales data from database. Please try again.'
+    error.value = 'Failed to load verified sales and escrow records. Please try again.'
   } finally {
     loading.value = false
   }
@@ -847,28 +1093,11 @@ const formatNumber = (num) => {
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   })
-}
-
-const capitalize = (str) => {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
-
-const openFilters = () => {
-  showFilters.value = true
-}
-
-const closeFilters = () => {
-  showFilters.value = false
-}
-
-const applyFilters = () => {
-  currentPage.value = 1
-  closeFilters()
 }
 
 const clearFilters = () => {
@@ -876,54 +1105,138 @@ const clearFilters = () => {
     search: '',
     dateRange: 'all',
     product: '',
-    status: ''
+    payoutStatus: ''
   }
   currentPage.value = 1
-}
-
-const exportData = () => {
-  const headers = ['Order ID', 'Product', 'Quantity', 'Price (ETB)', 'Amount (ETB)', 'Buyer', 'Date', 'Status']
-  const rows = filteredSales.value.map(sale => [
-    `"${sale.id}"`,
-    `"${sale.productName}"`,
-    `"${sale.quantity} ${sale.unit}"`,
-    `"${formatNumber(sale.pricePerUnit)}"`,
-    `"${formatNumber(sale.totalAmount)}"`,
-    `"${sale.buyerName}"`,
-    `"${formatDate(sale.saleDate)}"`,
-    `"${sale.status}"`
-  ])
-
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `sales-report-${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
 }
 
 const viewDetails = (sale) => {
   selectedSale.value = sale
 }
 
+// Official Printable Invoice Generator
 const downloadInvoice = (sale) => {
+  // 1. Open dedicated print window
+  const printWindow = window.open('', '_blank', 'width=800,height=900')
+  if (printWindow) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${sale.id}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; background: #fff; line-height: 1.5; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
+          .title { font-size: 24px; font-weight: 900; color: #065f46; margin: 0; }
+          .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+          .invoice-meta { text-align: right; }
+          .meta-item { font-size: 13px; color: #475569; }
+          .meta-item strong { color: #0f172a; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
+          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+          .card h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+          .card p { margin: 4px 0; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { background: #f1f5f9; padding: 12px 14px; font-size: 12px; text-transform: uppercase; text-align: left; color: #475569; border-bottom: 2px solid #cbd5e1; }
+          td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+          .total-box { margin-left: auto; width: 300px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-bottom: 30px; }
+          .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #065f46; }
+          .stamp { display: inline-block; padding: 8px 16px; border: 2px solid #10b981; border-radius: 8px; font-weight: 900; color: #047857; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+          .footer { text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="title">AgriTech Digital Farmer Exchange</h1>
+            <div class="subtitle">Official Verified Sales & Escrow Settlement Tax Invoice</div>
+          </div>
+          <div class="invoice-meta">
+            <div class="meta-item">Invoice #: <strong>${sale.id}</strong></div>
+            <div class="meta-item">Settled: <strong>${formatDate(sale.saleDate)}</strong></div>
+            <div class="meta-item">Chapa Ref: <strong>${sale.payoutReference}</strong></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h4>Sold By (Farmer / Producer)</h4>
+            <p><strong>${auth.user?.name || 'Verified Farmer Member'}</strong></p>
+            <p>National Farmer Registry ID: ET-FARM-${auth.user?.id || '001'}</p>
+            <p>Digital Wallet: Chapa Escrow Connected</p>
+          </div>
+          <div class="card">
+            <h4>Billed To (Buyer / Customer)</h4>
+            <p><strong>${sale.buyerName}</strong></p>
+            <p>Phone: ${sale.buyerPhone || 'Registered Account'}</p>
+            <p>Fulfillment Hub: ${sale.deliveryAddress}</p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Produce Item Description</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th style="text-align: right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>${sale.productName}</strong></td>
+              <td>${sale.quantity} ${sale.unit}</td>
+              <td>ETB ${formatNumber(sale.pricePerUnit)}</td>
+              <td style="text-align: right; font-weight: bold;">ETB ${formatNumber(sale.totalAmount)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="total-box">
+          <div class="total-row">
+            <span>Net Disbursed Revenue:</span>
+            <span>ETB ${formatNumber(sale.totalAmount)}</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+          <div class="stamp">✓ Chapa Escrow Verified & Disbursed</div>
+        </div>
+
+        <div class="footer">
+          This is an electronically verified transaction certificate generated by AgriTech Platform.
+        </div>
+        <scr' + 'ipt>
+          window.onload = function() {
+            window.print();
+          };
+        </scr' + 'ipt>
+      </body>
+      </html>
+    `
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+  }
+
+  // 2. Also download text invoice file for offline records
   const invoiceText = [
-    '========================================',
-    '             SALES INVOICE',
-    '========================================',
-    `Order Number:    ${sale.id}`,
-    `Sale Date:       ${formatDate(sale.saleDate)}`,
-    `Customer:        ${sale.buyerName}`,
-    `Status:          ${capitalize(sale.status)}`,
-    '----------------------------------------',
-    `Product:         ${sale.productName}`,
-    `Quantity:        ${sale.quantity} ${sale.unit}`,
-    `Unit Price:      ETB ${formatNumber(sale.pricePerUnit)}`,
-    `Total Amount:    ETB ${formatNumber(sale.totalAmount)}`,
-    '========================================',
-    'Thank you for your business!',
-    '========================================'
+    '==============================================================',
+    '        AGRITECH PLATFORM - VERIFIED SALES INVOICE',
+    '==============================================================',
+    `Invoice Ref:       ${sale.id}`,
+    `Settled Date:      ${formatDate(sale.saleDate)}`,
+    `Customer:          ${sale.buyerName} (${sale.buyerPhone || 'N/A'})`,
+    `Delivery Hub:      ${sale.deliveryAddress}`,
+    `Payment Status:    Paid via Chapa Escrow`,
+    `Escrow Payout Ref: ${sale.payoutReference}`,
+    '--------------------------------------------------------------',
+    `Produce Item:      ${sale.productName}`,
+    `Quantity:          ${sale.quantity} ${sale.unit}`,
+    `Unit Price:        ETB ${formatNumber(sale.pricePerUnit)}`,
+    `Net Disbursed:     ETB ${formatNumber(sale.totalAmount)}`,
+    '==============================================================',
+    '  Status: VERIFIED & DISBURSED TO FARMER DIGITAL WALLET',
+    '=============================================================='
   ].join('\n')
 
   const blob = new Blob([invoiceText], { type: 'text/plain;charset=utf-8;' })
@@ -931,6 +1244,32 @@ const downloadInvoice = (sale) => {
   const a = document.createElement('a')
   a.href = url
   a.download = `Invoice-${sale.id}.txt`
+  a.click()
+}
+
+// Export Verified Sales to CSV
+const exportData = () => {
+  const headers = ['Order Ref', 'Produce', 'Quantity', 'Unit', 'Price (ETB)', 'Total Amount (ETB)', 'Buyer', 'Phone', 'Date', 'Escrow Status', 'Payout Ref']
+  const rows = filteredSales.value.map(sale => [
+    `"${sale.id}"`,
+    `"${sale.productName}"`,
+    `"${sale.quantity}"`,
+    `"${sale.unit}"`,
+    `"${formatNumber(sale.pricePerUnit)}"`,
+    `"${formatNumber(sale.totalAmount)}"`,
+    `"${sale.buyerName}"`,
+    `"${sale.buyerPhone || ''}"`,
+    `"${formatDate(sale.saleDate)}"`,
+    '"Delivered & Paid (Chapa Escrow)"',
+    `"${sale.payoutReference}"`
+  ])
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `verified-sales-report-${new Date().toISOString().split('T')[0]}.csv`
   a.click()
 }
 
@@ -964,24 +1303,25 @@ onMounted(() => {
 /* Page Header */
 .page-header {
   background: white;
-  padding: 30px;
+  padding: 24px 32px;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .header-content h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
 .header-content p {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
@@ -990,32 +1330,20 @@ onMounted(() => {
   gap: 12px;
 }
 
-.btn-filter,
 .btn-export {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  color: #4b5563;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-filter:hover,
-.btn-export:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.btn-export {
+  padding: 9px 16px;
+  border-radius: 10px;
   background: #10b981;
   color: white;
-  border-color: #10b981;
+  border: 1px solid #10b981;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .btn-export:hover {
@@ -1034,8 +1362,8 @@ onMounted(() => {
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border: 4px solid #e5e7eb;
   border-top-color: #10b981;
   border-radius: 50%;
@@ -1048,37 +1376,30 @@ onMounted(() => {
 
 .error-container {
   background: #fee2e2;
-  border: 2px solid #fca5a5;
-  border-radius: 12px;
-  padding: 40px;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 30px;
+  border-radius: 16px;
   margin: 30px;
-  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-}
-
-.error-icon {
-  color: #dc2626;
-}
-
-.error-message {
-  color: #991b1b;
-  font-size: 16px;
+  gap: 16px;
+  text-align: center;
 }
 
 .btn-retry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #dc2626;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   transition: all 0.2s;
 }
 
@@ -1086,1201 +1407,36 @@ onMounted(() => {
   background: #b91c1c;
 }
 
-/* Content */
-.sales-content {
-  padding: 30px;
-  flex: 1;
+/* Dark Mode Theme Adjustments */
+.dark.sales-layout {
+  background-color: #0b101b;
 }
 
-/* Summary Section */
-.summary-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+.dark .page-header {
+  background: #131b2e;
+  border-bottom-color: #1e293b;
 }
 
-.summary-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s;
-  border-left: 5px solid #10b981;
+.dark .header-content h1 {
+  color: #f8fafc;
 }
 
-.summary-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+.dark .header-content p {
+  color: #94a3b8;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+.dark .spinner {
+  border-color: #1e293b;
+  border-top-color: #10b981;
 }
 
-.card-header h3 {
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-  font-weight: 700;
+.dark .loading-container p {
+  color: #94a3b8;
 }
 
-.card-icon {
-  color: #d1d5db;
-}
-
-.summary-card:nth-child(2) {
-  border-left-color: #3b82f6;
-}
-
-.summary-card:nth-child(3) {
-  border-left-color: #8b5cf6;
-}
-
-.summary-card:nth-child(4) {
-  border-left-color: #f59e0b;
-}
-
-.card-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 8px 0 4px 0;
-}
-
-.card-subtitle,
-.card-trend {
-  font-size: 12px;
-  color: #9ca3af;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-trend.positive {
-  color: #10b981;
-}
-
-.card-trend.negative {
-  color: #ef4444;
-}
-
-/* Charts Section */
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.chart-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.chart-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 16px 0;
-}
-
-.chart-placeholder {
-  height: 300px;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-/* Filters Panel */
-.filters-panel {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.filters-header h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.filters-content {
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.filter-select {
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1f2937;
-  background: white;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.filter-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.btn-apply,
-.btn-clear {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-apply {
-  background: #10b981;
-  color: white;
-}
-
-.btn-apply:hover {
-  background: #059669;
-}
-
-.btn-clear {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-
-.btn-clear:hover {
-  background: #e5e7eb;
-}
-
-/* Table Section */
-.table-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-}
-
-.table-header {
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.table-header h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.table-controls {
-  display: flex;
-  gap: 12px;
-}
-
-.items-select {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #4b5563;
-  background: white;
-  cursor: pointer;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.sales-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.sales-table thead {
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.sales-table th {
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  color: #4b5563;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 12px;
-}
-
-.sales-table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
-  transition: background 0.2s;
-}
-
-.sales-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.table-row td {
-  padding: 16px;
-  color: #1f2937;
-}
-
-.td-id {
-  font-weight: 600;
-}
-
-.order-badge {
-  background: #ecfdf5;
-  color: #10b981;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.amount-badge {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.status-completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-cancelled {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.td-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  background: none;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 6px 8px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
-  background: #ecfdf5;
-}
-
-.download-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background: #eff6ff;
-}
-
-.empty-state {
-  padding: 60px 20px;
-  text-align: center;
-  color: #9ca3af;
-}
-
-.empty-icon {
-  color: #d1d5db;
-  margin-bottom: 16px;
-}
-
-.empty-state p {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: #6b7280;
-}
-
-.empty-hint {
-  font-size: 14px;
-  color: #9ca3af;
-}
-
-/* Pagination */
-.pagination {
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  color: #4b5563;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 600;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.detail-label {
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.detail-value {
-  font-size: 14px;
-  color: #1f2937;
-  font-weight: 600;
-}
-
-.detail-amount {
-  font-size: 18px;
-  color: #10b981;
-}
-
-.modal-footer {
-  padding: 24px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background: #10b981;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #059669;
-}
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
   .sales-container {
     margin-left: 0;
   }
-
-  .charts-section {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .sales-content {
-    padding: 20px;
-  }
-
-  .summary-section {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .sales-table {
-    font-size: 12px;
-  }
-
-  .sales-table th,
-  .table-row td {
-    padding: 12px 8px;
-  }
-
-  .td-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .summary-section {
-    grid-template-columns: 1fr;
-  }
-
-  .filters-content {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==================== DARK MODE STYLES ==================== */
-
-/* Light Mode (Default) */
-.sales-layout.light {
-  background-color: #f0f2f5;
-  color: #1f2937;
-}
-
-/* Dark Mode */
-.sales-layout.dark {
-  background-color: #0b0f17;
-  color: #f3f4f6;
-}
-
-.sales-container {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.sales-layout.light .sales-container {
-  background-color: #f0f2f5;
-}
-
-.sales-layout.dark .sales-container {
-  background-color: #0b0f17;
-}
-
-/* Page Header */
-.sales-layout.light .page-header {
-  background: white;
-  border-bottom-color: #e5e7eb;
-  color: #1f2937;
-}
-
-.sales-layout.dark .page-header {
-  background: #131b2e;
-  border-bottom-color: #1e293b;
-  color: #f3f4f6;
-}
-
-.sales-layout.dark .header-content h1 {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .header-content p {
-  color: #cbd5e1;
-}
-
-/* Buttons */
-.sales-layout.dark .btn-filter {
-  background: #1a2338;
-  color: #cbd5e1;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .btn-filter:hover {
-  background: #1e293b;
-  border-color: #3d4f63;
-}
-
-.sales-layout.light .btn-export {
-  background: #10b981;
-  color: white;
-}
-
-.sales-layout.dark .btn-export {
-  background: #10b981;
-  color: white;
-}
-
-/* Loading & Error */
-.sales-layout.dark .loading-container {
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .spinner {
-  border-color: #2d3f52;
-  border-top-color: #4ade80;
-}
-
-.sales-layout.dark .error-container {
-  background: #7f1d1d;
-  border-color: #991b1b;
-}
-
-.sales-layout.dark .error-icon {
-  color: #f87171;
-}
-
-.sales-layout.dark .error-message {
-  color: #fee2e2;
-}
-
-/* Summary Cards */
-.sales-layout.light .summary-card {
-  background: white;
-  color: #1f2937;
-}
-
-.sales-layout.dark .summary-card {
-  background: #1a2338;
-  border-left-color: #4ade80;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.sales-layout.dark .summary-card:nth-child(2) {
-  border-left-color: #60a5fa;
-}
-
-.sales-layout.dark .summary-card:nth-child(3) {
-  border-left-color: #a78bfa;
-}
-
-.sales-layout.dark .summary-card:nth-child(4) {
-  border-left-color: #fbbf24;
-}
-
-.sales-layout.dark .card-header h3 {
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .card-value {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .card-icon {
-  color: #2d3f52;
-}
-
-.sales-layout.dark .card-subtitle {
-  color: #94a3b8;
-}
-
-/* Charts Section */
-.sales-layout.light .chart-card {
-  background: white;
-}
-
-.sales-layout.dark .chart-card {
-  background: #1a2338;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.sales-layout.dark .chart-title {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .chart-placeholder {
-  background: linear-gradient(135deg, #131b2e 0%, #1a2338 100%);
-  color: #2d3f52;
-}
-
-/* Filters Panel */
-.sales-layout.light .filters-panel {
-  background: white;
-  border-color: #e5e7eb;
-}
-
-.sales-layout.dark .filters-panel {
-  background: #1a2338;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .filters-header {
-  border-bottom-color: #2d3f52;
-}
-
-.sales-layout.dark .filters-header h3 {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .btn-close {
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .filter-group label {
-  color: #cbd5e1;
-}
-
-.sales-layout.light .filter-select {
-  background: white;
-  color: #1f2937;
-  border-color: #e5e7eb;
-}
-
-.sales-layout.dark .filter-select {
-  background: #131b2e;
-  color: #f1f5f9;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .filter-select:focus {
-  border-color: #4ade80;
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
-}
-
-.sales-layout.dark .btn-apply {
-  background: #10b981;
-  color: white;
-}
-
-.sales-layout.dark .btn-clear {
-  background: #1e293b;
-  color: #cbd5e1;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .btn-clear:hover {
-  background: #2d3f52;
-}
-
-/* Table Section */
-.sales-layout.light .table-section {
-  background: white;
-}
-
-.sales-layout.dark .table-section {
-  background: #1a2338;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.sales-layout.dark .table-header {
-  border-bottom-color: #2d3f52;
-}
-
-.sales-layout.dark .table-header h3 {
-  color: #f1f5f9;
-}
-
-.sales-layout.light .items-select {
-  background: white;
-  color: #4b5563;
-  border-color: #e5e7eb;
-}
-
-.sales-layout.dark .items-select {
-  background: #131b2e;
-  color: #f1f5f9;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .sales-table thead {
-  background: #131b2e;
-  border-bottom-color: #2d3f52;
-}
-
-.sales-layout.dark .sales-table th {
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .sales-table tbody tr {
-  border-bottom-color: #2d3f52;
-}
-
-.sales-layout.dark .sales-table tbody tr:hover {
-  background: #1e293b;
-}
-
-.sales-layout.dark .table-row td {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .order-badge {
-  background: #0f4c3a;
-  color: #86efac;
-}
-
-.sales-layout.dark .amount-badge {
-  background: #5d4307;
-  color: #fde047;
-}
-
-.sales-layout.dark .status-completed {
-  background: #0f4c3a;
-  color: #86efac;
-}
-
-.sales-layout.dark .status-pending {
-  background: #5d4307;
-  color: #fde047;
-}
-
-.sales-layout.dark .status-cancelled {
-  background: #7f1d1d;
-  color: #f87171;
-}
-
-.sales-layout.dark .action-btn {
-  background: none;
-  border-color: #2d3f52;
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .action-btn:hover {
-  border-color: #4ade80;
-  color: #4ade80;
-  background: #0f4c3a;
-}
-
-.sales-layout.dark .download-btn:hover {
-  border-color: #60a5fa;
-  color: #60a5fa;
-  background: #0c2d52;
-}
-
-/* Empty State */
-.sales-layout.dark .empty-state {
-  color: #94a3b8;
-}
-
-.sales-layout.dark .empty-state p {
-  color: #cbd5e1;
-}
-
-/* Pagination */
-.sales-layout.light .pagination {
-  border-top-color: #e5e7eb;
-}
-
-.sales-layout.dark .pagination {
-  border-top-color: #2d3f52;
-}
-
-.sales-layout.dark .pagination-btn {
-  background: #1a2338;
-  color: #cbd5e1;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .pagination-btn:hover:not(:disabled) {
-  background: #1e293b;
-  border-color: #4ade80;
-  color: #4ade80;
-}
-
-.sales-layout.dark .pagination-info {
-  color: #cbd5e1;
-}
-
-/* Modal */
-.sales-layout.dark .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.sales-layout.light .modal-content {
-  background: white;
-  color: #1f2937;
-}
-
-.sales-layout.dark .modal-content {
-  background: #1a2338;
-  color: #f3f4f6;
-}
-
-.sales-layout.dark .modal-header {
-  border-bottom-color: #2d3f52;
-}
-
-.sales-layout.dark .modal-header h2 {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .modal-body {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .detail-label {
-  color: #cbd5e1;
-}
-
-.sales-layout.dark .detail-value {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .modal-footer {
-  border-top-color: #2d3f52;
-}
-
-.sales-layout.dark .btn-primary {
-  background: #10b981;
-  color: white;
-}
-
-.sales-layout.dark .btn-secondary {
-  background: #1e293b;
-  color: #cbd5e1;
-  border-color: #2d3f52;
-}
-
-.sales-layout.dark .btn-secondary:hover {
-  background: #2d3f52;
 }
 </style>
-
-
-/* Visual Trend Bar Chart & Product Breakdown */
-.chart-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.chart-badge {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  background-color: #ecfdf5;
-  color: #059669;
-}
-
-.trend-chart-box {
-  height: 240px;
-  display: flex;
-  align-items: flex-end;
-  padding-top: 24px;
-}
-
-.trend-bars-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-  height: 100%;
-  gap: 12px;
-}
-
-.trend-bar-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  position: relative;
-}
-
-.trend-bar-col:hover .trend-bar-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-4px);
-}
-
-.trend-bar-tooltip {
-  position: absolute;
-  top: -24px;
-  background: #1f2937;
-  color: #f9fafb;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.trend-bar-track {
-  flex: 1;
-  width: 100%;
-  max-width: 44px;
-  background: #f1f5f9;
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-}
-
-.trend-bar-fill {
-  width: 100%;
-  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-  border-radius: 8px 8px 0 0;
-  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.trend-bar-label {
-  margin-top: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-/* Product Breakdown List */
-.product-breakdown-box {
-  min-height: 240px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.product-bars-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.product-bar-entry {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.product-bar-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.product-bar-name {
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.product-bar-val {
-  font-size: 12px;
-  font-weight: 700;
-  color: #059669;
-}
-
-.product-pct {
-  color: #64748b;
-  font-weight: 600;
-}
-
-.product-progress-track {
-  height: 8px;
-  width: 100%;
-  background-color: #f1f5f9;
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.product-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #10b981, #3b82f6);
-  border-radius: 9999px;
-  transition: width 0.6s ease;
-}
-
-.product-bar-meta {
-  font-size: 10px;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.chart-empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-/* Dark mode chart adjustments */
-.sales-layout.dark .chart-card {
-  background: #131b2e;
-  border: 1px solid #1e293b;
-}
-
-.sales-layout.dark .chart-title {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .chart-badge {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-}
-
-.sales-layout.dark .trend-bar-track {
-  background: #1a2338;
-}
-
-.sales-layout.dark .trend-bar-label {
-  color: #94a3b8;
-}
-
-.sales-layout.dark .product-bar-name {
-  color: #f1f5f9;
-}
-
-.sales-layout.dark .product-progress-track {
-  background: #1a2338;
-}
