@@ -180,7 +180,7 @@
                     <span class="product-count">{{ order.items.length }} item(s)</span>
                   </td>
                   <td class="td-amount">
-                    <span class="amount-badge">${{ formatNumber(order.totalAmount) }}</span>
+                    <span class="amount-badge">ETB {{ formatNumber(order.totalAmount) }}</span>
                   </td>
                   <td class="td-date">{{ formatDate(order.orderDate) }}</td>
                   <td class="td-status">
@@ -309,8 +309,8 @@
                   <div v-for="item in selectedOrder.items" :key="item.id" class="item-row">
                     <span class="item-name">{{ item.productName }}</span>
                     <span class="item-qty">{{ item.quantity }} {{ item.unit }}</span>
-                    <span class="item-price">${{ formatNumber(item.pricePerUnit) }}</span>
-                    <span class="item-total">${{ formatNumber(item.totalPrice) }}</span>
+                    <span class="item-price">ETB {{ formatNumber(item.pricePerUnit) }}</span>
+                    <span class="item-total">ETB {{ formatNumber(item.totalPrice) }}</span>
                   </div>
                 </div>
               </div>
@@ -321,19 +321,19 @@
                 <div class="totals">
                   <div class="total-row">
                     <span>Subtotal:</span>
-                    <span>${{ formatNumber(selectedOrder.subtotal) }}</span>
+                    <span>ETB {{ formatNumber(selectedOrder.subtotal) }}</span>
                   </div>
                   <div class="total-row">
                     <span>Shipping:</span>
-                    <span>${{ formatNumber(selectedOrder.shippingCost) }}</span>
+                    <span>ETB {{ formatNumber(selectedOrder.shippingCost) }}</span>
                   </div>
                   <div class="total-row">
                     <span>Tax:</span>
-                    <span>${{ formatNumber(selectedOrder.tax) }}</span>
+                    <span>ETB {{ formatNumber(selectedOrder.tax) }}</span>
                   </div>
                   <div class="total-row total">
                     <span>Total:</span>
-                    <span>${{ formatNumber(selectedOrder.totalAmount) }}</span>
+                    <span>ETB {{ formatNumber(selectedOrder.totalAmount) }}</span>
                   </div>
                 </div>
               </div>
@@ -387,6 +387,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
+import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Filter, Download, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
@@ -423,99 +424,6 @@ const filters = ref({
   paymentStatus: ''
 })
 
-// Mock data - replace with API calls
-const mockOrders = [
-  {
-    id: 'ORD-2026-001',
-    customerName: 'John Smith',
-    customerEmail: 'john@example.com',
-    customerPhone: '+1-555-0101',
-    deliveryAddress: '123 Main St, Springfield, IL 62701',
-    totalAmount: 450.50,
-    subtotal: 425.00,
-    shippingCost: 15.00,
-    tax: 10.50,
-    orderDate: '2026-09-01',
-    status: 'delivered',
-    paymentStatus: 'paid',
-    deliveryStatus: 'Delivered',
-    trackingNumber: 'TRK123456789',
-    expectedDelivery: '2026-09-05',
-    items: [
-      { id: 1, productName: 'Tomatoes', quantity: 25, unit: 'kg', pricePerUnit: 2.50, totalPrice: 62.50 },
-      { id: 2, productName: 'Carrots', quantity: 15, unit: 'kg', pricePerUnit: 1.80, totalPrice: 27.00 }
-    ]
-  },
-  {
-    id: 'ORD-2026-002',
-    customerName: 'Jane Doe',
-    customerEmail: 'jane@example.com',
-    customerPhone: '+1-555-0102',
-    deliveryAddress: '456 Oak Ave, Chicago, IL 60601',
-    totalAmount: 320.00,
-    subtotal: 300.00,
-    shippingCost: 12.00,
-    tax: 8.00,
-    orderDate: '2026-09-02',
-    status: 'processing',
-    paymentStatus: 'paid',
-    deliveryStatus: 'In Transit',
-    trackingNumber: 'TRK123456790',
-    expectedDelivery: '2026-09-06',
-    items: [
-      { id: 1, productName: 'Potatoes', quantity: 50, unit: 'kg', pricePerUnit: 1.20, totalPrice: 60.00 },
-      { id: 2, productName: 'Corn', quantity: 30, unit: 'kg', pricePerUnit: 0.80, totalPrice: 24.00 }
-    ]
-  },
-  {
-    id: 'ORD-2026-003',
-    customerName: 'Bob Johnson',
-    customerEmail: 'bob@example.com',
-    customerPhone: '+1-555-0103',
-    deliveryAddress: '789 Pine Rd, Miami, FL 33101',
-    totalAmount: 580.75,
-    subtotal: 555.00,
-    shippingCost: 18.00,
-    tax: 7.75,
-    orderDate: '2026-09-03',
-    status: 'pending',
-    paymentStatus: 'pending',
-    deliveryStatus: 'Awaiting Pickup',
-    trackingNumber: null,
-    expectedDelivery: '2026-09-07',
-    items: [
-      { id: 1, productName: 'Organic Tomatoes', quantity: 40, unit: 'kg', pricePerUnit: 3.50, totalPrice: 140.00 }
-    ]
-  },
-  {
-    id: 'ORD-2026-004',
-    customerName: 'Alice Williams',
-    customerEmail: 'alice@example.com',
-    customerPhone: '+1-555-0104',
-    deliveryAddress: '321 Elm St, Houston, TX 77001',
-    totalAmount: 275.25,
-    subtotal: 260.00,
-    shippingCost: 12.00,
-    tax: 3.25,
-    orderDate: '2026-09-04',
-    status: 'shipped',
-    paymentStatus: 'paid',
-    deliveryStatus: 'Shipped',
-    trackingNumber: 'TRK123456791',
-    expectedDelivery: '2026-09-08',
-    items: [
-      { id: 1, productName: 'Fresh Lettuce', quantity: 20, unit: 'kg', pricePerUnit: 1.50, totalPrice: 30.00 }
-    ]
-  }
-]
-
-const mockCustomers = [
-  { id: 1, name: 'John Smith' },
-  { id: 2, name: 'Jane Doe' },
-  { id: 3, name: 'Bob Johnson' },
-  { id: 4, name: 'Alice Williams' }
-]
-
 // Computed
 const filteredOrders = computed(() => {
   let result = orders.value
@@ -532,11 +440,45 @@ const filteredOrders = computed(() => {
     result = result.filter(o => o.paymentStatus === filters.value.paymentStatus)
   }
 
+  if (filters.value.dateRange && filters.value.dateRange !== 'all') {
+    const now = new Date()
+    result = result.filter(o => {
+      if (!o.orderDate) return false
+      const orderDate = new Date(o.orderDate)
+      switch (filters.value.dateRange) {
+        case 'today':
+          return orderDate.toDateString() === now.toDateString()
+        case 'week': {
+          const d = new Date(now)
+          d.setDate(now.getDate() - 7)
+          return orderDate >= d
+        }
+        case 'month': {
+          const d = new Date(now)
+          d.setMonth(now.getMonth() - 1)
+          return orderDate >= d
+        }
+        case 'quarter': {
+          const d = new Date(now)
+          d.setMonth(now.getMonth() - 3)
+          return orderDate >= d
+        }
+        case 'year': {
+          const d = new Date(now)
+          d.setFullYear(now.getFullYear() - 1)
+          return orderDate >= d
+        }
+        default:
+          return true
+      }
+    })
+  }
+
   return result
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredOrders.value.length / parseInt(itemsPerPage.value))
+  return Math.ceil(filteredOrders.value.length / parseInt(itemsPerPage.value)) || 1
 })
 
 const paginatedOrders = computed(() => {
@@ -545,26 +487,79 @@ const paginatedOrders = computed(() => {
   return filteredOrders.value.slice(start, end)
 })
 
-// Methods
+// Methods - Fetch live orders strictly from database
 const fetchOrders = async () => {
   loading.value = true
   error.value = null
   try {
-    // Replace with actual API call
-    // const res = await farmerAPI.getCustomerOrders()
-    orders.value = mockOrders
-    availableCustomers.value = mockCustomers
-    
-    // Calculate summary
+    const res = await farmerAPI.getOrders()
+    const rawOrders = res.data?.data || res.data || []
+
+    orders.value = (Array.isArray(rawOrders) ? rawOrders : []).map(raw => {
+      const buyerName = raw.buyer?.name || raw.buyer?.phone || 'Customer'
+      const items = (raw.items || raw.order_items || []).map((item, idx) => ({
+        id: item.id || idx,
+        productName: item.product?.name || item.product_name || 'Agricultural Produce',
+        quantity: Number(item.quantity || 1),
+        unit: item.product?.quantity_unit || item.product?.unit || item.unit || 'kg',
+        pricePerUnit: Number(item.price || 0),
+        totalPrice: Number(item.subtotal || (item.quantity * item.price) || 0)
+      }))
+
+      const subtotal = Number(raw.subtotal || items.reduce((s, i) => s + i.totalPrice, 0))
+      const shippingCost = Number(raw.delivery_fee || 0)
+      const tax = Number(raw.tax || 0)
+      const totalAmount = Number(raw.grand_total || (subtotal + shippingCost + tax))
+
+      return {
+        id: raw.order_number || ('ORD-' + String(raw.id).padStart(4, '0')),
+        rawId: raw.id,
+        customerName: buyerName,
+        customerEmail: raw.buyer?.email || 'N/A',
+        customerPhone: raw.delivery_phone || raw.buyer?.phone || 'N/A',
+        deliveryAddress: [raw.delivery_address, raw.delivery_woreda, raw.delivery_zone, raw.delivery_region].filter(Boolean).join(', ') || 'Standard Agro Depot Pickup',
+        totalAmount,
+        subtotal,
+        shippingCost,
+        tax,
+        orderDate: raw.created_at,
+        status: raw.status || 'pending',
+        paymentStatus: raw.payment_status || 'pending',
+        deliveryStatus: capitalize(raw.status || 'pending'),
+        trackingNumber: raw.payment_reference || null,
+        expectedDelivery: raw.delivered_at || null,
+        items: items.length > 0 ? items : [
+          {
+            id: 1,
+            productName: 'Agricultural Produce',
+            quantity: 1,
+            unit: 'lot',
+            pricePerUnit: totalAmount,
+            totalPrice: totalAmount
+          }
+        ]
+      }
+    })
+
+    // Populate available customers from real database records
+    const customerMap = new Map()
+    orders.value.forEach(o => {
+      if (o.customerName && !customerMap.has(o.customerName)) {
+        customerMap.set(o.customerName, { id: o.customerName, name: o.customerName })
+      }
+    })
+    availableCustomers.value = Array.from(customerMap.values())
+
+    // Live summary counts from database
     summaryData.value = {
       totalOrders: orders.value.length,
       pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      processingOrders: orders.value.filter(o => o.status === 'processing').length,
-      completedOrders: orders.value.filter(o => o.status === 'delivered').length
+      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'in_transit'].includes(o.status)).length,
+      completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
     }
   } catch (err) {
-    console.error('Error fetching orders:', err)
-    error.value = 'Failed to load orders. Please try again.'
+    console.error('Error fetching orders from database:', err)
+    error.value = 'Failed to load customer orders from database. Please try again.'
   } finally {
     loading.value = false
   }
@@ -614,7 +609,7 @@ const exportData = () => {
   const rows = filteredOrders.value.map(order => [
     order.id,
     order.customerName,
-    `$${formatNumber(order.totalAmount)}`,
+    `ETB ${formatNumber(order.totalAmount)}`,
     formatDate(order.orderDate),
     order.status,
     order.paymentStatus
@@ -633,11 +628,25 @@ const viewDetails = (order) => {
   selectedOrder.value = { ...order }
 }
 
-const updateStatus = (order, newStatus) => {
-  // Update order status
-  const index = orders.value.findIndex(o => o.id === order.id)
-  if (index !== -1) {
-    orders.value[index].status = newStatus
+const updateStatus = async (order, newStatus) => {
+  try {
+    if (order.rawId) {
+      await farmerAPI.updateOrderStatus(order.rawId, newStatus)
+    }
+    const index = orders.value.findIndex(o => o.id === order.id || o.rawId === order.rawId)
+    if (index !== -1) {
+      orders.value[index].status = newStatus
+      orders.value[index].deliveryStatus = capitalize(newStatus)
+    }
+    summaryData.value = {
+      totalOrders: orders.value.length,
+      pendingOrders: orders.value.filter(o => o.status === 'pending').length,
+      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'in_transit'].includes(o.status)).length,
+      completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
+    }
+  } catch (err) {
+    console.error('Failed to update order status:', err)
+    alert(err?.response?.data?.message || 'Failed to update order status in database.')
   }
 }
 

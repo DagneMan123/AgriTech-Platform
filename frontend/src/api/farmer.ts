@@ -67,13 +67,15 @@ export const farmerAPI = {
     }),
 
   // Orders
-  getOrders: () => apiClient.get('/farmer/orders'),
+  getOrders: (params?: any) => apiClient.get('/farmer/orders', { params }),
   
   getOrder: (id: number) => apiClient.get(`/farmer/orders/${id}`),
   
   acceptOrder: (id: number) => apiClient.post(`/farmer/orders/${id}/accept`),
   
   rejectOrder: (id: number) => apiClient.post(`/farmer/orders/${id}/reject`),
+
+  updateOrderStatus: (id: number, status: string) => apiClient.patch(`/farmer/orders/${id}/status`, { status }),
 
   // Consultations
   getConsultations: () => apiClient.get('/farmer/consultations'),

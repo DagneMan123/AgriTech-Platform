@@ -79,17 +79,55 @@
 
         <!-- Charts Section -->
         <div v-if="sales.length > 0" class="charts-section">
+          <!-- Monthly Revenue Trend Chart -->
           <div class="chart-card">
-            <h3 class="chart-title">Revenue Trend (Last 12 Months)</h3>
-            <div class="chart-placeholder">
-              <p>Chart visualization will be displayed here</p>
+            <div class="chart-header-row">
+              <h3 class="chart-title">Monthly Revenue Trend</h3>
+              <span class="chart-badge">Past 6 Months</span>
+            </div>
+            <div class="trend-chart-box">
+              <div class="trend-bars-wrapper">
+                <div v-for="m in revenueTrendData" :key="m.key" class="trend-bar-col">
+                  <div class="trend-bar-tooltip">
+                    ETB {{ formatNumber(m.revenue) }}
+                  </div>
+                  <div class="trend-bar-track">
+                    <div
+                      class="trend-bar-fill"
+                      :style="{ height: `${Math.max(m.heightPct, 6)}%` }"
+                      :title="`${m.label}: ETB ${formatNumber(m.revenue)} (${m.count} orders)`"
+                    ></div>
+                  </div>
+                  <span class="trend-bar-label">{{ m.label }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Sales by Product Breakdown -->
           <div class="chart-card">
-            <h3 class="chart-title">Sales by Product</h3>
-            <div class="chart-placeholder">
-              <p>Product breakdown will be displayed here</p>
+            <div class="chart-header-row">
+              <h3 class="chart-title">Sales by Product</h3>
+              <span class="chart-badge">Volume &amp; Share</span>
+            </div>
+            <div class="product-breakdown-box">
+              <div v-if="productSalesData.length > 0" class="product-bars-list">
+                <div v-for="p in productSalesData" :key="p.name" class="product-bar-entry">
+                  <div class="product-bar-info">
+                    <span class="product-bar-name">{{ p.name }}</span>
+                    <span class="product-bar-val">ETB {{ formatNumber(p.revenue) }} <strong class="product-pct">({{ p.percentage }}%)</strong></span>
+                  </div>
+                  <div class="product-progress-track">
+                    <div class="product-progress-fill" :style="{ width: `${p.percentage}%` }"></div>
+                  </div>
+                  <div class="product-bar-meta">
+                    <span>{{ p.quantity }} {{ p.unit }} fulfilled</span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="chart-empty-state">
+                <span>No product breakdown available yet</span>
+              </div>
             </div>
           </div>
         </div>
@@ -305,6 +343,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import { farmerAPI } from '@/api/farmer'
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock, Banknote,
   AlertCircle, RotateCcw, Sliders, Download, X, Eye, FileDown, ChevronLeft,
@@ -339,6 +378,62 @@ const filters = ref({
   dateRange: 'all',
   product: '',
   status: ''
+})
+
+// Charts Computed Data
+const revenueTrendData = computed(() => {
+  const months = []
+  const now = new Date()
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('en-US', { month: 'short' })
+    months.push({ key, label, revenue: 0, count: 0 })
+  }
+
+  sales.value.forEach(s => {
+    if (!s.saleDate) return
+    const d = new Date(s.saleDate)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const m = months.find(item => item.key === key)
+    if (m) {
+      m.revenue += Number(s.totalAmount || 0)
+      m.count += 1
+    }
+  })
+
+  const maxRevenue = Math.max(...months.map(m => m.revenue), 1)
+  return months.map(m => ({
+    ...m,
+    heightPct: Math.round((m.revenue / maxRevenue) * 100)
+  }))
+})
+
+const productSalesData = computed(() => {
+  const map = new Map()
+  let grandTotal = 0
+
+  sales.value.forEach(s => {
+    const name = s.productName || 'Agricultural Produce'
+    const amt = Number(s.totalAmount || 0)
+    const qty = Number(s.quantity || 0)
+    grandTotal += amt
+
+    if (!map.has(name)) {
+      map.set(name, { name, revenue: 0, quantity: 0, unit: s.unit || 'kg' })
+    }
+    const cur = map.get(name)
+    cur.revenue += amt
+    cur.quantity += qty
+  })
+
+  return Array.from(map.values())
+    .map(p => ({
+      ...p,
+      percentage: grandTotal > 0 ? Math.round((p.revenue / grandTotal) * 100) : 0
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
 })
 
 // Computed
@@ -406,33 +501,22 @@ const fetchSalesData = async () => {
   error.value = null
   try {
     const [ordersRes, productsRes] = await Promise.all([
-      fetch('/api/farmer/orders', {
-        headers: {
-          'Authorization': `Bearer ${auth.token}`,
-          'Accept': 'application/json'
-        }
-      }),
-      fetch('/api/farmer/products', {
-        headers: {
-          'Authorization': `Bearer ${auth.token}`,
-          'Accept': 'application/json'
-        }
-      })
+      farmerAPI.getOrders(),
+      farmerAPI.getProducts()
     ])
 
-    const ordersJson = ordersRes.ok ? await ordersRes.json() : { data: [] }
-    const productsJson = productsRes.ok ? await productsRes.json() : { data: [] }
+    const rawOrders = ordersRes.data?.data || ordersRes.data || []
+    const rawProducts = productsRes.data?.data || productsRes.data || []
 
-    const rawOrders = ordersJson.data?.data || ordersJson.data || []
-    const rawProducts = productsJson.data?.data || productsJson.data || []
-
-    availableProducts.value = rawProducts.map(p => ({
+    availableProducts.value = (Array.isArray(rawProducts) ? rawProducts : []).map(p => ({
       id: p.id,
       name: p.name
     }))
 
     const salesList = []
-    rawOrders.forEach(order => {
+    const orderList = Array.isArray(rawOrders) ? rawOrders : []
+
+    orderList.forEach(order => {
       const buyerName = order.buyer?.name || order.buyer?.phone || 'Customer'
       const orderNum = order.order_number || `ORD-${String(order.id).padStart(4, '0')}`
 
@@ -441,10 +525,10 @@ const fetchSalesData = async () => {
           salesList.push({
             id: orderNum,
             orderId: order.id,
-            productName: item.product?.name || 'Product',
+            productName: item.product?.name || item.product_name || 'Agricultural Produce',
             productId: item.product_id,
             quantity: Number(item.quantity || 0),
-            unit: item.product?.quantity_unit || item.product?.unit || 'kg',
+            unit: item.product?.quantity_unit || item.product?.unit || item.unit || 'kg',
             pricePerUnit: Number(item.price || 0),
             totalAmount: Number(item.subtotal || (item.quantity * item.price) || 0),
             buyerName: buyerName,
@@ -454,6 +538,7 @@ const fetchSalesData = async () => {
           })
         })
       } else {
+        const total = Number(order.grand_total || order.subtotal || 0)
         salesList.push({
           id: orderNum,
           orderId: order.id,
@@ -461,8 +546,8 @@ const fetchSalesData = async () => {
           productId: null,
           quantity: 1,
           unit: 'lot',
-          pricePerUnit: Number(order.grand_total || order.subtotal || 0),
-          totalAmount: Number(order.grand_total || order.subtotal || 0),
+          pricePerUnit: total,
+          totalAmount: total,
           buyerName: buyerName,
           saleDate: order.created_at,
           status: order.status || 'pending',
@@ -473,7 +558,7 @@ const fetchSalesData = async () => {
 
     sales.value = salesList
 
-    const completedSales = salesList.filter(s => s.status === 'completed' || s.status === 'delivered')
+    const completedSales = salesList.filter(s => ['completed', 'delivered', 'confirmed'].includes(s.status))
     const totalRev = completedSales.reduce((sum, s) => sum + s.totalAmount, 0)
     const pendingCount = salesList.filter(s => s.status === 'pending').length
 
@@ -486,7 +571,7 @@ const fetchSalesData = async () => {
     }
   } catch (err) {
     console.error('Error fetching sales data:', err)
-    error.value = 'Failed to load sales data. Please try again.'
+    error.value = 'Failed to load sales data from database. Please try again.'
   } finally {
     loading.value = false
   }
@@ -1737,3 +1822,199 @@ onMounted(() => {
   background: #2d3f52;
 }
 </style>
+
+
+/* Visual Trend Bar Chart & Product Breakdown */
+.chart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.trend-chart-box {
+  height: 240px;
+  display: flex;
+  align-items: flex-end;
+  padding-top: 24px;
+}
+
+.trend-bars-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  gap: 12px;
+}
+
+.trend-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  position: relative;
+}
+
+.trend-bar-col:hover .trend-bar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-4px);
+}
+
+.trend-bar-tooltip {
+  position: absolute;
+  top: -24px;
+  background: #1f2937;
+  color: #f9fafb;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.trend-bar-track {
+  flex: 1;
+  width: 100%;
+  max-width: 44px;
+  background: #f1f5f9;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.trend-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  border-radius: 8px 8px 0 0;
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trend-bar-label {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Product Breakdown List */
+.product-breakdown-box {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.product-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-bar-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.product-bar-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.product-bar-name {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.product-bar-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.product-pct {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.product-progress-track {
+  height: 8px;
+  width: 100%;
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.product-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #3b82f6);
+  border-radius: 9999px;
+  transition: width 0.6s ease;
+}
+
+.product-bar-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.chart-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Dark mode chart adjustments */
+.sales-layout.dark .chart-card {
+  background: #131b2e;
+  border: 1px solid #1e293b;
+}
+
+.sales-layout.dark .chart-title {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .chart-badge {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.sales-layout.dark .trend-bar-track {
+  background: #1a2338;
+}
+
+.sales-layout.dark .trend-bar-label {
+  color: #94a3b8;
+}
+
+.sales-layout.dark .product-bar-name {
+  color: #f1f5f9;
+}
+
+.sales-layout.dark .product-progress-track {
+  background: #1a2338;
+}

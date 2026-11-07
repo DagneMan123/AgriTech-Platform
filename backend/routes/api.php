@@ -506,6 +506,16 @@ Route::middleware('auth:sanctum')->group(function () {
                 'reject'
             ]);
 
+            Route::patch('/orders/{id}/status', [
+                FarmerOrderController::class,
+                'updateStatus'
+            ]);
+
+            Route::put('/orders/{id}/status', [
+                FarmerOrderController::class,
+                'updateStatus'
+            ]);
+
             Route::get('/dashboard/agricultural-inputs', [
                 FarmerDashboardController::class,
                 'requestInputs'

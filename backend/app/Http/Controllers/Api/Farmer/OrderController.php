@@ -22,10 +22,23 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Farmer profile not found'], 404);
             }
 
-            $orders = Order::where('farmer_id', $farmer->id)
-                ->with(['items.product', 'buyer'])
-                ->latest()
-                ->paginate(15);
+            $query = Order::where(function ($q) use ($farmer) {
+                $q->where('farmer_id', $farmer->id)
+                  ->orWhere('farmer_id', $farmer->user_id)
+                  ->orWhereHas('items.product', function ($pq) use ($farmer) {
+                      $pq->where('farmer_id', $farmer->id)
+                         ->orWhere('farmer_id', $farmer->user_id);
+                  });
+            })
+            ->with(['items.product', 'buyer'])
+            ->latest();
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $limit = (int) $request->get('limit', 50);
+            $orders = $query->paginate($limit);
 
             return response()->json([
                 'success' => true,
@@ -130,6 +143,53 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error rejecting order', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update order status (e.g. processing, confirmed, shipped, delivered)
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $farmer = $this->getOrCreateFarmer();
+
+            if (!$farmer) {
+                return response()->json(['message' => 'Farmer profile not found'], 404);
+            }
+
+            $order = Order::where(function ($q) use ($farmer) {
+                $q->where('farmer_id', $farmer->id)
+                  ->orWhere('farmer_id', $farmer->user_id)
+                  ->orWhereHas('items.product', function ($pq) use ($farmer) {
+                      $pq->where('farmer_id', $farmer->id)
+                         ->orWhere('farmer_id', $farmer->user_id);
+                  });
+            })->findOrFail($id);
+
+            $status = $request->input('status');
+            $allowed = ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled', 'rejected'];
+
+            if (!in_array($status, $allowed)) {
+                return response()->json(['message' => 'Invalid status provided'], 422);
+            }
+
+            $updateData = ['status' => $status];
+            if ($status === 'delivered') {
+                $updateData['delivered_at'] = now();
+            }
+
+            $order->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order status updated successfully',
+                'data' => $order->fresh(['items.product', 'buyer']),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Order not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error updating order status', 'error' => $e->getMessage()], 500);
         }
     }
 
