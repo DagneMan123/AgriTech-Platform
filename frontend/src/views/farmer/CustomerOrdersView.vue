@@ -9,10 +9,6 @@
           <p>Manage and track orders from your customers</p>
         </div>
         <div class="header-actions">
-          <button @click="openFilters" class="btn-filter">
-            <Filter size="16" />
-            <span>Filters</span>
-          </button>
           <button @click="exportData" class="btn-export">
             <Download size="16" />
             <span>Export</span>
@@ -78,12 +74,9 @@
         </div>
 
         <!-- Filters Section -->
-        <div v-if="showFilters" class="filters-panel">
+        <div class="filters-panel">
           <div class="filters-header">
             <h3>Filters</h3>
-            <button @click="closeFilters" class="btn-close">
-              <X size="20" />
-            </button>
           </div>
           
           <div class="filters-content">
@@ -129,11 +122,6 @@
                 <option value="pending">Pending</option>
                 <option value="failed">Failed</option>
               </select>
-            </div>
-
-            <div class="filter-actions">
-              <button @click="applyFilters" class="btn-apply">Apply Filters</button>
-              <button @click="clearFilters" class="btn-clear">Clear</button>
             </div>
           </div>
         </div>
@@ -383,14 +371,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
-  Filter, Download, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
+  Download, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
   CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight
 } from 'lucide-vue-next'
 
@@ -401,7 +389,6 @@ const { isDark, isLight } = useTheme()
 // State
 const loading = ref(false)
 const error = ref(null)
-const showFilters = ref(false)
 const selectedOrder = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
@@ -582,17 +569,12 @@ const capitalize = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-const openFilters = () => {
-  showFilters.value = true
-}
-
-const closeFilters = () => {
-  showFilters.value = false
-}
+watch(filters, () => {
+  currentPage.value = 1
+}, { deep: true })
 
 const applyFilters = () => {
   currentPage.value = 1
-  closeFilters()
 }
 
 const clearFilters = () => {
@@ -602,6 +584,7 @@ const clearFilters = () => {
     customer: '',
     paymentStatus: ''
   }
+  currentPage.value = 1
 }
 
 const exportData = () => {
