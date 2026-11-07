@@ -65,7 +65,7 @@
           <router-link to="/farmer/contracts" class="menu-item sub-item" active-class="active">
             <FileText class="sub-icon" />
             <span>Contracts &amp; Agreements</span>
-            <span v-if="pendingContractsCount > 0" class="badge-pending">Pending</span>
+
           </router-link>
         </div>
       </div>
