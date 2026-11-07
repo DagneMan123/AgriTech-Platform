@@ -519,7 +519,7 @@ onMounted(() => {
 
 .sidebar-bottom {
   padding: 10px 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: none;
   transition: border-color 0.3s ease;
 }
 
@@ -597,7 +597,7 @@ onMounted(() => {
 }
 
 .sidebar-bottom {
-  border-top: 1px solid #1e293b !important;
+  border-top: none !important;
 }
 
 .sidebar.dark .logout-btn {
