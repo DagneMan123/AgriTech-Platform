@@ -78,56 +78,44 @@
         </div>
 
         <!-- Charts Section -->
-        <div v-if="sales.length > 0" class="charts-section">
-          <!-- Monthly Revenue Trend Chart -->
-          <div class="chart-card">
-            <div class="chart-header-row">
-              <h3 class="chart-title">Monthly Revenue Trend</h3>
-              <span class="chart-badge">Past 6 Months</span>
-            </div>
-            <div class="trend-chart-box">
-              <div class="trend-bars-wrapper">
-                <div v-for="m in revenueTrendData" :key="m.key" class="trend-bar-col">
-                  <div class="trend-bar-tooltip">
-                    ETB {{ formatNumber(m.revenue) }}
-                  </div>
-                  <div class="trend-bar-track">
-                    <div
-                      class="trend-bar-fill"
-                      :style="{ height: `${Math.max(m.heightPct, 6)}%` }"
-                      :title="`${m.label}: ETB ${formatNumber(m.revenue)} (${m.count} orders)`"
-                    ></div>
-                  </div>
-                  <span class="trend-bar-label">{{ m.label }}</span>
-                </div>
+        <div v-if="sales.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Monthly Revenue Trend (Smooth Area / Line Chart) -->
+          <div :class="['rounded-2xl p-6 border shadow-xs flex flex-col justify-between transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 :class="['text-base font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
+                  Monthly Revenue Trend
+                </h3>
+                <p :class="['text-xs m-0 mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                  Responsive revenue timeline with interactive tooltips
+                </p>
               </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Last 6 Months
+              </span>
+            </div>
+            <div class="h-64 sm:h-72 w-full relative">
+              <Line :data="lineChartData" :options="lineChartOptions" />
             </div>
           </div>
 
-          <!-- Sales by Product Breakdown -->
-          <div class="chart-card">
-            <div class="chart-header-row">
-              <h3 class="chart-title">Sales by Product</h3>
-              <span class="chart-badge">Volume &amp; Share</span>
+          <!-- Sales by Product (Interactive Donut / Pie Chart) -->
+          <div :class="['rounded-2xl p-6 border shadow-xs flex flex-col justify-between transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 :class="['text-base font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
+                  Sales by Product
+                </h3>
+                <p :class="['text-xs m-0 mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500']">
+                  Product volume distribution &amp; percentage shares
+                </p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                Product Share
+              </span>
             </div>
-            <div class="product-breakdown-box">
-              <div v-if="productSalesData.length > 0" class="product-bars-list">
-                <div v-for="p in productSalesData" :key="p.name" class="product-bar-entry">
-                  <div class="product-bar-info">
-                    <span class="product-bar-name">{{ p.name }}</span>
-                    <span class="product-bar-val">ETB {{ formatNumber(p.revenue) }} <strong class="product-pct">({{ p.percentage }}%)</strong></span>
-                  </div>
-                  <div class="product-progress-track">
-                    <div class="product-progress-fill" :style="{ width: `${p.percentage}%` }"></div>
-                  </div>
-                  <div class="product-bar-meta">
-                    <span>{{ p.quantity }} {{ p.unit }} fulfilled</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="chart-empty-state">
-                <span>No product breakdown available yet</span>
-              </div>
+            <div class="h-64 sm:h-72 w-full relative flex items-center justify-center">
+              <Doughnut :data="donutChartData" :options="donutChartOptions" />
             </div>
           </div>
         </div>
@@ -343,6 +331,31 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
+import { Line, Doughnut } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ArcElement
+} from 'chart.js'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ArcElement
+)
 import { farmerAPI } from '@/api/farmer'
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, BarChart3, Clock, Banknote,
@@ -435,6 +448,175 @@ const productSalesData = computed(() => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5)
 })
+
+// Line / Area Chart Config (Monthly Revenue Trend)
+const lineChartData = computed(() => {
+  const labels = revenueTrendData.value.map(m => m.label)
+  const data = revenueTrendData.value.map(m => m.revenue)
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Monthly Revenue (ETB)',
+        data,
+        borderColor: '#10b981',
+        backgroundColor: (context) => {
+          const chart = context.chart
+          const { ctx, chartArea } = chart
+          if (!chartArea) return 'rgba(16, 185, 129, 0.15)'
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+          gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)')
+          gradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)')
+          return gradient
+        },
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#10b981',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: '#059669',
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 3,
+      }
+    ]
+  }
+})
+
+const lineChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      backgroundColor: isDark.value ? '#1e293b' : '#0f172a',
+      titleColor: '#f8fafc',
+      bodyColor: '#34d399',
+      borderColor: isDark.value ? '#334155' : '#475569',
+      borderWidth: 1,
+      padding: 12,
+      cornerRadius: 8,
+      displayColors: false,
+      callbacks: {
+        title: (items) => items && items[0] ? `${items[0].label} Revenue` : '',
+        label: (item) => `ETB ${formatNumber(item.parsed.y)}`
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false
+      },
+      ticks: {
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        font: { family: 'inherit', size: 12, weight: '600' }
+      }
+    },
+    y: {
+      beginAtZero: true,
+      grid: {
+        color: isDark.value ? 'rgba(148, 163, 184, 0.1)' : 'rgba(226, 232, 240, 0.8)',
+      },
+      ticks: {
+        color: isDark.value ? '#94a3b8' : '#64748b',
+        font: { family: 'inherit', size: 11 },
+        callback: (value) => {
+          if (value >= 1000000) return `ETB ${(value / 1000000).toFixed(1)}M`
+          if (value >= 1000) return `ETB ${(value / 1000).toFixed(0)}k`
+          return `ETB ${value}`
+        }
+      }
+    }
+  }
+}))
+
+// Donut Chart Config (Sales by Product)
+const donutPalette = [
+  '#10b981', // emerald
+  '#3b82f6', // blue
+  '#f59e0b', // amber
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#f97316', // orange
+]
+
+const donutChartData = computed(() => {
+  const items = productSalesData.value
+  if (!items || items.length === 0) {
+    return {
+      labels: ['No sales recorded'],
+      datasets: [
+        {
+          data: [1],
+          backgroundColor: [isDark.value ? '#1e293b' : '#e2e8f0'],
+          borderWidth: 0
+        }
+      ]
+    }
+  }
+
+  const labels = items.map(p => p.name)
+  const data = items.map(p => p.revenue)
+  const bgColors = items.map((_, idx) => donutPalette[idx % donutPalette.length])
+
+  return {
+    labels,
+    datasets: [
+      {
+        data,
+        backgroundColor: bgColors,
+        borderColor: isDark.value ? '#131b2e' : '#ffffff',
+        borderWidth: 3,
+        hoverOffset: 6
+      }
+    ]
+  }
+})
+
+const donutChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%',
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: isDark.value ? '#cbd5e1' : '#334155',
+        font: { family: 'inherit', size: 12, weight: '600' },
+        padding: 16,
+        usePointStyle: true,
+        pointStyle: 'circle'
+      }
+    },
+    tooltip: {
+      backgroundColor: isDark.value ? '#1e293b' : '#0f172a',
+      titleColor: '#f8fafc',
+      bodyColor: '#38bdf8',
+      borderColor: isDark.value ? '#334155' : '#475569',
+      borderWidth: 1,
+      padding: 12,
+      cornerRadius: 8,
+      callbacks: {
+        label: (item) => {
+          const val = item.parsed
+          const total = item.dataset.data.reduce((a, b) => a + b, 0)
+          const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0
+          return ` ETB ${formatNumber(val)} (${pct}%)`
+        }
+      }
+    }
+  }
+}))
 
 // Computed
 const filteredSales = computed(() => {
