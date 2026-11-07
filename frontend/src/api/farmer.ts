@@ -111,6 +111,7 @@ export const farmerAPI = {
 
   // Forward Supply Contracts & Escrow Milestones
   getContracts: (params?: any) => apiClient.get('/farmer/contracts', { params }),
+  createContract: (data: any) => apiClient.post('/farmer/contracts', data),
   getContract: (id: number) => apiClient.get(`/farmer/contracts/${id}`),
   acceptContract: (id: number, data?: { notes?: string }) => apiClient.post(`/farmer/contracts/${id}/accept`, data),
   rejectContract: (id: number, data?: { reason?: string }) => apiClient.post(`/farmer/contracts/${id}/reject`, data),

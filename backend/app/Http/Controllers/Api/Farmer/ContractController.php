@@ -125,6 +125,144 @@ class ContractController extends Controller
     }
 
     /**
+     * Create / propose a forward supply agreement from farmer side
+     */
+    public function store(Request $request)
+    {
+        try {
+            $farmer = $this->getOrCreateFarmer();
+            if (!$farmer) {
+                return response()->json(['message' => 'Farmer profile not found'], 404);
+            }
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'crop_type' => 'required|string|max:100',
+                'variety' => 'nullable|string|max:100',
+                'quantity' => 'required|numeric|min:0.01',
+                'unit' => 'nullable|string|max:50',
+                'unit_price' => 'required|numeric|min:0.01',
+                'advance_percentage' => 'nullable|numeric|min:0|max:100',
+                'delivery_date' => 'required|date',
+                'delivery_location' => 'nullable|string|max:255',
+                'quality_specifications' => 'nullable|string',
+                'buyer_name' => 'nullable|string|max:255',
+            ]);
+
+            // Find or use default institutional buyer (e.g. Lake Tana Agro Producers Union)
+            $buyer = User::where('role', 'buyer')->first();
+            if (!$buyer) {
+                $buyer = User::firstOrCreate(
+                    ['email' => 'contracts@laketana-union.et'],
+                    [
+                        'name' => $validated['buyer_name'] ?? 'Lake Tana Agro Producers Union',
+                        'role' => 'buyer',
+                        'phone' => '+251 58 220 1845',
+                        'password' => bcrypt('password123'),
+                        'region' => 'Amhara',
+                        'zone' => 'West Gojjam',
+                        'woreda' => 'Bahir Dar Zuria',
+                        'is_active' => true,
+                    ]
+                );
+            }
+
+            $qty = (float)$validated['quantity'];
+            $price = (float)$validated['unit_price'];
+            $totalAmount = round($qty * $price, 2);
+            $advPct = isset($validated['advance_percentage']) ? (float)$validated['advance_percentage'] : 30.0;
+            $advance = round($totalAmount * ($advPct / 100), 2);
+
+            DB::beginTransaction();
+
+            $contract = Contract::create([
+                'buyer_id' => $buyer->id,
+                'farmer_id' => $farmer->id,
+                'title' => $validated['title'],
+                'crop_type' => $validated['crop_type'],
+                'variety' => $validated['variety'] ?? 'Grade 1 Select',
+                'quantity' => $qty,
+                'unit' => $validated['unit'] ?? 'Quintal',
+                'unit_price' => $price,
+                'total_amount' => $totalAmount,
+                'advance_payment' => $advance,
+                'currency' => 'ETB',
+                'start_date' => now()->toDateString(),
+                'delivery_date' => $validated['delivery_date'],
+                'delivery_location' => $validated['delivery_location'] ?? 'Regional Agricultural Terminal Depot',
+                'quality_specifications' => $validated['quality_specifications'] ?? 'Grade 1 Export Standards, moisture max 11.5%, purity min 99.0%',
+                'status' => 'proposed',
+                'payment_terms' => "{$advPct}% Advance Escrow Mobilization, remaining balances on harvest and final warehouse acceptance.",
+                'terms_and_conditions' => 'Standard Agricultural Escrow forward supply terms. All funds safeguarded in neutral custody.',
+                'signed_by_farmer_at' => now(),
+            ]);
+
+            // Milestone 1: Mobilization advance
+            ContractMilestone::create([
+                'contract_id' => $contract->id,
+                'title' => 'Advance Mobilization & Field Preparation',
+                'description' => "Initial {$advPct}% mobilization for input acquisition and sowing.",
+                'due_date' => now()->addDays(14)->toDateString(),
+                'status' => 'pending',
+                'payout_percentage' => $advPct,
+                'payout_amount' => $advance,
+                'payout_status' => 'in_escrow',
+            ]);
+
+            // Milestone 2: Mid-Season Inspection
+            ContractMilestone::create([
+                'contract_id' => $contract->id,
+                'title' => 'Mid-Season Crop Agronomy Inspection',
+                'description' => 'On-field agronomist verification of vegetative health and weed/pest management.',
+                'due_date' => date('Y-m-d', strtotime('+45 days')),
+                'status' => 'pending',
+                'payout_percentage' => 0.00,
+                'payout_amount' => 0.00,
+                'payout_status' => 'unpaid',
+            ]);
+
+            // Milestone 3: Harvesting & Grading
+            $harvestPct = 40.0;
+            $harvestAmount = round($totalAmount * 0.40, 2);
+            ContractMilestone::create([
+                'contract_id' => $contract->id,
+                'title' => 'Harvesting, Threshing & Standard Grading',
+                'description' => '40% milestone payout upon harvest grading and standardization into food bags.',
+                'due_date' => date('Y-m-d', strtotime($validated['delivery_date'] . ' - 10 days')),
+                'status' => 'pending',
+                'payout_percentage' => $harvestPct,
+                'payout_amount' => $harvestAmount,
+                'payout_status' => 'unpaid',
+            ]);
+
+            // Milestone 4: Final Warehouse Delivery
+            $finalPct = max(0, 100 - $advPct - $harvestPct);
+            $finalAmount = round($totalAmount - $advance - $harvestAmount, 2);
+            ContractMilestone::create([
+                'contract_id' => $contract->id,
+                'title' => 'Final Warehouse Delivery & Escrow Settlement',
+                'description' => 'Final escrow balance release upon physical depot arrival and laboratory acceptance test.',
+                'due_date' => $validated['delivery_date'],
+                'status' => 'pending',
+                'payout_percentage' => $finalPct,
+                'payout_amount' => $finalAmount,
+                'payout_status' => 'unpaid',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Forward agreement proposed successfully! Buyer has been notified.',
+                'data' => $contract->load(['buyer', 'milestones']),
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error proposing contract: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Digitally sign & accept a forward supply agreement
      */
     public function accept(Request $request, $id)

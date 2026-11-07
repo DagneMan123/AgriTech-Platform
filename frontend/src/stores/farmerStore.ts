@@ -197,6 +197,22 @@ export const useFarmerStore = defineStore('farmer', () => {
     }
   }
 
+  const createContract = async (data: any) => {
+    try {
+      const response = await farmerAPI.createContract(data)
+      const created = response.data?.data || response.data
+      contracts.value.unshift(created)
+      if (contractStats.value) {
+        contractStats.value.total_contracts++
+        contractStats.value.pending_contracts++
+      }
+      return created
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to create contract'
+      throw err
+    }
+  }
+
   const acceptContract = async (id: number, data?: { notes?: string }) => {
     try {
       const response = await farmerAPI.acceptContract(id, data)
@@ -260,6 +276,7 @@ export const useFarmerStore = defineStore('farmer', () => {
     acceptOrder,
     fetchDashboard,
     fetchContracts,
+    createContract,
     acceptContract,
     rejectContract,
   }

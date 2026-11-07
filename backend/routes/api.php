@@ -576,6 +576,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
             // Farmer Forward Supply Contracts & Escrow Milestones
             Route::get('/contracts', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'index']);
+            Route::post('/contracts', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'store']);
             Route::get('/contracts/{id}', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'show']);
             Route::post('/contracts/{id}/accept', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'accept']);
             Route::post('/contracts/{id}/reject', [\App\Http\Controllers\Api\Farmer\ContractController::class, 'reject']);

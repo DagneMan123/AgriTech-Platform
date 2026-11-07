@@ -1,24 +1,22 @@
 <template>
-  <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', isDark ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-50 text-slate-800']">
+  <div :class="['flex min-h-screen font-sans antialiased transition-colors duration-300', isDark ? 'bg-[#0b0f19] text-slate-100 dark' : 'bg-slate-50 text-slate-800']">
     <!-- Farmer Sidebar -->
     <FarmerSidebar @logout="handleLogout" />
 
     <!-- Main Content Area -->
     <main class="flex-1 p-4 lg:p-8 overflow-y-auto min-h-screen transition-all lg:ml-[260px]" role="main">
       
-      <!-- Page Header -->
-      <div :class="['rounded-2xl border p-6 mb-6 shadow-xs transition-all', isDark ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 :class="['text-2xl lg:text-3xl font-black tracking-tight m-0', isDark ? 'text-slate-100' : 'text-slate-900']">
-              Contracts &amp; Agreements
-            </h1>
-            <p :class="['text-xs lg:text-sm m-0 mt-1', isDark ? 'text-slate-400' : 'text-slate-600']">
-              Review forward supply proposals from buyers and agricultural unions, track stage milestones, and digitally sign agreements.
-            </p>
-          </div>
+      <!-- Page Header matching Crop Activities design -->
+      <header class="page-header" :class="{ 'dark': isDark }">
+        <div class="header-titles">
+          <h1>Contracts &amp; Agreements</h1>
+          <p>Track, monitor, and manage all forward supply agreements and milestone escrows.</p>
         </div>
-      </div>
+        <button class="btn-primary" @click="openAddContractDialog">
+          <PlusCircle class="icon" />
+          <span>Add Agreement</span>
+        </button>
+      </header>
 
       <!-- Toast Feedback Banner -->
       <transition
@@ -646,6 +644,210 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ── MODAL 4: ADD / PROPOSE FORWARD AGREEMENT ── -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div
+      v-if="addContractModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        :class="['w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col', isDark ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
+      >
+        <!-- Modal Header -->
+        <div :class="['p-5 sm:p-6 border-b flex items-center justify-between shrink-0', isDark ? 'border-slate-800 bg-[#0f172a]' : 'border-slate-200 bg-slate-50']">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <PlusCircle class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-black tracking-tight m-0">Propose Forward Supply Agreement</h2>
+              <p class="text-xs text-slate-400 m-0 mt-0.5">Setup commodity terms, escrow milestones, and forward delivery guarantees</p>
+            </div>
+          </div>
+          <button @click="addContractModalOpen = false" class="text-slate-400 hover:text-slate-200 p-1 cursor-pointer">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Modal Body (Scrollable) -->
+        <form @submit.prevent="submitNewContractProposal" class="p-6 space-y-4 overflow-y-auto flex-1">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Agreement Title *</label>
+            <input
+              v-model="newContractForm.title"
+              type="text"
+              required
+              placeholder="e.g. Teff Supply Agreement with Lake Tana Union"
+              :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Commodity / Crop Type *</label>
+              <select
+                v-model="newContractForm.crop_type"
+                required
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              >
+                <option value="Teff">Teff</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Maize">Maize (Corn)</option>
+                <option value="Coffee">Arabica Coffee</option>
+                <option value="Soybeans">Soybeans</option>
+                <option value="Barley">Malting Barley</option>
+                <option value="Sesame">White Humera Sesame</option>
+                <option value="Sorghum">Sorghum</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Variety / Grade</label>
+              <input
+                v-model="newContractForm.variety"
+                type="text"
+                placeholder="e.g. Quncho DZ-Cr-387 Magna"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Quantity *</label>
+              <input
+                v-model.number="newContractForm.quantity"
+                type="number"
+                min="1"
+                step="any"
+                required
+                placeholder="e.g. 200"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Unit</label>
+              <select
+                v-model="newContractForm.unit"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              >
+                <option value="Quintal">Quintal (100 kg)</option>
+                <option value="Kg">Kilogram (kg)</option>
+                <option value="Metric Ton">Metric Ton</option>
+                <option value="Bags">Standard Bags</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Unit Price (ETB) *</label>
+              <input
+                v-model.number="newContractForm.unit_price"
+                type="number"
+                min="1"
+                step="any"
+                required
+                placeholder="e.g. 9200"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Advance Escrow Mobilization (%)</label>
+              <input
+                v-model.number="newContractForm.advance_percentage"
+                type="number"
+                min="0"
+                max="100"
+                placeholder="30"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Delivery Target Date *</label>
+              <input
+                v-model="newContractForm.delivery_date"
+                type="date"
+                required
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Buyer / Union Organization</label>
+              <input
+                v-model="newContractForm.buyer_name"
+                type="text"
+                placeholder="Lake Tana Agro Producers Union"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Delivery Location Depot</label>
+              <input
+                v-model="newContractForm.delivery_location"
+                type="text"
+                placeholder="Lake Tana Agro Central Depot, Bahir Dar"
+                :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Quality Specifications &amp; Standards</label>
+            <textarea
+              v-model="newContractForm.quality_specifications"
+              rows="2"
+              placeholder="Moisture content max 11.5%, purity min 99.0%, standard food bags..."
+              :class="['w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium resize-none', isDark ? 'bg-[#0f172a] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900']"
+            ></textarea>
+          </div>
+
+          <!-- Escrow Calculation Preview Strip -->
+          <div :class="['p-3.5 rounded-xl border flex items-center justify-between text-xs', isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200']">
+            <div>
+              <span class="text-slate-400 text-[10px] uppercase font-bold block">Estimated Contract Value</span>
+              <span class="font-black text-sm text-emerald-500">
+                ETB {{ formatNumber((newContractForm.quantity || 0) * (newContractForm.unit_price || 0)) }}
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-400 text-[10px] uppercase font-bold block">Advance Escrow ({{ newContractForm.advance_percentage || 30 }}%)</span>
+              <span class="font-black text-sm text-purple-400">
+                ETB {{ formatNumber(((newContractForm.quantity || 0) * (newContractForm.unit_price || 0)) * ((newContractForm.advance_percentage || 30) / 100)) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Modal Action Buttons -->
+          <div :class="['pt-3 border-t flex items-center justify-end gap-3', isDark ? 'border-slate-800' : 'border-slate-200']">
+            <button
+              type="button"
+              @click="addContractModalOpen = false"
+              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="actionLoading"
+              class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+            >
+              <PlusCircle class="w-4 h-4" />
+              <span>{{ actionLoading ? 'Creating Agreement...' : 'Create & Propose Agreement' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -659,7 +861,7 @@ import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   FileText, CheckCircle2, Clock, ShieldCheck, BadgeDollarSign,
-  Calendar, MapPin, Search, FileSignature, X, Sprout
+  Calendar, MapPin, Search, FileSignature, X, Sprout, PlusCircle
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -679,7 +881,23 @@ const sortBy = ref('newest')
 const signModalOpen = ref(false)
 const milestoneModalOpen = ref(false)
 const legalTermsModalOpen = ref(false)
+const addContractModalOpen = ref(false)
 const selectedContract = ref<any>(null)
+
+// Add Agreement Form state
+const newContractForm = ref({
+  title: '',
+  crop_type: 'Teff',
+  variety: 'Quncho (DZ-Cr-387)',
+  quantity: 200,
+  unit: 'Quintal',
+  unit_price: 9200,
+  advance_percentage: 30,
+  delivery_date: '',
+  delivery_location: 'Lake Tana Agro Central Depot, Bahir Dar',
+  quality_specifications: 'Grade 1 Export Standards, moisture max 11.5%, purity min 99.0%, standard 100kg new food bags.',
+  buyer_name: 'Lake Tana Agro Producers Union',
+})
 
 // Signing state
 const agreeLegally = ref(false)
@@ -796,6 +1014,39 @@ const openMilestoneModal = (contract: any) => {
 const openLegalTermsModal = (contract: any) => {
   selectedContract.value = contract
   legalTermsModalOpen.value = true
+}
+
+const openAddContractDialog = () => {
+  const targetDate = new Date()
+  targetDate.setDate(targetDate.getDate() + 90)
+  newContractForm.value = {
+    title: 'Teff Supply Agreement with Lake Tana Union',
+    crop_type: 'Teff',
+    variety: 'Quncho (DZ-Cr-387)',
+    quantity: 200,
+    unit: 'Quintal',
+    unit_price: 9200,
+    advance_percentage: 30,
+    delivery_date: targetDate.toISOString().slice(0, 10),
+    delivery_location: 'Lake Tana Agro Central Depot, Bahir Dar',
+    quality_specifications: 'Grade 1 Export Standards, moisture max 11.5%, purity min 99.0%, standard 100kg new food bags.',
+    buyer_name: 'Lake Tana Agro Producers Union',
+  }
+  addContractModalOpen.value = true
+}
+
+const submitNewContractProposal = async () => {
+  actionLoading.value = true
+  try {
+    await farmerStore.createContract(newContractForm.value)
+    addContractModalOpen.value = false
+    toastMessage.value = `Agreement "${newContractForm.value.title}" successfully proposed! Escrow milestones initialized.`
+    await loadContracts()
+  } catch (err: any) {
+    alert(err?.response?.data?.message || 'Failed to create agreement proposal.')
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 const submitDigitalSignature = async () => {
@@ -931,6 +1182,102 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Page Header matching Crop Activities design */
+.page-header {
+  background: white;
+  padding: 24px;
+  margin: -16px -16px 24px -16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-header {
+    margin: -32px -32px 28px -32px;
+    padding: 30px;
+  }
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.page-header p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.header-titles {
+  flex: 1;
+}
+
+.page-header .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #10b981;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background-color 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+@media (min-width: 640px) {
+  .page-header .btn-primary {
+    align-self: center;
+  }
+}
+
+.page-header .btn-primary:hover {
+  background-color: #059669;
+}
+
+.page-header .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Page Header - Dark Mode */
+.page-header.dark,
+:deep(.dark) .page-header {
+  background: #131b2e;
+  border-bottom-color: #1f293d;
+}
+
+.page-header.dark h1,
+:deep(.dark) .page-header h1 {
+  color: #f1f5f9;
+}
+
+.page-header.dark p,
+:deep(.dark) .page-header p {
+  color: #94a3b8;
+}
+
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
