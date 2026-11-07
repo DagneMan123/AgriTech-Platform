@@ -12,10 +12,6 @@
           <h1>Contracts &amp; Agreements</h1>
           <p>Track, monitor, and manage all forward supply agreements and milestone escrows.</p>
         </div>
-        <button class="btn-primary" @click="openAddContractDialog">
-          <PlusCircle class="icon" />
-          <span>Add Agreement</span>
-        </button>
       </header>
 
       <!-- Toast Feedback Banner -->
