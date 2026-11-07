@@ -5,69 +5,16 @@
       <!-- Header Section -->
       <div class="dashboard-header-wrapper">
         <div class="dashboard-header">
-          <div class="title-row">
-            <h1>Farmer Dashboard</h1>
-            <span class="live-pill">
-              <span class="pulse-dot"></span>
-              Live Synced
-            </span>
-          </div>
-          <p>Real-time telemetry, crop operations, order pipeline, and revenue insights</p>
+          <h1>Farmer Dashboard</h1>
+          <p>Manage your farms, crops, and agricultural business</p>
         </div>
-        <div class="header-actions">
-          <button
-            @click="fetchDashboardData"
-            class="action-btn btn-refresh"
-            :disabled="loading"
-            title="Refresh dashboard data"
-          >
-            <RefreshCw size="16" :class="{ 'animate-spin': loading }" />
-            <span>Sync</span>
-          </button>
-          <button
-            @click="router.push('/farmer/products')"
-            class="action-btn btn-primary"
-            title="Add a new marketplace product"
-          >
-            <Plus size="16" />
-            <span>Add Product</span>
-          </button>
-          <button
-            @click="toggleTheme"
-            class="theme-toggle-btn"
-            :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-          >
-            <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Shortcuts Bar -->
-      <div class="shortcuts-bar">
-        <button @click="router.push('/farmer/farms')" class="shortcut-chip">
-          <Building2 size="14" />
-          <span>Farms ({{ dashboard?.summary?.total_farms || 0 }})</span>
-        </button>
-        <button @click="router.push('/farmer/crops')" class="shortcut-chip">
-          <Sprout size="14" />
-          <span>Active Crops ({{ dashboard?.summary?.active_crops || 0 }})</span>
-        </button>
-        <button @click="router.push('/farmer/harvests')" class="shortcut-chip">
-          <Package size="14" />
-          <span>Harvest Logs</span>
-        </button>
-        <button @click="router.push('/farmer/customer-orders')" class="shortcut-chip">
-          <ShoppingCart size="14" />
-          <span>Customer Orders ({{ dashboard?.summary?.pending_orders || 0 }} pending)</span>
-        </button>
-        <button @click="router.push('/farmer/my-sales')" class="shortcut-chip">
-          <Banknote size="14" />
-          <span>Sales & Revenue</span>
-        </button>
-        <button @click="router.push('/farmer/consultations')" class="shortcut-chip">
-          <MessageSquare size="14" />
-          <span>Advisory</span>
+        <button
+          @click="toggleTheme"
+          class="theme-toggle-btn"
+          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
         </button>
       </div>
 
