@@ -136,8 +136,8 @@
             <div class="p-4 flex-1 flex flex-col justify-between">
               <div>
                 <h3 :class="['text-sm font-bold mb-1 line-clamp-2', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ product.name }}</h3>
-                <p :class="['text-xs mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                  <i class="fas fa-store text-xs"></i> {{ product.farmer_name || 'Supplier' }}
+                <p v-if="getSupplierName(product)" :class="['text-xs mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  <i class="fas fa-store text-xs"></i> {{ getSupplierName(product) }}
                 </p>
                 <p :class="['text-[11px] uppercase tracking-wider mb-3', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ product.category || 'Uncategorized' }}</p>
               </div>
@@ -221,7 +221,7 @@
             </div>
             <div>
               <h3 class="text-lg font-bold">{{ selectedProduct.name }}</h3>
-              <p class="text-xs text-slate-500 mt-1"><i class="fas fa-store"></i> {{ selectedProduct.farmer_name || 'Local Farmer' }}</p>
+              <p v-if="getSupplierName(selectedProduct)" class="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><i class="fas fa-store"></i> {{ getSupplierName(selectedProduct) }}</p>
               <p class="text-xs text-blue-600 font-bold uppercase mt-1">{{ selectedProduct.category }}</p>
               <p class="text-base font-black text-blue-600 dark:text-blue-400 mt-2">ETB {{ formatNumber(selectedProduct.price || 0) }} / {{ selectedProduct.unit || 'kg' }}</p>
             </div>
@@ -463,8 +463,21 @@ const safeProducts = computed<Product[]>(() => {
   return list
 })
 
+const getSupplierName = (product: any): string => {
+  if (!product) return ''
+  return (
+    product.farmer_name ||
+    product.supplier_name ||
+    product.farmer?.cooperative_name ||
+    product.farmer?.farm_name ||
+    product.farmer?.user?.name ||
+    product.farmer?.name ||
+    ''
+  )
+}
+
 const totalProducts = computed(() => safeProducts.value.length)
-const totalSuppliers = computed(() => new Set(safeProducts.value.map(p => p.farmer_name)).size)
+const totalSuppliers = computed(() => new Set(safeProducts.value.map(p => getSupplierName(p)).filter(Boolean)).size)
 const totalCategories = computed(() => new Set(safeProducts.value.map(p => p.category)).size)
 const wishlistCount = computed(() => (Array.isArray(buyerStore.wishlist) ? buyerStore.wishlist.length : 0))
 

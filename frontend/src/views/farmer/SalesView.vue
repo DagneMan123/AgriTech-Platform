@@ -381,13 +381,15 @@
                   <!-- Escrow & Delivery Badges -->
                   <td class="py-3.5 px-4">
                     <div class="flex flex-wrap items-center gap-1.5">
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        <CheckCircle2 class="w-3 h-3" />
-                        Delivered
+                      <!-- Dynamic Delivery Status Badge -->
+                      <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all', getDeliveryBadgeClass(sale)]">
+                        <component :is="getDeliveryBadgeIcon(sale)" class="w-3 h-3" />
+                        <span>{{ getDeliveryBadgeText(sale) }}</span>
                       </span>
-                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                        <ShieldCheck class="w-3 h-3" />
-                        Chapa Paid
+                      <!-- Dynamic Escrow / Settlement Status Badge -->
+                      <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all', getEscrowBadgeClass(sale)]">
+                        <component :is="getEscrowBadgeIcon(sale)" class="w-3 h-3" />
+                        <span>{{ getEscrowBadgeText(sale) }}</span>
                       </span>
                     </div>
                   </td>
@@ -501,16 +503,20 @@
             <!-- Modal Body -->
             <div class="p-6 space-y-5 text-xs max-h-[75vh] overflow-y-auto">
               <!-- Escrow Status Card -->
-              <div :class="['p-4 rounded-xl border flex items-center justify-between', isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50/80 border-emerald-200 text-emerald-800']">
+              <div :class="['p-4 rounded-xl border flex items-center justify-between', selectedSale.escrowStatus === 'disbursed' ? (isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50/80 border-emerald-200 text-emerald-800') : (isDark ? 'bg-blue-950/20 border-blue-800/40 text-blue-300' : 'bg-blue-50/80 border-blue-200 text-blue-800')]">
                 <div class="flex items-center gap-3">
-                  <ShieldCheck class="w-6 h-6 text-emerald-500 shrink-0" />
+                  <component :is="selectedSale.escrowStatus === 'disbursed' ? CheckCircle2 : ShieldCheck" class="w-6 h-6 text-emerald-500 shrink-0" />
                   <div>
-                    <div class="font-bold text-sm leading-tight">Chapa Escrow Disbursed</div>
-                    <div class="text-[11px] opacity-80 mt-0.5">Funds released directly to farmer digital wallet</div>
+                    <div class="font-bold text-sm leading-tight">
+                      {{ selectedSale.escrowStatus === 'disbursed' ? 'Chapa Escrow Disbursed' : (selectedSale.escrowStatus === 'held' ? 'Chapa Escrow Held' : 'Payment Status: ' + (selectedSale.paymentStatus ? selectedSale.paymentStatus.toUpperCase() : 'PENDING')) }}
+                    </div>
+                    <div class="text-[11px] opacity-80 mt-0.5">
+                      {{ selectedSale.escrowStatus === 'disbursed' ? 'Funds released directly to farmer digital wallet' : 'Funds safely secured in neutral escrow custody' }}
+                    </div>
                   </div>
                 </div>
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white">
-                  PAID
+                <span :class="['px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider', selectedSale.escrowStatus === 'disbursed' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white']">
+                  {{ selectedSale.escrowStatus === 'disbursed' ? 'DISBURSED' : (selectedSale.paymentStatus === 'paid' ? 'PAID' : (selectedSale.paymentStatus || 'PENDING').toUpperCase()) }}
                 </span>
               </div>
 
@@ -625,7 +631,7 @@ import {
   TrendingUp, ShoppingCart, BarChart3, Clock, Banknote,
   AlertCircle, RotateCcw, Download, X, Eye, ChevronLeft,
   ChevronRight, SlidersHorizontal, Search, Calendar, Package, CheckCircle2, ChevronDown,
-  ShieldCheck, Printer, FileText
+  ShieldCheck, Printer, FileText, Truck, Check, Lock
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -912,7 +918,7 @@ const filteredSales = computed(() => {
   // Payout / Settlement status filter
   if (filters.value.payoutStatus) {
     if (filters.value.payoutStatus === 'disbursed') {
-      result = result.filter(s => s.escrowStatus === 'disbursed' || s.paymentStatus === 'paid')
+      result = result.filter(s => s.escrowStatus === 'disbursed')
     } else if (filters.value.payoutStatus === 'delivered') {
       result = result.filter(s => s.status === 'delivered' || s.status === 'completed')
     }
@@ -967,12 +973,97 @@ const paginatedSales = computed(() => {
 })
 
 // Methods
+// Dynamic Badge Helpers matching actual database fulfillment & escrow states
+const getDeliveryBadgeText = (sale) => {
+  const status = (sale?.status || '').toLowerCase()
+  if (status === 'delivered') return 'Delivered'
+  if (status === 'completed') return 'Completed'
+  if (status === 'shipped' || status === 'in_transit') return 'In Transit'
+  if (status === 'confirmed') return 'Confirmed'
+  if (status === 'processing') return 'Processing'
+  if (status === 'pending' || status === 'placed') return 'Pending'
+  if (status === 'cancelled') return 'Cancelled'
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Delivered'
+}
+
+const getDeliveryBadgeClass = (sale) => {
+  const status = (sale?.status || '').toLowerCase()
+  if (status === 'delivered' || status === 'completed') {
+    return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+  }
+  if (status === 'shipped' || status === 'in_transit') {
+    return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20'
+  }
+  if (status === 'confirmed' || status === 'processing') {
+    return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+  }
+  if (status === 'pending' || status === 'placed') {
+    return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+  }
+  if (status === 'cancelled') {
+    return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+  }
+  return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+}
+
+const getDeliveryBadgeIcon = (sale) => {
+  const status = (sale?.status || '').toLowerCase()
+  if (status === 'delivered' || status === 'completed') return CheckCircle2
+  if (status === 'shipped' || status === 'in_transit') return Truck
+  if (status === 'cancelled') return AlertCircle
+  return Clock
+}
+
+const getEscrowBadgeText = (sale) => {
+  const escrow = (sale?.escrowStatus || '').toLowerCase()
+  const payment = (sale?.paymentStatus || '').toLowerCase()
+
+  if (escrow === 'disbursed') return 'Chapa Disbursed'
+  if (escrow === 'held') return 'Escrow Held'
+  if (payment === 'paid' || payment === 'completed') return 'Chapa Paid'
+  if (payment === 'pending') return 'Payment Pending'
+  if (payment === 'failed') return 'Payment Failed'
+  return payment ? payment.charAt(0).toUpperCase() + payment.slice(1) : 'Chapa Paid'
+}
+
+const getEscrowBadgeClass = (sale) => {
+  const escrow = (sale?.escrowStatus || '').toLowerCase()
+  const payment = (sale?.paymentStatus || '').toLowerCase()
+
+  if (escrow === 'disbursed') {
+    return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+  }
+  if (escrow === 'held') {
+    return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+  }
+  if (payment === 'paid' || payment === 'completed') {
+    return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+  }
+  if (payment === 'pending') {
+    return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+  }
+  if (payment === 'failed') {
+    return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+  }
+  return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+}
+
+const getEscrowBadgeIcon = (sale) => {
+  const escrow = (sale?.escrowStatus || '').toLowerCase()
+  const payment = (sale?.paymentStatus || '').toLowerCase()
+
+  if (escrow === 'disbursed') return CheckCircle2
+  if (escrow === 'held' || payment === 'paid' || payment === 'completed') return ShieldCheck
+  if (payment === 'failed') return AlertCircle
+  return Clock
+}
+
 const fetchSalesData = async () => {
   loading.value = true
   error.value = null
   try {
     const [ordersRes, productsRes] = await Promise.all([
-      farmerAPI.getOrders(),
+      farmerAPI.getOrders({ limit: 100 }),
       farmerAPI.getProducts()
     ])
 
@@ -993,31 +1084,49 @@ const fetchSalesData = async () => {
 
     allRawOrders.value.forEach((order, idx) => {
       const status = (order.status || '').toLowerCase()
-      const paymentStatus = (order.payment_status || '').toLowerCase()
-      const escrowStatus = (order.escrow_status || '').toLowerCase()
+      const paymentStatus = (order.payment_status || order.payment?.status || '').toLowerCase()
+      const escrowStatus = (order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
 
-      // Track pending orders awaiting fulfillment, review, or delivery
-      if (['pending', 'confirmed', 'processing', 'shipped'].includes(status)) {
+      // Track pending or active orders awaiting fulfillment, logistics assignment, or in transit
+      const isPendingOrActive = [
+        'pending',
+        'placed',
+        'confirmed',
+        'processing',
+        'awaiting_transport',
+        'awaiting_delivery',
+        'shipped',
+        'in_transit'
+      ].includes(status)
+
+      if (isPendingOrActive) {
         pendingCount += 1
       }
 
-      // DATA SEPARATION RULE:
-      // Verified transactions MUST strictly be completed & delivered orders with payment settled
-      const isVerified = (
-        (status === 'delivered' || status === 'completed' || paymentStatus === 'paid' || escrowStatus === 'disbursed') &&
+      // STRICT STATE-MATCHING RULE FOR SALES LEDGER & REVENUE:
+      // The sales ledger and completed revenue MUST strictly reflect verified successful deliveries
+      // and completed transactions. Orders currently in Pending, Placed, Confirmed, or Awaiting Transport
+      // states must NEVER be prematurely injected into the completed sales history.
+      const isDeliveredAndCompleted = (status === 'delivered' || status === 'completed') &&
         status !== 'cancelled' &&
-        paymentStatus !== 'failed'
-      )
+        status !== 'rejected' &&
+        paymentStatus !== 'failed' &&
+        paymentStatus !== 'refunded'
 
-      if (!isVerified) return
+      if (!isDeliveredAndCompleted) return
 
       completedOrderIds.add(order.id)
       const buyerName = order.buyer?.name || order.buyer?.phone || 'Customer'
-      const buyerPhone = order.buyer?.phone || order.delivery_phone || ''
+      const buyerPhone = order.buyer?.phone || order.delivery_phone || order.phone || ''
       const orderNum = order.order_number || `ORD-${String(order.id).padStart(4, '0')}`
-      const deliveryAddress = order.delivery_address || 'Kality Central Grain Warehouse'
-      const payoutRef = order.payout_reference || order.payment_reference || `CHAPA-ESC-${order.id}`
+      const deliveryAddress = order.delivery_address || order.shipping_address || 'Kality Central Grain Warehouse'
+      const payoutRef = order.payout_reference || order.payment_reference || order.payment?.transaction_id || `CHAPA-ESC-${order.id}`
       const saleDate = order.delivered_at || order.updated_at || order.created_at
+
+      // True database fulfillment & escrow states (Zero hardcoding)
+      const realStatus = (order.status || 'delivered').toLowerCase()
+      const realPaymentStatus = (order.payment_status || order.payment?.status || 'paid').toLowerCase()
+      const realEscrowStatus = (order.escrow_status || order.payment?.escrow_status || (realPaymentStatus === 'paid' ? 'disbursed' : 'pending')).toLowerCase()
 
       if (order.items && order.items.length > 0) {
         order.items.forEach((item, itemIdx) => {
@@ -1035,9 +1144,9 @@ const fetchSalesData = async () => {
             buyerPhone,
             deliveryAddress,
             saleDate,
-            status: order.status || 'delivered',
-            paymentStatus: order.payment_status || 'paid',
-            escrowStatus: order.escrow_status || 'disbursed',
+            status: realStatus,
+            paymentStatus: realPaymentStatus,
+            escrowStatus: realEscrowStatus,
             payoutReference: payoutRef,
             rawOrder: order
           })
@@ -1058,9 +1167,9 @@ const fetchSalesData = async () => {
           buyerPhone,
           deliveryAddress,
           saleDate,
-          status: order.status || 'delivered',
-          paymentStatus: order.payment_status || 'paid',
-          escrowStatus: order.escrow_status || 'disbursed',
+          status: realStatus,
+          paymentStatus: realPaymentStatus,
+          escrowStatus: realEscrowStatus,
           payoutReference: payoutRef,
           rawOrder: order
         })
@@ -1071,7 +1180,7 @@ const fetchSalesData = async () => {
 
     // Compute KPI cards: Total Revenue strictly matches verified transactions
     const totalRev = verifiedList.reduce((sum, s) => sum + s.totalAmount, 0)
-    const completedOrdersCount = completedOrderIds.size || (verifiedList.length > 0 ? 1 : 0)
+    const completedOrdersCount = completedOrderIds.size
 
     summaryData.value = {
       totalRevenue: totalRev,

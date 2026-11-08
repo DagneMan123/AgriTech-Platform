@@ -49,6 +49,7 @@ class Product extends Model
         'image',
         'harvest_id',
         'farmer_name',
+        'supplier_name',
     ];
 
     public function getQuantityAvailableAttribute()
@@ -80,14 +81,18 @@ class Product extends Model
 
     public function getFarmerNameAttribute()
     {
-        if ($this->relationLoaded('farmer') && $this->farmer) {
-            return $this->farmer->farm_name ?: ($this->farmer->user->name ?? 'Local Farmer');
-        }
-        $farmer = $this->farmer;
+        $farmer = $this->relationLoaded('farmer') ? $this->farmer : $this->farmer()->with('user')->first();
         if ($farmer) {
-            return $farmer->farm_name ?: ($farmer->user->name ?? 'Local Farmer');
+            return $farmer->cooperative_name
+                ?: ($farmer->farm_name
+                ?: ($farmer->user?->name ?? ''));
         }
-        return 'Local Farmer';
+        return '';
+    }
+
+    public function getSupplierNameAttribute()
+    {
+        return $this->farmer_name;
     }
 
     public function farmer()

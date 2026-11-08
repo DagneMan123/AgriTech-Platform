@@ -36,11 +36,12 @@ class ActivateTestUsers extends Command
         );
 
         // Ensure farmer has a profile
-        Farmer::firstOrCreate(
+        Farmer::updateOrCreate(
             ['user_id' => $farmer->id],
             [
                 'farmer_registration_number' => 'FRM-' . $farmer->id . '-' . time(),
-                'farm_name' => 'Lake Tana Agro Producers Union',
+                'farm_name' => 'Lake Tana Basin Organic Farms',
+                'cooperative_name' => 'Lake Tana Agro Producers Union',
                 'region' => 'Amhara',
                 'zone' => 'West Gojjam',
                 'woreda' => 'Bahir Dar',

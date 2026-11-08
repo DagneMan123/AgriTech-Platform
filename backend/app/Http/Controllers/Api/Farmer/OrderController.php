@@ -254,9 +254,9 @@ class OrderController extends Controller
 
         $stats = [
             'total_orders' => $orders->count(),
-            'total_revenue' => $orders->where('status', 'delivered')->sum('grand_total'),
-            'pending_orders' => $orders->where('status', 'pending')->count(),
-            'completed_orders' => $orders->where('status', 'delivered')->count(),
+            'total_revenue' => (float) $orders->whereIn('status', ['delivered', 'completed'])->sum('grand_total'),
+            'pending_orders' => $orders->whereIn('status', ['pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit'])->count(),
+            'completed_orders' => $orders->whereIn('status', ['delivered', 'completed'])->count(),
             'paid_orders' => $orders->where('payment_status', 'paid')->count(),
             'by_status' => $orders->groupBy('status')->map->count(),
         ];

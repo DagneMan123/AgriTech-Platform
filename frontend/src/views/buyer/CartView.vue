@@ -79,8 +79,8 @@
                 <!-- Item Details -->
                 <div class="item-details">
                   <h3 class="item-name">{{ item.product_name }}</h3>
-                  <p class="item-supplier">
-                    <i class="fas fa-store"></i> {{ item.supplier_name || 'Supplier' }}
+                  <p v-if="item.supplier_name || item.product?.farmer_name" class="item-supplier">
+                    <i class="fas fa-store"></i> {{ item.supplier_name || item.product?.farmer_name || item.product?.farmer?.cooperative_name || item.product?.farmer?.farm_name || item.product?.farmer?.user?.name || '' }}
                   </p>
                   <p class="item-sku">SKU: {{ item.sku || 'N/A' }}</p>
                 </div>

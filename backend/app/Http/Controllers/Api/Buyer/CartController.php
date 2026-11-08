@@ -32,9 +32,9 @@ class CartController extends Controller
             $qty = (int) $item->quantity;
             $subtotal = $unitPrice * $qty;
 
-            $supplierName = 'Local Farmer';
-            if ($product && $product->farmer) {
-                $supplierName = $product->farmer->farm_name ?: ($product->farmer->user->name ?? 'Local Farmer');
+            $supplierName = '';
+            if ($product) {
+                $supplierName = $product->farmer_name ?: ($product->farmer?->cooperative_name ?: ($product->farmer?->farm_name ?: ($product->farmer?->user?->name ?? '')));
             }
 
             return [
@@ -110,9 +110,9 @@ class CartController extends Controller
             ]);
         }
 
-        $supplierName = 'Local Farmer';
-        if ($product->farmer) {
-            $supplierName = $product->farmer->farm_name ?: ($product->farmer->user->name ?? 'Local Farmer');
+        $supplierName = '';
+        if ($product) {
+            $supplierName = $product->farmer_name ?: ($product->farmer?->cooperative_name ?: ($product->farmer?->farm_name ?: ($product->farmer?->user?->name ?? '')));
         }
 
         $formatted = [

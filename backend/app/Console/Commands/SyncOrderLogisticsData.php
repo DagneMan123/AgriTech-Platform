@@ -40,7 +40,8 @@ class SyncOrderLogisticsData extends Command
             ['user_id' => $farmerUser->id],
             [
                 'farmer_registration_number' => 'FRM-ETH-00421',
-                'farm_name' => 'Lake Tana Agro Producers Union',
+                'farm_name' => 'Lake Tana Basin Organic Farms',
+                'cooperative_name' => 'Lake Tana Agro Producers Union',
                 'region' => 'Amhara',
                 'zone' => 'West Gojjam',
                 'woreda' => 'Bahir Dar',

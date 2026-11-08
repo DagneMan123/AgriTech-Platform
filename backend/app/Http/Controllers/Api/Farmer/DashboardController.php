@@ -188,17 +188,14 @@ class DashboardController extends Controller
                 $orders = (clone $orderQuery)->get();
                 
                 $summary['total_orders'] = $orders->count();
-                $summary['pending_orders'] = $orders->whereIn('status', ['pending', 'processing', 'confirmed', 'approved'])->count();
+                $summary['pending_orders'] = $orders->whereIn('status', [
+                    'pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit'
+                ])->count();
                 $summary['completed_orders'] = $orders->whereIn('status', ['delivered', 'completed'])->count();
                 
                 $completedRevenue = $orders->whereIn('status', ['delivered', 'completed'])->sum('grand_total');
-                if ($completedRevenue > 0) {
-                    $summary['total_sales'] = (float) $completedRevenue;
-                    $summary['average_order_value'] = (float) ($orders->whereIn('status', ['delivered', 'completed'])->avg('grand_total') ?: 0);
-                } else {
-                    $summary['total_sales'] = (float) ($orders->sum('grand_total') ?: 0);
-                    $summary['average_order_value'] = (float) ($orders->avg('grand_total') ?: 0);
-                }
+                $summary['total_sales'] = (float) $completedRevenue;
+                $summary['average_order_value'] = (float) ($summary['completed_orders'] > 0 ? ($completedRevenue / $summary['completed_orders']) : 0);
             } catch (\Exception $e) {
                 \Log::error('Error getting orders: ' . $e->getMessage());
             }
@@ -226,6 +223,7 @@ class DashboardController extends Controller
             $endDate = Carbon::now()->endOfDay();
 
             $orders = $this->getFarmerOrderQuery($farmer)
+                ->whereIn('status', ['delivered', 'completed'])
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
@@ -267,16 +265,17 @@ class DashboardController extends Controller
             $labels = [];
             $values = [];
 
-            // 1. Try order items
+            // 1. Try order items from delivered/completed orders only
             $orderItems = OrderItem::whereHas('order', function ($query) use ($farmer) {
-                $query->where(function ($q) use ($farmer) {
-                    $q->where('farmer_id', $farmer->id)
-                      ->orWhere('farmer_id', $farmer->user_id)
-                      ->orWhereHas('items.product', function ($pq) use ($farmer) {
-                          $pq->where('farmer_id', $farmer->id)
-                             ->orWhere('farmer_id', $farmer->user_id);
+                $query->whereIn('status', ['delivered', 'completed'])
+                      ->where(function ($q) use ($farmer) {
+                          $q->where('farmer_id', $farmer->id)
+                            ->orWhere('farmer_id', $farmer->user_id)
+                            ->orWhereHas('items.product', function ($pq) use ($farmer) {
+                                $pq->where('farmer_id', $farmer->id)
+                                   ->orWhere('farmer_id', $farmer->user_id);
+                            });
                       });
-                });
             })
             ->with('product')
             ->get();
@@ -339,14 +338,15 @@ class DashboardController extends Controller
     {
         try {
             $orderItems = OrderItem::whereHas('order', function ($query) use ($farmer) {
-                $query->where(function ($q) use ($farmer) {
-                    $q->where('farmer_id', $farmer->id)
-                      ->orWhere('farmer_id', $farmer->user_id)
-                      ->orWhereHas('items.product', function ($pq) use ($farmer) {
-                          $pq->where('farmer_id', $farmer->id)
-                             ->orWhere('farmer_id', $farmer->user_id);
+                $query->whereIn('status', ['delivered', 'completed'])
+                      ->where(function ($q) use ($farmer) {
+                          $q->where('farmer_id', $farmer->id)
+                            ->orWhere('farmer_id', $farmer->user_id)
+                            ->orWhereHas('items.product', function ($pq) use ($farmer) {
+                                $pq->where('farmer_id', $farmer->id)
+                                   ->orWhere('farmer_id', $farmer->user_id);
+                            });
                       });
-                });
             })
             ->with(['order.buyer', 'product'])
             ->latest()
@@ -354,8 +354,9 @@ class DashboardController extends Controller
             ->get();
 
             if ($orderItems->isEmpty()) {
-                // Fallback to recent orders directly
+                // Fallback to recent delivered orders directly
                 $orders = $this->getFarmerOrderQuery($farmer)
+                    ->whereIn('status', ['delivered', 'completed'])
                     ->with('buyer')
                     ->latest()
                     ->limit($limit)
