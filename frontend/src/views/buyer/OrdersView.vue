@@ -1538,30 +1538,30 @@ const timelineSteps = [
   {
     status: 'pending',
     label: 'Placed',
-    subLabel: 'Pending Confirmation',
-    fullTitle: 'Pending Confirmation / Placed',
-    operationalLogic: 'Triggered when order is placed and awaits payment confirmation (Telebirr/Chapa). Producing farmers\' cooperative prepares to review and fulfill request.'
+    subLabel: 'Awaiting Transport',
+    fullTitle: 'Placed / Awaiting Transport Assignment',
+    operationalLogic: 'Stage 1: Pending. Order placed and payment secured in Chapa Escrow. Awaits administrative review and logistics transporter assignment.'
   },
   {
     status: 'confirmed',
     label: 'Preparing',
     subLabel: 'Confirmed',
     fullTitle: 'Confirmed / Preparing',
-    operationalLogic: 'Automatically transitions once payment is verified. Producing farmers\' cooperative is actively weighing, packaging, and staging produce for transport.'
+    operationalLogic: 'Stage 2: Confirmed. Activated after admin or logistics officer assigns a transporter/vehicle and confirms the transport request.'
   },
   {
     status: 'shipped',
     label: 'In Transit',
     subLabel: 'Shipped',
     fullTitle: 'In Transit / Shipped',
-    operationalLogic: 'Preparation complete and logistics fleet/driver assigned. Cargo departs regional hub; live route telemetry and checkpoints active.'
+    operationalLogic: 'Stage 3: Shipped. Assigned vehicle picks up produce from farm/hub and begins transit.'
   },
   {
     status: 'delivered',
     label: 'Delivered',
-    subLabel: 'Handed Over',
-    fullTitle: 'Delivered',
-    operationalLogic: 'Cargo arrived safely at destination depot and officially handed over with final system confirmation. Stepper complete; view receipt and leave review.'
+    subLabel: 'Delivered & Paid',
+    fullTitle: 'Delivered & Paid (Settled)',
+    operationalLogic: 'Stage 4: Delivered & Paid. Receipt of goods verified at destination; Chapa Escrow funds released to farmer.'
   }
 ]
 
@@ -1848,11 +1848,15 @@ const getOrderBorderColor = (status?: string): string => {
 const isStatusReached = (checkStatus: string, orderOrStatus?: any): boolean => {
   const order = typeof orderOrStatus === 'object' && orderOrStatus !== null ? orderOrStatus : null
   const s = String(order ? order.status : (orderOrStatus || 'pending')).toLowerCase()
-  const isPaid = order ? isOrderPaid(order) : false
 
+  // Strict Status Mapping: Stepper progress and connector lines strictly reflect actual database order status.
+  // Step 1: Placed (pending)
+  // Step 2: Preparing / Confirmed (activated ONLY after admin/logistics assigns a transporter and status changes to confirmed)
+  // Step 3: In Transit / Shipped
+  // Step 4: Delivered & Paid
   const orderRank: Record<string, number> = {
-    pending: isPaid ? 2 : 1,
-    placed: isPaid ? 2 : 1,
+    pending: 1,
+    placed: 1,
     confirmed: 2,
     processing: 2,
     preparing: 2,
@@ -1863,6 +1867,14 @@ const isStatusReached = (checkStatus: string, orderOrStatus?: any): boolean => {
     completed: 4,
     cancelled: 0
   }
+
+  let currentRank = orderRank[s] ?? 1
+
+  // If a transporter has been explicitly assigned on the order record, advance to at least Step 2 (Confirmed)
+  if (currentRank < 2 && order && hasAssignedTransport(order)) {
+    currentRank = 2
+  }
+
   const checkRank: Record<string, number> = {
     pending: 1,
     placed: 1,
@@ -1872,7 +1884,7 @@ const isStatusReached = (checkStatus: string, orderOrStatus?: any): boolean => {
     in_transit: 3,
     delivered: 4
   }
-  return (orderRank[s] || 0) >= (checkRank[checkStatus] || 0)
+  return currentRank >= (checkRank[checkStatus] || 0)
 }
 
 const canCancelOrder = (status?: string): boolean => {
