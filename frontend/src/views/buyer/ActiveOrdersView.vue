@@ -1108,8 +1108,8 @@ const getProgressPercentage = (status: string) => {
 const getCurrentProgressDescription = (status: string) => {
   const norm = (status || '').toLowerCase()
   switch (norm) {
-    case 'pending': return 'Awaiting Farmer Confirmation'
-    case 'confirmed': return 'Order Accepted – Preparation Underway'
+    case 'pending': return 'Awaiting Transport Assignment'
+    case 'confirmed': return 'Logistics Assigned – Preparation Underway'
     case 'processing':
     case 'preparing': return 'Packed and awaiting courier pickup'
     case 'shipped':
@@ -1161,7 +1161,7 @@ const getStatusTextColor = (status: string) => {
 
 const formatStatusLabel = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (norm === 'pending') return 'Waiting Farmer Acceptance'
+  if (norm === 'pending') return 'Awaiting Transport Assignment'
   if (norm === 'confirmed') return 'Confirmed / Packing'
   if (norm === 'shipped' || norm === 'in_transit') return 'In Transit'
   if (norm === 'out_for_delivery') return 'Out for Delivery'
@@ -1271,10 +1271,10 @@ const getTrackingLogs = (order: any) => {
       completed: true
     },
     {
-      title: 'Farmer Confirmation & Quality Audit',
+      title: 'Logistics Review & Transport Assignment',
       time: formatDateTime(order.updated_at || order.created_at),
-      desc: 'Produce harvested, inspected for moisture and grade standard, packaged for transport.',
-      location: order.seller?.name || order.seller_name || 'Regional Farm Hub',
+      desc: 'Order logged; awaiting logistics manager or admin vehicle assignment and dispatch planning.',
+      location: order.seller?.name || order.seller_name || 'Logistics Coordination Desk',
       completed: norm !== 'pending'
     },
     {

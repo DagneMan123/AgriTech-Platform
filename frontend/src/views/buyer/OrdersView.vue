@@ -660,10 +660,10 @@
               <span
                 v-else-if="['pending', 'placed'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-amber-950/30 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700']"
-                title="Order placed and awaiting farmer review and acceptance"
+                title="Order placed and awaiting logistics/transport assignment"
               >
                 <Clock class="w-3.5 h-3.5 text-amber-500" />
-                <span>Waiting Farmer Acceptance</span>
+                <span>Awaiting Transport Assignment</span>
               </span>
 
               <!-- Chat with Farmer / Direct Support -->
@@ -1797,8 +1797,8 @@ const getOrderAddress = (order: any): string => {
 const formatStatus = (status?: string): string => {
   const s = (status || '').toLowerCase()
   const map: Record<string, string> = {
-    pending: 'Pending Confirmation / Placed',
-    placed: 'Pending Confirmation / Placed',
+    pending: 'Awaiting Transport Assignment',
+    placed: 'Awaiting Transport Assignment',
     confirmed: 'Confirmed / Preparing',
     processing: 'Confirmed / Preparing',
     preparing: 'Confirmed / Preparing',
