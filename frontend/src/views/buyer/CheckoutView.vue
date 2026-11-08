@@ -235,14 +235,9 @@
               </div>
 
               <div>
-                <div class="mb-1.5 flex items-center justify-between">
-                  <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Delivery Destination (Hub &amp; Region)
-                  </label>
-                  <span v-if="isSetInCart" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <Check class="w-3 h-3" /> Selected in Cart
-                  </span>
-                </div>
+                <label :class="['block text-xs font-bold mb-1.5', darkMode ? 'text-slate-300' : 'text-slate-700']">
+                  Delivery Destination (Hub &amp; Region)
+                </label>
 
                 <!-- Single Destination Display (No multi-option dropdown) -->
                 <div class="relative">
