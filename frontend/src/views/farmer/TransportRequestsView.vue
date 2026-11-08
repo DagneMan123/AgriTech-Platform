@@ -64,50 +64,6 @@
           </div>
         </div>
 
-        <!-- 4-Stage Visual Lifecycle Banner -->
-        <div class="mb-6 p-4 rounded-2xl border bg-white dark:bg-[#131b2e] border-slate-200 dark:border-slate-800 shadow-xs">
-          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-between">
-            <span class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Sequential Transport Lifecycle Workflow
-            </span>
-            <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-              <ShieldCheck size="14" />
-              Chapa Escrow Logistics Settlement
-            </span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <div class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
-                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                <span>Stage 1: Pending</span>
-              </div>
-              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Initiated automatically upon submission. Awaits dispatch review.</p>
-            </div>
-            <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
-              <div class="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 mb-1">
-                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                <span>Stage 2: Confirmed</span>
-              </div>
-              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Logistics manager reviews and assigns verified vehicle &amp; transporter.</p>
-            </div>
-            <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-              <div class="font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
-                <span class="w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-                <span>Stage 3: Shipped</span>
-              </div>
-              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Assigned vehicle picks up produce at farm/depot and begins transit.</p>
-            </div>
-            <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <div class="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 mb-1">
-                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">4</span>
-                <span>Stage 4: Delivered &amp; Paid</span>
-              </div>
-              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Receipt confirmed at destination. Freight/escrow settled to farmer.</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Requests Table Section -->
         <div class="table-section">
           <div class="table-header">
