@@ -237,33 +237,25 @@
               <div>
                 <div class="mb-1.5 flex items-center justify-between">
                   <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Delivery Destination (Hub &amp; Region) *
+                    Delivery Destination (Hub &amp; Region)
                   </label>
                   <span v-if="isSetInCart" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                     <Check class="w-3 h-3" /> Selected in Cart
                   </span>
                 </div>
 
-                <!-- Destination Selector Dropdown -->
+                <!-- Single Destination Display (No multi-option dropdown) -->
                 <div class="relative">
-                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none z-10" />
-                  <select
-                    v-model="selectedDestination"
-                    @change="handleDestinationDropdownChange"
+                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    :value="destinationDisplayName || selectedDestination"
+                    readonly
                     :class="[
-                      'w-full pl-9 pr-8 py-2.5 rounded-xl border text-xs font-bold focus:outline-none focus:border-blue-500 transition appearance-none cursor-pointer',
-                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                      'w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-bold cursor-default select-none focus:outline-none transition',
+                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-800'
                     ]"
-                  >
-                    <option
-                      v-for="dest in deliveryDestinations"
-                      :key="dest.city"
-                      :value="`${dest.city}, ${dest.region}`"
-                    >
-                      {{ dest.city }} ({{ dest.region }})
-                    </option>
-                  </select>
-                  <ChevronDown class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  />
                 </div>
               </div>
 
@@ -981,7 +973,7 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Plus, Minus, Trash2, Info, ChevronDown,
+  Plus, Minus, Trash2, Info,
   Star, Smartphone
 } from 'lucide-vue-next'
 
