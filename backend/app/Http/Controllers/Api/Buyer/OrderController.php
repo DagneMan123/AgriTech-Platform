@@ -34,13 +34,17 @@ class OrderController extends Controller
         $limit = (int) $request->get('limit', 100);
         $orders = $query->paginate($limit);
 
-        // Ensure every order has assigned farmer profile loaded
+        // Ensure every order has assigned farmer profile loaded and auto-sync payment_status
         $orders->getCollection()->transform(function ($order) {
             if (!$order->farmer && $order->items->isNotEmpty()) {
                 $itemFarmer = $order->items->first()?->product?->farmer;
                 if ($itemFarmer) {
                     $order->setRelation('farmer', $itemFarmer);
                 }
+            }
+            if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                $order->payment_status = 'paid';
+                $order->saveQuietly();
             }
             return $order;
         });

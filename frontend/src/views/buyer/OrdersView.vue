@@ -525,18 +525,18 @@
                   <div
                     :class="[
                       'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all',
-                      isStatusReached(step.status, order.status)
+                      isStatusReached(step.status, order)
                         ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.2)]'
                         : darkMode ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-slate-100 border-slate-300 text-slate-400'
                     ]"
                   >
-                    <Check v-if="isStatusReached(step.status, order.status)" class="w-3 h-3" />
+                    <Check v-if="isStatusReached(step.status, order)" class="w-3 h-3" />
                     <span v-else>{{ idx + 1 }}</span>
                   </div>
                   <span
                     :class="[
                       'text-[10px] sm:text-[11px] font-bold whitespace-nowrap',
-                      isStatusReached(step.status, order.status)
+                      isStatusReached(step.status, order)
                         ? (darkMode ? 'text-slate-100' : 'text-slate-900')
                         : (darkMode ? 'text-slate-500' : 'text-slate-400')
                     ]"
@@ -546,7 +546,7 @@
                   <span
                     :class="[
                       'text-[9px] font-medium whitespace-nowrap',
-                      isStatusReached(step.status, order.status)
+                      isStatusReached(step.status, order)
                         ? 'text-blue-500 dark:text-blue-400 font-semibold'
                         : (darkMode ? 'text-slate-600' : 'text-slate-400')
                     ]"
@@ -558,7 +558,7 @@
                   v-if="idx < timelineSteps.length - 1"
                   :class="[
                     'flex-1 h-0.5 mb-6 mx-2 min-w-[28px]',
-                    isStatusReached(timelineSteps[idx + 1].status, order.status)
+                    isStatusReached(timelineSteps[idx + 1].status, order)
                       ? 'bg-blue-600'
                       : (darkMode ? 'bg-slate-800' : 'bg-slate-200')
                   ]"
@@ -570,18 +570,28 @@
           <!-- Order Actions -->
           <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- Pay with Chapa Action (Unpaid Orders) -->
+              <!-- Pay with Chapa Action (Unpaid Orders Only) -->
               <button
                 v-if="isOrderUnpaid(order)"
                 @click="payWithChapa(order)"
                 :disabled="payingOrderId === order.id"
                 class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95 disabled:opacity-60"
-                title="Pay securely via Chapa (Telebirr, CBE Birr, Card)"
+                title="Pay securely via Chapa Escrow"
               >
                 <RefreshCw v-if="payingOrderId === order.id" class="w-3.5 h-3.5 animate-spin" />
                 <CreditCard v-else class="w-3.5 h-3.5" />
                 <span>{{ payingOrderId === order.id ? 'Connecting...' : 'Pay with Chapa' }}</span>
               </button>
+
+              <!-- Escrow Secured Indicator Badge (Paid Orders) -->
+              <span
+                v-else-if="isOrderPaid(order) && order.status !== 'delivered'"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs"
+                title="Payment safely secured in Chapa Escrow. Released to farmer upon verified delivery."
+              >
+                <ShieldCheck class="w-3.5 h-3.5 text-emerald-500" />
+                <span>Chapa Escrow Secured</span>
+              </span>
 
               <!-- View Full Receipt (Delivered Orders) -->
               <button
@@ -855,9 +865,12 @@
               </span>
             </div>
             <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
-              <span>Payment Method:</span>
-              <span class="uppercase font-bold text-slate-300">
-                {{ activeOrderForDetails.payment?.payment_method || activeOrderForDetails.payment_method || 'Unspecified' }} ({{ activeOrderForDetails.payment?.status || activeOrderForDetails.payment_status || 'Pending' }})
+              <span>Payment Status:</span>
+              <span
+                class="uppercase font-bold tracking-wide px-2 py-0.5 rounded-md text-[10px]"
+                :class="isOrderPaid(activeOrderForDetails) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'"
+              >
+                {{ getPaymentStatusLabel(activeOrderForDetails) }}
               </span>
             </div>
           </div>
@@ -1832,11 +1845,14 @@ const getOrderBorderColor = (status?: string): string => {
   return '#6366f1'
 }
 
-const isStatusReached = (checkStatus: string, orderStatus?: string): boolean => {
-  const s = (orderStatus || 'pending').toLowerCase()
+const isStatusReached = (checkStatus: string, orderOrStatus?: any): boolean => {
+  const order = typeof orderOrStatus === 'object' && orderOrStatus !== null ? orderOrStatus : null
+  const s = String(order ? order.status : (orderOrStatus || 'pending')).toLowerCase()
+  const isPaid = order ? isOrderPaid(order) : false
+
   const orderRank: Record<string, number> = {
-    pending: 1,
-    placed: 1,
+    pending: isPaid ? 2 : 1,
+    placed: isPaid ? 2 : 1,
     confirmed: 2,
     processing: 2,
     preparing: 2,
@@ -1844,6 +1860,7 @@ const isStatusReached = (checkStatus: string, orderStatus?: string): boolean => 
     in_transit: 3,
     out_for_delivery: 3,
     delivered: 4,
+    completed: 4,
     cancelled: 0
   }
   const checkRank: Record<string, number> = {
@@ -1919,12 +1936,26 @@ const printReceipt = () => {
 // ── Functional Chapa Payment Handler ──
 const payingOrderId = ref<number | null>(null)
 
+const isOrderPaid = (order: any): boolean => {
+  if (!order) return false
+  const pStatus = String(order.payment_status || '').toLowerCase()
+  const paymentObjStatus = String(order.payment?.status || '').toLowerCase()
+  const escrow = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
+
+  return pStatus === 'paid'
+    || pStatus === 'completed'
+    || paymentObjStatus === 'completed'
+    || paymentObjStatus === 'paid'
+    || escrow === 'held'
+    || escrow === 'disbursed'
+    || Boolean(order.escrow_held_at)
+}
+
 const isOrderUnpaid = (order: any): boolean => {
   if (!order) return false
-  const status = (order.status || '').toLowerCase()
+  const status = String(order.status || '').toLowerCase()
   if (['cancelled', 'delivered', 'completed', 'refunded'].includes(status)) return false
-  const payStatus = (order.payment?.status || order.payment_status || '').toLowerCase()
-  return !['paid', 'completed', 'successful'].includes(payStatus)
+  return !isOrderPaid(order)
 }
 
 const payWithChapa = async (order: any) => {
@@ -1987,58 +2018,39 @@ const confirmWarehouseInspection = async (order: any) => {
 
 // Payment Status Helpers (Strictly database driven)
 const getPaymentStatusLabel = (order: any): string => {
-  const method = (order?.payment?.payment_method || order?.payment_method || '').toLowerCase()
-  const status = (order?.payment?.status || order?.payment_status || '').toLowerCase()
+  if (isOrderPaid(order)) {
+    const escrow = String(order?.escrow_status || order?.payment?.escrow_status || '').toLowerCase()
+    if (escrow === 'disbursed') {
+      return 'PAID (SETTLED)'
+    }
+    return 'PAID (ESCROW)'
+  }
+
+  const method = String(order?.payment?.payment_method || order?.payment_method || '').toLowerCase()
+  const status = String(order?.payment?.status || order?.payment_status || '').toLowerCase()
 
   if (method === 'cash_on_delivery' || method === 'cod') {
-    if (status === 'paid' || status === 'completed') {
-      return 'PAID (COD)'
-    }
     return 'COD - Cash on Delivery'
   }
 
-  if (method === 'chapa' || method === 'chapa_digital') {
-    if (status === 'paid' || status === 'completed' || status === 'successful') return 'PAID via Chapa'
-    if (status === 'failed') return 'Chapa - Failed'
-    return 'Chapa - Pending'
-  }
-
-  if (method === 'telebirr') {
-    if (status === 'paid' || status === 'completed') return 'PAID via Telebirr'
-    return 'Telebirr - Pending'
-  }
-
-  if (method === 'cbe_birr' || method === 'cbe') {
-    if (status === 'paid' || status === 'completed') return 'PAID via CBE Birr'
-    return 'CBE Birr - Pending'
-  }
-
-  if (method === 'bank_transfer') {
-    if (status === 'paid' || status === 'completed') return 'PAID via Bank'
-    return 'Bank Transfer - Pending'
-  }
-
-  if (status === 'paid' || status === 'completed' || status === 'successful') {
-    return 'PAID'
-  }
-  if (status === 'pending') {
-    return 'Payment Pending'
+  if (status === 'failed') {
+    return 'Payment Failed'
   }
 
   return 'Payment Pending'
 }
 
 const getPaymentBadgeClass = (order: any): string => {
+  if (isOrderPaid(order)) {
+    return darkMode.value
+      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+      : 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-xs'
+  }
   const label = getPaymentStatusLabel(order)
   if (label.includes('COD')) {
     return darkMode.value
       ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
       : 'bg-cyan-50 text-cyan-700 border-cyan-200'
-  }
-  if (label.includes('PAID') || label.includes('Secured')) {
-    return darkMode.value
-      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
   }
   if (label.includes('Failed')) {
     return darkMode.value
@@ -2051,11 +2063,11 @@ const getPaymentBadgeClass = (order: any): string => {
 }
 
 const getPaymentIcon = (order: any) => {
+  if (isOrderPaid(order)) return ShieldCheck
   const label = getPaymentStatusLabel(order)
   if (label.includes('COD')) return Banknote
-  if (label.includes('PAID')) return ShieldCheck
-  if (label.includes('Pending')) return Clock
-  return CreditCard
+  if (label.includes('Failed')) return AlertCircle
+  return Clock
 }
 
 // Carrier / Driver / Vehicle Tracking Helpers (Pure Database Records, Zero Mock Fallbacks)
