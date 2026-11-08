@@ -30,19 +30,32 @@ class OrderController extends Controller
                          ->orWhere('farmer_id', $farmer->user_id);
                   });
             })
-            ->with(['items.product', 'buyer'])
+            ->with(['items.product', 'buyer', 'payment', 'delivery'])
             ->latest();
 
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
+            if ($request->filled('payment_status')) {
+                $query->where('payment_status', strtolower($request->payment_status));
+            }
+
             $limit = (int) $request->get('limit', 50);
             $orders = $query->paginate($limit);
 
+            // Auto-heal / synchronize payment_status from Payment record if escrow is held or completed
+            $orderItems = collect($orders->items())->map(function ($order) {
+                if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                    $order->payment_status = 'paid';
+                    $order->saveQuietly();
+                }
+                return $order;
+            });
+
             return response()->json([
                 'success' => true,
-                'data' => $orders->items(),
+                'data' => $orderItems,
                 'pagination' => [
                     'total' => $orders->total(),
                     'per_page' => $orders->perPage(),
@@ -51,6 +64,7 @@ class OrderController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            \Log::error('Farmer Orders fetch error: ' . $e->getMessage());
             return response()->json(['message' => 'Error fetching orders', 'error' => $e->getMessage()], 500);
         }
     }
@@ -67,9 +81,22 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Farmer profile not found'], 404);
             }
 
-            $order = Order::where('farmer_id', $farmer->id)
-                ->with(['items.product', 'buyer'])
-                ->findOrFail($id);
+            $order = Order::where(function ($q) use ($farmer) {
+                $q->where('farmer_id', $farmer->id)
+                  ->orWhere('farmer_id', $farmer->user_id)
+                  ->orWhereHas('items.product', function ($pq) use ($farmer) {
+                      $pq->where('farmer_id', $farmer->id)
+                         ->orWhere('farmer_id', $farmer->user_id);
+                  });
+            })
+            ->with(['items.product', 'buyer', 'payment', 'delivery'])
+            ->findOrFail($id);
+
+            // Auto-heal payment_status
+            if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                $order->payment_status = 'paid';
+                $order->saveQuietly();
+            }
 
             return response()->json(['data' => $order]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -80,27 +107,14 @@ class OrderController extends Controller
     }
 
     /**
-     * Accept order
+     * Accept order (Blocked by RBAC)
      */
     public function accept(Request $request, $id)
     {
-        try {
-            $farmer = $this->getOrCreateFarmer();
-
-            if (!$farmer) {
-                return response()->json(['message' => 'Farmer profile not found'], 404);
-            }
-
-            $order = Order::where('farmer_id', $farmer->id)->findOrFail($id);
-            return response()->json([
-                'success' => false,
-                'message' => 'RBAC Restriction: Farmers are strictly restricted from manually marking orders as Confirmed. Stage 2 (Confirmed) is strictly activated when buyer payment is secured via Chapa Escrow and logistics is assigned.'
-            ], 403);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Order not found'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error accepting order', 'error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'RBAC Restriction: Farmers are strictly restricted from manually marking orders as Confirmed. Stage 2 (Confirmed) is strictly activated when buyer payment is secured via Chapa Escrow and logistics is assigned.'
+        ], 403);
     }
 
     /**
@@ -115,7 +129,10 @@ class OrderController extends Controller
                 return response()->json(['message' => 'Farmer profile not found'], 404);
             }
 
-            $order = Order::where('farmer_id', $farmer->id)->findOrFail($id);
+            $order = Order::where(function ($q) use ($farmer) {
+                $q->where('farmer_id', $farmer->id)
+                  ->orWhere('farmer_id', $farmer->user_id);
+            })->findOrFail($id);
 
             if ($order->status !== 'pending') {
                 return response()->json(['message' => 'Order cannot be rejected'], 403);
@@ -127,7 +144,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Order rejected successfully',
-                'data' => $order->load(['items.product', 'buyer']),
+                'data' => $order->load(['items.product', 'buyer', 'payment', 'delivery']),
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Order not found'], 404);
@@ -137,7 +154,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Update order status (e.g. processing, confirmed, shipped, delivered)
+     * Update order status (Blocked by RBAC)
      */
     public function updateStatus(Request $request, $id)
     {
@@ -146,8 +163,6 @@ class OrderController extends Controller
             'message' => 'RBAC Restriction: Farmers are strictly restricted from manually overriding, updating, or marking orders as Confirmed, Shipped, Delivered, or Paid. Status transitions are exclusively managed by Chapa Escrow verification, Logistics Managers, and Buyer delivery confirmation.'
         ], 403);
     }
-
-    
 
     /**
      * Request delivery
@@ -195,13 +210,17 @@ class OrderController extends Controller
      */
     public function byStatus(Request $request, string $status)
     {
-        $farmerId = Auth::id();
+        $farmer = $this->getOrCreateFarmer();
+        $farmerId = $farmer ? $farmer->id : Auth::id();
 
-        $orders = Order::whereHas('items.product', function ($q) use ($farmerId) {
-            $q->where('seller_id', $farmerId);
+        $orders = Order::where(function ($q) use ($farmerId) {
+            $q->where('farmer_id', $farmerId)
+              ->orWhereHas('items.product', function ($pq) use ($farmerId) {
+                  $pq->where('farmer_id', $farmerId);
+              });
         })
         ->where('status', $status)
-        ->with('items', 'buyer')
+        ->with(['items.product', 'buyer', 'payment', 'delivery'])
         ->paginate($request->get('limit', 20));
 
         return response()->json([
@@ -215,12 +234,16 @@ class OrderController extends Controller
      */
     public function statistics(Request $request)
     {
-        $farmerId = Auth::id();
+        $farmer = $this->getOrCreateFarmer();
+        $farmerId = $farmer ? $farmer->id : Auth::id();
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
 
-        $query = Order::whereHas('items.product', function ($q) use ($farmerId) {
-            $q->where('seller_id', $farmerId);
+        $query = Order::where(function ($q) use ($farmerId) {
+            $q->where('farmer_id', $farmerId)
+              ->orWhereHas('items.product', function ($pq) use ($farmerId) {
+                  $pq->where('farmer_id', $farmerId);
+              });
         });
 
         if ($startDate && $endDate) {
@@ -234,6 +257,7 @@ class OrderController extends Controller
             'total_revenue' => $orders->where('status', 'delivered')->sum('grand_total'),
             'pending_orders' => $orders->where('status', 'pending')->count(),
             'completed_orders' => $orders->where('status', 'delivered')->count(),
+            'paid_orders' => $orders->where('payment_status', 'paid')->count(),
             'by_status' => $orders->groupBy('status')->map->count(),
         ];
 

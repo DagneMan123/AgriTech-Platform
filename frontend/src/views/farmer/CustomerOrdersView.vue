@@ -547,7 +547,7 @@ const fetchOrders = async () => {
         tax,
         orderDate: raw.created_at,
         status: raw.status || 'pending',
-        paymentStatus: raw.payment_status || 'pending',
+        paymentStatus: String(raw.payment_status || (raw.payment?.status === 'completed' ? 'paid' : 'pending')).toLowerCase(),
         deliveryStatus: capitalize(raw.status || 'pending'),
         trackingNumber: raw.payment_reference || null,
         expectedDelivery: raw.delivered_at || null,

@@ -63,11 +63,22 @@ class DashboardController extends Controller
             ->first();
 
         // Recent orders
-        $recentOrders = Order::where('supplier_id', $supplier->id)
-            ->with(['items', 'buyer', 'delivery'])
-            ->latest()
-            ->limit(5)
-            ->get();
+        $recentOrders = Order::where(function ($q) use ($supplier) {
+            $q->where('farmer_id', $supplier->id)
+              ->orWhere('farmer_id', $supplier->user_id)
+              ->orWhereHas('items.product', fn($pq) => $pq->where('farmer_id', $supplier->id)->orWhere('farmer_id', $supplier->user_id));
+        })
+        ->with(['items.product', 'buyer', 'delivery', 'payment'])
+        ->latest()
+        ->limit(5)
+        ->get()
+        ->map(function ($order) {
+            if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                $order->payment_status = 'paid';
+                $order->saveQuietly();
+            }
+            return $order;
+        });
 
         // Recent products
         $recentProducts = SupplierProduct::where('supplier_id', $supplier->id)

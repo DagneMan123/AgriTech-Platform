@@ -53,6 +53,17 @@ class Order extends Model
         'cancelled_at' => 'datetime'
     ];
 
+    public function getPaymentStatusAttribute($value)
+    {
+        if (in_array(strtolower($value ?? ''), ['paid', 'completed'])) {
+            return 'paid';
+        }
+        if ($this->relationLoaded('payment') && $this->payment && in_array(strtolower($this->payment->status ?? ''), ['completed', 'paid'])) {
+            return 'paid';
+        }
+        return strtolower($value ?: 'pending');
+    }
+
     protected static function boot()
     {
         parent::boot();

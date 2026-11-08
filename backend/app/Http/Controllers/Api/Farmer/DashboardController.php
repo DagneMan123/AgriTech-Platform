@@ -433,18 +433,24 @@ class DashboardController extends Controller
     {
         try {
             $orders = $this->getFarmerOrderQuery($farmer)
-                ->with(['buyer'])
+                ->with(['buyer', 'payment'])
                 ->latest()
                 ->limit($limit)
                 ->get();
 
             return $orders->map(function ($o) {
+                $isPaid = in_array(strtolower($o->payment_status ?? ''), ['paid', 'completed'])
+                    || ($o->payment && in_array(strtolower($o->payment->status ?? ''), ['completed', 'paid']))
+                    || $o->escrow_held_at !== null;
+
                 return [
                     'id' => $o->id,
                     'order_number' => $o->order_number ?: ('ORD-' . str_pad($o->id, 5, '0', STR_PAD_LEFT)),
                     'customer_name' => $o->buyer?->name ?? 'Customer',
                     'grand_total' => (float) $o->grand_total,
                     'status' => $o->status ?: 'pending',
+                    'payment_status' => $isPaid ? 'paid' : 'pending',
+                    'escrow_status' => $o->escrow_status ?: ($isPaid ? 'held' : 'pending'),
                     'created_at' => $o->created_at ? $o->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d'),
                 ];
             })->toArray();
