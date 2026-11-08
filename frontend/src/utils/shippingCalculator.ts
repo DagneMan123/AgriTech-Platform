@@ -414,49 +414,110 @@ export function formatHierarchicalLocation(addr: {
 
 /**
  * Cleanly formats address in strict hierarchical order:
- * [Specific Street], [Woreda], [Zone/Sub-City], [Region], [Country]
- * Eliminates redundant repetitions and jumbled fields (e.g. "Addis Ababa, Ethiopia, Bole, Central, Oromia")
+ * [City/Hub], [Woreda/Sub-City], [Street/Warehouse], [Region], [Country]
+ * Guarantees the primary City/Hub is always present at the beginning without dropping details.
  */
 export function formatHierarchicalAddress(params: {
+  city?: string
+  hub?: string
+  destination?: string
   street?: string
   street_address?: string
+  warehouse?: string
   woreda?: string
   woreda_kebele?: string
   sub_city?: string
   zone?: string
   region?: string
   country?: string
-  city?: string
 }): string {
-  let street = (params.street || params.street_address || '').trim()
-  const locationHierarchy = formatHierarchicalLocation({
-    sub_city: params.sub_city,
-    woreda: params.woreda || params.woreda_kebele,
-    city: params.city,
-    zone: params.zone,
-    region: params.region,
-    country: params.country || 'Ethiopia'
-  })
+  // 1. Resolve City / Hub Name
+  let city = (params.city || params.hub || '').trim()
+  if (!city && params.destination) {
+    const resolved = resolveDestinationHubAndRegion(params.destination)
+    if (resolved && resolved.city) {
+      city = resolved.city
+    }
+  }
+  if (!city && params.region) {
+    const resolved = resolveDestinationHubAndRegion(params.region)
+    if (resolved && resolved.city) {
+      city = resolved.city
+    }
+  }
 
-  // Clean generic country artifact from street without overriding with hardcoded defaults
+  // 2. Resolve Region
+  let region = (params.region || '').trim()
+  if (!region && params.destination) {
+    const resolved = resolveDestinationHubAndRegion(params.destination)
+    if (resolved && resolved.region) {
+      region = resolved.region
+    }
+  }
+
+  // 3. Resolve Zone / Sub-City / Woreda
+  const woreda = (params.woreda || params.woreda_kebele || '').trim()
+  const subCity = (params.sub_city || '').trim()
+  const zone = (params.zone || '').trim()
+
+  // 4. Resolve Street / Warehouse
+  let street = (params.street || params.street_address || params.warehouse || '').trim()
   if (street) {
     street = street.replace(/^[,.\s]+|[,.\s]+$/g, '')
-    if (/^(addis ababa,?\s*ethiopia|ethiopia)$/i.test(street)) {
+    // Remove trailing ", Ethiopia" from street
+    street = street.replace(/,\s*ethiopia$/i, '').trim()
+    // If street is redundant with city or country, clear it
+    if (/^(addis ababa,?\s*ethiopia|ethiopia)$/i.test(street) || (city && street.toLowerCase() === city.toLowerCase())) {
       street = ''
-    } else {
-      // Remove trailing ", Ethiopia" from street
-      street = street.replace(/,\s*ethiopia$/i, '').trim()
     }
   }
 
-  if (street && locationHierarchy) {
-    if (street.toLowerCase().includes(locationHierarchy.toLowerCase())) {
-      return street
-    }
-    return `${street}, ${locationHierarchy}`
+  // Assemble segments strictly: [City/Hub], [Woreda/Sub-City/Zone], [Street/Warehouse], [Region], [Country]
+  const segments: string[] = []
+
+  // Step 1: City / Hub
+  if (city) {
+    segments.push(city)
   }
 
-  return street || locationHierarchy || [params.city, params.region, params.country || 'Ethiopia'].filter(Boolean).join(', ') || 'Ethiopia'
+  // Step 2: Woreda / Sub-City / Zone
+  const locParts: string[] = []
+  if (woreda && !locParts.some(p => p.toLowerCase().includes(woreda.toLowerCase()))) {
+    locParts.push(woreda)
+  }
+  if (subCity && (!city || !subCity.toLowerCase().includes(city.toLowerCase())) && !locParts.some(p => p.toLowerCase().includes(subCity.toLowerCase()))) {
+    locParts.push(subCity)
+  }
+  if (zone && (!city || !zone.toLowerCase().includes(city.toLowerCase())) && !locParts.some(p => p.toLowerCase().includes(zone.toLowerCase()))) {
+    locParts.push(zone)
+  }
+  if (locParts.length > 0) {
+    segments.push(locParts.join(', '))
+  }
+
+  // Step 3: Street / Warehouse / Landmark
+  if (street) {
+    const alreadyIncluded = segments.some(seg => seg.toLowerCase().includes(street.toLowerCase()))
+    if (!alreadyIncluded) {
+      segments.push(street)
+    }
+  }
+
+  // Step 4: Region (if not redundant with city)
+  if (region && (!city || region.toLowerCase() !== city.toLowerCase())) {
+    const alreadyIncluded = segments.some(seg => seg.toLowerCase().includes(region.toLowerCase()))
+    if (!alreadyIncluded) {
+      segments.push(region)
+    }
+  }
+
+  // Step 5: Country
+  const country = (params.country || 'Ethiopia').trim()
+  if (country && !segments.some(seg => seg.toLowerCase().includes(country.toLowerCase()))) {
+    segments.push(country)
+  }
+
+  return segments.join(', ')
 }
 
 export const PERISHABLE_CATEGORIES = [
