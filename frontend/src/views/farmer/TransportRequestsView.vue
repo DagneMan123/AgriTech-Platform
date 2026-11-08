@@ -32,34 +32,78 @@
 
       <!-- Content -->
       <div v-if="!loading && !error" class="transport-content">
-        <!-- Stats KPI Grid -->
+        <!-- 4-Stage Lifecycle KPI Grid -->
         <div class="stats-grid">
-          <div class="stat-card">
+          <div class="stat-card cursor-pointer" @click="filterStatus = 'pending'">
             <Send size="20" class="stat-icon pending" />
             <div>
-              <span class="stat-label">Pending Review</span>
+              <span class="stat-label">Stage 1: Pending</span>
               <span class="stat-value">{{ stats.pending }}</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card cursor-pointer" @click="filterStatus = 'confirmed'">
             <Truck size="20" class="stat-icon confirmed" />
             <div>
-              <span class="stat-label">Assigned / Confirmed</span>
+              <span class="stat-label">Stage 2: Confirmed</span>
               <span class="stat-value">{{ stats.confirmed }}</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card cursor-pointer" @click="filterStatus = 'shipped'">
             <MapPin size="20" class="stat-icon inTransit" />
             <div>
-              <span class="stat-label">In Transit</span>
+              <span class="stat-label">Stage 3: Shipped</span>
               <span class="stat-value">{{ stats.inTransit }}</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card cursor-pointer" @click="filterStatus = 'completed'">
             <CheckCircle size="20" class="stat-icon completed" />
             <div>
-              <span class="stat-label">Delivered</span>
+              <span class="stat-label">Stage 4: Delivered &amp; Paid</span>
               <span class="stat-value">{{ stats.completed }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4-Stage Visual Lifecycle Banner -->
+        <div class="mb-6 p-4 rounded-2xl border bg-white dark:bg-[#131b2e] border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Sequential Transport Lifecycle Workflow
+            </span>
+            <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <ShieldCheck size="14" />
+              Chapa Escrow Logistics Settlement
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                <span>Stage 1: Pending</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Initiated automatically upon submission. Awaits dispatch review.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <div class="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                <span>Stage 2: Confirmed</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Logistics manager reviews and assigns verified vehicle &amp; transporter.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+              <div class="font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                <span>Stage 3: Shipped</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Assigned vehicle picks up produce at farm/depot and begins transit.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div class="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                <span>Stage 4: Delivered &amp; Paid</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Receipt confirmed at destination. Freight/escrow settled to farmer.</p>
             </div>
           </div>
         </div>
@@ -139,6 +183,37 @@
                     <button @click="viewDetails(request)" class="action-btn view-btn" title="View Full Details">
                       <Eye size="15" />
                     </button>
+
+                    <!-- Stage 1 -> Stage 2: Confirm & Assign Transporter -->
+                    <button
+                      v-if="request.status === 'pending'"
+                      @click="advanceStatus(request, 'confirmed')"
+                      class="action-btn text-blue-600 hover:text-blue-700 border-blue-200 bg-blue-50/60 dark:bg-blue-950/30"
+                      title="Stage 2: Approve & Assign Transporter"
+                    >
+                      <ShieldCheck size="15" />
+                    </button>
+
+                    <!-- Stage 2 -> Stage 3: Ship / Dispatch Produce -->
+                    <button
+                      v-if="request.status === 'confirmed'"
+                      @click="advanceStatus(request, 'shipped')"
+                      class="action-btn text-purple-600 hover:text-purple-700 border-purple-200 bg-purple-50/60 dark:bg-purple-950/30"
+                      title="Stage 3: Dispatch & Ship Produce"
+                    >
+                      <Truck size="15" />
+                    </button>
+
+                    <!-- Stage 3 -> Stage 4: Mark Delivered -->
+                    <button
+                      v-if="request.status === 'shipped' || request.status === 'in-transit'"
+                      @click="advanceStatus(request, 'delivered')"
+                      class="action-btn text-emerald-600 hover:text-emerald-700 border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/30"
+                      title="Stage 4: Confirm Arrival & Mark Delivered"
+                    >
+                      <CheckCircle2 size="15" />
+                    </button>
+
                     <button
                       v-if="request.status === 'pending'"
                       @click="editRequest(request)"
@@ -419,16 +494,49 @@
               </div>
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer flex items-center justify-between">
               <button @click="selectedRequest = null" class="btn-secondary">Close</button>
-              <button
-                v-if="selectedRequest.status === 'pending'"
-                @click="openEditFromDetails"
-                class="btn-primary"
-              >
-                <Edit size="15" />
-                <span>Edit Request</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <!-- Advance actions inside modal -->
+                <button
+                  v-if="selectedRequest.status === 'pending'"
+                  @click="advanceStatus(selectedRequest, 'confirmed'); selectedRequest = null;"
+                  class="btn-primary"
+                  style="background: #3b82f6;"
+                >
+                  <ShieldCheck size="15" />
+                  <span>Confirm &amp; Assign Transporter (Stage 2)</span>
+                </button>
+
+                <button
+                  v-if="selectedRequest.status === 'confirmed'"
+                  @click="advanceStatus(selectedRequest, 'shipped'); selectedRequest = null;"
+                  class="btn-primary"
+                  style="background: #8b5cf6;"
+                >
+                  <Truck size="15" />
+                  <span>Dispatch &amp; Ship Produce (Stage 3)</span>
+                </button>
+
+                <button
+                  v-if="selectedRequest.status === 'shipped' || selectedRequest.status === 'in-transit'"
+                  @click="advanceStatus(selectedRequest, 'delivered'); selectedRequest = null;"
+                  class="btn-primary"
+                  style="background: #10b981;"
+                >
+                  <CheckCircle2 size="15" />
+                  <span>Confirm Delivered &amp; Paid (Stage 4)</span>
+                </button>
+
+                <button
+                  v-if="selectedRequest.status === 'pending'"
+                  @click="openEditFromDetails"
+                  class="btn-secondary"
+                >
+                  <Edit size="15" />
+                  <span>Edit</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -648,6 +756,24 @@ const saveRequest = async () => {
     alert(msg)
   } finally {
     submitting.value = false
+  }
+}
+
+const advanceStatus = async (request, newStatus) => {
+  const stageLabels = {
+    confirmed: 'Stage 2: Confirmed (Assign Transporter & Vehicle)',
+    shipped: 'Stage 3: Shipped (Dispatch produce into transit)',
+    delivered: 'Stage 4: Delivered & Paid (Verify delivery & release payment)'
+  }
+  const promptText = `Advance transport request ${request.id} to ${stageLabels[newStatus] || newStatus}?`
+  if (!confirm(promptText)) return
+
+  try {
+    await farmerAPI.updateTransportRequestStatus(request.rawId, newStatus)
+    await fetchRequests()
+  } catch (err) {
+    console.error('Failed to advance transport request status:', err)
+    alert(err?.response?.data?.message || 'Failed to advance transport request status.')
   }
 }
 

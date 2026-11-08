@@ -34,42 +34,90 @@
 
       <!-- Content -->
       <div v-if="!loading && !error" class="orders-content">
-        <!-- Summary Cards -->
+        <!-- 4-Stage Lifecycle KPI Summary Cards -->
         <div class="summary-section">
-          <div class="summary-card">
+          <!-- Stage 1: Pending -->
+          <div class="summary-card cursor-pointer" @click="filters.status = 'pending'">
             <div class="card-header">
-              <h3>Total Orders</h3>
-              <ShoppingCart size="20" class="card-icon total-icon" />
-            </div>
-            <p class="card-value">{{ summaryData.totalOrders }}</p>
-            <p class="card-subtitle">all time</p>
-          </div>
-
-          <div class="summary-card">
-            <div class="card-header">
-              <h3>Pending</h3>
+              <h3>Stage 1: Pending</h3>
               <Clock size="20" class="card-icon pending-icon" />
             </div>
             <p class="card-value">{{ summaryData.pendingOrders }}</p>
-            <p class="card-subtitle">awaiting action</p>
+            <p class="card-subtitle">awaiting review &amp; confirmation</p>
           </div>
 
-          <div class="summary-card">
+          <!-- Stage 2: Confirmed -->
+          <div class="summary-card cursor-pointer" @click="filters.status = 'confirmed'">
             <div class="card-header">
-              <h3>Processing</h3>
-              <Zap size="20" class="card-icon processing-icon" />
+              <h3>Stage 2: Confirmed</h3>
+              <ShieldCheck size="20" class="card-icon" style="color: #3b82f6;" />
             </div>
-            <p class="card-value">{{ summaryData.processingOrders }}</p>
-            <p class="card-subtitle">in progress</p>
+            <p class="card-value">{{ summaryData.confirmedOrders }}</p>
+            <p class="card-subtitle">escrow secured &amp; dispatch planned</p>
           </div>
 
-          <div class="summary-card">
+          <!-- Stage 3: Shipped -->
+          <div class="summary-card cursor-pointer" @click="filters.status = 'shipped'">
             <div class="card-header">
-              <h3>Completed</h3>
-              <CheckCircle size="20" class="card-icon completed-icon" />
+              <h3>Stage 3: Shipped</h3>
+              <Truck size="20" class="card-icon" style="color: #8b5cf6;" />
+            </div>
+            <p class="card-value">{{ summaryData.shippedOrders }}</p>
+            <p class="card-subtitle">dispatched &amp; in transit</p>
+          </div>
+
+          <!-- Stage 4: Delivered & Paid -->
+          <div class="summary-card cursor-pointer" @click="filters.status = 'delivered'">
+            <div class="card-header">
+              <h3>Stage 4: Delivered &amp; Paid</h3>
+              <CheckCircle size="20" class="card-icon completed-icon" style="color: #10b981;" />
             </div>
             <p class="card-value">{{ summaryData.completedOrders }}</p>
-            <p class="card-subtitle">fulfilled</p>
+            <p class="card-subtitle">escrow funds released to wallet</p>
+          </div>
+        </div>
+
+        <!-- 4-Stage End-to-End Visual Lifecycle Banner -->
+        <div class="mb-6 p-4 rounded-2xl border bg-white dark:bg-[#131b2e] border-slate-200 dark:border-slate-800 shadow-xs">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              End-to-End Order &amp; Transport Lifecycle
+            </span>
+            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <ShieldCheck size="14" />
+              Chapa Escrow Protected
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                <span>Stage 1: Pending</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Initiated when buyer places order. Awaits administrative review.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <div class="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                <span>Stage 2: Confirmed</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Payment secured in Chapa Escrow. Transporter/vehicle assigned.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+              <div class="font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                <span>Stage 3: Shipped</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Produce picked up from farm/hub and begins transit (Dispatch).</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div class="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 mb-1">
+                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                <span>Stage 4: Delivered &amp; Paid</span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 m-0">Delivery verified. Chapa Escrow funds released to farmer wallet.</p>
+            </div>
           </div>
         </div>
 
@@ -419,7 +467,8 @@ const availableCustomers = ref([])
 const summaryData = ref({
   totalOrders: 0,
   pendingOrders: 0,
-  processingOrders: 0,
+  confirmedOrders: 0,
+  shippedOrders: 0,
   completedOrders: 0
 })
 
@@ -557,11 +606,12 @@ const fetchOrders = async () => {
     })
     availableCustomers.value = Array.from(customerMap.values())
 
-    // Live summary counts from database
+    // Live summary counts aligned to 4 sequential stages
     summaryData.value = {
       totalOrders: orders.value.length,
       pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'shipped', 'in_transit'].includes(o.status)).length,
+      confirmedOrders: orders.value.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
+      shippedOrders: orders.value.filter(o => ['shipped', 'in_transit'].includes(o.status)).length,
       completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
     }
   } catch (err) {
@@ -647,7 +697,8 @@ const updateStatus = async (order, newStatus) => {
     summaryData.value = {
       totalOrders: orders.value.length,
       pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      processingOrders: orders.value.filter(o => ['processing', 'confirmed', 'shipped', 'in_transit'].includes(o.status)).length,
+      confirmedOrders: orders.value.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
+      shippedOrders: orders.value.filter(o => ['shipped', 'in_transit'].includes(o.status)).length,
       completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
     }
   } catch (err) {

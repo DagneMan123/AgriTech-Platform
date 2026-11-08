@@ -970,7 +970,7 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Plus, Minus, Trash2, Info, ChevronDown,
+  Plus, Minus, Trash2, Info,
   Star, Smartphone
 } from 'lucide-vue-next'
 

@@ -124,5 +124,6 @@ export const farmerAPI = {
   getTransportRequest: (id: number) => apiClient.get(`/farmer/transport-requests/${id}`),
   createTransportRequest: (data: any) => apiClient.post('/farmer/transport-requests', data),
   updateTransportRequest: (id: number, data: any) => apiClient.put(`/farmer/transport-requests/${id}`, data),
+  updateTransportRequestStatus: (id: number, status: string, data?: any) => apiClient.put(`/farmer/transport-requests/${id}/status`, { status, ...data }),
   deleteTransportRequest: (id: number) => apiClient.delete(`/farmer/transport-requests/${id}`)
 }

@@ -527,6 +527,10 @@ Route::middleware('auth:sanctum')->group(function () {
             ]);
 
             Route::apiResource('/transport-requests', FarmerTransportController::class);
+            Route::put('/transport-requests/{id}/status', [
+                FarmerTransportController::class,
+                'updateStatus'
+            ]);
 
             Route::get('/dashboard/weather-forecast', [
                 FarmerDashboardController::class,
@@ -845,6 +849,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/deliveries/{id}/accept', [
                 DeliveryController::class,
                 'accept'
+            ]);
+
+            Route::post('/deliveries/{id}/dispatch', [
+                DeliveryController::class,
+                'dispatchDelivery'
             ]);
 
             Route::post('/deliveries/{id}/complete', [
