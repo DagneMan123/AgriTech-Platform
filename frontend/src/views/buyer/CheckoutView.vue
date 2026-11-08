@@ -235,24 +235,35 @@
               </div>
 
               <div>
-                <div class="mb-1.5">
+                <div class="mb-1.5 flex items-center justify-between">
                   <label :class="['block text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">
-                    Delivery Destination (Hub &amp; Region)
+                    Delivery Destination (Hub &amp; Region) *
                   </label>
+                  <span v-if="isSetInCart" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <Check class="w-3 h-3" /> Selected in Cart
+                  </span>
                 </div>
 
-                <!-- Single Destination Display (No multi-option dropdown) -->
+                <!-- Destination Selector Dropdown -->
                 <div class="relative">
-                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
-                  <input
-                    type="text"
-                    :value="destinationDisplayName || selectedDestination"
-                    readonly
+                  <MapPin class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none z-10" />
+                  <select
+                    v-model="selectedDestination"
+                    @change="handleDestinationDropdownChange"
                     :class="[
-                      'w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-bold cursor-default select-none focus:outline-none transition',
-                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-300 text-slate-800'
+                      'w-full pl-9 pr-8 py-2.5 rounded-xl border text-xs font-bold focus:outline-none focus:border-blue-500 transition appearance-none cursor-pointer',
+                      darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
                     ]"
-                  />
+                  >
+                    <option
+                      v-for="dest in deliveryDestinations"
+                      :key="dest.city"
+                      :value="`${dest.city}, ${dest.region}`"
+                    >
+                      {{ dest.city }} ({{ dest.region }})
+                    </option>
+                  </select>
+                  <ChevronDown class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -970,7 +981,7 @@ import {
   Menu, ArrowLeft, Check, CheckCircle2, Truck, CreditCard,
   MapPin, Phone, User, Building, AlertCircle, ShoppingBag,
   Sparkles, RefreshCw, Lock, ShieldCheck, Leaf,
-  Plus, Minus, Trash2, Info,
+  Plus, Minus, Trash2, Info, ChevronDown,
   Star, Smartphone
 } from 'lucide-vue-next'
 
@@ -1003,9 +1014,9 @@ const addressForm = ref({
   phone: '',
   region: initialDestInfo.region,
   city: initialDestInfo.city,
-  zone: initialDestInfo.defaultZone || 'Bole Subcity',
-  woreda: 'Woreda 03',
-  address: 'Commercial Agro-Distribution Depot',
+  zone: initialDestInfo.defaultZone || '',
+  woreda: 'Woreda 01',
+  address: `${initialDestInfo.city} Central Receiving Warehouse`,
   notes: ''
 })
 
@@ -1064,6 +1075,17 @@ const handleDestinationDropdownChange = () => {
     customDestinationText.value = lastSelectedHubDestination.value || ''
   } else {
     lastSelectedHubDestination.value = selectedDestination.value
+    const res = resolveDestinationHubAndRegion(selectedDestination.value)
+    addressForm.value.region = res.region
+    addressForm.value.city = res.city
+    addressForm.value.zone = res.defaultZone
+    // If address was blank or default warehouse, update to new city warehouse
+    if (!addressForm.value.address || addressForm.value.address.includes('Warehouse') || addressForm.value.address.includes('Depot') || addressForm.value.address.includes('Hub')) {
+      addressForm.value.address = `${res.city} Central Receiving Warehouse`
+    }
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('checkout_destination', selectedDestination.value)
+    }
   }
 }
 
@@ -1083,19 +1105,28 @@ const formattedAddressPreview = computed(() => {
     street: addressForm.value.address,
     woreda: addressForm.value.woreda,
     zone: addressForm.value.zone,
-    region: addressForm.value.region,
+    city: addressForm.value.city || resolvedDest.value.city,
+    region: addressForm.value.region || resolvedDest.value.region,
     country: 'Ethiopia'
   })
 })
 
 watch(selectedDestination, (newDest) => {
-  if (newDest) {
+  if (newDest && newDest !== '__custom__') {
     const res = resolveDestinationHubAndRegion(newDest)
-    if (addressForm.value.region !== res.region) {
-      addressForm.value.region = res.region
+    addressForm.value.region = res.region
+    addressForm.value.city = res.city
+    if (!addressForm.value.zone || addressForm.value.zone.includes('Bole') || addressForm.value.zone.includes('Zone')) {
+      addressForm.value.zone = res.defaultZone
+    }
+    if (!addressForm.value.address || addressForm.value.address.includes('Warehouse') || addressForm.value.address.includes('Depot') || addressForm.value.address.includes('Hub')) {
+      addressForm.value.address = `${res.city} Central Receiving Warehouse`
+    }
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('checkout_destination', newDest)
     }
   }
-})
+}, { immediate: true })
 
 const totalWeightKg = computed(() => getCartTotalWeightKg(cartItems.value))
 const hasPerishables = computed(() => cartHasPerishables(cartItems.value))
@@ -1362,15 +1393,18 @@ const handlePlaceOrder = async () => {
       street: addressForm.value.address,
       woreda: addressForm.value.woreda,
       zone: addressForm.value.zone,
-      region: addressForm.value.region,
+      city: addressForm.value.city || resolvedDest.value.city,
+      region: addressForm.value.region || resolvedDest.value.region,
       country: 'Ethiopia'
     })
 
     const payload = {
       delivery_address: formattedAddress,
-      delivery_region: addressForm.value.region,
-      delivery_zone: addressForm.value.zone,
+      delivery_region: addressForm.value.region || resolvedDest.value.region,
+      delivery_zone: addressForm.value.zone || resolvedDest.value.defaultZone,
       delivery_woreda: addressForm.value.woreda,
+      delivery_city: addressForm.value.city || resolvedDest.value.city,
+      delivery_destination: selectedDestination.value,
       phone: addressForm.value.phone || authStore.user?.phone || '0934318549',
       delivery_fee: selectedShippingFee.value,
       shipping_type: selectedShipping.value,

@@ -438,11 +438,11 @@ export function formatHierarchicalAddress(params: {
     country: params.country || 'Ethiopia'
   })
 
-  // Clean jumbled artifact from street if it was set to generic "Addis Ababa, Ethiopia" or city/region
+  // Clean generic country artifact from street without overriding with hardcoded defaults
   if (street) {
     street = street.replace(/^[,.\s]+|[,.\s]+$/g, '')
     if (/^(addis ababa,?\s*ethiopia|ethiopia)$/i.test(street)) {
-      street = 'Commercial Agro-Distribution Depot'
+      street = ''
     } else {
       // Remove trailing ", Ethiopia" from street
       street = street.replace(/,\s*ethiopia$/i, '').trim()
@@ -456,7 +456,7 @@ export function formatHierarchicalAddress(params: {
     return `${street}, ${locationHierarchy}`
   }
 
-  return street || locationHierarchy || 'Addis Ababa, Ethiopia'
+  return street || locationHierarchy || [params.city, params.region, params.country || 'Ethiopia'].filter(Boolean).join(', ') || 'Ethiopia'
 }
 
 export const PERISHABLE_CATEGORIES = [

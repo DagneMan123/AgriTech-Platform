@@ -484,9 +484,9 @@
             </div>
 
             <!-- Destination Address -->
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1 min-w-0">
               <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Destination</span>
-              <span :class="['text-sm font-semibold truncate', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderAddress(order)">
+              <span :class="['text-sm font-semibold break-words whitespace-normal leading-snug', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderAddress(order)">
                 {{ getOrderAddress(order) }}
               </span>
             </div>
@@ -791,7 +791,7 @@
                 <MapPin class="w-3.5 h-3.5 text-emerald-500" />
                 <span>Delivery Address</span>
               </h4>
-              <p class="font-bold text-xs mb-1">{{ getOrderAddress(activeOrderForDetails) }}</p>
+              <p class="font-bold text-xs mb-1 break-words whitespace-normal leading-relaxed">{{ getOrderAddress(activeOrderForDetails) }}</p>
               <p v-if="activeOrderForDetails.delivery_phone || activeOrderForDetails.phone" class="m-0 text-[11px] text-slate-400 flex items-center gap-1 mt-1">
                 <Phone class="w-3 h-3" />
                 <span>{{ activeOrderForDetails.delivery_phone || activeOrderForDetails.phone }}</span>
@@ -1110,7 +1110,7 @@
                 </div>
                 <div class="text-xs">
                   <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Destination Delivery Address</p>
-                  <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  <p :class="['text-[11px] m-0 break-words whitespace-normal leading-relaxed', darkMode ? 'text-slate-400' : 'text-slate-500']">
                     {{ getOrderAddress(activeOrderForTracking) }}
                   </p>
                 </div>
@@ -1781,7 +1781,21 @@ const getOrderItemsCount = (order: any): number => {
 }
 
 const getOrderAddress = (order: any): string => {
-  return order?.delivery_address || order?.delivery?.delivery_address || 'Address on file'
+  if (!order) return 'Address on file'
+  if (order.delivery_address && typeof order.delivery_address === 'string' && order.delivery_address.trim()) {
+    return order.delivery_address.trim()
+  }
+  if (order.delivery?.delivery_address && typeof order.delivery.delivery_address === 'string' && order.delivery.delivery_address.trim()) {
+    return order.delivery.delivery_address.trim()
+  }
+  if (order.delivery?.destination_location && typeof order.delivery.destination_location === 'string' && order.delivery.destination_location.trim()) {
+    return order.delivery.destination_location.trim()
+  }
+  const parts = [order.delivery_woreda, order.delivery_zone, order.delivery_region].filter(Boolean)
+  if (parts.length > 0) {
+    return parts.join(', ')
+  }
+  return 'Address on file'
 }
 
 const formatStatus = (status?: string): string => {

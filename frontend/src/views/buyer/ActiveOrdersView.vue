@@ -379,8 +379,8 @@
                 <MapPin class="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                 <div class="min-w-0 flex-1">
                   <p class="font-bold m-0 text-[11px] uppercase tracking-wider text-slate-400">Delivery Address</p>
-                  <p class="font-medium m-0 truncate text-xs">{{ order.delivery_address || 'Address registered on file' }}</p>
-                  <p v-if="order.delivery_region || order.delivery_zone" class="text-[10px] text-slate-400 m-0">
+                  <p class="font-medium m-0 break-words whitespace-normal text-xs leading-relaxed">{{ order.delivery_address || 'Address registered on file' }}</p>
+                  <p v-if="order.delivery_region || order.delivery_zone" class="text-[10px] text-slate-400 m-0 break-words whitespace-normal">
                     {{ order.delivery_region }} {{ order.delivery_zone ? ', ' + order.delivery_zone : '' }}
                   </p>
                 </div>

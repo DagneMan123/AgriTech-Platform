@@ -299,6 +299,18 @@ class CartController extends Controller
                 $discount = (float) $request->input('promo_discount', $request->input('discount', 0));
                 $orderGrandTotal = max(0, $groupSubtotal + $groupDeliveryFee + $tax - $discount);
 
+                $deliveryAddress = $request->input('delivery_address');
+                if (empty($deliveryAddress)) {
+                    $parts = array_filter([
+                        $request->input('delivery_destination'),
+                        $request->input('delivery_woreda'),
+                        $request->input('delivery_zone'),
+                        $request->input('delivery_region'),
+                        'Ethiopia'
+                    ]);
+                    $deliveryAddress = !empty($parts) ? implode(', ', array_unique($parts)) : ($user->address ?? 'Address on file');
+                }
+
                 $order = Order::create([
                     'order_number' => 'ORD-' . strtoupper(Str::random(8)),
                     'buyer_id' => $userId,
@@ -309,7 +321,7 @@ class CartController extends Controller
                     'discount' => $discount,
                     'grand_total' => $orderGrandTotal,
                     'status' => 'pending',
-                    'delivery_address' => $request->input('delivery_address', $user->address ?? ''),
+                    'delivery_address' => $deliveryAddress,
                     'delivery_region' => $request->input('delivery_region', $user->region ?? ''),
                     'delivery_zone' => $request->input('delivery_zone', $user->zone ?? ''),
                     'delivery_woreda' => $request->input('delivery_woreda', $user->woreda ?? ''),

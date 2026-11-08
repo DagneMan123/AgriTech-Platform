@@ -100,7 +100,7 @@ class PurchaseReportController extends Controller
                     'payment_status' => $order->payment_status ?: 'pending',
                     'payment_method' => $order->payment_method ?: 'Chapa Escrow',
                     'payment_reference' => $order->payment_reference ?: ($order->payment->reference ?? null),
-                    'delivery_address' => $order->delivery_address ?: 'Addis Ababa Central Produce Depot',
+                    'delivery_address' => $order->delivery_address ?: ($order->delivery_region ? "{$order->delivery_region}, Ethiopia" : 'Address on file'),
                     'items' => $order->items->map(fn($i) => [
                         'id' => $i->id,
                         'product_name' => $i->product->name ?? 'Produce Item',
