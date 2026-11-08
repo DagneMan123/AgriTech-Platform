@@ -166,8 +166,7 @@
                   <td>{{ formatDate(order.created_at) }}</td>
                   <td class="action-buttons">
                     <button class="btn-small btn-view">View</button>
-                    <button v-if="order.status === 'pending'" class="btn-small btn-accept">Accept</button>
-                  </td>
+                    </td>
                 </tr>
               </tbody>
             </table>

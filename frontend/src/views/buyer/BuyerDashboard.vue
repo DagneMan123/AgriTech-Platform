@@ -102,6 +102,7 @@
                   <th class="p-3">Supplier</th>
                   <th class="p-3">Items</th>
                   <th class="p-3">Status</th>
+                  <th class="p-3">Payment</th>
                   <th class="p-3">Total</th>
                   <th class="p-3">Date</th>
                   <th class="p-3">Actions</th>
@@ -115,6 +116,14 @@
                   <td class="p-3">
                     <span :class="['inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
                       {{ order.status }}
+                    </span>
+                  </td>
+                  <td class="p-3">
+                    <span
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                      :class="order.payment_status === 'paid' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'"
+                    >
+                      {{ order.payment_status === 'paid' ? 'Paid (Escrow)' : 'Pending' }}
                     </span>
                   </td>
                   <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.total_amount || order.grand_total) }}</td>

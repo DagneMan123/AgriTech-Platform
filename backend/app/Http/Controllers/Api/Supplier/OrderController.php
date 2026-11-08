@@ -87,45 +87,24 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, Order $order)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:confirmed,shipped,delivered,cancelled',
-            'notes' => 'sometimes|string',
-            'tracking_number' => 'sometimes|string',
-        ]);
-
-        // Verify supplier has items in this order
-        if (!$order->items()->where('supplier_id', Auth::id())->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized',
-            ], 403);
-        }
-
-        // Check current status
-        if ($order->status === 'delivered' || $order->status === 'cancelled') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot update delivered or cancelled orders',
-            ], 422);
-        }
-
-        $order->update([
-            'status' => $validated['status'],
-            'notes' => $validated['notes'] ?? $order->notes,
-        ]);
-
-        if (isset($validated['tracking_number'])) {
-            $order->items()
-                ->where('supplier_id', Auth::id())
-                ->update(['tracking_number' => $validated['tracking_number']]);
-        }
-
         return response()->json([
-            'success' => true,
-            'message' => 'Order status updated',
-            'data' => $order,
-        ]);
+            'success' => false,
+            'message' => 'RBAC Restriction: Suppliers are strictly restricted from manually altering order statuses (Confirmed, Shipped, Delivered). Status progression is strictly managed via Chapa Escrow verification, Admin / Logistics Officers, and Buyer delivery confirmation.',
+        ], 403);
     }
+
+    /**
+     * Prevent direct order updates from suppliers (RBAC)
+     */
+    public function update(Request $request, Order $order)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'RBAC Restriction: Suppliers cannot manually alter order records.',
+        ], 403);
+    }
+
+    
 
     /**
      * Get order statistics

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Admin\PermissionController;
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\DocumentVerificationController;
 use App\Http\Controllers\Api\Admin\ReportController;
+use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
 
 // Farmer
 use App\Http\Controllers\Api\Farmer\FarmController;
@@ -319,6 +320,13 @@ Route::middleware('auth:sanctum')->group(function () {
                 AdminDashboardController::class,
                 'userManagement'
             ]);
+
+            // Admin Order & Logistics Management (RBAC)
+            Route::get('/orders', [AdminOrderController::class, 'index']);
+            Route::get('/orders/{id}', [AdminOrderController::class, 'show']);
+            Route::post('/orders/{id}/assign-transporter', [AdminOrderController::class, 'assignTransporter']);
+            Route::post('/orders/{id}/dispatch', [AdminOrderController::class, 'dispatchOrder']);
+            Route::post('/orders/{id}/complete', [AdminOrderController::class, 'completeDelivery']);
 
             Route::prefix('documents')->group(function () {
 

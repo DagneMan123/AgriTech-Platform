@@ -50,7 +50,7 @@ class AdminDashboardController extends Controller
                 ->get();
 
             // Recent activity
-            $recentOrders = Order::with(['buyer', 'items'])
+            $recentOrders = Order::with(['buyer', 'items', 'delivery.transporter', 'payment'])
                 ->latest()
                 ->limit(10)
                 ->get();

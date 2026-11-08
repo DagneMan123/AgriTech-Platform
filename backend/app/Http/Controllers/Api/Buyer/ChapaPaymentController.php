@@ -220,13 +220,20 @@ class ChapaPaymentController extends Controller
                 }
 
                 if (!empty($targetOrderIds)) {
-                    Order::whereIn('id', $targetOrderIds)->update([
-                        'payment_status' => 'paid',
-                        'payment_reference' => $txRef,
-                        'status' => 'confirmed',
-                        'escrow_status' => 'held',
-                        'escrow_held_at' => now(),
-                    ]);
+                    $ordersToUpdate = Order::whereIn('id', $targetOrderIds)->with('delivery')->get();
+                    foreach ($ordersToUpdate as $targetOrder) {
+                        $orderData = [
+                            'payment_status' => 'paid',
+                            'payment_reference' => $txRef,
+                            'escrow_status' => 'held',
+                            'escrow_held_at' => now(),
+                        ];
+                        // Stage 2: Confirmed requires transporter assignment
+                        if ($targetOrder->delivery && $targetOrder->delivery->transporter_id) {
+                            $orderData['status'] = 'confirmed';
+                        }
+                        $targetOrder->update($orderData);
+                    }
                 }
 
                 // Register payment method on buyer profile without overriding existing primary method
@@ -335,13 +342,20 @@ class ChapaPaymentController extends Controller
                     }
 
                     if (!empty($targetOrderIds)) {
-                        Order::whereIn('id', $targetOrderIds)->update([
-                            'payment_status' => 'paid',
-                            'payment_reference' => $txRef,
-                            'status' => 'confirmed',
-                            'escrow_status' => 'held',
-                            'escrow_held_at' => now(),
-                        ]);
+                        $ordersToUpdate = Order::whereIn('id', $targetOrderIds)->with('delivery')->get();
+                        foreach ($ordersToUpdate as $targetOrder) {
+                            $orderData = [
+                                'payment_status' => 'paid',
+                                'payment_reference' => $txRef,
+                                'escrow_status' => 'held',
+                                'escrow_held_at' => now(),
+                            ];
+                            // Stage 2: Confirmed requires transporter assignment
+                            if ($targetOrder->delivery && $targetOrder->delivery->transporter_id) {
+                                $orderData['status'] = 'confirmed';
+                            }
+                            $targetOrder->update($orderData);
+                        }
                     }
 
                     // Register payment method on buyer profile without overriding existing primary method
