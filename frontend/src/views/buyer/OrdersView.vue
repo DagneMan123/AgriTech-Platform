@@ -583,16 +583,6 @@
                 <span>{{ payingOrderId === order.id ? 'Connecting...' : 'Pay with Chapa' }}</span>
               </button>
 
-              <!-- Escrow Secured Indicator Badge (Paid Orders) -->
-              <span
-                v-else-if="isOrderPaid(order) && order.status !== 'delivered'"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs"
-                title="Payment safely secured in Chapa Escrow. Released to farmer upon verified delivery."
-              >
-                <ShieldCheck class="w-3.5 h-3.5 text-emerald-500" />
-                <span>Chapa Escrow Secured</span>
-              </span>
-
               <!-- View Full Receipt (Delivered Orders) -->
               <button
                 v-if="order.status === 'delivered'"
