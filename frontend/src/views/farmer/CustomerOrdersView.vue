@@ -186,20 +186,24 @@
                     </span>
                   </td>
                   <td class="td-actions">
-                    <button @click="viewDetails(order)" class="action-btn view-btn" title="Review Order Details">
+                    <button @click="viewDetails(order)" class="action-btn view-btn" title="Review Order Tracking & Details">
                       <Eye size="16" />
                     </button>
-                    <!-- Step 1: Order Review & Confirmation -->
-                    <button v-if="order.status === 'pending'" @click="updateStatus(order, 'confirmed')" class="action-btn confirm-btn" title="Confirm Order">
-                      <CheckCircle size="16" />
-                    </button>
-                    <!-- Step 2: Logistics & Warehouse Fulfillment -->
-                    <button v-if="order.status === 'confirmed' || order.status === 'processing'" @click="updateStatus(order, 'shipped')" class="action-btn ship-btn" title="Ship to Warehouse (Kality Central)">
+                    <button
+                      v-if="['pending', 'confirmed', 'processing'].includes(order.status)"
+                      @click="router.push('/farmer/transport-requests')"
+                      class="action-btn ship-btn text-blue-600 border-blue-200"
+                      title="Request Transport Dispatch"
+                    >
                       <Truck size="16" />
                     </button>
-                    <!-- Step 3: Delivery & Chapa Escrow Payment Release -->
-                    <button v-if="order.status === 'shipped'" @click="updateStatus(order, 'delivered')" class="action-btn deliver-btn" title="Mark as Delivered & Release Escrow to Wallet">
-                      <ShieldCheck size="16" />
+                    <button
+                      v-if="['shipped', 'in_transit'].includes(order.status)"
+                      @click="router.push('/farmer/active-deliveries')"
+                      class="action-btn deliver-btn text-purple-600 border-purple-200"
+                      title="View Live Delivery Tracking"
+                    >
+                      <Navigation size="16" />
                     </button>
                   </td>
                 </tr>
@@ -366,24 +370,31 @@
             <div class="modal-footer">
               <button @click="selectedOrder = null" class="btn-secondary">Close</button>
               <div class="action-buttons">
-                <!-- Step 1: Order Review & Confirmation -->
-                <button v-if="selectedOrder.status === 'pending'" @click="updateStatusAndClose('confirmed')" class="btn-primary confirm">
-                  <CheckCircle size="14" />
-                  Confirm Order
-                </button>
-                <!-- Step 2: Logistics & Warehouse Fulfillment -->
-                <button v-if="selectedOrder.status === 'confirmed' || selectedOrder.status === 'processing'" @click="updateStatusAndClose('shipped')" class="btn-primary ship">
+                <button
+                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status)"
+                  @click="router.push('/farmer/transport-requests')"
+                  class="btn-primary ship"
+                  style="background: #3b82f6;"
+                >
                   <Truck size="14" />
-                  Ship to Warehouse (Kality Central)
+                  <span>Request Transport Dispatch</span>
                 </button>
-                <!-- Step 3: Delivery & Chapa Escrow Payment Release -->
-                <button v-if="selectedOrder.status === 'shipped'" @click="updateStatusAndClose('delivered')" class="btn-primary deliver">
+                <button
+                  v-if="['shipped', 'in_transit'].includes(selectedOrder.status)"
+                  @click="router.push('/farmer/active-deliveries')"
+                  class="btn-primary"
+                  style="background: #8b5cf6;"
+                >
+                  <Navigation size="14" />
+                  <span>Track Delivery Telemetry</span>
+                </button>
+                <span v-if="['shipped', 'in_transit'].includes(selectedOrder.status)" class="escrow-paid-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
                   <ShieldCheck size="14" />
-                  Mark as Delivered & Release Escrow
-                </button>
+                  Awaiting Buyer Delivery Confirmation
+                </span>
                 <span v-if="selectedOrder.status === 'delivered'" class="escrow-paid-badge">
                   <ShieldCheck size="14" />
-                  Funds Released to Digital Wallet (Paid)
+                  Delivered &amp; Paid (Chapa Escrow Disbursed to Wallet)
                 </span>
               </div>
             </div>
@@ -402,7 +413,7 @@ import { useTheme } from '@/composables/useTheme'
 import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
-  Download, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
+  Download, Navigation, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
   CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight, ShieldCheck
 } from 'lucide-vue-next'
 
@@ -637,37 +648,13 @@ const viewDetails = (order) => {
   selectedOrder.value = { ...order }
 }
 
-const updateStatus = async (order, newStatus) => {
-  try {
-    if (order.rawId) {
-      await farmerAPI.updateOrderStatus(order.rawId, newStatus)
-    }
-    const index = orders.value.findIndex(o => o.id === order.id || o.rawId === order.rawId)
-    if (index !== -1) {
-      orders.value[index].status = newStatus
-      orders.value[index].deliveryStatus = capitalize(newStatus)
-      if (newStatus === 'delivered') {
-        orders.value[index].paymentStatus = 'paid'
-      }
-    }
-    summaryData.value = {
-      totalOrders: orders.value.length,
-      pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      confirmedOrders: orders.value.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
-      shippedOrders: orders.value.filter(o => ['shipped', 'in_transit'].includes(o.status)).length,
-      completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
-    }
-  } catch (err) {
-    console.error('Failed to update order status:', err)
-    alert(err?.response?.data?.message || 'Failed to update order status in database.')
-  }
+// RBAC: Status updates are managed exclusively via Escrow, Logistics, and Buyer confirmation
+const navigateToTransport = () => {
+  router.push('/farmer/transport-requests')
 }
 
-const updateStatusAndClose = (newStatus) => {
-  if (selectedOrder.value) {
-    updateStatus(selectedOrder.value, newStatus)
-    selectedOrder.value = null
-  }
+const navigateToTracking = () => {
+  router.push('/farmer/active-deliveries')
 }
 
 const openActions = (order) => {

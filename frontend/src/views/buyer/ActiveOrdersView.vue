@@ -443,6 +443,15 @@
 
               <!-- Quick Action Buttons -->
               <div class="mt-5 grid grid-cols-2 gap-2 pt-3 border-t border-slate-700/40">
+                <!-- Stage 4: Buyer Confirms Delivery Receipt & Releases Escrow -->
+                <button
+                  v-if="['shipped', 'in_transit'].includes(order.status)"
+                  @click="confirmDeliveryReceipt(order)"
+                  class="col-span-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/30 cursor-pointer mb-1"
+                >
+                  <ShieldCheck class="w-4 h-4" />
+                  <span>Confirm Receipt &amp; Release Escrow</span>
+                </button>
                 <button
                   @click="openTrackingModal(order)"
                   class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-blue-600/30 cursor-pointer"
@@ -870,6 +879,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useBuyerStore } from '@/stores/buyerStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
 import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 import {
@@ -925,6 +935,20 @@ onMounted(async () => {
   themeStore.initializeTheme()
   await loadOrdersData()
 })
+
+const confirmDeliveryReceipt = async (order: any) => {
+  const confirmMsg = `Confirm physical receipt and warehouse inspection for Order #${order.order_number || order.id}?\n\nThis will officially mark the order as Delivered and release the Chapa Escrow funds directly to the farmer.`
+  if (!confirm(confirmMsg)) return
+
+  try {
+    await buyerAPI.confirmDelivery(order.id)
+    alert('Delivery confirmed! Chapa Escrow payment has been successfully released to the farmer.')
+    await loadOrdersData()
+  } catch (err: any) {
+    console.error('Failed to confirm delivery:', err)
+    alert(err?.response?.data?.message || 'Failed to confirm delivery receipt.')
+  }
+}
 
 const loadOrdersData = async () => {
   loading.value = true

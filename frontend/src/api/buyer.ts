@@ -28,6 +28,8 @@ export const buyerAPI = {
 
   confirmOrderInspection: (id: number | string) => apiClient.post(`/buyer/orders/${id}/confirm-inspection`),
 
+  confirmDelivery: (id: number | string) => apiClient.post(`/buyer/orders/${id}/confirm-delivery`),
+
   // Payments
   getPayments: () => apiClient.get('/buyer/payments'),
   

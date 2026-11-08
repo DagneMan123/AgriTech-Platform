@@ -138,67 +138,35 @@ class TransportController extends Controller
     {
         try {
             $farmer = $this->getOrCreateFarmer();
-
             if (!$farmer) {
                 return response()->json(['message' => 'Farmer profile not found'], 404);
             }
 
             $transportRequest = TransportRequest::where('farmer_id', $farmer->id)->findOrFail($id);
-
             $status = $request->input('status');
-            $allowed = ['pending', 'confirmed', 'assigned', 'shipped', 'in_transit', 'delivered', 'completed', 'cancelled'];
-            if (!in_array($status, $allowed)) {
-                return response()->json(['message' => 'Invalid status provided'], 422);
+
+            // Farmers may only cancel their own pending request before assignment
+            if ($status === 'cancelled' && $transportRequest->status === 'pending') {
+                $transportRequest->update(['status' => 'cancelled']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transport request cancelled successfully.',
+                    'data' => $transportRequest->fresh(['product', 'transporter', 'vehicle'])
+                ]);
             }
-
-            // Normalize to the 4 canonical stages
-            $canonicalStatus = match ($status) {
-                'assigned' => 'confirmed',
-                'in_transit' => 'shipped',
-                'completed' => 'delivered',
-                default => $status,
-            };
-
-            $updateData = ['status' => $canonicalStatus];
-
-            // Stage 2: Confirmed - logistics manager reviews and approves request by assigning vehicle/transporter
-            if ($canonicalStatus === 'confirmed') {
-                $transporterId = $request->input('assigned_transporter_id') ?? $transportRequest->assigned_transporter_id;
-                $vehicleId = $request->input('assigned_vehicle_id') ?? $transportRequest->assigned_vehicle_id;
-
-                if (!$transporterId) {
-                    $activeTransporter = Transporter::where('is_active', true)->first();
-                    $transporterId = $activeTransporter?->id;
-                    $vehicleId = $transporterId ? Vehicle::where('transporter_id', $transporterId)->value('id') : null;
-                }
-
-                $updateData['assigned_transporter_id'] = $transporterId;
-                $updateData['assigned_vehicle_id'] = $vehicleId;
-            }
-
-            // Stage 3: Shipped - vehicle picks up produce from farm/warehouse and begins transit (Dispatch)
-            if ($canonicalStatus === 'shipped') {
-                $updateData['pickup_date'] = now()->toDateString();
-            }
-
-            // Stage 4: Delivered & Paid - receipt of goods confirmed and funds released
-            if ($canonicalStatus === 'delivered') {
-                $updateData['delivery_date'] = now()->toDateString();
-            }
-
-            $transportRequest->update($updateData);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Transport request successfully transitioned to ' . ucfirst($canonicalStatus),
-                'data' => $transportRequest->fresh(['product', 'transporter', 'vehicle']),
-            ]);
+                'success' => false,
+                'message' => 'RBAC Restriction: Farmers are strictly restricted from manually updating transport requests to Confirmed, Shipped, or Delivered. Transporter assignments and dispatch are managed exclusively by Admin and Logistics Managers.'
+            ], 403);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Transport request not found'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating transport status', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Error processing transport request', 'error' => $e->getMessage()], 500);
         }
     }
+
+    
 
     /**
      * Update a transport request

@@ -673,6 +673,11 @@ Route::middleware('auth:sanctum')->group(function () {
                 'confirmInspection'
             ]);
 
+            Route::post('/orders/{id}/confirm-delivery', [
+                BuyerOrderController::class,
+                'confirmInspection'
+            ]);
+
             Route::apiResource('/payments', BuyerPaymentController::class);
 
             Route::post('/payments/{id}/verify', [

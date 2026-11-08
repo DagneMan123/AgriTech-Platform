@@ -92,20 +92,10 @@ class OrderController extends Controller
             }
 
             $order = Order::where('farmer_id', $farmer->id)->findOrFail($id);
-
-            if ($order->status !== 'pending') {
-                return response()->json(['message' => 'Order cannot be accepted'], 403);
-            }
-
-            $order->update([
-                'status' => 'confirmed',
-                'confirmed_at' => now(),
-            ]);
-
             return response()->json([
-                'message' => 'Order accepted successfully',
-                'data' => $order->load(['items.product', 'buyer']),
-            ]);
+                'success' => false,
+                'message' => 'RBAC Restriction: Farmers are strictly restricted from manually marking orders as Confirmed. Stage 2 (Confirmed) is strictly activated when buyer payment is secured via Chapa Escrow and logistics is assigned.'
+            ], 403);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Order not found'], 404);
         } catch (\Exception $e) {
@@ -151,61 +141,13 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        try {
-            $farmer = $this->getOrCreateFarmer();
-
-            if (!$farmer) {
-                return response()->json(['message' => 'Farmer profile not found'], 404);
-            }
-
-            $order = Order::where(function ($q) use ($farmer) {
-                $q->where('farmer_id', $farmer->id)
-                  ->orWhere('farmer_id', $farmer->user_id)
-                  ->orWhereHas('items.product', function ($pq) use ($farmer) {
-                      $pq->where('farmer_id', $farmer->id)
-                         ->orWhere('farmer_id', $farmer->user_id);
-                  });
-            })->findOrFail($id);
-
-            $status = $request->input('status');
-            $allowed = ['pending', 'processing', 'confirmed', 'shipped', 'delivered', 'cancelled', 'rejected'];
-
-            if (!in_array($status, $allowed)) {
-                return response()->json(['message' => 'Invalid status provided'], 422);
-            }
-
-            $updateData = ['status' => $status];
-            if ($status === 'delivered') {
-                $updateData['delivered_at'] = now();
-                $updateData['payment_status'] = 'paid';
-                $updateData['escrow_status'] = 'disbursed';
-                $updateData['escrow_disbursed_at'] = now();
-            }
-
-            $order->update($updateData);
-
-            // Chapa Escrow Payment Release directly to farmer digital wallet upon delivery
-            if ($status === 'delivered') {
-                try {
-                    app(\App\Services\EscrowSettlementService::class)->disburseFarmerPayout($order);
-                } catch (\Exception $escrowEx) {
-                    \Log::warning('Escrow auto-disbursement warning on order delivery: ' . $escrowEx->getMessage());
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $status === 'delivered'
-                    ? 'Order delivered successfully. Chapa Escrow payment has been released to your digital wallet.'
-                    : 'Order status updated to ' . ucfirst($status) . ' successfully.',
-                'data' => $order->fresh(['items.product', 'buyer']),
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Order not found'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error updating order status', 'error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'RBAC Restriction: Farmers are strictly restricted from manually overriding, updating, or marking orders as Confirmed, Shipped, Delivered, or Paid. Status transitions are exclusively managed by Chapa Escrow verification, Logistics Managers, and Buyer delivery confirmation.'
+        ], 403);
     }
+
+    
 
     /**
      * Request delivery

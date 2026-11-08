@@ -193,16 +193,10 @@
                   <Navigation size="15" />
                   <span>View Route Telemetry</span>
                 </button>
-                <!-- Stage 4 Trigger: Mark Delivered & Release Escrow -->
-                <button
-                  @click="confirmDeliveryAndReleaseEscrow(delivery)"
-                  class="btn-action btn-deliver flex-1"
-                  style="background: #10b981; color: white; border-color: #10b981;"
-                  title="Stage 4: Verify receipt and release Chapa Escrow payout"
-                >
-                  <CheckCircle2 size="15" />
-                  <span>Mark as Delivered &amp; Release Escrow</span>
-                </button>
+                <div class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck size="14" />
+                  <span>Awaiting Buyer Delivery Confirmation</span>
+                </div>
               </div>
             </div>
           </div>
@@ -284,14 +278,10 @@
 
             <div class="modal-footer flex items-center justify-between">
               <button @click="selectedDelivery = null" class="btn-secondary">Close</button>
-              <button
-                @click="confirmDeliveryAndReleaseEscrow(selectedDelivery); selectedDelivery = null;"
-                class="btn-primary"
-                style="background: #10b981;"
-              >
-                <CheckCircle2 size="15" />
-                <span>Mark Delivered &amp; Release Escrow</span>
-              </button>
+              <div class="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20">
+                <ShieldCheck size="14" />
+                <span>Chapa Escrow releases automatically upon Buyer confirmation</span>
+              </div>
             </div>
           </div>
         </div>
@@ -403,30 +393,7 @@ const fetchDeliveries = async () => {
   }
 }
 
-// Stage 4 Transition: Mark as Delivered and Release Escrow
-const confirmDeliveryAndReleaseEscrow = async (delivery) => {
-  const confirmed = confirm(
-    `Confirm final delivery for ${delivery.id}?\n\nThis transitions to Stage 4: Delivered & Paid and releases Chapa Escrow funds directly to your digital wallet account.`
-  )
-  if (!confirmed) return
-
-  try {
-    if (delivery.sourceType === 'order') {
-      await farmerAPI.updateOrderStatus(delivery.rawId, 'delivered')
-    } else {
-      await farmerAPI.updateTransportRequestStatus(delivery.rawId, 'delivered')
-    }
-
-    alert(`Delivery confirmed! Chapa Escrow funds have been successfully released to your farmer digital wallet account.`)
-    await fetchDeliveries()
-  } catch (err) {
-    console.error('Failed to confirm delivery:', err)
-    alert(err?.response?.data?.message || 'Failed to confirm delivery and release escrow.')
-  }
-}
-
-const formatNumber = (num) => new Intl.NumberFormat().format(num || 0)
-
+// RBAC: Farmers cannot manually mark delivered. Delivery is confirmed by Buyer or Logistics verification.
 const formatDate = (date) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString('en-US', {

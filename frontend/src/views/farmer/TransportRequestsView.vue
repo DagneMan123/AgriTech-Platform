@@ -139,42 +139,11 @@
                     <button @click="viewDetails(request)" class="action-btn view-btn" title="View Full Details">
                       <Eye size="15" />
                     </button>
-
-                    <!-- Stage 1 -> Stage 2: Confirm & Assign Transporter -->
-                    <button
-                      v-if="request.status === 'pending'"
-                      @click="advanceStatus(request, 'confirmed')"
-                      class="action-btn text-blue-600 hover:text-blue-700 border-blue-200 bg-blue-50/60 dark:bg-blue-950/30"
-                      title="Stage 2: Approve & Assign Transporter"
-                    >
-                      <ShieldCheck size="15" />
-                    </button>
-
-                    <!-- Stage 2 -> Stage 3: Ship / Dispatch Produce -->
-                    <button
-                      v-if="request.status === 'confirmed'"
-                      @click="advanceStatus(request, 'shipped')"
-                      class="action-btn text-purple-600 hover:text-purple-700 border-purple-200 bg-purple-50/60 dark:bg-purple-950/30"
-                      title="Stage 3: Dispatch & Ship Produce"
-                    >
-                      <Truck size="15" />
-                    </button>
-
-                    <!-- Stage 3 -> Stage 4: Mark Delivered -->
-                    <button
-                      v-if="request.status === 'shipped' || request.status === 'in-transit'"
-                      @click="advanceStatus(request, 'delivered')"
-                      class="action-btn text-emerald-600 hover:text-emerald-700 border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/30"
-                      title="Stage 4: Confirm Arrival & Mark Delivered"
-                    >
-                      <CheckCircle2 size="15" />
-                    </button>
-
                     <button
                       v-if="request.status === 'pending'"
                       @click="editRequest(request)"
                       class="action-btn edit-btn"
-                      title="Edit Request"
+                      title="Edit Pending Request"
                     >
                       <Edit size="15" />
                     </button>
@@ -453,37 +422,17 @@
             <div class="modal-footer flex items-center justify-between">
               <button @click="selectedRequest = null" class="btn-secondary">Close</button>
               <div class="flex items-center gap-2">
-                <!-- Advance actions inside modal -->
-                <button
-                  v-if="selectedRequest.status === 'pending'"
-                  @click="advanceStatus(selectedRequest, 'confirmed'); selectedRequest = null;"
-                  class="btn-primary"
-                  style="background: #3b82f6;"
-                >
-                  <ShieldCheck size="15" />
-                  <span>Confirm &amp; Assign Transporter (Stage 2)</span>
-                </button>
-
-                <button
-                  v-if="selectedRequest.status === 'confirmed'"
-                  @click="advanceStatus(selectedRequest, 'shipped'); selectedRequest = null;"
-                  class="btn-primary"
-                  style="background: #8b5cf6;"
-                >
-                  <Truck size="15" />
-                  <span>Dispatch &amp; Ship Produce (Stage 3)</span>
-                </button>
-
-                <button
-                  v-if="selectedRequest.status === 'shipped' || selectedRequest.status === 'in-transit'"
-                  @click="advanceStatus(selectedRequest, 'delivered'); selectedRequest = null;"
-                  class="btn-primary"
-                  style="background: #10b981;"
-                >
-                  <CheckCircle2 size="15" />
-                  <span>Confirm Delivered &amp; Paid (Stage 4)</span>
-                </button>
-
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-xl border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                  {{
+                    selectedRequest.status === 'pending'
+                      ? 'Stage 1: Awaiting Admin & Logistics Assignment'
+                      : selectedRequest.status === 'confirmed'
+                        ? 'Stage 2: Transporter Assigned (Dispatch Managed by Logistics)'
+                        : selectedRequest.status === 'shipped' || selectedRequest.status === 'in-transit'
+                          ? 'Stage 3: Produce in Transit (Awaiting Delivery Confirmation)'
+                          : 'Stage 4: Delivered & Settled'
+                  }}
+                </span>
                 <button
                   v-if="selectedRequest.status === 'pending'"
                   @click="openEditFromDetails"
@@ -492,11 +441,18 @@
                   <Edit size="15" />
                   <span>Edit</span>
                 </button>
+                <button
+                  v-if="selectedRequest.status === 'pending'"
+                  @click="deleteRequest(selectedRequest); selectedRequest = null;"
+                  class="btn-secondary text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 size="15" />
+                  <span>Cancel Request</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -715,24 +671,7 @@ const saveRequest = async () => {
   }
 }
 
-const advanceStatus = async (request, newStatus) => {
-  const stageLabels = {
-    confirmed: 'Stage 2: Confirmed (Assign Transporter & Vehicle)',
-    shipped: 'Stage 3: Shipped (Dispatch produce into transit)',
-    delivered: 'Stage 4: Delivered & Paid (Verify delivery & release payment)'
-  }
-  const promptText = `Advance transport request ${request.id} to ${stageLabels[newStatus] || newStatus}?`
-  if (!confirm(promptText)) return
-
-  try {
-    await farmerAPI.updateTransportRequestStatus(request.rawId, newStatus)
-    await fetchRequests()
-  } catch (err) {
-    console.error('Failed to advance transport request status:', err)
-    alert(err?.response?.data?.message || 'Failed to advance transport request status.')
-  }
-}
-
+// RBAC: Status transitions are managed exclusively by Logistics Managers and Admin
 const deleteRequest = async (request) => {
   if (!confirm(`Are you sure you want to cancel transport request ${request.id}?`)) return
   try {
