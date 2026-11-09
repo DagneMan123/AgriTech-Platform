@@ -287,18 +287,39 @@
                     ETB {{ formatNumber(order.amount) }}
                   </td>
                   <td class="py-3.5 px-4">
-                    <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase', order.status === 'delivered' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-400 border border-blue-500/30']">
+                    <span
+                      v-if="order.is_under_review"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-500 border border-amber-500/40"
+                    >
+                      <AlertTriangle class="w-3 h-3" /> UNDER REVIEW
+                    </span>
+                    <span
+                      v-else
+                      :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase', order.status === 'delivered' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-400 border border-blue-500/30']"
+                    >
                       {{ order.status }}
                     </span>
                   </td>
                   <td class="py-3.5 px-4">
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    <span
+                      v-if="order.is_under_review"
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-rose-500/15 text-rose-500 border border-rose-500/30"
+                    >
+                      <Lock class="w-3 h-3" /> Dispute Locked
+                    </span>
+                    <span
+                      v-else
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                    >
                       <Lock class="w-3 h-3" /> Chapa Custody
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-right">
+                    <span v-if="order.is_under_review" class="text-[11px] text-amber-500 font-semibold italic">
+                      Review in progress
+                    </span>
                     <button
-                      v-if="order.inspection_ready"
+                      v-else-if="order.inspection_ready"
                       @click="triggerDisbursement(order.id)"
                       :disabled="disbursingId === order.id"
                       class="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer disabled:opacity-50"
@@ -499,7 +520,7 @@ import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Plus, Building, Star, CheckCircle2, Lock, Clock, Receipt,
-  Smartphone, Trash2, RefreshCw, X, ShieldCheck
+  Smartphone, Trash2, RefreshCw, X, ShieldCheck, AlertTriangle
 } from 'lucide-vue-next'
 
 const router = useRouter()

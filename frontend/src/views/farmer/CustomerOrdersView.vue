@@ -88,10 +88,13 @@
               <label>Order Status</label>
               <select v-model="filters.status" class="filter-select">
                 <option value="">All Status</option>
-                <option value="pending">Pending</option>
+                <option value="pending">Stage 1: Pending</option>
+                <option value="confirmed">Stage 2: Confirmed</option>
                 <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
-                <option value="delivered">Delivered</option>
+                <option value="shipped">Stage 3: Shipped</option>
+                <option value="delivered">Stage 4: Delivered &amp; Paid</option>
+                <option value="refund_requested">Refund Requested / Under Review</option>
+                <option value="refunded">Refunded</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
@@ -176,13 +179,13 @@
                   </td>
                   <td class="td-date">{{ formatDate(order.orderDate) }}</td>
                   <td class="td-status">
-                    <span class="status-badge" :class="`status-${order.status}`">
-                      {{ capitalize(order.status) }}
+                    <span class="status-badge" :class="getOrderStatusBadge(order).class">
+                      {{ getOrderStatusBadge(order).label }}
                     </span>
                   </td>
                   <td class="td-payment">
-                    <span class="payment-badge" :class="`payment-${order.paymentStatus}`">
-                      {{ capitalize(order.paymentStatus) }}
+                    <span class="payment-badge" :class="getOrderPaymentBadge(order).class">
+                      {{ getOrderPaymentBadge(order).label }}
                     </span>
                   </td>
                   <td class="td-actions">
@@ -190,7 +193,7 @@
                       <Eye size="16" />
                     </button>
                     <button
-                      v-if="['pending', 'confirmed', 'processing'].includes(order.status)"
+                      v-if="['pending', 'confirmed', 'processing'].includes(order.status) && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
                       @click="router.push('/farmer/transport-requests')"
                       class="action-btn ship-btn text-blue-600 border-blue-200"
                       title="Request Transport Dispatch"
@@ -198,7 +201,15 @@
                       <Truck size="16" />
                     </button>
                     <button
-                      v-if="['shipped', 'in_transit'].includes(order.status)"
+                      v-else-if="hasActiveRefundClaim(order)"
+                      class="action-btn locked-btn text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 cursor-not-allowed"
+                      disabled
+                      title="Fulfillment locked: Order has an active refund claim or dispute under review"
+                    >
+                      <ShieldAlert size="16" />
+                    </button>
+                    <button
+                      v-if="['shipped', 'in_transit'].includes(order.status) && !hasActiveRefundClaim(order)"
                       @click="router.push('/farmer/active-deliveries')"
                       class="action-btn deliver-btn text-purple-600 border-purple-200"
                       title="View Live Delivery Tracking"
@@ -254,6 +265,35 @@
             </div>
 
             <div class="modal-body">
+              <!-- Refund / Dispute Safety Guard Banner -->
+              <div v-if="hasActiveRefundClaim(selectedOrder)" class="claim-alert-banner">
+                <div class="banner-icon-box">
+                  <AlertTriangle size="22" class="text-amber-600 dark:text-amber-400" />
+                </div>
+                <div class="banner-text">
+                  <h4 class="banner-title">
+                    Fulfillment Locked &mdash; Active {{ String(selectedOrder.refund?.status || '').includes('dispute') ? 'Dispute' : 'Refund Claim' }} Under Review
+                  </h4>
+                  <p class="banner-desc">
+                    The customer has initiated a refund/dispute claim for this order. Transport dispatch and shipping actions are strictly disabled. Escrow funds remain held securely in Chapa Escrow Custody until resolution.
+                  </p>
+                  <div v-if="selectedOrder.refund?.reason" class="banner-claim-detail">
+                    <strong>Claim Reason:</strong> {{ selectedOrder.refund.reason }}
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="isOrderRefundSettled(selectedOrder)" class="settled-alert-banner">
+                <div class="banner-icon-box">
+                  <RotateCcw size="22" class="text-rose-600 dark:text-rose-400" />
+                </div>
+                <div class="banner-text">
+                  <h4 class="banner-title">Order Refunded</h4>
+                  <p class="banner-desc">
+                    This order has been resolved and refunded to the customer. Fulfillment is permanently closed.
+                  </p>
+                </div>
+              </div>
+
               <!-- Order Summary -->
               <div class="order-summary">
                 <div class="summary-item">
@@ -266,14 +306,14 @@
                 </div>
                 <div class="summary-item">
                   <span class="label">Status</span>
-                  <span class="status-badge" :class="`status-${selectedOrder.status}`">
-                    {{ capitalize(selectedOrder.status) }}
+                  <span class="status-badge" :class="getOrderStatusBadge(selectedOrder).class">
+                    {{ getOrderStatusBadge(selectedOrder).label }}
                   </span>
                 </div>
                 <div class="summary-item">
                   <span class="label">Payment Status</span>
-                  <span class="payment-badge" :class="`payment-${selectedOrder.paymentStatus}`">
-                    {{ capitalize(selectedOrder.paymentStatus) }}
+                  <span class="payment-badge" :class="getOrderPaymentBadge(selectedOrder).class">
+                    {{ getOrderPaymentBadge(selectedOrder).label }}
                   </span>
                 </div>
               </div>
@@ -371,7 +411,7 @@
               <button @click="selectedOrder = null" class="btn-secondary">Close</button>
               <div class="action-buttons">
                 <button
-                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status)"
+                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && !hasActiveRefundClaim(selectedOrder) && !isOrderRefundSettled(selectedOrder)"
                   @click="router.push('/farmer/transport-requests')"
                   class="btn-primary ship"
                   style="background: #3b82f6;"
@@ -379,8 +419,12 @@
                   <Truck size="14" />
                   <span>Request Transport Dispatch</span>
                 </button>
+                <div v-else-if="hasActiveRefundClaim(selectedOrder)" class="locked-action-badge">
+                  <ShieldAlert size="15" />
+                  <span>Fulfillment Locked: Claim Under Review</span>
+                </div>
                 <button
-                  v-if="['shipped', 'in_transit'].includes(selectedOrder.status)"
+                  v-if="['shipped', 'in_transit'].includes(selectedOrder.status) && !hasActiveRefundClaim(selectedOrder)"
                   @click="router.push('/farmer/active-deliveries')"
                   class="btn-primary"
                   style="background: #8b5cf6;"
@@ -388,13 +432,17 @@
                   <Navigation size="14" />
                   <span>Track Delivery Telemetry</span>
                 </button>
-                <span v-if="['shipped', 'in_transit'].includes(selectedOrder.status)" class="escrow-paid-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
+                <span v-if="['shipped', 'in_transit'].includes(selectedOrder.status) && !hasActiveRefundClaim(selectedOrder)" class="escrow-paid-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
                   <ShieldCheck size="14" />
                   Awaiting Buyer Delivery Confirmation
                 </span>
-                <span v-if="selectedOrder.status === 'delivered'" class="escrow-paid-badge">
+                <span v-if="selectedOrder.status === 'delivered' && !isOrderRefundSettled(selectedOrder) && !hasActiveRefundClaim(selectedOrder)" class="escrow-paid-badge">
                   <ShieldCheck size="14" />
                   Delivered &amp; Paid (Chapa Escrow Disbursed to Wallet)
+                </span>
+                <span v-if="isOrderRefundSettled(selectedOrder)" class="escrow-refunded-badge">
+                  <RotateCcw size="14" />
+                  Escrow Refund Settled to Buyer
                 </span>
               </div>
             </div>
@@ -414,7 +462,8 @@ import { farmerAPI } from '@/api/farmer'
 import FarmerSidebar from '@/components/Sidebar/FarmerSidebar.vue'
 import {
   Download, Navigation, AlertCircle, RotateCcw, ShoppingCart, Clock, Zap, 
-  CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight, ShieldCheck
+  CheckCircle, X, Eye, Play, Truck, MoreVertical, ChevronLeft, ChevronRight, ShieldCheck,
+  ShieldAlert, AlertTriangle
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -452,7 +501,13 @@ const filteredOrders = computed(() => {
   let result = orders.value
 
   if (filters.value.status) {
-    result = result.filter(o => o.status === filters.value.status)
+    if (filters.value.status === 'refund_requested') {
+      result = result.filter(o => hasActiveRefundClaim(o))
+    } else if (filters.value.status === 'refunded') {
+      result = result.filter(o => isOrderRefundSettled(o))
+    } else {
+      result = result.filter(o => o.status === filters.value.status && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
+    }
   }
 
   if (filters.value.customer) {
@@ -551,6 +606,8 @@ const fetchOrders = async () => {
         deliveryStatus: capitalize(raw.status || 'pending'),
         trackingNumber: raw.payment_reference || null,
         expectedDelivery: raw.delivered_at || null,
+        refund: raw.refund || null,
+        rawOrder: raw,
         items: items.length > 0 ? items : [
           {
             id: 1,
@@ -576,10 +633,10 @@ const fetchOrders = async () => {
     // Live summary counts aligned to 4 sequential stages
     summaryData.value = {
       totalOrders: orders.value.length,
-      pendingOrders: orders.value.filter(o => o.status === 'pending').length,
-      confirmedOrders: orders.value.filter(o => ['confirmed', 'processing'].includes(o.status)).length,
-      shippedOrders: orders.value.filter(o => ['shipped', 'in_transit'].includes(o.status)).length,
-      completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status)).length
+      pendingOrders: orders.value.filter(o => o.status === 'pending' && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o)).length,
+      confirmedOrders: orders.value.filter(o => ['confirmed', 'processing'].includes(o.status) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o)).length,
+      shippedOrders: orders.value.filter(o => ['shipped', 'in_transit'].includes(o.status) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o)).length,
+      completedOrders: orders.value.filter(o => ['delivered', 'completed'].includes(o.status) && !isOrderRefundSettled(o)).length
     }
   } catch (err) {
     console.error('Error fetching orders from database:', err)
@@ -604,6 +661,70 @@ const formatDate = (date) => {
 
 const capitalize = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+// Active refund or dispute claim detection (e.g. requested, under_review, pending, dispute, in_review)
+const hasActiveRefundClaim = (order) => {
+  if (!order) return false
+  if (isOrderRefundSettled(order)) return false
+  const s = String(order.status || '').toLowerCase()
+  if (['refund_requested', 'under_review', 'dispute', 'disputed'].includes(s)) return true
+  const r = order.refund || order.rawOrder?.refund
+  if (r) {
+    const rStatus = String(r.status || '').toLowerCase()
+    return ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes(rStatus)
+  }
+  return false
+}
+
+// Settled / Completed refund detection
+const isOrderRefundSettled = (order) => {
+  if (!order) return false
+  const s = String(order.status || '').toLowerCase()
+  if (s === 'refunded') return true
+  const payStatus = String(order.paymentStatus || order.payment_status || order.rawOrder?.payment_status || order.rawOrder?.payment?.status || '').toLowerCase()
+  if (payStatus === 'refunded') return true
+  const escrowStatus = String(order.escrow_status || order.rawOrder?.escrow_status || order.rawOrder?.payment?.escrow_status || '').toLowerCase()
+  if (escrowStatus === 'refunded') return true
+  const r = order.refund || order.rawOrder?.refund
+  if (r) {
+    const rStatus = String(r.status || '').toLowerCase()
+    if (['approved', 'completed', 'refunded'].includes(rStatus)) return true
+  }
+  return false
+}
+
+// Status badge styling and label resolver
+const getOrderStatusBadge = (order) => {
+  if (!order) return { label: 'Pending', class: 'status-pending' }
+  if (hasActiveRefundClaim(order)) {
+    const r = order.refund || order.rawOrder?.refund
+    const rStatus = String(r?.status || order.status || '').toLowerCase()
+    if (['dispute', 'disputed'].includes(rStatus)) {
+      return { label: 'DISPUTED', class: 'status-dispute' }
+    }
+    if (['under_review', 'in_review'].includes(rStatus)) {
+      return { label: 'UNDER REVIEW', class: 'status-under-review' }
+    }
+    return { label: 'REFUND REQUESTED', class: 'status-refund-requested' }
+  }
+  if (isOrderRefundSettled(order)) {
+    return { label: 'REFUNDED', class: 'status-refunded' }
+  }
+  return { label: capitalize(order.status), class: `status-${order.status}` }
+}
+
+// Payment badge styling and label resolver
+const getOrderPaymentBadge = (order) => {
+  if (!order) return { label: 'Pending', class: 'payment-pending' }
+  if (isOrderRefundSettled(order)) {
+    return { label: 'REFUNDED', class: 'payment-refunded' }
+  }
+  if (hasActiveRefundClaim(order)) {
+    return { label: 'DISPUTE (ESCROW HELD)', class: 'payment-disputed' }
+  }
+  const ps = String(order.paymentStatus || 'pending').toLowerCase()
+  return { label: capitalize(ps), class: `payment-${ps}` }
 }
 
 watch(filters, () => {
@@ -1145,6 +1266,189 @@ onMounted(() => {
 .status-cancelled {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.status-refund-requested,
+.status-under-review {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  font-weight: 700;
+}
+
+.status-dispute {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  font-weight: 700;
+}
+
+.status-refunded {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+}
+
+.payment-refunded {
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 700;
+}
+
+.payment-disputed {
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+  border: 1px solid #fde68a;
+}
+
+/* Claim Banners & Locked Badges */
+.claim-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #92400e;
+}
+
+.orders-layout.dark .claim-alert-banner {
+  background: rgba(120, 53, 15, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fde68a;
+}
+
+.settled-alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #991b1b;
+}
+
+.orders-layout.dark .settled-alert-banner {
+  background: rgba(127, 29, 29, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.banner-icon-box {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.banner-text {
+  flex: 1;
+}
+
+.banner-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.banner-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.banner-claim-detail {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+}
+
+.locked-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.orders-layout.dark .locked-action-badge {
+  background: rgba(120, 53, 15, 0.3);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.escrow-refunded-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.orders-layout.dark .escrow-refunded-badge {
+  background: rgba(127, 29, 29, 0.3);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.action-btn.locked-btn {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.action-btn.locked-btn:hover {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.orders-layout.dark .action-btn.locked-btn {
+  background: rgba(120, 53, 15, 0.3);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.orders-layout.dark .status-refund-requested,
+.orders-layout.dark .status-under-review {
+  background: #451a03;
+  color: #fbbf24;
+  border: 1px solid #78350f;
+}
+
+.orders-layout.dark .status-dispute,
+.orders-layout.dark .status-refunded {
+  background: #450a0a;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+}
+
+.orders-layout.dark .payment-refunded {
+  background: #450a0a;
+  color: #f87171;
+}
+
+.orders-layout.dark .payment-disputed {
+  background: #451a03;
+  color: #fbbf24;
+  border: 1px solid #78350f;
 }
 
 .payment-badge {

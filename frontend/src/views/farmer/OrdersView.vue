@@ -107,8 +107,8 @@
                 </td>
                 <td><strong>ETB {{ formatNumber(order.total_amount) }}</strong></td>
                 <td>
-                  <span class="status-badge" :class="`status-${order.status}`">
-                    {{ formatStatus(order.status) }}
+                  <span class="status-badge" :class="getStatusBadgeClass(order)">
+                    {{ formatStatus(order.status, order) }}
                   </span>
                 </td>
                 <td>{{ formatDate(order.created_at) }}</td>
@@ -117,19 +117,22 @@
                     <i class="fas fa-eye"></i> View
                   </button>
                   <button 
-                    v-if="order.status === 'pending'"
+                    v-if="order.status === 'pending' && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
                     class="btn-small btn-accept"
                     @click="acceptOrder(order.id)"
                   >
                     <i class="fas fa-check"></i> Accept
                   </button>
                   <button 
-                    v-if="order.status === 'pending'"
+                    v-if="order.status === 'pending' && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
                     class="btn-small btn-reject"
                     @click="rejectOrder(order.id)"
                   >
                     <i class="fas fa-times"></i> Reject
                   </button>
+                  <span v-else-if="hasActiveRefundClaim(order)" class="badge-locked" title="Fulfillment locked: Order is under refund/dispute review">
+                    <i class="fas fa-shield-alt"></i> Under Review
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -146,7 +149,26 @@
           </div>
 
           <div class="modal-content">
-            <div class="details-grid">
+            <!-- Refund / Dispute Safety Guard Banner -->
+          <div v-if="hasActiveRefundClaim(selectedOrder)" class="claim-alert-box">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+              <strong>Fulfillment Locked &mdash; Active Refund Claim Under Review:</strong>
+              The buyer has submitted a dispute/refund claim for this order. Transport dispatch is disabled and escrow payout is frozen until administrator resolution.
+              <div v-if="selectedOrder?.refund?.reason" class="claim-reason-text">
+                Reason: {{ selectedOrder.refund.reason }}
+              </div>
+            </div>
+          </div>
+          <div v-else-if="isOrderRefundSettled(selectedOrder)" class="settled-alert-box">
+            <i class="fas fa-undo-alt"></i>
+            <div>
+              <strong>Order Refunded:</strong>
+              This order has been resolved and refunded to the buyer. Fulfillment is permanently closed.
+            </div>
+          </div>
+
+          <div class="details-grid">
               <div class="detail-section">
                 <h3>Order Information</h3>
                 <div class="detail-row">
@@ -155,8 +177,8 @@
                 </div>
                 <div class="detail-row">
                   <span class="label">Status:</span>
-                  <span class="value status-badge" :class="`status-${selectedOrder?.status}`">
-                    {{ formatStatus(selectedOrder?.status) }}
+                  <span class="value status-badge" :class="getStatusBadgeClass(selectedOrder)">
+                    {{ formatStatus(selectedOrder?.status, selectedOrder) }}
                   </span>
                 </div>
                 <div class="detail-row">
@@ -290,11 +312,11 @@ const filteredOrders = computed(() => {
   })
 })
 
-const pendingCount = computed(() => orders.value.filter(o => o.status === 'pending').length)
-const completedCount = computed(() => orders.value.filter(o => o.status === 'completed').length)
+const pendingCount = computed(() => orders.value.filter(o => o.status === 'pending' && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o)).length)
+const completedCount = computed(() => orders.value.filter(o => o.status === 'completed' && !isOrderRefundSettled(o)).length)
 const totalRevenue = computed(() => {
   return orders.value
-    .filter(o => o.status === 'completed')
+    .filter(o => o.status === 'completed' && !isOrderRefundSettled(o))
     .reduce((sum, o) => sum + (o.total_amount || 0), 0)
 })
 
@@ -358,13 +380,64 @@ const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num || 0)
 }
 
-const formatStatus = (status) => {
+// Active refund or dispute claim detection
+const hasActiveRefundClaim = (order) => {
+  if (!order) return false
+  if (isOrderRefundSettled(order)) return false
+  const s = String(order.status || '').toLowerCase()
+  if (['refund_requested', 'under_review', 'dispute', 'disputed'].includes(s)) return true
+  const r = order.refund
+  if (r) {
+    const rStatus = String(r.status || '').toLowerCase()
+    return ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes(rStatus)
+  }
+  return false
+}
+
+// Settled refund detection
+const isOrderRefundSettled = (order) => {
+  if (!order) return false
+  const s = String(order.status || '').toLowerCase()
+  if (s === 'refunded') return true
+  const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
+  if (payStatus === 'refunded') return true
+  const r = order.refund
+  if (r) {
+    const rStatus = String(r.status || '').toLowerCase()
+    return ['approved', 'completed', 'refunded'].includes(rStatus)
+  }
+  return false
+}
+
+const getStatusBadgeClass = (order) => {
+  if (!order) return 'status-pending'
+  if (hasActiveRefundClaim(order)) {
+    const rStatus = String(order.refund?.status || order.status || '').toLowerCase()
+    if (['dispute', 'disputed'].includes(rStatus)) return 'status-dispute'
+    if (['under_review', 'in_review'].includes(rStatus)) return 'status-under-review'
+    return 'status-refund-requested'
+  }
+  if (isOrderRefundSettled(order)) return 'status-refunded'
+  return `status-${order.status}`
+}
+
+const formatStatus = (status, order) => {
+  if (order && hasActiveRefundClaim(order)) {
+    const rStatus = String(order.refund?.status || order.status || '').toLowerCase()
+    if (['dispute', 'disputed'].includes(rStatus)) return 'Disputed'
+    if (['under_review', 'in_review'].includes(rStatus)) return 'Under Review'
+    return 'Refund Requested'
+  }
+  if (order && isOrderRefundSettled(order)) {
+    return 'Refunded'
+  }
   const statuses = {
     'pending': 'Pending',
     'confirmed': 'Confirmed',
     'shipped': 'Shipped',
     'completed': 'Completed',
     'cancelled': 'Cancelled',
+    'refunded': 'Refunded',
   }
   return statuses[status] || status
 }
@@ -786,5 +859,88 @@ const handleLogout = async () => {
   .data-table { font-size: 12px; }
   .action-buttons { flex-direction: column; }
   .btn-small { width: 100%; }
+}
+
+.status-refund-requested,
+.status-under-review {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  font-weight: 700;
+}
+
+.status-dispute {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  font-weight: 700;
+}
+
+.status-refunded {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+}
+
+.badge-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.claim-alert-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.claim-alert-box i {
+  font-size: 18px;
+  margin-top: 2px;
+  color: #d97706;
+}
+
+.claim-reason-text {
+  margin-top: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+}
+
+.settled-alert-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.settled-alert-box i {
+  font-size: 18px;
+  margin-top: 2px;
+  color: #dc2626;
 }
 </style>

@@ -30,7 +30,7 @@ class OrderController extends Controller
                          ->orWhere('farmer_id', $farmer->user_id);
                   });
             })
-            ->with(['items.product', 'buyer', 'payment', 'delivery'])
+            ->with(['items.product', 'buyer', 'payment', 'delivery', 'refund'])
             ->latest();
 
             if ($request->filled('status')) {
@@ -46,7 +46,16 @@ class OrderController extends Controller
 
             // Auto-heal / synchronize payment_status from Payment record if escrow is held or completed
             $orderItems = collect($orders->items())->map(function ($order) {
-                if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
+                    || strtolower($order->payment_status ?? '') === 'refunded'
+                    || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+
+                if ($isRefundSettled) {
+                    if ($order->payment_status !== 'refunded') {
+                        $order->payment_status = 'refunded';
+                        $order->saveQuietly();
+                    }
+                } elseif ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
                     $order->payment_status = 'paid';
                     $order->saveQuietly();
                 }
@@ -89,11 +98,20 @@ class OrderController extends Controller
                          ->orWhere('farmer_id', $farmer->user_id);
                   });
             })
-            ->with(['items.product', 'buyer', 'payment', 'delivery'])
+            ->with(['items.product', 'buyer', 'payment', 'delivery', 'refund'])
             ->findOrFail($id);
 
             // Auto-heal payment_status
-            if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+            $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
+                || strtolower($order->payment_status ?? '') === 'refunded'
+                || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+
+            if ($isRefundSettled) {
+                if ($order->payment_status !== 'refunded') {
+                    $order->payment_status = 'refunded';
+                    $order->saveQuietly();
+                }
+            } elseif ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
                 $order->payment_status = 'paid';
                 $order->saveQuietly();
             }
@@ -132,7 +150,11 @@ class OrderController extends Controller
             $order = Order::where(function ($q) use ($farmer) {
                 $q->where('farmer_id', $farmer->id)
                   ->orWhere('farmer_id', $farmer->user_id);
-            })->findOrFail($id);
+            })->with('refund')->findOrFail($id);
+
+            if ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'])) {
+                return response()->json(['message' => 'Fulfillment locked: Order has an active refund claim or dispute under review.'], 403);
+            }
 
             if ($order->status !== 'pending') {
                 return response()->json(['message' => 'Order cannot be rejected'], 403);
@@ -144,7 +166,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Order rejected successfully',
-                'data' => $order->load(['items.product', 'buyer', 'payment', 'delivery']),
+                'data' => $order->load(['items.product', 'buyer', 'payment', 'delivery', 'refund']),
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Order not found'], 404);
@@ -170,6 +192,21 @@ class OrderController extends Controller
     public function requestDelivery(Request $request, Order $order)
     {
         $this->authorize('update', $order);
+
+        $order->loadMissing('refund');
+        if ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fulfillment locked: Cannot request transport dispatch for an order with an active refund claim or dispute under review.',
+            ], 422);
+        }
+
+        if (in_array(strtolower($order->status ?? ''), ['refunded', 'cancelled']) || strtolower($order->payment_status ?? '') === 'refunded') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fulfillment locked: Order is already refunded or cancelled.',
+            ], 422);
+        }
 
         $validated = $request->validate([
             'pickup_location' => 'required|string',
@@ -220,7 +257,7 @@ class OrderController extends Controller
               });
         })
         ->where('status', $status)
-        ->with(['items.product', 'buyer', 'payment', 'delivery'])
+        ->with(['items.product', 'buyer', 'payment', 'delivery', 'refund'])
         ->paginate($request->get('limit', 20));
 
         return response()->json([
@@ -244,7 +281,7 @@ class OrderController extends Controller
               ->orWhereHas('items.product', function ($pq) use ($farmerId) {
                   $pq->where('farmer_id', $farmerId);
               });
-        });
+        })->with('refund');
 
         if ($startDate && $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate]);
@@ -254,8 +291,16 @@ class OrderController extends Controller
 
         $stats = [
             'total_orders' => $orders->count(),
-            'total_revenue' => (float) $orders->whereIn('status', ['delivered', 'completed'])->sum('grand_total'),
-            'pending_orders' => $orders->whereIn('status', ['pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit'])->count(),
+            'total_revenue' => (float) $orders->filter(function ($o) {
+                if (in_array(strtolower($o->status ?? ''), ['refunded', 'cancelled']) || strtolower($o->payment_status ?? '') === 'refunded') return false;
+                if ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded'])) return false;
+                return in_array($o->status, ['delivered', 'completed']);
+            })->sum('grand_total'),
+            'pending_orders' => $orders->filter(function ($o) {
+                if (in_array(strtolower($o->status ?? ''), ['refunded', 'cancelled']) || strtolower($o->payment_status ?? '') === 'refunded') return false;
+                if ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed', 'approved', 'completed', 'refunded'])) return false;
+                return in_array($o->status, ['pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit']);
+            })->count(),
             'completed_orders' => $orders->whereIn('status', ['delivered', 'completed'])->count(),
             'paid_orders' => $orders->where('payment_status', 'paid')->count(),
             'by_status' => $orders->groupBy('status')->map->count(),

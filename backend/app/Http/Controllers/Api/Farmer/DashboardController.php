@@ -185,15 +185,27 @@ class DashboardController extends Controller
             // Count orders & sales
             try {
                 $orderQuery = $this->getFarmerOrderQuery($farmer);
-                $orders = (clone $orderQuery)->get();
+                $orders = (clone $orderQuery)->with('refund')->get();
                 
                 $summary['total_orders'] = $orders->count();
-                $summary['pending_orders'] = $orders->whereIn('status', [
-                    'pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit'
-                ])->count();
-                $summary['completed_orders'] = $orders->whereIn('status', ['delivered', 'completed'])->count();
+                $summary['pending_orders'] = $orders->filter(function ($o) {
+                    if (in_array(strtolower($o->status ?? ''), ['refunded', 'cancelled']) || strtolower($o->payment_status ?? '') === 'refunded') return false;
+                    if ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed', 'approved', 'completed', 'refunded'])) return false;
+                    return in_array($o->status, [
+                        'pending', 'placed', 'awaiting_transport', 'awaiting_delivery', 'confirmed', 'processing', 'shipped', 'in_transit'
+                    ]);
+                })->count();
+                $summary['completed_orders'] = $orders->filter(function ($o) {
+                    if (in_array(strtolower($o->status ?? ''), ['refunded', 'cancelled']) || strtolower($o->payment_status ?? '') === 'refunded') return false;
+                    if ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded'])) return false;
+                    return in_array($o->status, ['delivered', 'completed']);
+                })->count();
                 
-                $completedRevenue = $orders->whereIn('status', ['delivered', 'completed'])->sum('grand_total');
+                $completedRevenue = $orders->filter(function ($o) {
+                    if (in_array(strtolower($o->status ?? ''), ['refunded', 'cancelled']) || strtolower($o->payment_status ?? '') === 'refunded') return false;
+                    if ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded'])) return false;
+                    return in_array($o->status, ['delivered', 'completed']);
+                })->sum('grand_total');
                 $summary['total_sales'] = (float) $completedRevenue;
                 $summary['average_order_value'] = (float) ($summary['completed_orders'] > 0 ? ($completedRevenue / $summary['completed_orders']) : 0);
             } catch (\Exception $e) {
@@ -434,7 +446,7 @@ class DashboardController extends Controller
     {
         try {
             $orders = $this->getFarmerOrderQuery($farmer)
-                ->with(['buyer', 'payment'])
+                ->with(['buyer', 'payment', 'refund'])
                 ->latest()
                 ->limit($limit)
                 ->get();
@@ -444,14 +456,24 @@ class DashboardController extends Controller
                     || ($o->payment && in_array(strtolower($o->payment->status ?? ''), ['completed', 'paid']))
                     || $o->escrow_held_at !== null;
 
+                $hasActiveClaim = $o->refund && in_array(strtolower($o->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
+                $isSettledRefund = strtolower($o->status ?? '') === 'refunded'
+                    || strtolower($o->payment_status ?? '') === 'refunded'
+                    || ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+
+                $statusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? ($o->refund->status === 'dispute' ? 'disputed' : 'refund_requested') : ($o->status ?: 'pending'));
+                $paymentStatusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? 'disputed' : ($isPaid ? 'paid' : 'pending'));
+
                 return [
                     'id' => $o->id,
                     'order_number' => $o->order_number ?: ('ORD-' . str_pad($o->id, 5, '0', STR_PAD_LEFT)),
                     'customer_name' => $o->buyer?->name ?? 'Customer',
                     'grand_total' => (float) $o->grand_total,
-                    'status' => $o->status ?: 'pending',
-                    'payment_status' => $isPaid ? 'paid' : 'pending',
-                    'escrow_status' => $o->escrow_status ?: ($isPaid ? 'held' : 'pending'),
+                    'status' => $statusDisplay,
+                    'payment_status' => $paymentStatusDisplay,
+                    'escrow_status' => $hasActiveClaim ? 'held_under_review' : ($o->escrow_status ?: ($isPaid ? 'held' : 'pending')),
+                    'has_active_refund_claim' => $hasActiveClaim,
+                    'is_refund_settled' => $isSettledRefund,
                     'created_at' => $o->created_at ? $o->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d'),
                 ];
             })->toArray();

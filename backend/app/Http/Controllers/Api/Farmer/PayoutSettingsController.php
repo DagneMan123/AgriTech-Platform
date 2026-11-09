@@ -56,15 +56,18 @@ class PayoutSettingsController extends Controller
 
         $farmerId = $farmer?->id;
 
-        // Calculate live escrow balances from PostgreSQL orders
-        $ordersQuery = Order::where('farmer_id', $farmerId);
-        
+        // Calculate live escrow balances from PostgreSQL orders (strictly excluding active disputes/refunds)
         $escrowHeldBalance = (float) Order::where('farmer_id', $farmerId)
             ->where(function ($q) {
                 $q->where('escrow_status', 'held')
                   ->orWhere(function ($sq) {
                       $sq->whereNull('escrow_status')->whereIn('status', ['confirmed', 'processing', 'preparing', 'shipped', 'in_transit']);
                   });
+            })
+            ->whereNotIn('status', ['refunded', 'cancelled', 'refund_requested', 'under_review', 'dispute', 'disputed'])
+            ->whereNotIn('payment_status', ['refunded'])
+            ->whereDoesntHave('refund', function ($rq) {
+                $rq->whereIn('status', ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed', 'approved', 'completed', 'refunded']);
             })
             ->sum('subtotal');
 
@@ -75,15 +78,29 @@ class PayoutSettingsController extends Controller
                       $sq->whereNull('escrow_status')->where('status', 'delivered');
                   });
             })
+            ->whereNotIn('status', ['refunded', 'cancelled'])
+            ->whereNotIn('payment_status', ['refunded'])
+            ->whereDoesntHave('refund', function ($rq) {
+                $rq->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->sum('subtotal');
 
         $pendingInspectionCount = Order::where('farmer_id', $farmerId)
             ->where('status', 'delivered')
             ->where('escrow_status', 'held')
+            ->whereNotIn('payment_status', ['refunded'])
+            ->whereDoesntHave('refund', function ($rq) {
+                $rq->whereIn('status', ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed', 'approved', 'completed', 'refunded']);
+            })
             ->count();
 
         $completedPayoutsCount = Order::where('farmer_id', $farmerId)
             ->where('escrow_status', 'disbursed')
+            ->whereNotIn('status', ['refunded', 'cancelled'])
+            ->whereNotIn('payment_status', ['refunded'])
+            ->whereDoesntHave('refund', function ($rq) {
+                $rq->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->count();
 
         // Recent Disbursed Escrow Payouts
@@ -91,6 +108,11 @@ class PayoutSettingsController extends Controller
             ->where(function ($q) {
                 $q->where('escrow_status', 'disbursed')
                   ->orWhere('status', 'delivered');
+            })
+            ->whereNotIn('status', ['refunded', 'cancelled'])
+            ->whereNotIn('payment_status', ['refunded'])
+            ->whereDoesntHave('refund', function ($rq) {
+                $rq->whereIn('status', ['approved', 'completed', 'refunded']);
             })
             ->with(['buyer', 'items.product'])
             ->latest('escrow_disbursed_at')
@@ -120,23 +142,28 @@ class PayoutSettingsController extends Controller
             ->where(function ($q) {
                 $q->where('escrow_status', 'held')
                   ->orWhere(function ($sq) {
-                      $sq->whereNull('escrow_status')->whereIn('status', ['confirmed', 'processing', 'preparing', 'shipped', 'in_transit']);
+                      $sq->whereNull('escrow_status')->whereIn('status', ['confirmed', 'processing', 'preparing', 'shipped', 'in_transit', 'delivered']);
                   });
             })
-            ->with(['buyer', 'items.product'])
+            ->whereNotIn('status', ['refunded', 'cancelled'])
+            ->whereNotIn('payment_status', ['refunded'])
+            ->with(['buyer', 'items.product', 'refund'])
             ->latest()
             ->limit(10)
             ->get()
             ->map(function ($order) {
+                $hasActiveClaim = $order->refund && in_array(strtolower($order->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
                     'amount' => (float) $order->subtotal,
-                    'status' => $order->status,
+                    'status' => $hasActiveClaim ? 'UNDER REVIEW' : $order->status,
                     'buyer_name' => $order->buyer?->name ?: 'Commercial Buyer',
-                    'escrow_status' => 'held_in_escrow',
-                    'escrow_custody' => 'Chapa & Agricultural Escrow Custody',
-                    'inspection_ready' => $order->status === 'delivered',
+                    'escrow_status' => $hasActiveClaim ? 'held_under_review' : 'held_in_escrow',
+                    'escrow_custody' => $hasActiveClaim ? 'Locked in Dispute / Refund Review' : 'Chapa & Agricultural Escrow Custody',
+                    'inspection_ready' => !$hasActiveClaim && $order->status === 'delivered',
+                    'is_under_review' => $hasActiveClaim,
+                    'refund_claim_status' => $order->refund?->status,
                     'created_at' => $order->created_at->toIso8601String(),
                 ];
             });
@@ -296,7 +323,22 @@ class PayoutSettingsController extends Controller
         $farmer = Farmer::where('user_id', $user->id)->first() ?? Farmer::first();
 
         $order = Order::where('farmer_id', $farmer?->id)
+            ->with('refund')
             ->findOrFail($orderId);
+
+        if ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Escrow payout locked: Order has an active refund claim or dispute under review.',
+            ], 422);
+        }
+
+        if (in_array(strtolower($order->status ?? ''), ['refunded', 'cancelled']) || strtolower($order->payment_status ?? '') === 'refunded') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Escrow payout locked: Order has been refunded or cancelled.',
+            ], 422);
+        }
 
         $result = $this->escrowService->disburseFarmerPayout($order);
 
