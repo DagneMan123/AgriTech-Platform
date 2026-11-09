@@ -110,7 +110,7 @@
               </thead>
               <tbody :class="['divide-y text-xs font-semibold', darkMode ? 'divide-slate-800/80 text-slate-300' : 'divide-slate-100 text-slate-600']">
                 <tr v-for="order in filteredOrders" :key="order.id" :class="[darkMode ? 'hover:bg-[#0b0f19]/50' : 'hover:bg-slate-50/50']">
-                  <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">#{{ order.id }}</td>
+                  <td :class="['p-3 font-bold font-mono text-[11px] whitespace-nowrap', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ getOrderNumber(order) }}</td>
                   <td class="p-3">{{ getOrderFarmer(order) }}</td>
                   <td class="p-3">{{ order.items?.length || 0 }}</td>
                   <td class="p-3">
@@ -264,7 +264,7 @@
               </div>
               <div>
                 <div class="flex items-center gap-2">
-                  <h3 class="text-base font-bold m-0">Order #{{ selectedOrder.id }}</h3>
+                  <h3 class="text-base font-bold m-0 font-mono">{{ getOrderNumber(selectedOrder) }}</h3>
                   <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getStatusClass(selectedOrder.status)]">
                     {{ selectedOrder.status }}
                   </span>
@@ -642,6 +642,11 @@ async function fetchDashboardData() {
 const formatNumber = (num) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0)
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'
 const formatTabName = (tab) => ({ orders: 'My Orders', deliveries: 'Deliveries', cart: 'Shopping Cart', reviews: 'Reviews', wishlist: 'Wishlist', analytics: 'Analytics' }[tab] || tab)
+
+const getOrderNumber = (order) => {
+  if (!order) return ''
+  return order.order_number || order.tracking_id || order.tracking_number || (order.id ? `ORD-${order.id}` : '')
+}
 
 const getOrderFarmer = (order) => {
   if (!order) return 'N/A'
