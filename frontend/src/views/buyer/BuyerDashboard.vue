@@ -48,14 +48,25 @@
         <article
           v-for="card in summaryCards"
           :key="card.key"
-          :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200/60 text-slate-900 !border-l-blue-600']"
+          role="button"
+          tabindex="0"
+          @click="selectCard(card.key)"
+          @keydown.enter="selectCard(card.key)"
+          @keydown.space.prevent="selectCard(card.key)"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-start cursor-pointer select-none outline-none',
+            darkMode ? 'bg-[#131b2e] text-slate-100' : 'bg-white text-slate-900',
+            selectedCard === card.key
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
         >
           <div class="min-w-0 flex-1">
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ card.label }}</h3>
             <p class="text-xl lg:text-2xl font-black tracking-tight">{{ card.value }}</p>
             <p :class="['text-[11px] font-medium truncate mt-1', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ card.sub }}</p>
           </div>
-          <div :class="['text-lg shrink-0 pt-0.5', darkMode ? 'text-blue-400' : 'text-slate-400']">
+          <div :class="['text-lg shrink-0 pt-0.5 transition-colors', selectedCard === card.key ? 'text-blue-500 dark:text-blue-400' : (darkMode ? 'text-blue-400' : 'text-slate-400')]">
             <i :class="card.icon"></i>
           </div>
         </article>
@@ -369,6 +380,25 @@ const tabs = ['orders']
 
 const dashboard = ref(null)
 const orderFilter = ref('')
+const selectedCard = ref(null)
+
+const selectCard = (key) => {
+  if (selectedCard.value === key) {
+    selectedCard.value = null
+    if (['pending', 'completed'].includes(orderFilter.value)) {
+      orderFilter.value = ''
+    }
+  } else {
+    selectedCard.value = key
+    if (key === 'pending') {
+      orderFilter.value = 'pending'
+    } else if (key === 'completed') {
+      orderFilter.value = 'completed'
+    } else if (key === 'total') {
+      orderFilter.value = ''
+    }
+  }
+}
 const loading = ref(false)
 const error = ref('')
 const sidebarOpen = ref(false)
