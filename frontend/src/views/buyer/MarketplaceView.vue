@@ -466,12 +466,12 @@ const safeProducts = computed<Product[]>(() => {
 const getSupplierName = (product: any): string => {
   if (!product) return ''
   return (
+    product.farmer?.user?.name ||
     product.farmer_name ||
     product.supplier_name ||
-    product.farmer?.cooperative_name ||
-    product.farmer?.farm_name ||
-    product.farmer?.user?.name ||
     product.farmer?.name ||
+    product.farmer?.farm_name ||
+    product.farmer?.cooperative_name ||
     ''
   )
 }

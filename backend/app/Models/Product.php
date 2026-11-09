@@ -83,9 +83,10 @@ class Product extends Model
     {
         $farmer = $this->relationLoaded('farmer') ? $this->farmer : $this->farmer()->with('user')->first();
         if ($farmer) {
-            return $farmer->cooperative_name
+            return $farmer->user?->name
+                ?: ($farmer->name
                 ?: ($farmer->farm_name
-                ?: ($farmer->user?->name ?? ''));
+                ?: ($farmer->cooperative_name ?? '')));
         }
         return '';
     }

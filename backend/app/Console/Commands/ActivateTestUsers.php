@@ -24,7 +24,7 @@ class ActivateTestUsers extends Command
         $farmer = User::updateOrCreate(
             ['email' => 'farmer@agritech.com'],
             [
-                'name' => 'Bahir Dar Agro Farmers Cooperative',
+                'name' => 'Abebe Bikila',
                 'phone' => '251934318549',
                 'password' => Hash::make('password'),
                 'role' => 'farmer',

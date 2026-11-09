@@ -34,7 +34,7 @@ class CartController extends Controller
 
             $supplierName = '';
             if ($product) {
-                $supplierName = $product->farmer_name ?: ($product->farmer?->cooperative_name ?: ($product->farmer?->farm_name ?: ($product->farmer?->user?->name ?? '')));
+                $supplierName = $product->farmer?->user?->name ?: ($product->farmer_name ?: ($product->farmer?->name ?: ($product->farmer?->farm_name ?: ($product->farmer?->cooperative_name ?? ''))));
             }
 
             return [

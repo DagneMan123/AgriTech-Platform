@@ -16,7 +16,7 @@ class ProductSeeder extends Seeder
         $farmersData = [
             'bahir_dar' => [
                 'email' => 'farmer@agritech.com',
-                'user_name' => 'Bahir Dar Agro Farmers Cooperative',
+                'user_name' => 'Abebe Bikila',
                 'farm_name' => 'Lake Tana Basin Organic Farms',
                 'cooperative_name' => 'Lake Tana Agro Producers Union',
                 'region' => 'Amhara',
@@ -29,7 +29,7 @@ class ProductSeeder extends Seeder
             ],
             'hawassa' => [
                 'email' => 'hawassa.farmer@agritech.com',
-                'user_name' => 'Hawassa Green Valley Farmers Cooperative',
+                'user_name' => 'Almaz Ayana',
                 'farm_name' => 'Rift Valley Fresh Vegetable Farm',
                 'cooperative_name' => 'Hawassa Green Valley Farmers Cooperative',
                 'region' => 'Sidama',
@@ -42,7 +42,7 @@ class ProductSeeder extends Seeder
             ],
             'bishoftu' => [
                 'email' => 'bishoftu.farmer@agritech.com',
-                'user_name' => 'Bishoftu Fresh Horticulture Union',
+                'user_name' => 'Derartu Tulu',
                 'farm_name' => 'Bishoftu Greenhouses & Vegetable Farm',
                 'cooperative_name' => 'Bishoftu Fresh Horticulture Union',
                 'region' => 'Oromia',
@@ -55,7 +55,7 @@ class ProductSeeder extends Seeder
             ],
             'dessie' => [
                 'email' => 'dessie.farmer@agritech.com',
-                'user_name' => 'South Wollo Grain & Maize Growers Union',
+                'user_name' => 'Kenenisa Bekele',
                 'farm_name' => 'Highland Cereal & Maize Fields',
                 'cooperative_name' => 'South Wollo Grain & Maize Growers Union',
                 'region' => 'Amhara',
@@ -68,7 +68,7 @@ class ProductSeeder extends Seeder
             ],
             'adama' => [
                 'email' => 'adama.farmer@agritech.com',
-                'user_name' => 'Adama Agro Farmers Cooperative Union',
+                'user_name' => 'Tirunesh Dibaba',
                 'farm_name' => 'Central Plains Agro Farm',
                 'cooperative_name' => 'Adama Agro Farmers Cooperative Union',
                 'region' => 'Oromia',
@@ -81,7 +81,7 @@ class ProductSeeder extends Seeder
             ],
             'ambo' => [
                 'email' => 'ambo.farmer@agritech.com',
-                'user_name' => 'Ambo Cereal Producers Cooperative',
+                'user_name' => 'Haile Gebrselassie',
                 'farm_name' => 'Ambo Guder Agricultural Farm',
                 'cooperative_name' => 'Ambo Cereal Producers Cooperative',
                 'region' => 'Oromia',

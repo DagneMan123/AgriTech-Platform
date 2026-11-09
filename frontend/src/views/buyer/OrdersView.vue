@@ -1752,13 +1752,13 @@ const getOrderDeliveryFee = (order: any): number => {
 const getOrderSupplier = (order: any): string => {
   if (!order) return ''
   const candidates = [
-    order.farmer?.cooperative_name,
-    order.farmer?.farm_name,
     order.farmer?.user?.name,
     order.farmer?.name,
-    order.supplier?.name,
+    order.farmer_name,
     order.supplier_name,
-    order.farmer_name
+    order.supplier?.name,
+    order.farmer?.farm_name,
+    order.farmer?.cooperative_name
   ]
   for (const candidate of candidates) {
     if (candidate && typeof candidate === 'string') {

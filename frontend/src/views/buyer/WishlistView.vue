@@ -109,8 +109,8 @@
             <div class="p-4 flex-1 flex flex-col justify-between">
               <div>
                 <h3 class="text-sm font-bold mb-1 line-clamp-1 group-hover:text-blue-500 transition-colors capitalize">{{ item.name }}</h3>
-                <p v-if="item.farmer_name || item.supplier_name" :class="['text-xs mb-2 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                  <i class="fas fa-store text-xs"></i> {{ item.farmer_name || item.supplier_name || item.farmer?.cooperative_name || item.farmer?.farm_name || item.farmer?.user?.name || '' }}
+                <p v-if="item.farmer_name || item.supplier_name || item.farmer?.user?.name" :class="['text-xs mb-2 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  <i class="fas fa-store text-xs"></i> {{ item.farmer?.user?.name || item.farmer_name || item.supplier_name || item.farmer?.name || item.farmer?.farm_name || item.farmer?.cooperative_name || '' }}
                 </p>
                 <div class="flex items-baseline justify-between mb-4">
                   <p :class="['text-sm font-black', darkMode ? 'text-blue-400' : 'text-blue-600']">
