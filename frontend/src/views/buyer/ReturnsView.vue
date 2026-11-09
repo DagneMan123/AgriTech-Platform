@@ -281,13 +281,17 @@
           <!-- ── Stepper Resolution Timeline ── -->
           <div :class="['px-5 py-4 border-b', darkMode ? 'bg-[#0c1220] border-slate-800/80' : 'bg-slate-50/50 border-slate-100']">
             <div class="grid grid-cols-4 gap-2 relative">
-              <div class="absolute top-4 left-[12.5%] right-[12.5%] h-1 bg-slate-200 dark:bg-slate-700 -z-0 rounded-full overflow-hidden">
+              <!-- Inactive Background Track -->
+              <div class="absolute top-4 left-[12.5%] right-[12.5%] h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <!-- Active Progress Line: correctly extends to milestone node #2 when status is UNDER_REVIEW -->
                 <div
                   class="h-full bg-blue-600 transition-all duration-500 rounded-full"
-                  :style="{ width: getResolutionPercentage(item.status, item) }"
+                  :class="getProgressLineTailwindClass(item)"
+                  :style="{ width: getProgressLineWidth(item) }"
                 ></div>
               </div>
 
+              <!-- Milestone Step Nodes -->
               <div
                 v-for="step in resolutionSteps"
                 :key="step.key"
@@ -296,24 +300,16 @@
                 <div
                   :class="[
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm',
-                    isResolutionCompleted(item.status, step.key, item)
-                      ? 'bg-blue-600 text-white'
-                      : isResolutionCurrent(item.status, step.key, item)
-                        ? 'bg-blue-600 text-white ring-4 ring-blue-500/30'
-                        : darkMode
-                          ? 'bg-slate-800 text-slate-500 border border-slate-700'
-                          : 'bg-white text-slate-400 border border-slate-300'
+                    getStepNodeClass(step.step, item)
                   ]"
                 >
-                  <Check v-if="isResolutionCompleted(item.status, step.key, item)" class="w-4 h-4 stroke-[3]" />
+                  <Check v-if="isStepCompleted(step.step, item)" class="w-4 h-4 stroke-[3]" />
                   <component v-else :is="step.icon" class="w-4 h-4" />
                 </div>
                 <span
                   :class="[
-                    'text-[10px] font-semibold mt-1.5 hidden sm:block',
-                    isResolutionCompleted(item.status, step.key, item) || isResolutionCurrent(item.status, step.key, item)
-                      ? darkMode ? 'text-slate-200 font-bold' : 'text-slate-800 font-bold'
-                      : darkMode ? 'text-slate-500' : 'text-slate-400'
+                    'text-[10px] mt-1.5 hidden sm:block transition-colors',
+                    getStepLabelClass(step.step, item)
                   ]"
                 >
                   {{ step.label }}
@@ -636,12 +632,14 @@ interface ReturnClaim {
   order_id: number
   amount: number | string
   status: string
+  claim_status?: string
   reason?: string
   admin_notes?: string
   created_at: string
   order?: {
     id: number
     order_number?: string
+    status?: string
     grand_total?: number
     items?: any[]
     order_items?: any[]
@@ -679,11 +677,19 @@ const claimForm = ref({
   notes: ''
 })
 
-const resolutionSteps = [
-  { key: 'requested', label: 'Claim Submitted', icon: Clock },
-  { key: 'review', label: 'Under Review', icon: FileCheck },
-  { key: 'approved', label: 'Claim Approved', icon: CheckCircle2 },
-  { key: 'completed', label: 'Refund Disbursed', icon: BadgeDollarSign }
+interface TimelineStep {
+  step: number
+  key: string
+  statusKey: string
+  label: string
+  icon: any
+}
+
+const resolutionSteps: TimelineStep[] = [
+  { step: 1, key: 'requested', statusKey: 'CLAIM_SUBMITTED', label: 'Claim Submitted', icon: Clock },
+  { step: 2, key: 'review', statusKey: 'UNDER_REVIEW', label: 'Under Review', icon: FileCheck },
+  { step: 3, key: 'approved', statusKey: 'APPROVED', label: 'Claim Approved', icon: CheckCircle2 },
+  { step: 4, key: 'completed', statusKey: 'REFUND_DISBURSED', label: 'Refund Disbursed', icon: BadgeDollarSign }
 ]
 
 onMounted(async () => {
@@ -915,40 +921,67 @@ const resetFilters = () => {
 }
 
 // Helpers
-const getClaimStageRank = (status: string, item?: any): number => {
-  const s = String(status || item?.status || '').toLowerCase().trim()
-  const orderStatus = String(item?.order?.status || '').toLowerCase().trim()
+/**
+ * Helper function to calculate active step index (1-based) from claim/order status.
+ * Step 1: CLAIM_SUBMITTED (Claim Submitted)
+ * Step 2: UNDER_REVIEW (Under Review) -> where UNDER_REVIEW equals step 2
+ * Step 3: APPROVED (Claim Approved)
+ * Step 4: REFUND_DISBURSED (Refund Disbursed)
+ */
+const calculateActiveStepIndex = (statusOrItem: any, item?: any): number => {
+  let s = ''
+  let orderStatus = ''
 
-  // Rank 4: Fully disbursed / refunded / completed
-  if (['completed', 'refunded', 'disbursed', 'settled'].includes(s) || orderStatus === 'refunded') {
+  if (statusOrItem && typeof statusOrItem === 'object') {
+    s = String(statusOrItem.status || statusOrItem.claim_status || '').toUpperCase().trim()
+    orderStatus = String(statusOrItem.order?.status || '').toUpperCase().trim()
+  } else {
+    s = String(statusOrItem || item?.status || item?.claim_status || '').toUpperCase().trim()
+    orderStatus = String(item?.order?.status || '').toUpperCase().trim()
+  }
+
+  // Step 4: REFUND_DISBURSED / COMPLETED / REFUNDED
+  if (
+    ['REFUND_DISBURSED', 'COMPLETED', 'REFUNDED', 'DISBURSED', 'SETTLED'].includes(s) ||
+    ['REFUNDED', 'REFUND_DISBURSED', 'COMPLETED'].includes(orderStatus)
+  ) {
     return 4
   }
 
-  // Rank 3: Approved
-  if (['approved', 'claim_approved', 'accepted'].includes(s)) {
+  // Step 3: APPROVED / CLAIM_APPROVED
+  if (
+    ['APPROVED', 'CLAIM_APPROVED', 'ACCEPTED'].includes(s) ||
+    ['APPROVED', 'CLAIM_APPROVED'].includes(orderStatus)
+  ) {
     return 3
   }
 
-  // Rank 2: Under Review / Dispute
+  // Step 2: UNDER_REVIEW (where UNDER_REVIEW equals step 2)
   if (
-    ['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(s) ||
-    ['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(orderStatus)
+    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED', 'AUDITING'].includes(s) ||
+    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED'].includes(orderStatus)
   ) {
     return 2
   }
 
-  // Rank 1: Requested / Pending submission
-  if (['requested', 'pending', 'submitted', 'refund_requested', 'claim_submitted'].includes(s) || orderStatus === 'refund_requested') {
+  // Step 1: CLAIM_SUBMITTED / REQUESTED / PENDING
+  if (
+    ['CLAIM_SUBMITTED', 'REQUESTED', 'PENDING', 'SUBMITTED', 'REFUND_REQUESTED'].includes(s) ||
+    ['REFUND_REQUESTED', 'PENDING'].includes(orderStatus)
+  ) {
     return 1
   }
 
-  // Fallbacks
-  if (['rejected', 'cancelled', 'canceled'].includes(s)) {
+  if (['REJECTED', 'CANCELLED', 'CANCELED'].includes(s)) {
     return 2
   }
 
   return 1
 }
+
+const getActiveStepIndex = calculateActiveStepIndex
+const getActiveStep = calculateActiveStepIndex
+const getClaimStageRank = calculateActiveStepIndex
 
 const stepRankMap: Record<string, number> = {
   requested: 1,
@@ -957,26 +990,94 @@ const stepRankMap: Record<string, number> = {
   completed: 4
 }
 
+/**
+ * Check if a milestone step is completed
+ */
+const isStepCompleted = (stepNumber: number, itemOrStatus: any): boolean => {
+  const activeIndex = calculateActiveStepIndex(itemOrStatus)
+  if (activeIndex >= 4) return true
+  return stepNumber < activeIndex
+}
+
+/**
+ * Check if a milestone step is currently active
+ */
+const isStepActive = (stepNumber: number, itemOrStatus: any): boolean => {
+  const activeIndex = calculateActiveStepIndex(itemOrStatus)
+  if (activeIndex >= 4) return false
+  return stepNumber === activeIndex
+}
+
+/**
+ * Dynamic CSS/Tailwind class for milestone step node
+ */
+const getStepNodeClass = (stepNumber: number, itemOrStatus: any): string => {
+  if (isStepCompleted(stepNumber, itemOrStatus)) {
+    return 'bg-blue-600 text-white shadow-sm'
+  }
+  if (isStepActive(stepNumber, itemOrStatus)) {
+    return 'bg-blue-600 text-white ring-4 ring-blue-500/30 shadow-md scale-105'
+  }
+  return darkMode.value
+    ? 'bg-slate-800 text-slate-500 border border-slate-700'
+    : 'bg-white text-slate-400 border border-slate-300'
+}
+
+/**
+ * Dynamic CSS/Tailwind class for milestone step label
+ */
+const getStepLabelClass = (stepNumber: number, itemOrStatus: any): string => {
+  const activeIndex = calculateActiveStepIndex(itemOrStatus)
+  if (stepNumber <= activeIndex) {
+    return darkMode.value ? 'text-slate-100 font-bold' : 'text-slate-900 font-bold'
+  }
+  return darkMode.value ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium'
+}
+
+/**
+ * Dynamic Tailwind class for active progress line extending between nodes.
+ * When status is UNDER_REVIEW (step 2), extends to milestone node #2 (w-1/3 of the 4-node track).
+ */
+const getProgressLineTailwindClass = (itemOrStatus: any): string => {
+  const step = calculateActiveStepIndex(itemOrStatus)
+  if (step === 2) return 'w-1/3'
+  if (step === 3) return 'w-2/3'
+  if (step >= 4) return 'w-full'
+  return 'w-0'
+}
+
+/**
+ * Dynamic percentage width for active progress line extending between nodes.
+ * When status is UNDER_REVIEW (step 2), extends to milestone node #2 (33.333% of the track).
+ */
+const getProgressLineWidth = (itemOrStatus: any): string => {
+  const step = calculateActiveStepIndex(itemOrStatus)
+  if (step === 2) return '33.333%'
+  if (step === 3) return '66.666%'
+  if (step >= 4) return '100%'
+  return '0%'
+}
+
 const getStatusColor = (status: string) => {
-  const norm = (status || '').toLowerCase()
-  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) {
+  const norm = String(status || '').toLowerCase().trim()
+  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'claim_submitted'].includes(norm)) {
     return '#f59e0b'
   }
   if (['approved', 'claim_approved'].includes(norm)) return '#3b82f6'
-  if (['completed', 'refunded', 'disbursed'].includes(norm)) return '#10b981'
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) return '#10b981'
   if (['rejected', 'cancelled', 'canceled'].includes(norm)) return '#ef4444'
   return '#64748b'
 }
 
 const getStatusBadgeStyle = (status: string) => {
-  const norm = (status || '').toLowerCase()
-  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) {
+  const norm = String(status || '').toLowerCase().trim()
+  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'claim_submitted'].includes(norm)) {
     return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
   }
   if (['approved', 'claim_approved'].includes(norm)) {
     return 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
   }
-  if (['completed', 'refunded', 'disbursed'].includes(norm)) {
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) {
     return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
   }
   if (['rejected', 'cancelled', 'canceled'].includes(norm)) {
@@ -986,36 +1087,27 @@ const getStatusBadgeStyle = (status: string) => {
 }
 
 const formatStatusLabel = (status: string) => {
-  const norm = (status || '').toLowerCase()
+  const norm = String(status || '').toLowerCase().trim()
   if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) return 'Under Review'
-  if (['requested', 'pending', 'refund_requested'].includes(norm)) return 'Under Review'
+  if (['requested', 'pending', 'refund_requested', 'claim_submitted'].includes(norm)) return 'Under Review'
   if (['approved', 'claim_approved'].includes(norm)) return 'Approved'
-  if (['completed', 'refunded', 'disbursed'].includes(norm)) return 'Refunded'
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) return 'Refunded'
   if (['rejected', 'cancelled', 'canceled'].includes(norm)) return 'Rejected'
   return status || 'Pending'
 }
 
 const isResolutionCompleted = (status: string, stepKey: string, item?: any) => {
-  const currentRank = getClaimStageRank(status, item)
-  const stepRank = stepRankMap[stepKey] || 1
-  if (currentRank >= 4) return true
-  return currentRank > stepRank
+  const stepNumber = stepRankMap[stepKey] || 1
+  return isStepCompleted(stepNumber, item || status)
 }
 
 const isResolutionCurrent = (status: string, stepKey: string, item?: any) => {
-  const currentRank = getClaimStageRank(status, item)
-  const stepRank = stepRankMap[stepKey] || 1
-  if (currentRank >= 4) return false
-  return currentRank === stepRank
+  const stepNumber = stepRankMap[stepKey] || 1
+  return isStepActive(stepNumber, item || status)
 }
 
 const getResolutionPercentage = (status: string, item?: any) => {
-  const rank = getClaimStageRank(status, item)
-  if (rank <= 1) return '0%'
-  if (rank === 2) return '33.33%'
-  if (rank === 3) return '66.66%'
-  if (rank >= 4) return '100%'
-  return '0%'
+  return getProgressLineWidth(item || status)
 }
 
 const formatDateTime = (dateStr: string | null) => {
