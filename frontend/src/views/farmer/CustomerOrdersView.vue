@@ -39,7 +39,7 @@
           <!-- Stage 1: Pending -->
           <div class="summary-card cursor-pointer" @click="filters.status = 'pending'">
             <div class="card-header">
-              <h3>Stage 1: Pending</h3>
+              <h3>Pending</h3>
               <Clock size="20" class="card-icon pending-icon" />
             </div>
             <p class="card-value">{{ summaryData.pendingOrders }}</p>
@@ -49,7 +49,7 @@
           <!-- Stage 2: Confirmed -->
           <div class="summary-card cursor-pointer" @click="filters.status = 'confirmed'">
             <div class="card-header">
-              <h3>Stage 2: Confirmed</h3>
+              <h3>Confirmed</h3>
               <ShieldCheck size="20" class="card-icon" style="color: #3b82f6;" />
             </div>
             <p class="card-value">{{ summaryData.confirmedOrders }}</p>
@@ -59,7 +59,7 @@
           <!-- Stage 3: Shipped -->
           <div class="summary-card cursor-pointer" @click="filters.status = 'shipped'">
             <div class="card-header">
-              <h3>Stage 3: Shipped</h3>
+              <h3>Shipped</h3>
               <Truck size="20" class="card-icon" style="color: #8b5cf6;" />
             </div>
             <p class="card-value">{{ summaryData.shippedOrders }}</p>
@@ -69,7 +69,7 @@
           <!-- Stage 4: Delivered & Paid -->
           <div class="summary-card cursor-pointer" @click="filters.status = 'delivered'">
             <div class="card-header">
-              <h3>Stage 4: Delivered &amp; Paid</h3>
+              <h3>Delivered &amp; Paid</h3>
               <CheckCircle size="20" class="card-icon completed-icon" style="color: #10b981;" />
             </div>
             <p class="card-value">{{ summaryData.completedOrders }}</p>
@@ -88,11 +88,11 @@
               <label>Order Status</label>
               <select v-model="filters.status" class="filter-select">
                 <option value="">All Status</option>
-                <option value="pending">Stage 1: Pending</option>
-                <option value="confirmed">Stage 2: Confirmed</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="processing">Processing</option>
-                <option value="shipped">Stage 3: Shipped</option>
-                <option value="delivered">Stage 4: Delivered &amp; Paid</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered &amp; Paid</option>
                 <option value="refund_requested">Refund Requested / Under Review</option>
                 <option value="refunded">Refunded</option>
                 <option value="cancelled">Cancelled</option>
