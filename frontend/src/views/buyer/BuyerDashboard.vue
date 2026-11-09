@@ -290,42 +290,6 @@
 
           <!-- Modal Body -->
           <div class="p-6 space-y-6">
-            <!-- Active Refund Claim Banner -->
-            <div
-              v-if="hasActiveRefundClaim(selectedOrder)"
-              :class="['p-3.5 rounded-xl border flex items-center justify-between gap-3', darkMode ? 'bg-amber-950/25 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800']"
-            >
-              <div class="flex items-center gap-2.5 text-xs font-semibold">
-                <i class="fas fa-history text-amber-500 text-sm"></i>
-                <span><strong>Refund Under Review:</strong> A refund request ({{ selectedOrder.refund?.refund_number || selectedOrder.refund?.id || 'Active Claim' }}) is currently being reviewed.</span>
-              </div>
-              <router-link
-                :to="`/buyer/returns?claim_id=${selectedOrder.refund?.id || ''}&order_id=${selectedOrder.id}`"
-                class="text-xs font-bold underline shrink-0 hover:opacity-80"
-                @click="closeOrderModal"
-              >
-                Track Claim Status
-              </router-link>
-            </div>
-
-            <!-- Refund Notice Banner (if settled) -->
-            <div
-              v-else-if="isOrderRefundSettled(selectedOrder)"
-              :class="['p-3.5 rounded-xl border flex items-center justify-between gap-3', darkMode ? 'bg-rose-950/25 border-rose-900/50 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800']"
-            >
-              <div class="flex items-center gap-2.5 text-xs font-semibold">
-                <i class="fas fa-undo-alt text-rose-500 text-sm"></i>
-                <span><strong>Escrow Refund Settled:</strong> Funds have been refunded to the buyer's account.</span>
-              </div>
-              <router-link
-                to="/buyer/returns"
-                class="text-xs font-bold underline shrink-0 hover:opacity-80"
-                @click="closeOrderModal"
-              >
-                Returns &amp; Refunds
-              </router-link>
-            </div>
-
             <!-- Logistics & Farmer Info Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Farmer / Supplier Info -->
@@ -684,9 +648,6 @@ const isOrderRefunded = (order) => {
   return isOrderRefundSettled(order) || hasActiveRefundClaim(order)
 }
 
-const inProgressClaimsCount = computed(() => {
-  return (dashboard.value?.recent_orders || []).filter(hasActiveRefundClaim).length
-})
 
 const filteredOrders = computed(() => {
   const orders = dashboard.value?.recent_orders || []

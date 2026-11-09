@@ -903,44 +903,6 @@
                 ETB {{ formatNumber(getOrderAmount(activeOrderForDetails)) }}
               </span>
             </div>
-            <!-- Active Claim Notice in Modal -->
-            <div
-              v-if="hasActiveRefundClaim(activeOrderForDetails)"
-              class="p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-amber-500/10 border-amber-500/30 text-amber-300 text-xs"
-            >
-              <div class="flex items-center gap-2">
-                <RotateCcw class="w-4 h-4 text-amber-400 shrink-0" />
-                <span>
-                  <strong>Claim Under Review:</strong> A refund claim has been submitted for this order. Produce dispatch is on hold.
-                </span>
-              </div>
-              <router-link
-                :to="getRefundTrackingUrl(activeOrderForDetails)"
-                class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg font-bold whitespace-nowrap transition-colors"
-              >
-                View Claim Status
-              </router-link>
-            </div>
-
-            <!-- Refund Settlement Notice in Modal -->
-            <div
-              v-else-if="isOrderRefundSettled(activeOrderForDetails)"
-              class="p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs"
-            >
-              <div class="flex items-center gap-2">
-                <RotateCcw class="w-4 h-4 text-rose-400 shrink-0" />
-                <span>
-                  <strong>Escrow Refund Settled:</strong> Funds for this order have been returned via Chapa Escrow.
-                </span>
-              </div>
-              <router-link
-                :to="getRefundTrackingUrl(activeOrderForDetails)"
-                class="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg font-bold whitespace-nowrap transition-colors"
-              >
-                View Returns
-              </router-link>
-            </div>
-
             <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
               <span>Payment Status:</span>
               <span
@@ -1912,7 +1874,6 @@ watch([searchQuery, selectedStatus, selectedDateRange, sortBy], () => {
 const totalOrders = computed(() => ordersArray.value.length)
 const activeOrdersCount = computed(() => ordersArray.value.filter(isOrderActive).length)
 const pastOrdersCount = computed(() => ordersArray.value.filter(isOrderPast).length)
-const inProgressClaimsCount = computed(() => ordersArray.value.filter(hasActiveRefundClaim).length)
 const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)
 const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)
 const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)

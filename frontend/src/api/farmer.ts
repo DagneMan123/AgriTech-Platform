@@ -68,6 +68,7 @@ export const farmerAPI = {
 
   // Orders
   getOrders: (params?: any) => apiClient.get('/farmer/orders', { params }),
+  getFarmerOrders: (params?: any) => apiClient.get('/farmer/orders', { params }),
   
   getOrder: (id: number) => apiClient.get(`/farmer/orders/${id}`),
   

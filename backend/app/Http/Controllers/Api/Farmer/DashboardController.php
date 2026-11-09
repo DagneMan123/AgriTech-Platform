@@ -482,4 +482,12 @@ class DashboardController extends Controller
             return [];
         }
     }
+
+    /**
+     * Get farmer customer orders via dashboard orders endpoint.
+     */
+    public function customerOrders(Request $request)
+    {
+        return app(\App\Http\Controllers\Api\Farmer\OrderController::class)->index($request);
+    }
 }

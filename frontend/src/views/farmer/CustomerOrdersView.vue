@@ -1297,7 +1297,9 @@ onMounted(() => {
 }
 
 .status-refund-requested,
-.status-under-review {
+.status-refund_requested,
+.status-under-review,
+.status-under_review {
   background: #fef3c7;
   color: #b45309;
   border: 1px solid #fde68a;
@@ -1455,7 +1457,9 @@ onMounted(() => {
 }
 
 .orders-layout.dark .status-refund-requested,
-.orders-layout.dark .status-under-review {
+.orders-layout.dark .status-refund_requested,
+.orders-layout.dark .status-under-review,
+.orders-layout.dark .status-under_review {
   background: #451a03;
   color: #fbbf24;
   border: 1px solid #78350f;
