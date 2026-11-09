@@ -244,6 +244,162 @@
         </div>
       </section>
 
+      <!-- ORDER DETAILS MODAL -->
+      <div
+        v-if="showOrderModal && selectedOrder"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+        @click.self="closeOrderModal"
+      >
+        <div
+          :class="[
+            'w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl flex flex-col',
+            darkMode ? 'bg-[#0f172a] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+          ]"
+        >
+          <!-- Modal Header -->
+          <div :class="['px-6 py-4 border-b flex items-center justify-between sticky top-0 z-10 backdrop-blur-md', darkMode ? 'bg-[#0f172a]/90 border-slate-800' : 'bg-white/90 border-slate-100']">
+            <div class="flex items-center gap-3">
+              <div :class="['w-10 h-10 rounded-xl flex items-center justify-center text-lg', selectedOrder.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500']">
+                <i :class="selectedOrder.status === 'delivered' ? 'fas fa-check-circle' : 'fas fa-receipt'"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-base font-bold m-0">Order #{{ selectedOrder.id }}</h3>
+                  <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getStatusClass(selectedOrder.status)]">
+                    {{ selectedOrder.status }}
+                  </span>
+                  <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider', getOrderPaymentBadge(selectedOrder).class]">
+                    {{ getOrderPaymentBadge(selectedOrder).label }}
+                  </span>
+                </div>
+                <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                  Placed on {{ formatDate(selectedOrder.created_at) }}
+                  <span v-if="selectedOrder.order_number" class="ml-2 font-mono text-[11px] opacity-75">• {{ selectedOrder.order_number }}</span>
+                </p>
+              </div>
+            </div>
+            <button
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-colors cursor-pointer"
+              @click="closeOrderModal"
+              title="Close"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-6">
+            <!-- Logistics & Farmer Info Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Farmer / Supplier Info -->
+              <div :class="['p-4 rounded-xl border', darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200/80']">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-user-tie text-emerald-500 text-xs"></i>
+                  <span :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Farmers / Producers</span>
+                </div>
+                <p class="font-bold text-sm m-0 text-emerald-500">{{ getOrderFarmer(selectedOrder) }}</p>
+                <p v-if="selectedOrder.farmer?.farm_name && selectedOrder.farmer?.farm_name !== getOrderFarmer(selectedOrder)" :class="['text-xs mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
+                  {{ selectedOrder.farmer.farm_name }}
+                </p>
+                <div v-if="selectedOrder.farmer?.phone_number || selectedOrder.farmer?.user?.phone" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+                  <i class="fas fa-phone text-[10px]"></i>
+                  <span>{{ selectedOrder.farmer?.phone_number || selectedOrder.farmer?.user?.phone }}</span>
+                </div>
+              </div>
+
+              <!-- Delivery Destination -->
+              <div :class="['p-4 rounded-xl border', darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200/80']">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-map-marker-alt text-blue-500 text-xs"></i>
+                  <span :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivery Destination</span>
+                </div>
+                <p class="font-semibold text-xs leading-relaxed m-0 break-words whitespace-normal">{{ getOrderDeliveryAddress(selectedOrder) }}</p>
+                <div v-if="selectedOrder.delivery_phone || selectedOrder.phone" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+                  <i class="fas fa-phone text-[10px]"></i>
+                  <span>Recipient: {{ selectedOrder.delivery_phone || selectedOrder.phone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items Ordered List -->
+            <div>
+              <h4 :class="['text-xs font-bold uppercase tracking-wider mb-3', darkMode ? 'text-slate-400' : 'text-slate-600']">
+                Items In This Order ({{ getOrderItems(selectedOrder).length }})
+              </h4>
+              <div :class="['divide-y rounded-xl border overflow-hidden', darkMode ? 'divide-slate-800 border-slate-800 bg-slate-900/30' : 'divide-slate-100 border-slate-200 bg-white']">
+                <div
+                  v-for="(item, idx) in getOrderItems(selectedOrder)"
+                  :key="item.id || idx"
+                  class="p-3.5 flex items-center justify-between gap-4"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div :class="['w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs shrink-0', darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700']">
+                      {{ idx + 1 }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-bold text-xs m-0 capitalize truncate">{{ item.product?.name || item.name || 'Agricultural Item' }}</p>
+                      <p :class="['text-[11px] m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                        {{ item.quantity || 1 }} {{ item.product?.quantity_unit || item.product?.unit || 'kg' }} @ ETB {{ formatNumber(item.price || item.unit_price) }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <span class="font-bold text-xs">ETB {{ formatNumber(item.subtotal || item.total_price || ((item.quantity || 1) * (item.price || 0))) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Price & Settlement Summary -->
+            <div :class="['p-4 rounded-xl border space-y-2', darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200/80']">
+              <div class="flex justify-between items-center text-xs">
+                <span :class="darkMode ? 'text-slate-400' : 'text-slate-600'">Items Subtotal</span>
+                <span class="font-semibold">ETB {{ formatNumber(selectedOrder.subtotal || (selectedOrder.total_amount || selectedOrder.grand_total) - (selectedOrder.delivery_fee || 0)) }}</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span :class="darkMode ? 'text-slate-400' : 'text-slate-600'">Delivery & Transport Fee</span>
+                <span class="font-semibold">ETB {{ formatNumber(selectedOrder.delivery_fee || 0) }}</span>
+              </div>
+              <div v-if="selectedOrder.discount && Number(selectedOrder.discount) > 0" class="flex justify-between items-center text-xs text-emerald-500">
+                <span>Promotional Discount</span>
+                <span class="font-semibold">- ETB {{ formatNumber(selectedOrder.discount) }}</span>
+              </div>
+              <div :class="['pt-2 border-t flex justify-between items-center text-sm font-bold', darkMode ? 'border-slate-800 text-slate-100' : 'border-slate-200 text-slate-900']">
+                <span>Total Paid / Payable</span>
+                <span class="text-blue-500">ETB {{ formatNumber(selectedOrder.grand_total || selectedOrder.total_amount) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div :class="['px-6 py-4 border-t flex items-center justify-between gap-3', darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-100']">
+            <button
+              class="px-4 py-2 text-xs font-bold rounded-xl border transition-colors cursor-pointer flex items-center gap-2"
+              :class="darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'"
+              @click="printOrderReceipt"
+            >
+              <i class="fas fa-print"></i> Print Receipt
+            </button>
+            <div class="flex items-center gap-2">
+              <button
+                class="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm shadow-blue-600/30 cursor-pointer flex items-center gap-2"
+                @click="goToFullOrders(selectedOrder)"
+              >
+                <span>Full Orders Page</span>
+                <i class="fas fa-arrow-right text-[10px]"></i>
+              </button>
+              <button
+                class="px-4 py-2 text-xs font-bold rounded-xl border transition-colors cursor-pointer"
+                :class="darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-400' : 'border-slate-200 hover:bg-slate-100 text-slate-600'"
+                @click="closeOrderModal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
@@ -505,8 +661,58 @@ const getOrderFarmer = (order) => {
   return 'N/A'
 }
 
+const selectedOrder = ref(null)
+const showOrderModal = ref(false)
+
+const viewOrder = (order) => {
+  if (!order) return
+  selectedOrder.value = order
+  showOrderModal.value = true
+}
+
+const closeOrderModal = () => {
+  showOrderModal.value = false
+  selectedOrder.value = null
+}
+
+const goToFullOrders = (order) => {
+  const orderId = order?.id
+  closeOrderModal()
+  if (orderId) {
+    router.push(`/buyer/orders/${orderId}`)
+  } else {
+    router.push('/buyer/orders')
+  }
+}
+
+const printOrderReceipt = () => {
+  window.print()
+}
+
+const getOrderItems = (order) => {
+  if (!order) return []
+  return order.items || order.order_items || []
+}
+
+const getOrderDeliveryAddress = (order) => {
+  if (!order) return 'N/A'
+  return order.delivery_address || order.destination || order.delivery?.to_location || 'N/A'
+}
+
+const getOrderPaymentBadge = (order) => {
+  if (!order) return { label: 'PENDING', class: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }
+  const isPaid = order.payment_status === 'paid' || order.payment?.status === 'completed' || order.payment?.status === 'paid'
+  if (isPaid) {
+    const escrow = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
+    if (escrow === 'disbursed') {
+      return { label: 'PAID (SETTLED)', class: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
+    }
+    return { label: 'PAID (ESCROW)', class: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
+  }
+  return { label: 'PENDING', class: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }
+}
+
 const handleLogout = async () => { await auth.logout(); router.push('/login'); }
-const viewOrder = (order) => router.push(`/buyer/orders/${order.id}`)
 const trackDelivery = (delivery) => router.push(`/buyer/deliveries/${delivery.id}/track`)
 </script>
 

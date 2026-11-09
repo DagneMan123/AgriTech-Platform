@@ -458,6 +458,12 @@ const routes: RouteRecordRaw[] = [
         redirect: { name: 'buyer-orders', query: { tab: 'past' } }
       },
       {
+        path: 'orders/:id',
+        name: 'buyer-order-details',
+        component: BuyerOrdersView,
+        meta: { requiresAuth: true, requiredRole: 'buyer', title: 'Order Details' }
+      },
+      {
         path: 'returns',
         name: 'buyer-returns',
         component: BuyerReturnsView,

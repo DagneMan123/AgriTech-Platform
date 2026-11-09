@@ -1590,6 +1590,24 @@ onMounted(async () => {
   }
 
   await refreshOrders()
+
+  // Auto-open order details if order id is in route params or query
+  const targetId = route.params.id || route.query.orderId
+  if (targetId) {
+    const matched = orders.value.find((o: any) => String(o.id) === String(targetId) || String(o.order_number) === String(targetId))
+    if (matched) {
+      openDetailsModal(matched)
+    }
+  }
+})
+
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    const matched = orders.value.find((o: any) => String(o.id) === String(newId) || String(o.order_number) === String(newId))
+    if (matched) {
+      openDetailsModal(matched)
+    }
+  }
 })
 
 watch(() => route.query.tab, (newTab) => {
