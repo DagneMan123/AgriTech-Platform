@@ -112,44 +112,6 @@
         </button>
       </div>
 
-      <!-- ── In-Progress Refund / Dispute Claims Alert Banner ── -->
-      <div
-        v-if="inProgressClaimsCount > 0"
-        :class="[
-          'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 mb-6 rounded-2xl border transition-all shadow-2xs',
-          darkMode ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-amber-50/90 border-amber-300 text-amber-900'
-        ]"
-      >
-        <div class="flex items-center gap-3">
-          <div :class="['p-2.5 rounded-xl shrink-0', darkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700']">
-            <RotateCcw class="w-5 h-5" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h4 class="text-xs sm:text-sm font-bold m-0">
-                {{ inProgressClaimsCount }} In-Progress Refund / Dispute {{ inProgressClaimsCount === 1 ? 'Claim' : 'Claims' }} Under Review
-              </h4>
-              <span :class="['px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider', darkMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-200 text-amber-800 border border-amber-300']">
-                Isolated From Active Orders
-              </span>
-            </div>
-            <p :class="['text-xs mt-1 m-0 leading-relaxed', darkMode ? 'text-amber-300/80' : 'text-amber-700']">
-              Orders with active refund requests or dispute claims are segregated from live fulfillment and tracked in the Returns &amp; Refunds portal.
-            </p>
-          </div>
-        </div>
-        <router-link
-          to="/buyer/returns"
-          :class="[
-            'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs',
-            darkMode ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-amber-600 text-white hover:bg-amber-700'
-          ]"
-        >
-          <span>Track in Returns Portal</span>
-          <ExternalLink class="w-4 h-4" />
-        </router-link>
-      </div>
-
       <!-- ── Unified Main Content Navigation Tabs ── -->
       <nav
         aria-label="Order Lifecycle Categories"
