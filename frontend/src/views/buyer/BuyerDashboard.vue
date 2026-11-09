@@ -493,15 +493,16 @@ const createOrderStatusChart = () => {
     const ctx = statusChart.value.getContext('2d')
     const completed = Number(dashboard.value?.summary?.completed_orders ?? 0)
     const pending = Number(dashboard.value?.summary?.pending_orders ?? 0)
+    const underReview = Number(dashboard.value?.summary?.in_progress_claims ?? 0)
     const cancelled = Number(dashboard.value?.summary?.cancelled_orders ?? 0)
     
     orderStatusChart = new window.Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Completed', 'Pending', 'Cancelled'],
+        labels: ['Completed', 'Pending', 'Under Review', 'Cancelled'],
         datasets: [{
-          data: [completed, pending, cancelled],
-          backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+          data: [completed, pending, underReview, cancelled],
+          backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
           borderWidth: 3
         }]
       },
@@ -521,7 +522,44 @@ const createCategoryChart = () => {
     if (purchaseCategoryChart) purchaseCategoryChart.destroy()
     const ctx = categoryChart.value.getContext('2d')
     const categories = ['Cereals & Grains', 'Coffee & Teas', 'Vegetables', 'Fruits', 'Dairy', 'Livestock']
-    const purchaseData = [28, 45, 32, 38, 22, 15]
+    const rawCategories = dashboard.value?.purchases_by_category || []
+    
+    // Map each of the 6 fixed categories to the buyer's real purchase count from database
+    const purchaseData = categories.map((cat) => {
+      const catLower = cat.toLowerCase()
+      let total = 0
+      for (const item of rawCategories) {
+        const itemCat = String(item.category || '').toLowerCase()
+        if (catLower.includes('cereal') || catLower.includes('grain')) {
+          if (itemCat.includes('cereal') || itemCat.includes('creal') || itemCat.includes('grain') || itemCat.includes('wheat') || itemCat.includes('maize') || itemCat.includes('teff') || itemCat.includes('corn')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (catLower.includes('coffee') || catLower.includes('tea')) {
+          if (itemCat.includes('coffee') || itemCat.includes('tea') || itemCat.includes('beverage')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (catLower.includes('vegetable')) {
+          if (itemCat.includes('vegetable') || itemCat.includes('tomato') || itemCat.includes('potato') || itemCat.includes('onion')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (catLower.includes('fruit')) {
+          if (itemCat.includes('fruit') || itemCat.includes('mango') || itemCat.includes('banana') || itemCat.includes('avocado')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (catLower.includes('dairy')) {
+          if (itemCat.includes('dairy') || itemCat.includes('milk') || itemCat.includes('butter') || itemCat.includes('cheese')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (catLower.includes('livestock')) {
+          if (itemCat.includes('livestock') || itemCat.includes('cattle') || itemCat.includes('sheep') || itemCat.includes('goat') || itemCat.includes('poultry')) {
+            total += Number(item.count || item.purchase_count || 0)
+          }
+        } else if (itemCat.includes(catLower)) {
+          total += Number(item.count || item.purchase_count || 0)
+        }
+      }
+      return total
+    })
     
     purchaseCategoryChart = new window.Chart(ctx, {
       type: 'bar',

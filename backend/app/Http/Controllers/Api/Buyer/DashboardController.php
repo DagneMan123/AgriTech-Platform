@@ -219,27 +219,36 @@ class DashboardController extends Controller
             $purchasesByCategory = DB::table('order_items')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
-                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
                 ->where('orders.buyer_id', $buyer->id)
                 ->where(function ($q) {
                     $q->whereIn('orders.payment_status', ['paid', 'completed'])
                       ->orWhereIn('orders.escrow_status', ['held', 'disbursed'])
                       ->orWhereNotNull('orders.escrow_held_at')
-                      ->orWhereIn('orders.status', ['delivered', 'completed']);
+                      ->orWhereIn('orders.status', ['delivered', 'completed', 'pending', 'refund_requested']);
                 })
-                ->groupBy('categories.id', 'categories.name')
-                ->selectRaw('categories.name as category, COUNT(DISTINCT order_items.id) as purchase_count, SUM(order_items.quantity) as total_quantity, SUM(order_items.subtotal) as total_spent')
+                ->where(function ($q) {
+                    $q->whereNull('orders.status')
+                      ->orWhere('orders.status', '!=', 'cancelled');
+                })
+                ->groupBy('products.category')
+                ->selectRaw("COALESCE(products.category, 'Agricultural Products') as category, COUNT(DISTINCT order_items.id) as purchase_count, SUM(order_items.quantity) as total_quantity, SUM(order_items.subtotal) as total_spent")
                 ->get()
                 ->map(function($item) {
+                    $cat = trim($item->category);
+                    if (strtolower($cat) === 'creals' || strtolower($cat) === 'cereals' || strtolower($cat) === 'grains') {
+                        $cat = 'Cereals & Grains';
+                    } else {
+                        $cat = ucwords($cat);
+                    }
                     return [
-                        'category' => $item->category ?? 'Uncategorized',
-                        'count' => $item->purchase_count,
-                        'quantity' => $item->total_quantity,
-                        'spent' => $item->total_spent,
+                        'category' => $cat,
+                        'count' => (int) $item->purchase_count,
+                        'quantity' => (float) $item->total_quantity,
+                        'spent' => (float) $item->total_spent,
                     ];
                 });
         } catch (\Exception $e) {
-            // If categories table doesn't exist or query fails, return empty array
+            // If query fails, return empty array
             $purchasesByCategory = collect([]);
         }
 
