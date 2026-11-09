@@ -281,11 +281,12 @@
           <!-- ── Stepper Resolution Timeline ── -->
           <div :class="['px-5 py-4 border-b', darkMode ? 'bg-[#0c1220] border-slate-800/80' : 'bg-slate-50/50 border-slate-100']">
             <div class="grid grid-cols-4 gap-2 relative">
-              <div class="absolute top-4 left-[12%] right-[12%] h-1 bg-slate-200 dark:bg-slate-700 -z-0"></div>
-              <div
-                class="absolute top-4 left-[12%] h-1 bg-blue-600 transition-all duration-500 -z-0"
-                :style="{ width: getResolutionPercentage(item.status) }"
-              ></div>
+              <div class="absolute top-4 left-[12.5%] right-[12.5%] h-1 bg-slate-200 dark:bg-slate-700 -z-0 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-blue-600 transition-all duration-500 rounded-full"
+                  :style="{ width: getResolutionPercentage(item.status, item) }"
+                ></div>
+              </div>
 
               <div
                 v-for="step in resolutionSteps"
@@ -295,22 +296,22 @@
                 <div
                   :class="[
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm',
-                    isResolutionCompleted(item.status, step.key)
+                    isResolutionCompleted(item.status, step.key, item)
                       ? 'bg-blue-600 text-white'
-                      : isResolutionCurrent(item.status, step.key)
+                      : isResolutionCurrent(item.status, step.key, item)
                         ? 'bg-blue-600 text-white ring-4 ring-blue-500/30'
                         : darkMode
                           ? 'bg-slate-800 text-slate-500 border border-slate-700'
                           : 'bg-white text-slate-400 border border-slate-300'
                   ]"
                 >
-                  <Check v-if="isResolutionCompleted(item.status, step.key)" class="w-4 h-4 stroke-[3]" />
+                  <Check v-if="isResolutionCompleted(item.status, step.key, item)" class="w-4 h-4 stroke-[3]" />
                   <component v-else :is="step.icon" class="w-4 h-4" />
                 </div>
                 <span
                   :class="[
                     'text-[10px] font-semibold mt-1.5 hidden sm:block',
-                    isResolutionCompleted(item.status, step.key) || isResolutionCurrent(item.status, step.key)
+                    isResolutionCompleted(item.status, step.key, item) || isResolutionCurrent(item.status, step.key, item)
                       ? darkMode ? 'text-slate-200 font-bold' : 'text-slate-800 font-bold'
                       : darkMode ? 'text-slate-500' : 'text-slate-400'
                   ]"
@@ -914,63 +915,106 @@ const resetFilters = () => {
 }
 
 // Helpers
+const getClaimStageRank = (status: string, item?: any): number => {
+  const s = String(status || item?.status || '').toLowerCase().trim()
+  const orderStatus = String(item?.order?.status || '').toLowerCase().trim()
+
+  // Rank 4: Fully disbursed / refunded / completed
+  if (['completed', 'refunded', 'disbursed', 'settled'].includes(s) || orderStatus === 'refunded') {
+    return 4
+  }
+
+  // Rank 3: Approved
+  if (['approved', 'claim_approved', 'accepted'].includes(s)) {
+    return 3
+  }
+
+  // Rank 2: Under Review / Dispute
+  if (
+    ['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(s) ||
+    ['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(orderStatus)
+  ) {
+    return 2
+  }
+
+  // Rank 1: Requested / Pending submission
+  if (['requested', 'pending', 'submitted', 'refund_requested', 'claim_submitted'].includes(s) || orderStatus === 'refund_requested') {
+    return 1
+  }
+
+  // Fallbacks
+  if (['rejected', 'cancelled', 'canceled'].includes(s)) {
+    return 2
+  }
+
+  return 1
+}
+
+const stepRankMap: Record<string, number> = {
+  requested: 1,
+  review: 2,
+  approved: 3,
+  completed: 4
+}
+
 const getStatusColor = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (norm === 'requested') return '#f59e0b'
-  if (norm === 'approved') return '#3b82f6'
-  if (norm === 'completed') return '#10b981'
-  if (norm === 'rejected') return '#ef4444'
+  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) {
+    return '#f59e0b'
+  }
+  if (['approved', 'claim_approved'].includes(norm)) return '#3b82f6'
+  if (['completed', 'refunded', 'disbursed'].includes(norm)) return '#10b981'
+  if (['rejected', 'cancelled', 'canceled'].includes(norm)) return '#ef4444'
   return '#64748b'
 }
 
 const getStatusBadgeStyle = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (norm === 'requested') return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-  if (norm === 'approved') return 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
-  if (norm === 'completed') return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-  if (norm === 'rejected') return 'bg-red-500/15 text-red-400 border border-red-500/30'
+  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) {
+    return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+  }
+  if (['approved', 'claim_approved'].includes(norm)) {
+    return 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
+  }
+  if (['completed', 'refunded', 'disbursed'].includes(norm)) {
+    return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+  }
+  if (['rejected', 'cancelled', 'canceled'].includes(norm)) {
+    return 'bg-red-500/15 text-red-400 border border-red-500/30'
+  }
   return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
 }
 
 const formatStatusLabel = (status: string) => {
   const norm = (status || '').toLowerCase()
-  if (norm === 'requested') return 'Under Review'
-  if (norm === 'approved') return 'Approved'
-  if (norm === 'completed') return 'Refunded'
-  if (norm === 'rejected') return 'Rejected'
+  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) return 'Under Review'
+  if (['requested', 'pending', 'refund_requested'].includes(norm)) return 'Under Review'
+  if (['approved', 'claim_approved'].includes(norm)) return 'Approved'
+  if (['completed', 'refunded', 'disbursed'].includes(norm)) return 'Refunded'
+  if (['rejected', 'cancelled', 'canceled'].includes(norm)) return 'Rejected'
   return status || 'Pending'
 }
 
-const isResolutionCompleted = (status: string, stepKey: string) => {
-  const norm = (status || '').toLowerCase()
-  const map: Record<string, number> = {
-    requested: 1,
-    approved: 3,
-    completed: 4,
-    rejected: 2
-  }
-  const stepMap: Record<string, number> = {
-    requested: 1,
-    review: 2,
-    approved: 3,
-    completed: 4
-  }
-  return (map[norm] || 1) > stepMap[stepKey]
+const isResolutionCompleted = (status: string, stepKey: string, item?: any) => {
+  const currentRank = getClaimStageRank(status, item)
+  const stepRank = stepRankMap[stepKey] || 1
+  if (currentRank >= 4) return true
+  return currentRank > stepRank
 }
 
-const isResolutionCurrent = (status: string, stepKey: string) => {
-  const norm = (status || '').toLowerCase()
-  if (stepKey === 'requested' && norm === 'requested') return true
-  if (stepKey === 'approved' && norm === 'approved') return true
-  if (stepKey === 'completed' && norm === 'completed') return true
-  return false
+const isResolutionCurrent = (status: string, stepKey: string, item?: any) => {
+  const currentRank = getClaimStageRank(status, item)
+  const stepRank = stepRankMap[stepKey] || 1
+  if (currentRank >= 4) return false
+  return currentRank === stepRank
 }
 
-const getResolutionPercentage = (status: string) => {
-  const norm = (status || '').toLowerCase()
-  if (norm === 'requested') return '15%'
-  if (norm === 'approved') return '60%'
-  if (norm === 'completed') return '100%'
+const getResolutionPercentage = (status: string, item?: any) => {
+  const rank = getClaimStageRank(status, item)
+  if (rank <= 1) return '0%'
+  if (rank === 2) return '33.33%'
+  if (rank === 3) return '66.66%'
+  if (rank >= 4) return '100%'
   return '0%'
 }
 
