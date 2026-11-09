@@ -185,29 +185,6 @@
             {{ totalOrders }}
           </span>
         </button>
-
-        <!-- Returns & Refunds Section Navigation -->
-        <router-link
-          to="/buyer/returns"
-          :class="[
-            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap border',
-            darkMode
-              ? 'border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          ]"
-        >
-          <RotateCcw class="w-4 h-4 text-rose-500" />
-          <span>Returns &amp; Refunds</span>
-          <span
-            v-if="refundedOrdersCount > 0"
-            :class="[
-              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
-              darkMode ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-rose-100 text-rose-700'
-            ]"
-          >
-            {{ refundedOrdersCount }}
-          </span>
-        </router-link>
       </nav>
 
       <!-- ── Database Stats Summary Cards (Interactive Filters) ── -->
