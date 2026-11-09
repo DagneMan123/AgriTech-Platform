@@ -117,22 +117,25 @@
                     <i class="fas fa-eye"></i> View
                   </button>
                   <button 
-                    v-if="order.status === 'pending' && !isFulfillmentDisabled(order)"
-                    class="btn-small btn-accept"
-                    @click="acceptOrder(order.id)"
-                  >
-                    <i class="fas fa-check"></i> Accept
-                  </button>
-                  <button 
-                    v-if="order.status === 'pending' && !isFulfillmentDisabled(order)"
-                    class="btn-small btn-reject"
-                    @click="rejectOrder(order.id)"
-                  >
-                    <i class="fas fa-times"></i> Reject
-                  </button>
-                  <span v-else-if="isFulfillmentDisabled(order) && (hasActiveRefundClaim(order) || ['refund_requested', 'under_review', 'disputed'].includes(order.status))" class="badge-locked" title="Fulfillment locked: Order is under refund/dispute review">
-                    <i class="fas fa-shield-alt"></i> {{ formatStatus(order.status, order) }}
-                  </span>
+                      v-if="['pending', 'refund_requested', 'under_review', 'disputed'].includes(order.status)"
+                      class="btn-small btn-accept"
+                      :disabled="isFulfillmentDisabled(order)"
+                      :class="{ 'opacity-50 cursor-not-allowed': isFulfillmentDisabled(order) }"
+                      @click="!isFulfillmentDisabled(order) && acceptOrder(order.id)"
+                      :title="isFulfillmentDisabled(order) ? 'Fulfillment locked: Order has an active refund claim or dispute under review' : 'Accept order'"
+                    >
+                      <i class="fas fa-check"></i> Accept
+                    </button>
+                    <button 
+                      v-if="['pending', 'refund_requested', 'under_review', 'disputed'].includes(order.status)"
+                      class="btn-small btn-reject"
+                      :disabled="isFulfillmentDisabled(order)"
+                      :class="{ 'opacity-50 cursor-not-allowed': isFulfillmentDisabled(order) }"
+                      @click="!isFulfillmentDisabled(order) && rejectOrder(order.id)"
+                      :title="isFulfillmentDisabled(order) ? 'Fulfillment locked: Order has an active refund claim or dispute under review' : 'Reject order'"
+                    >
+                      <i class="fas fa-times"></i> Reject
+                    </button>
                 </td>
               </tr>
             </tbody>

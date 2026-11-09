@@ -40,6 +40,11 @@ class Order extends Model
         'cancelled_at'
     ];
 
+    protected $appends = [
+        'has_active_refund_claim',
+        'is_refund_settled'
+    ];
+
     protected $casts = [
         'subtotal' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
@@ -56,11 +61,12 @@ class Order extends Model
     public function getStatusAttribute($value)
     {
         $val = strtolower($value ?? 'pending');
-        if (in_array($val, ['refunded', 'cancelled', 'rejected'])) {
-            return $val;
+        if (in_array($val, ['refunded', 'cancelled', 'rejected', 'refund_requested', 'under_review', 'dispute', 'disputed'])) {
+            return $val === 'dispute' ? 'disputed' : $val;
         }
-        if ($this->relationLoaded('refund') && $this->refund) {
-            $refundStatus = strtolower($this->refund->status ?? '');
+        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
+        if ($refund) {
+            $refundStatus = strtolower($refund->status ?? '');
             if (in_array($refundStatus, ['approved', 'completed', 'refunded'])) {
                 return 'refunded';
             }
@@ -82,7 +88,8 @@ class Order extends Model
         if (strtolower($value ?? '') === 'refunded' || strtolower($this->status ?? '') === 'refunded') {
             return 'refunded';
         }
-        if ($this->relationLoaded('refund') && $this->refund && in_array(strtolower($this->refund->status ?? ''), ['approved', 'completed', 'refunded'])) {
+        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
+        if ($refund && in_array(strtolower($refund->status ?? ''), ['approved', 'completed', 'refunded'])) {
             return 'refunded';
         }
         if (in_array(strtolower($value ?? ''), ['paid', 'completed'])) {
@@ -102,10 +109,16 @@ class Order extends Model
         if (in_array(strtolower($this->status ?? ''), ['refund_requested', 'under_review', 'dispute', 'disputed'])) {
             return true;
         }
-        if ($this->relationLoaded('refund') && $this->refund) {
-            return in_array(strtolower($this->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
+        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
+        if ($refund) {
+            return in_array(strtolower($refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
         }
         return false;
+    }
+
+    public function getHasActiveRefundClaimAttribute(): bool
+    {
+        return $this->hasActiveRefundClaim();
     }
 
     public function isRefundSettled(): bool
@@ -116,10 +129,16 @@ class Order extends Model
         if (strtolower($this->payment_status ?? '') === 'refunded') {
             return true;
         }
-        if ($this->relationLoaded('refund') && $this->refund) {
-            return in_array(strtolower($this->refund->status ?? ''), ['approved', 'completed', 'refunded']);
+        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
+        if ($refund) {
+            return in_array(strtolower($refund->status ?? ''), ['approved', 'completed', 'refunded']);
         }
         return false;
+    }
+
+    public function getIsRefundSettledAttribute(): bool
+    {
+        return $this->isRefundSettled();
     }
 
     protected static function boot()

@@ -193,20 +193,14 @@
                       <Eye size="16" />
                     </button>
                     <button
-                      v-if="['pending', 'confirmed', 'processing'].includes(order.status) && !isFulfillmentDisabled(order)"
-                      @click="router.push('/farmer/transport-requests')"
-                      class="action-btn ship-btn text-blue-600 border-blue-200"
-                      title="Request Transport Dispatch"
+                      v-if="['pending', 'confirmed', 'processing', 'refund_requested', 'under_review', 'disputed'].includes(order.status)"
+                      :disabled="isFulfillmentDisabled(order)"
+                      @click="!isFulfillmentDisabled(order) && router.push('/farmer/transport-requests')"
+                      class="action-btn ship-btn"
+                      :class="isFulfillmentDisabled(order) ? 'opacity-40 cursor-not-allowed text-slate-400 border-slate-300 dark:border-slate-700 dark:text-slate-500' : 'text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/30'"
+                      :title="isFulfillmentDisabled(order) ? 'Fulfillment Locked: Order has an active refund claim or dispute under review' : 'Request Transport Dispatch'"
                     >
                       <Truck size="16" />
-                    </button>
-                    <button
-                      v-else-if="isFulfillmentDisabled(order) && (hasActiveRefundClaim(order) || ['refund_requested', 'under_review', 'disputed', 'dispute'].includes(order.status))"
-                      class="action-btn locked-btn text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 cursor-not-allowed"
-                      disabled
-                      title="Fulfillment locked: Order has an active refund claim or dispute under review"
-                    >
-                      <ShieldAlert size="16" />
                     </button>
                     <button
                       v-if="['shipped', 'in_transit'].includes(order.status) && !isFulfillmentDisabled(order)"
@@ -411,18 +405,17 @@
               <button @click="selectedOrder = null" class="btn-secondary">Close</button>
               <div class="action-buttons">
                 <button
-                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && !isFulfillmentDisabled(selectedOrder)"
-                  @click="router.push('/farmer/transport-requests')"
+                  v-if="['pending', 'confirmed', 'processing', 'refund_requested', 'under_review', 'disputed'].includes(selectedOrder.status)"
+                  :disabled="isFulfillmentDisabled(selectedOrder)"
+                  @click="!isFulfillmentDisabled(selectedOrder) && router.push('/farmer/transport-requests')"
                   class="btn-primary ship"
-                  style="background: #3b82f6;"
+                  :class="isFulfillmentDisabled(selectedOrder) ? 'opacity-50 cursor-not-allowed' : ''"
+                  :style="isFulfillmentDisabled(selectedOrder) ? 'background: #64748b; cursor: not-allowed;' : 'background: #3b82f6;'"
+                  :title="isFulfillmentDisabled(selectedOrder) ? 'Fulfillment Locked: Order has an active refund claim or dispute under review' : 'Request Transport Dispatch'"
                 >
                   <Truck size="14" />
-                  <span>Request Transport Dispatch</span>
+                  <span>{{ isFulfillmentDisabled(selectedOrder) ? 'Dispatch Locked (Dispute/Refund)' : 'Request Transport Dispatch' }}</span>
                 </button>
-                <div v-else-if="isFulfillmentDisabled(selectedOrder) && (hasActiveRefundClaim(selectedOrder) || ['refund_requested', 'under_review', 'disputed', 'dispute'].includes(selectedOrder.status))" class="locked-action-badge">
-                  <ShieldAlert size="15" />
-                  <span>Fulfillment Locked: {{ getOrderStatusBadge(selectedOrder).label }}</span>
-                </div>
                 <button
                   v-if="['shipped', 'in_transit'].includes(selectedOrder.status) && !isFulfillmentDisabled(selectedOrder)"
                   @click="router.push('/farmer/active-deliveries')"
@@ -570,7 +563,7 @@ const fetchOrders = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await farmerAPI.getOrders()
+    const res = farmerAPI.getFarmerOrders ? await farmerAPI.getFarmerOrders() : await farmerAPI.getOrders()
     const rawOrders = res.data?.data || res.data || []
 
     orders.value = (Array.isArray(rawOrders) ? rawOrders : []).map(raw => {

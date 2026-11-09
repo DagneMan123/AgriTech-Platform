@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\Farmer;
+use Illuminate\Support\Facades\Auth;
 
 class Controller extends BaseController
 {
@@ -20,7 +21,7 @@ class Controller extends BaseController
      */
     protected function getOrCreateFarmer()
     {
-        $user = auth()->user();
+        $user = auth('api')->user() ?: auth()->user() ?: Auth::user();
         
         if (!$user) {
             return null;
@@ -41,4 +42,3 @@ class Controller extends BaseController
         return $farmer;
     }
 }
-
