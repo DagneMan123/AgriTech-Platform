@@ -18,7 +18,7 @@
 
       <!-- Quick Summary Stats Grid -->
       <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-blue-500' : 'bg-white border-blue-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Categories</h3>
             <p class="text-xl font-black">{{ categories.length }}</p>
@@ -28,7 +28,7 @@
           </div>
         </article>
 
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-emerald-500' : 'bg-white border-blue-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Products</h3>
             <p class="text-xl font-black">{{ totalProductsCount }}</p>
@@ -38,7 +38,7 @@
           </div>
         </article>
 
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-amber-500' : 'bg-white border-blue-200 text-slate-900 !border-l-amber-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Top Category</h3>
             <p class="text-base font-black truncate max-w-[150px]">{{ topCategoryName }}</p>

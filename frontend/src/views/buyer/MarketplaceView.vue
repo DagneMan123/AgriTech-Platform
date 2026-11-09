@@ -31,21 +31,32 @@
         <article
           v-for="card in summaryCards"
           :key="card.key"
-          :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs hover:shadow-md transition-all flex justify-between items-start', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-blue-500' : 'bg-white border-blue-200 text-slate-900 !border-l-blue-600']"
+          role="button"
+          tabindex="0"
+          @click="selectCard(card.key)"
+          @keydown.enter="selectCard(card.key)"
+          @keydown.space.prevent="selectCard(card.key)"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-start cursor-pointer select-none outline-none',
+            darkMode ? 'bg-[#131b2e] text-slate-100' : 'bg-white text-slate-900',
+            selectedCard === card.key
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
         >
           <div class="min-w-0 flex-1">
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 truncate', darkMode ? 'text-slate-400' : 'text-slate-500']">{{ card.label }}</h3>
             <p class="text-xl lg:text-2xl font-black tracking-tight">{{ card.value }}</p>
             <p :class="['text-[11px] font-medium truncate mt-1', darkMode ? 'text-slate-500' : 'text-slate-400']">{{ card.sub }}</p>
           </div>
-          <div :class="['text-lg shrink-0 pt-0.5', darkMode ? 'text-blue-400' : 'text-blue-600']">
+          <div :class="['text-lg shrink-0 pt-0.5 transition-colors', selectedCard === card.key ? 'text-blue-500 dark:text-blue-400' : (darkMode ? 'text-slate-400' : 'text-slate-400')]">
             <i :class="card.icon"></i>
           </div>
         </article>
       </section>
 
       <!-- Filters Section Panel (Always Visible) -->
-      <section :class="['rounded-2xl border p-5 mb-6 shadow-sm', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+      <section :class="['rounded-2xl border p-5 mb-6 shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80']">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div class="flex flex-col gap-1.5">
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Search:</label>
@@ -53,13 +64,13 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search products..."
-              :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']"
+              :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500', darkMode ? 'bg-[#0b0f19] border-slate-800 text-slate-100 placeholder-slate-500' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400']"
               @input="handleSearch"
             />
           </div>
           <div class="flex flex-col gap-1.5">
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Category:</label>
-            <select v-model="selectedCategory" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
+            <select v-model="selectedCategory" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800']" @change="handleSearch">
               <option value="">All Categories</option>
               <option v-for="cat in categoriesList" :key="cat.id" :value="cat.name">
                 {{ cat.name }} ({{ cat.product_count ?? cat.products_count ?? 0 }})
@@ -68,7 +79,7 @@
           </div>
           <div class="flex flex-col gap-1.5">
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Price Range:</label>
-            <select v-model="priceRange" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
+            <select v-model="priceRange" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800']" @change="handleSearch">
               <option value="">All Prices</option>
               <option value="0-500">Under ETB 500</option>
               <option value="500-1000">ETB 500 - 1,000</option>
@@ -78,7 +89,7 @@
           </div>
           <div class="flex flex-col gap-1.5">
             <label :class="['text-xs font-bold', darkMode ? 'text-slate-300' : 'text-slate-700']">Sort by:</label>
-            <select v-model="sortBy" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-800']" @change="handleSearch">
+            <select v-model="sortBy" :class="['px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-blue-500 cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-800']" @change="handleSearch">
               <option value="newest">Newest First</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
@@ -89,7 +100,7 @@
       </section>
 
       <!-- Loading State -->
-      <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+      <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80']">
         <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-600 rounded-full animate-spin mb-4"></div>
         <p :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">Loading marketplace products...</p>
       </div>
@@ -103,7 +114,7 @@
           <article
             v-for="product in safeProducts"
             :key="product.id"
-            :class="['rounded-2xl border overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']"
+            :class="['rounded-2xl border overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col', darkMode ? 'bg-[#131b2e] border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200/80 hover:border-slate-300']"
           >
             <!-- Product Image -->
             <div :class="['relative w-full pt-[90%] overflow-hidden', darkMode ? 'bg-[#0b0f19]' : 'bg-slate-100']">
@@ -143,13 +154,13 @@
               </div>
 
               <div>
-                <div :class="['flex justify-between items-center mb-3 pt-3 border-t', darkMode ? 'border-blue-500/30' : 'border-slate-100']">
+                <div :class="['flex justify-between items-center mb-3 pt-3 border-t', darkMode ? 'border-slate-800' : 'border-slate-100']">
                   <span class="text-sm font-black text-blue-600 dark:text-blue-400">ETB {{ formatNumber(product.price || 0) }}</span>
                   <span v-if="product.original_price" class="text-xs text-slate-400 line-through">ETB {{ formatNumber(product.original_price) }}</span>
                 </div>
 
                 <div class="flex gap-2">
-                  <button @click.stop="viewProduct(product.id)" :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']">
+                  <button @click.stop="viewProduct(product.id)" :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50']">
                     View
                   </button>
                   <button
@@ -185,8 +196,8 @@
       </section>
 
       <!-- Empty State -->
-      <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
-        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600']">
+      <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center mb-6', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80']">
+        <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-slate-700 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600']">
           <i class="fas fa-box-open"></i>
         </div>
         <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">
@@ -273,7 +284,7 @@
       >
         <div
           v-if="toast.visible"
-          class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#131b2e] border border-blue-500/40 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 backdrop-blur-md"
+          class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#131b2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 flex items-start gap-3.5 backdrop-blur-md"
         >
           <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
             <i class="fas fa-shopping-bag text-lg"></i>
@@ -357,6 +368,21 @@ const priceRange = ref('')
 const sortBy = ref('newest')
 const sidebarOpen = ref(false)
 const selectedProduct = ref<Product | null>(null)
+const selectedCard = ref<string | null>(null)
+
+const selectCard = (key: string) => {
+  if (selectedCard.value === key) {
+    selectedCard.value = null
+  } else {
+    selectedCard.value = key
+    if (key === 'total') {
+      selectedCategory.value = ''
+      searchQuery.value = ''
+      priceRange.value = ''
+      handleSearch()
+    }
+  }
+}
 
 // Image and Cart interaction states
 const failedImages = ref<Record<string, boolean>>({})
