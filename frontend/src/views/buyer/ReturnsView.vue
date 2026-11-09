@@ -432,7 +432,7 @@
                 :key="order.id"
                 :value="order.id"
               >
-                #{{ order.order_number || ('ORD-' + order.id) }} &bull; ETB {{ formatNumber(order.grand_total || order.total_amount || 0) }} ({{ formatStatusLabel(order.status) }})
+                #{{ order.order_number || ('ORD-' + order.id) }} &bull; ETB {{ formatNumber(order.grand_total || order.total_amount || 0) }} ({{ formatOrderStatus(order.status) }})
               </option>
             </select>
           </div>
@@ -1058,26 +1058,55 @@ const getProgressLineWidth = (itemOrStatus: any): string => {
   return '0%'
 }
 
+const formatOrderStatus = (status: string) => {
+  const norm = String(status || '').toLowerCase().trim()
+  if (norm === 'pending') return 'Pending'
+  if (norm === 'confirmed') return 'Confirmed'
+  if (norm === 'processing') return 'Processing'
+  if (norm === 'shipped') return 'Shipped'
+  if (norm === 'delivered') return 'Delivered'
+  if (norm === 'paid') return 'Paid'
+  if (norm === 'cancelled' || norm === 'canceled') return 'Cancelled'
+  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(norm)) return 'Under Review'
+  if (['refund_requested', 'claim_submitted'].includes(norm)) return 'Refund Requested'
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) return 'Refunded'
+  return norm ? norm.charAt(0).toUpperCase() + norm.slice(1) : 'Pending'
+}
+
 const getStatusColor = (status: string) => {
   const norm = String(status || '').toLowerCase().trim()
-  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'claim_submitted'].includes(norm)) {
+  if (norm === 'pending') return '#64748b'
+  if (norm === 'confirmed' || norm === 'processing') return '#3b82f6'
+  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(norm)) {
+    return '#f59e0b'
+  }
+  if (['requested', 'refund_requested', 'claim_submitted'].includes(norm)) {
     return '#f59e0b'
   }
   if (['approved', 'claim_approved'].includes(norm)) return '#3b82f6'
-  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) return '#10b981'
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled', 'delivered'].includes(norm)) return '#10b981'
   if (['rejected', 'cancelled', 'canceled'].includes(norm)) return '#ef4444'
   return '#64748b'
 }
 
 const getStatusBadgeStyle = (status: string) => {
   const norm = String(status || '').toLowerCase().trim()
-  if (['requested', 'pending', 'refund_requested', 'under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'claim_submitted'].includes(norm)) {
+  if (norm === 'pending') {
+    return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+  }
+  if (norm === 'confirmed' || norm === 'processing') {
+    return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+  }
+  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(norm)) {
+    return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+  }
+  if (['requested', 'refund_requested', 'claim_submitted'].includes(norm)) {
     return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
   }
   if (['approved', 'claim_approved'].includes(norm)) {
     return 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
   }
-  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) {
+  if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled', 'delivered'].includes(norm)) {
     return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
   }
   if (['rejected', 'cancelled', 'canceled'].includes(norm)) {
@@ -1088,12 +1117,20 @@ const getStatusBadgeStyle = (status: string) => {
 
 const formatStatusLabel = (status: string) => {
   const norm = String(status || '').toLowerCase().trim()
-  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed'].includes(norm)) return 'Under Review'
-  if (['requested', 'pending', 'refund_requested', 'claim_submitted'].includes(norm)) return 'Under Review'
+  if (norm === 'pending') return 'Pending'
+  if (norm === 'confirmed') return 'Confirmed'
+  if (norm === 'processing') return 'Processing'
+  if (norm === 'shipped') return 'Shipped'
+  if (norm === 'delivered') return 'Delivered'
+  if (norm === 'paid') return 'Paid'
+  if (norm === 'cancelled' || norm === 'canceled') return 'Cancelled'
+  if (['under_review', 'in_review', 'under review', 'review', 'dispute', 'disputed', 'auditing'].includes(norm)) return 'Under Review'
+  if (norm === 'refund_requested') return 'Refund Requested'
+  if (norm === 'requested' || norm === 'claim_submitted') return 'Under Review'
   if (['approved', 'claim_approved'].includes(norm)) return 'Approved'
   if (['completed', 'refunded', 'disbursed', 'refund_disbursed', 'settled'].includes(norm)) return 'Refunded'
-  if (['rejected', 'cancelled', 'canceled'].includes(norm)) return 'Rejected'
-  return status || 'Pending'
+  if (['rejected'].includes(norm)) return 'Rejected'
+  return norm ? norm.charAt(0).toUpperCase() + norm.slice(1) : 'Pending'
 }
 
 const isResolutionCompleted = (status: string, stepKey: string, item?: any) => {
