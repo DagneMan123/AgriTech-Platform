@@ -491,9 +491,9 @@ const createOrderStatusChart = () => {
   try {
     if (orderStatusChart) orderStatusChart.destroy()
     const ctx = statusChart.value.getContext('2d')
-    const completed = dashboard.value?.summary?.completed_orders || 45
-    const pending = dashboard.value?.summary?.pending_orders || 12
-    const cancelled = dashboard.value?.summary?.cancelled_orders || 3
+    const completed = Number(dashboard.value?.summary?.completed_orders ?? 0)
+    const pending = Number(dashboard.value?.summary?.pending_orders ?? 0)
+    const cancelled = Number(dashboard.value?.summary?.cancelled_orders ?? 0)
     
     orderStatusChart = new window.Chart(ctx, {
       type: 'doughnut',
