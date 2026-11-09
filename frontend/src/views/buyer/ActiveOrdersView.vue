@@ -52,7 +52,7 @@
       <!-- ── Summary Stats Cards ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Active -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Active In-Progress</h3>
             <p class="text-2xl font-black">{{ stats.totalActive }}</p>
@@ -64,7 +64,7 @@
         </article>
 
         <!-- In Transit -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In Transit</h3>
             <p class="text-2xl font-black">{{ stats.inTransit }}</p>
@@ -76,7 +76,7 @@
         </article>
 
         <!-- Confirmed & Processing -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Packing & Prep</h3>
             <p class="text-2xl font-black">{{ stats.processing }}</p>
@@ -88,7 +88,7 @@
         </article>
 
         <!-- Total In-Flight Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In-Flight Value</h3>
             <p class="text-xl lg:text-2xl font-black text-emerald-500">ETB {{ formatNumber(stats.totalValue) }}</p>

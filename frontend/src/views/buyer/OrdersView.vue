@@ -191,92 +191,116 @@
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Orders -->
         <article
+          role="button"
+          tabindex="0"
           @click="handleCardFilter('total')"
+          @keydown.enter="handleCardFilter('total')"
+          @keydown.space.prevent="handleCardFilter('total')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-indigo-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-indigo-600 hover:bg-slate-50',
-            activeTab === 'all' && !selectedStatus ? 'ring-2 ring-indigo-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            activeTab === 'all' && !selectedStatus
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
           ]"
           title="Click to view all order records"
         >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
               <span>Total Orders</span>
-              <span v-if="activeTab === 'all' && !selectedStatus" class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+              <span v-if="activeTab === 'all' && !selectedStatus" class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
             </h3>
             <p class="text-2xl font-black">{{ totalOrders }}</p>
-            <span class="text-[10px] text-indigo-500 font-medium">All database records</span>
+            <span :class="['text-[10px] font-medium', activeTab === 'all' && !selectedStatus ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')]">All database records</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-indigo-500/10 text-indigo-400' : 'bg-indigo-50 text-indigo-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-all group-hover:scale-105', activeTab === 'all' && !selectedStatus ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')]">
             <ShoppingBag class="w-6 h-6" />
           </div>
         </article>
 
         <!-- Pending / In Preparation -->
         <article
+          role="button"
+          tabindex="0"
           @click="handleCardFilter('pending')"
+          @keydown.enter="handleCardFilter('pending')"
+          @keydown.space.prevent="handleCardFilter('pending')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600 hover:bg-slate-50',
-            activeTab === 'active' && selectedStatus === 'pending' ? 'ring-2 ring-amber-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            activeTab === 'active' && selectedStatus === 'pending'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
           ]"
           title="Click to filter active orders to pending confirmation"
         >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
               <span>Pending</span>
-              <span v-if="activeTab === 'active' && selectedStatus === 'pending'" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span v-if="activeTab === 'active' && selectedStatus === 'pending'" class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
             </h3>
             <p class="text-2xl font-black text-amber-500">{{ pendingOrders }}</p>
-            <span class="text-[10px] text-amber-500 font-medium">Awaiting fulfillment</span>
+            <span :class="['text-[10px] font-medium', activeTab === 'active' && selectedStatus === 'pending' ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')]">Awaiting fulfillment</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-all group-hover:scale-105', activeTab === 'active' && selectedStatus === 'pending' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')]">
             <Clock class="w-6 h-6" />
           </div>
         </article>
 
         <!-- In Transit -->
         <article
+          role="button"
+          tabindex="0"
           @click="handleCardFilter('shipped')"
+          @keydown.enter="handleCardFilter('shipped')"
+          @keydown.space.prevent="handleCardFilter('shipped')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600 hover:bg-slate-50',
-            activeTab === 'active' && selectedStatus === 'shipped' ? 'ring-2 ring-purple-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            activeTab === 'active' && selectedStatus === 'shipped'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
           ]"
           title="Click to filter active orders to freight in transit"
         >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
               <span>In Transit</span>
-              <span v-if="activeTab === 'active' && selectedStatus === 'shipped'" class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <span v-if="activeTab === 'active' && selectedStatus === 'shipped'" class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
             </h3>
             <p class="text-2xl font-black text-purple-500">{{ shippedOrders }}</p>
-            <span class="text-[10px] text-purple-500 font-medium">Dispatched freight</span>
+            <span :class="['text-[10px] font-medium', activeTab === 'active' && selectedStatus === 'shipped' ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')]">Dispatched freight</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-all group-hover:scale-105', activeTab === 'active' && selectedStatus === 'shipped' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')]">
             <Truck class="w-6 h-6" />
           </div>
         </article>
 
         <!-- Delivered -->
         <article
+          role="button"
+          tabindex="0"
           @click="handleCardFilter('delivered')"
+          @keydown.enter="handleCardFilter('delivered')"
+          @keydown.space.prevent="handleCardFilter('delivered')"
           :class="[
-            'rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all cursor-pointer select-none group',
-            darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-emerald-500 hover:bg-slate-800/60' : 'bg-white border-slate-200 text-slate-900 !border-l-emerald-600 hover:bg-slate-50',
-            activeTab === 'past' && selectedStatus === 'delivered' ? 'ring-2 ring-emerald-500/80 shadow-md scale-[1.02]' : 'opacity-90 hover:opacity-100'
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            activeTab === 'past' && selectedStatus === 'delivered'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
           ]"
           title="Click to view delivered orders in order history"
         >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
               <span>Delivered</span>
-              <span v-if="activeTab === 'past' && selectedStatus === 'delivered'" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span v-if="activeTab === 'past' && selectedStatus === 'delivered'" class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
             </h3>
             <p class="text-2xl font-black text-emerald-500">{{ deliveredOrders }}</p>
-            <span class="text-[10px] text-emerald-500 font-medium">Delivered &amp; completed</span>
+            <span :class="['text-[10px] font-medium', activeTab === 'past' && selectedStatus === 'delivered' ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')]">Delivered &amp; completed</span>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl transition-transform group-hover:scale-110', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-all group-hover:scale-105', activeTab === 'past' && selectedStatus === 'delivered' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')]">
             <CheckCircle2 class="w-6 h-6" />
           </div>
         </article>
