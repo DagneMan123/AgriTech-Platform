@@ -112,81 +112,6 @@
         </button>
       </div>
 
-      <!-- ── Unified Main Content Navigation Tabs ── -->
-      <nav
-        aria-label="Order Lifecycle Categories"
-        :class="['flex items-center gap-2 p-1.5 rounded-2xl border mb-6 transition-all overflow-x-auto shadow-2xs', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200']"
-      >
-        <!-- Active Orders Tab -->
-        <button
-          type="button"
-          @click="setTab('active')"
-          :class="[
-            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
-            activeTab === 'active'
-              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
-              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
-          ]"
-        >
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Active Orders</span>
-          <span
-            :class="[
-              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
-              activeTab === 'active' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
-            ]"
-          >
-            {{ activeOrdersCount }}
-          </span>
-        </button>
-
-        <!-- Past Orders / History Tab -->
-        <button
-          type="button"
-          @click="setTab('past')"
-          :class="[
-            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
-            activeTab === 'past'
-              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
-              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
-          ]"
-        >
-          <History class="w-4 h-4" />
-          <span>Past Orders / History</span>
-          <span
-            :class="[
-              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
-              activeTab === 'past' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
-            ]"
-          >
-            {{ pastOrdersCount }}
-          </span>
-        </button>
-
-        <!-- All Orders Tab -->
-        <button
-          type="button"
-          @click="setTab('all')"
-          :class="[
-            'flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap',
-            activeTab === 'all'
-              ? (darkMode ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40' : 'bg-blue-600 text-white shadow-md shadow-blue-600/20')
-              : (darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')
-          ]"
-        >
-          <Package class="w-4 h-4" />
-          <span>All Orders</span>
-          <span
-            :class="[
-              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
-              activeTab === 'all' ? 'bg-white/20 text-white' : (darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600')
-            ]"
-          >
-            {{ totalOrders }}
-          </span>
-        </button>
-      </nav>
-
       <!-- ── Database Stats Summary Cards (Interactive Filters) ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Orders -->
@@ -1390,7 +1315,7 @@ const escrowConfirmedBanner = ref(false)
 
 // ── Top Navigation Tabs State: 'active' | 'past' | 'all' ──
 // Defaults to 'active' so buyers immediately track ongoing shipments (Amazon standard)
-const activeTab = ref<'active' | 'past' | 'all'>('active')
+const activeTab = ref<'active' | 'past' | 'all'>('all')
 
 // Terminal / Completed historical states (strictly excluded from Active)
 const pastStatuses = ['delivered', 'completed', 'cancelled', 'rejected', 'failed', 'refunded', 'closed', 'voided']
