@@ -155,62 +155,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Deliveries Tab Content -->
-        <div v-show="activeTab === 'deliveries'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Active Deliveries</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <article
-              v-for="delivery in dashboard?.active_deliveries || []"
-              :key="delivery.id"
-              :class="['border rounded-xl p-4 hover:shadow-sm', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-white border-slate-200/80']"
-            >
-              <div class="flex justify-between items-center mb-3">
-                <h3 :class="['font-bold text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">Order #{{ delivery.order_id }}</h3>
-                <span class="px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold capitalize">{{ delivery.status }}</span>
-              </div>
-              <div :class="['space-y-1.5 text-xs mb-4', darkMode ? 'text-slate-300' : 'text-slate-600']">
-                <p><strong :class="darkMode ? 'text-slate-100' : 'text-slate-800'">From:</strong> {{ delivery.from_location || 'Farm Location' }}</p>
-                <p><strong :class="darkMode ? 'text-slate-100' : 'text-slate-800'">To:</strong> {{ delivery.to_location || 'Destination' }}</p>
-              </div>
-              <button class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer" @click="trackDelivery(delivery)">Track Order</button>
-            </article>
-
-            <div v-if="!(dashboard?.active_deliveries || []).length" class="col-span-full text-center py-10 text-slate-400 font-medium">
-              No active deliveries at the moment
-            </div>
-          </div>
-        </div>
-
-        <!-- Cart Tab Content -->
-        <div v-show="activeTab === 'cart'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">Shopping Cart Summary</h2>
-          <div class="text-center py-10 text-slate-400 font-medium">
-            You have {{ dashboard?.summary?.cart_items_count || 0 }} items in your shopping cart.
-          </div>
-        </div>
-
-        <!-- Reviews Tab Content -->
-        <div v-show="activeTab === 'reviews'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">My Written Reviews</h2>
-          <div class="text-center py-10 text-slate-400 font-medium">
-            No reviews written yet.
-          </div>
-        </div>
-
-        <!-- Wishlist Tab Content -->
-        <div v-show="activeTab === 'wishlist'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-4', darkMode ? 'text-slate-100' : 'text-slate-900']">My Wishlist</h2>
-          <div class="text-center py-10 text-slate-400 font-medium">
-            You have {{ dashboard?.summary?.wishlist_items_count || 0 }} items saved in your wishlist.
-          </div>
-        </div>
-
-        <!-- Analytics Tab Content -->
-        <div v-show="activeTab === 'analytics'" class="p-6" role="tabpanel">
-          <h2 :class="['text-base font-bold mb-2', darkMode ? 'text-slate-100' : 'text-slate-900']">Purchase Analytics</h2>
-          <p :class="['text-xs mb-6', darkMode ? 'text-slate-400' : 'text-slate-500']">Insights into your spending trends and order statistics.</p>
-        </div>
       </section>
 
       <!-- PERSISTENT BOTTOM ANALYTICS & CHARTS SECTION -->
@@ -421,7 +365,7 @@ const buyerStore = useBuyerStore()
 const router = useRouter()
 
 const activeTab = ref('orders')
-const tabs = ['orders', 'deliveries', 'cart', 'reviews', 'wishlist', 'analytics']
+const tabs = ['orders']
 
 const dashboard = ref(null)
 const orderFilter = ref('')
@@ -717,7 +661,7 @@ async function fetchDashboardData() {
 
 const formatNumber = (num) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0)
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'
-const formatTabName = (tab) => ({ orders: 'My Orders', deliveries: 'Deliveries', cart: 'Shopping Cart', reviews: 'Reviews', wishlist: 'Wishlist', analytics: 'Analytics' }[tab] || tab)
+const formatTabName = (tab) => ({ orders: 'My Orders' }[tab] || tab)
 
 const getOrderNumber = (order) => {
   if (!order) return ''
