@@ -460,9 +460,9 @@
               </span>
 
               <!-- Fulfillment Status Badge -->
-              <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide', isOrderRefunded(order) ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : statusBadgeClass(order.status)]">
+              <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide', getFulfillmentBadgeClass(order)]">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                <span>{{ isOrderRefunded(order) ? 'Refunded' : formatStatus(order.status) }}</span>
+                <span>{{ getFulfillmentStatusLabel(order) }}</span>
               </span>
             </div>
           </div>
@@ -639,9 +639,40 @@
                 <span>Live Freight Tracking</span>
               </button>
 
+              <!-- Active Claim Stage Badge (Transport & dispatch paused, claim under review) -->
+              <span
+                v-if="hasActiveRefundClaim(order)"
+                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-amber-950/30 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700']"
+                title="Refund/dispute claim filed. Transport and produce fulfillment are on hold under escrow review."
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-amber-400" />
+                <span>Under Review • Refund Requested</span>
+              </span>
+
+              <!-- Refunded Settled Badge -->
+              <span
+                v-else-if="isOrderRefundSettled(order)"
+                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-rose-950/25 border-rose-900/50 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-700']"
+                title="Refund settled in Chapa escrow."
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-rose-400" />
+                <span>Escrow Refund Settled</span>
+              </span>
+
+              <!-- Live Freight Delivery Tracker: Only when carrier has actually taken custody of produce -->
+              <button
+                v-else-if="hasAssignedTransport(order)"
+                @click="openTrackingModal(order)"
+                class="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-500/20 cursor-pointer"
+                title="View live GPS freight route, dispatch checkpoint, and driver contact"
+              >
+                <Truck class="w-3.5 h-3.5" />
+                <span>Track Freight Delivery</span>
+              </button>
+
               <!-- State-Aware Stage Badge: Before transport dispatch -->
               <span
-                v-else-if="!isOrderRefunded(order) && ['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
+                v-else-if="['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-blue-950/30 border-blue-900/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700']"
                 title="Farmer actively weighing, packaging, and staging produce for logistics pickup"
               >
@@ -650,24 +681,13 @@
               </span>
 
               <span
-                v-else-if="!isOrderRefunded(order) && ['pending', 'placed'].includes((order.status || '').toLowerCase())"
+                v-else-if="['pending', 'placed'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-amber-950/30 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700']"
                 title="Order placed and awaiting logistics/transport assignment"
               >
                 <Clock class="w-3.5 h-3.5 text-amber-500" />
                 <span>Awaiting Transport Assignment</span>
               </span>
-
-              <!-- Refunded Action Badge & Navigation to Claims -->
-              <router-link
-                v-else-if="isOrderRefunded(order)"
-                to="/buyer/returns"
-                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-rose-950/25 border-rose-900/50 text-rose-300 hover:bg-rose-900/40' : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100']"
-                title="Refund settled in Chapa escrow. View claim in Returns & Refunds."
-              >
-                <RotateCcw class="w-3.5 h-3.5 text-rose-500" />
-                <span>Refunded • View in Returns</span>
-              </router-link>
 
               <!-- Chat with Farmer / Direct Support -->
               <button
@@ -689,9 +709,25 @@
                 <span>Leave Review</span>
               </router-link>
 
-              <!-- Cancel Order (Pending or Confirmed only, excluded if refunded) -->
+              <!-- View Refund Status Button (Replaces Cancel Order for claimed or refunded orders) -->
+              <router-link
+                v-if="hasActiveRefundClaim(order) || isOrderRefundSettled(order)"
+                :to="getRefundTrackingUrl(order)"
+                :class="[
+                  'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs',
+                  hasActiveRefundClaim(order)
+                    ? (darkMode ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25' : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100')
+                    : (darkMode ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25' : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100')
+                ]"
+                title="Track refund claim investigation, escrow verification, and disbursement progress"
+              >
+                <RotateCcw class="w-3.5 h-3.5" />
+                <span>View Refund Status</span>
+              </router-link>
+
+              <!-- Cancel Order (Pending or Confirmed only, strictly excluded if claimed or refunded) -->
               <button
-                v-if="canCancelOrder(order)"
+                v-else-if="canCancelOrder(order)"
                 @click="openCancelModal(order)"
                 class="flex items-center gap-1.5 px-3 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
@@ -867,9 +903,28 @@
                 ETB {{ formatNumber(getOrderAmount(activeOrderForDetails)) }}
               </span>
             </div>
+            <!-- Active Claim Notice in Modal -->
+            <div
+              v-if="hasActiveRefundClaim(activeOrderForDetails)"
+              class="p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-amber-500/10 border-amber-500/30 text-amber-300 text-xs"
+            >
+              <div class="flex items-center gap-2">
+                <RotateCcw class="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  <strong>Claim Under Review:</strong> A refund claim has been submitted for this order. Produce dispatch is on hold.
+                </span>
+              </div>
+              <router-link
+                :to="getRefundTrackingUrl(activeOrderForDetails)"
+                class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg font-bold whitespace-nowrap transition-colors"
+              >
+                View Claim Status
+              </router-link>
+            </div>
+
             <!-- Refund Settlement Notice in Modal -->
             <div
-              v-if="isOrderRefunded(activeOrderForDetails)"
+              v-else-if="isOrderRefundSettled(activeOrderForDetails)"
               class="p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs"
             >
               <div class="flex items-center gap-2">
@@ -879,7 +934,7 @@
                 </span>
               </div>
               <router-link
-                to="/buyer/returns"
+                :to="getRefundTrackingUrl(activeOrderForDetails)"
                 class="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg font-bold whitespace-nowrap transition-colors"
               >
                 View Returns
@@ -890,7 +945,7 @@
               <span>Payment Status:</span>
               <span
                 class="uppercase font-bold tracking-wide px-2 py-0.5 rounded-md text-[10px]"
-                :class="isOrderRefunded(activeOrderForDetails) ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : (isOrderPaid(activeOrderForDetails) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20')"
+                :class="hasActiveRefundClaim(activeOrderForDetails) ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : (isOrderRefundSettled(activeOrderForDetails) ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : (isOrderPaid(activeOrderForDetails) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'))"
               >
                 {{ getPaymentStatusLabel(activeOrderForDetails) }}
               </span>
@@ -1355,8 +1410,17 @@ const activeTab = ref<'active' | 'past' | 'all'>('active')
 // Terminal / Completed historical states (strictly excluded from Active)
 const pastStatuses = ['delivered', 'completed', 'cancelled', 'rejected', 'failed', 'refunded', 'closed', 'voided']
 
-// Refund detection helper (checks order status, payment status, escrow status, and refund relation)
-const isOrderRefunded = (order: any): boolean => {
+// Active refund or dispute claim detection (e.g. requested, under_review, pending, dispute, in_review)
+const hasActiveRefundClaim = (order: any): boolean => {
+  if (!order) return false
+  const r = order.refund
+  if (!r) return false
+  const status = String(r.status || '').toLowerCase()
+  return ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes(status)
+}
+
+// Settled / Completed refund detection
+const isOrderRefundSettled = (order: any): boolean => {
   if (!order) return false
   const status = String(order.status || '').toLowerCase()
   if (status === 'refunded') return true
@@ -1367,6 +1431,46 @@ const isOrderRefunded = (order: any): boolean => {
   const refundStatus = String(order.refund?.status || '').toLowerCase()
   if (['approved', 'completed', 'refunded'].includes(refundStatus)) return true
   return false
+}
+
+// Combined refund activity helper (used for exclusion from standard lifecycle filters)
+const isOrderRefunded = (order: any): boolean => {
+  return isOrderRefundSettled(order) || hasActiveRefundClaim(order)
+}
+
+// Link helper for claim status tracking
+const getRefundTrackingUrl = (order: any): string => {
+  if (!order) return '/buyer/returns'
+  if (order.refund?.id) {
+    return `/buyer/returns?claim_id=${order.refund.id}&order_id=${order.id}`
+  }
+  return `/buyer/returns?order_id=${order.id}`
+}
+
+const getFulfillmentStatusLabel = (order: any): string => {
+  if (!order) return ''
+  if (hasActiveRefundClaim(order)) {
+    return 'UNDER REVIEW'
+  }
+  if (isOrderRefundSettled(order)) {
+    return 'Refunded'
+  }
+  return formatStatus(order.status)
+}
+
+const getFulfillmentBadgeClass = (order: any): string => {
+  if (!order) return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+  if (hasActiveRefundClaim(order)) {
+    return darkMode.value
+      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+      : 'bg-amber-50 text-amber-700 border border-amber-300 font-bold'
+  }
+  if (isOrderRefundSettled(order)) {
+    return darkMode.value
+      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold'
+      : 'bg-rose-50 text-rose-700 border border-rose-300 font-bold'
+  }
+  return statusBadgeClass(order.status)
 }
 
 // Explicit in-progress and active lifecycle stages
@@ -1381,13 +1485,16 @@ const activePaymentStates = ['pending', 'awaiting_payment', 'unpaid', 'processin
 /**
  * Categorization Rule 1: Active Orders Criteria
  * An order is classified under 'Active' if:
- * 1. It is NOT refunded or in a terminal/historical state (delivered, completed, cancelled, refunded, rejected, failed).
- * 2. AND it matches an active fulfillment stage (e.g., Placed, Confirmed, Packing, In Transit),
- *    OR has pending payment verification (e.g., Telebirr Pending, Chapa Pending, COD verification).
+ * 1. It is NOT a settled/historical refunded or terminal state.
+ * 2. Active refund claims stay visible in Active Orders for live dispute tracking.
+ * 3. OR it matches an active fulfillment stage or pending payment verification.
  */
 const isOrderActive = (order: any): boolean => {
   if (!order) return false
-  if (isOrderRefunded(order)) return false
+  // Settled historical refunds belong exclusively in History / Past Orders
+  if (isOrderRefundSettled(order)) return false
+  // Active refund claims remain visible in Active Orders for live dispute tracking
+  if (hasActiveRefundClaim(order)) return true
   const status = (order.status || '').toLowerCase()
   // Terminal states strictly belong in History / Past
   if (pastStatuses.includes(status)) return false
@@ -1405,11 +1512,11 @@ const isOrderActive = (order: any): boolean => {
 
 /**
  * Categorization Rule 2: History & Completion Separation
- * Completed (Delivered) or Cancelled or Refunded orders are strictly separated from Active and grouped into Past Orders / History.
+ * Completed (Delivered), Cancelled, or settled Refunded orders are strictly grouped into Past Orders / History.
  */
 const isOrderPast = (order: any): boolean => {
   if (!order) return false
-  if (isOrderRefunded(order)) return true
+  if (isOrderRefundSettled(order)) return true
   const status = (order.status || '').toLowerCase()
   return pastStatuses.includes(status)
 }
@@ -2113,7 +2220,10 @@ const confirmWarehouseInspection = async (order: any) => {
 // Payment Status Helpers (Strictly database driven)
 const getPaymentStatusLabel = (order: any): string => {
   if (!order) return ''
-  if (isOrderRefunded(order)) {
+  if (hasActiveRefundClaim(order)) {
+    return 'REFUND REQUESTED'
+  }
+  if (isOrderRefundSettled(order)) {
     return 'REFUNDED'
   }
   if (isOrderPaid(order)) {
@@ -2139,10 +2249,15 @@ const getPaymentStatusLabel = (order: any): string => {
 }
 
 const getPaymentBadgeClass = (order: any): string => {
-  if (isOrderRefunded(order)) {
+  if (hasActiveRefundClaim(order)) {
     return darkMode.value
-      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-      : 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs'
+      ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
+      : 'bg-amber-50 text-amber-700 border border-amber-300 font-bold shadow-xs'
+  }
+  if (isOrderRefundSettled(order)) {
+    return darkMode.value
+      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold'
+      : 'bg-rose-50 text-rose-700 border border-rose-200 font-bold shadow-xs'
   }
   if (isOrderPaid(order)) {
     return darkMode.value

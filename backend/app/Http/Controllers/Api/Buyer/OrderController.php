@@ -165,7 +165,7 @@ class OrderController extends Controller
                     $q->where('order_number', $id);
                 }
             })
-            ->with(['items.product.farmer.user', 'delivery.transporter', 'delivery.vehicle', 'payment', 'farmer.user', 'buyer'])
+            ->with(['items.product.farmer.user', 'delivery.transporter', 'delivery.vehicle', 'payment', 'farmer.user', 'buyer', 'refund'])
             ->first();
 
         if (!$order) {

@@ -689,10 +689,23 @@ onMounted(async () => {
   themeStore.initializeTheme()
   await loadData()
   const qOrderId = route.query.order_id as string
-  if (qOrderId) {
-    claimForm.value.order_id = qOrderId
-    onOrderSelected()
-    requestModalOpen.value = true
+  const qClaimId = (route.query.claim_id || route.query.claim) as string
+  if (qClaimId) {
+    const found = rawReturns.value.find(c => String(c.id) === String(qClaimId) || c.refund_number === qClaimId)
+    if (found) {
+      openDetailsModal(found)
+    } else {
+      searchQuery.value = qClaimId
+    }
+  } else if (qOrderId) {
+    const existing = rawReturns.value.find(c => String(c.order_id) === String(qOrderId) || c.order?.order_number === qOrderId)
+    if (existing) {
+      openDetailsModal(existing)
+    } else {
+      claimForm.value.order_id = qOrderId
+      onOrderSelected()
+      requestModalOpen.value = true
+    }
   }
 })
 

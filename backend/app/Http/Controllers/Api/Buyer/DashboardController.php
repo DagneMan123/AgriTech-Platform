@@ -31,7 +31,7 @@ class DashboardController extends Controller
         // Order statistics
         $totalOrders = Order::where('buyer_id', $buyer->id)->count();
 
-        // Pending Orders: strictly active, non-refunded, non-cancelled orders
+        // Pending Orders: strictly active, non-refunded, non-disputed, non-cancelled orders
         $pendingOrders = Order::where('buyer_id', $buyer->id)
             ->whereIn('status', ['pending', 'placed'])
             ->where(function ($q) {
@@ -41,7 +41,7 @@ class DashboardController extends Controller
                 $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
             })
             ->whereDoesntHave('refund', function ($q) {
-                $q->whereIn('status', ['approved', 'completed', 'refunded']);
+                $q->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']);
             })
             ->count();
 
@@ -67,7 +67,7 @@ class DashboardController extends Controller
                 $q->where('status', 'refunded')
                   ->orWhere('payment_status', 'refunded')
                   ->orWhere('escrow_status', 'refunded')
-                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']));
             })
             ->count();
 
@@ -209,7 +209,7 @@ class DashboardController extends Controller
                 $q->where('status', 'refunded')
                   ->orWhere('payment_status', 'refunded')
                   ->orWhere('escrow_status', 'refunded')
-                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']));
             });
         } elseif ($status === 'pending') {
             $query->whereIn('status', ['pending', 'placed'])
@@ -219,7 +219,7 @@ class DashboardController extends Controller
                   ->where(function ($q) {
                       $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
                   })
-                  ->whereDoesntHave('refund', fn($q) => $q->whereIn('status', ['approved', 'completed', 'refunded']));
+                  ->whereDoesntHave('refund', fn($q) => $q->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']));
         } elseif ($status) {
             $query->where('status', $status);
         }
