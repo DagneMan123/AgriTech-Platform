@@ -162,31 +162,57 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly spending trend (last 12 months) - reflects paid orders in escrow or delivered
-        $spendingByMonth = Order::where('buyer_id', $buyer->id)
+        // Monthly spending trend for current year (Jan to Dec) - reflects paid orders in escrow or delivered
+        $currentYear = (int) now()->format('Y');
+        $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        // Get approved refunds by Y-m to subtract from gross spending
+        $refundsByMonth = Refund::where(function ($q) use ($buyer) {
+                $q->where('requested_by_user_id', $buyer->id)
+                  ->orWhereHas('order', fn($oq) => $oq->where('buyer_id', $buyer->id));
+            })
+            ->whereIn('status', ['approved', 'completed', 'refunded'])
+            ->whereYear('created_at', $currentYear)
+            ->get()
+            ->groupBy(fn($r) => $r->created_at->format('Y-m'));
+
+        $yearPaidOrders = Order::where('buyer_id', $buyer->id)
             ->where(function ($q) {
                 $q->whereIn('payment_status', ['paid', 'completed'])
                   ->orWhereIn('escrow_status', ['held', 'disbursed'])
                   ->orWhereNotNull('escrow_held_at')
-                  ->orWhereIn('status', ['delivered', 'completed']);
+                  ->orWhereIn('status', ['delivered', 'completed', 'pending', 'refund_requested']);
             })
             ->whereDoesntHave('refund', function ($q) {
                 $q->whereIn('status', ['approved', 'completed', 'refunded']);
             })
-            ->whereDate('created_at', '>=', now()->subMonths(12))
-            ->get()
-            ->groupBy(function($date) {
-                return $date->created_at->format('Y-m');
-            })
-            ->map(function($group) {
-                return [
-                    'month' => $group->first()->created_at->format('M'),
-                    'year_month' => $group->first()->created_at->format('Y-m'),
-                    'spent' => $group->sum('grand_total'),
-                    'orders' => $group->count(),
-                ];
-            })
-            ->values();
+            ->whereYear('created_at', $currentYear)
+            ->get();
+
+        $spendingByMonth = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $ym = sprintf('%04d-%02d', $currentYear, $m);
+            $mName = $monthsNames[$m - 1];
+
+            $mOrders = $yearPaidOrders->filter(function($o) use ($m) {
+                return (int)$o->created_at->format('n') === $m;
+            });
+
+            $gross = (float) $mOrders->sum(function($o) {
+                return (float) ($o->grand_total ?: ($o->total_amount ?: (($o->subtotal ?? 0) + ($o->delivery_fee ?? 0))));
+            });
+
+            $refunded = (float) ($refundsByMonth->get($ym)?->sum('amount') ?? 0);
+            $netSpent = max(0, $gross - $refunded);
+
+            $spendingByMonth[] = [
+                'month' => $mName,
+                'month_index' => $m - 1,
+                'year_month' => $ym,
+                'spent' => $netSpent,
+                'orders' => $mOrders->count(),
+            ];
+        }
 
         // Purchases by category
         try {

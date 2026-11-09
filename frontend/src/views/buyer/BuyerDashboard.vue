@@ -418,9 +418,16 @@ const createSpendingTrendChart = () => {
     
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const rawData = dashboard.value?.spending_by_month || []
-    const spendingData = rawData.length > 0 
-      ? rawData.map(item => Number(item.spent) || 0)
-      : [500, 1500, 18000, 22000, 19000, 25000, 28000, 30000, 27000, 32000, 35000, 38000]
+    
+    // Map each of the 12 calendar months to its real database spending amount (or 0)
+    const spendingData = months.map((m, idx) => {
+      const match = rawData.find(item => 
+        item.month === m || 
+        item.month_index === idx || 
+        (item.year_month && item.year_month.endsWith(`-${String(idx + 1).padStart(2, '0')}`))
+      )
+      return match ? (Number(match.spent) || 0) : 0
+    })
     
     spendingChart = new window.Chart(ctx, {
       type: 'line',
@@ -444,7 +451,12 @@ const createSpendingTrendChart = () => {
         plugins: {
           tooltip: {
             callbacks: {
-              label: (context) => `ETB ${context.parsed.y.toLocaleString()}`
+              label: (context) => {
+                const monthName = months[context.dataIndex]
+                const match = rawData.find(item => item.month === monthName || item.month_index === context.dataIndex)
+                const ordersCount = match?.orders ? ` (${match.orders} order${match.orders > 1 ? 's' : ''})` : ''
+                return `ETB ${Number(context.parsed.y).toLocaleString()}${ordersCount}`
+              }
             }
           }
         },
