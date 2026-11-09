@@ -1751,6 +1751,13 @@ onMounted(async () => {
     router.replace({ query: { tab: activeTab.value } })
   }
 
+  if (paymentSuccess || escrowLocked || txRef) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('payment-completed'))
+      window.dispatchEvent(new CustomEvent('order-updated'))
+    }
+  }
+
   await refreshOrders()
 
   // Auto-open order details if order id is in route params or query

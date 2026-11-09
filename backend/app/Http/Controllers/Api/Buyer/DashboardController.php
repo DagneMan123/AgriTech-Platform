@@ -23,8 +23,11 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
 
-        // Total completed refunds
-        $totalRefundedAmount = (float) Refund::where('requested_by_user_id', $buyer->id)
+        // Total completed / approved refunds
+        $totalRefundedAmount = (float) Refund::where(function ($q) use ($buyer) {
+                $q->where('requested_by_user_id', $buyer->id)
+                  ->orWhereHas('order', fn($oq) => $oq->where('buyer_id', $buyer->id));
+            })
             ->whereIn('status', ['approved', 'completed', 'refunded'])
             ->sum('amount');
 
@@ -77,21 +80,48 @@ class DashboardController extends Controller
             ->whereHas('refund', fn($rq) => $rq->whereIn('status', ['requested', 'pending', 'under_review', 'dispute', 'in_review']))
             ->count();
 
-        // Shopping statistics - dynamically adjust total spent to exclude refunded amounts
-        $rawSpent = (float) Order::where('buyer_id', $buyer->id)
-            ->whereIn('status', ['delivered', 'completed'])
-            ->where(function ($q) {
-                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'refunded');
-            })
-            ->where(function ($q) {
-                $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
-            })
-            ->whereDoesntHave('refund', function ($q) {
-                $q->whereIn('status', ['approved', 'completed', 'refunded']);
-            })
-            ->sum('grand_total');
+        // Shopping statistics - Total Spent Ledger Calculation:
+        // 1. Add on Successful Payment (PAID / PAID ESCROW):
+        //    All orders where payment was completed into escrow or settled, summing total amount (item price + shipping fee).
+        // 2. Deduct on Refund (REFUNDED):
+        //    Exact approved/completed refund amount is automatically subtracted from the Total Spent ledger.
+        // 3. Exclude unpaid cancelled orders.
+        $buyerOrders = Order::where('buyer_id', $buyer->id)
+            ->with(['payment', 'refund'])
+            ->get();
 
-        $totalSpent = max(0, $rawSpent - $totalRefundedAmount);
+        $grossPaid = 0.0;
+        $activePaidOrdersCount = 0;
+
+        foreach ($buyerOrders as $order) {
+            $payStatus = strtolower($order->payment_status ?? '');
+            $escrowStatus = strtolower($order->escrow_status ?? '');
+            $orderStatus = strtolower($order->status ?? '');
+            $paymentStatus = strtolower($order->payment?->status ?? '');
+
+            // An order is paid if payment_status is 'paid', escrow is 'held'/'disbursed',
+            // escrow_held_at is set, payment record is completed/paid, or status is delivered/completed.
+            $wasPaid = in_array($payStatus, ['paid', 'completed', 'refunded'])
+                || in_array($escrowStatus, ['held', 'disbursed', 'refunded'])
+                || $order->escrow_held_at !== null
+                || in_array($paymentStatus, ['paid', 'completed', 'refunded'])
+                || in_array($orderStatus, ['delivered', 'completed', 'refunded']);
+
+            // Exclude orders cancelled without payment
+            if ($orderStatus === 'cancelled' && !in_array($payStatus, ['paid', 'refunded']) && !$order->refund) {
+                continue;
+            }
+
+            if ($wasPaid) {
+                $orderTotal = (float) ($order->grand_total ?: ($order->total_amount ?: (($order->subtotal ?? 0) + ($order->delivery_fee ?? 0))));
+                $grossPaid += $orderTotal;
+                if ($orderStatus !== 'cancelled' && $payStatus !== 'refunded') {
+                    $activePaidOrdersCount++;
+                }
+            }
+        }
+
+        $totalSpent = max(0, $grossPaid - $totalRefundedAmount);
 
         $cartCount = Cart::where('user_id', $buyer->id)->count();
         $wishlistCount = Wishlist::where('user_id', $buyer->id)->count();
@@ -132,9 +162,17 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as count')
             ->get();
 
-        // Monthly spending trend (last 12 months)
+        // Monthly spending trend (last 12 months) - reflects paid orders in escrow or delivered
         $spendingByMonth = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'delivered')
+            ->where(function ($q) {
+                $q->whereIn('payment_status', ['paid', 'completed'])
+                  ->orWhereIn('escrow_status', ['held', 'disbursed'])
+                  ->orWhereNotNull('escrow_held_at')
+                  ->orWhereIn('status', ['delivered', 'completed']);
+            })
+            ->whereDoesntHave('refund', function ($q) {
+                $q->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->whereDate('created_at', '>=', now()->subMonths(12))
             ->get()
             ->groupBy(function($date) {
@@ -157,7 +195,12 @@ class DashboardController extends Controller
                 ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
                 ->where('orders.buyer_id', $buyer->id)
-                ->where('orders.status', 'delivered')
+                ->where(function ($q) {
+                    $q->whereIn('orders.payment_status', ['paid', 'completed'])
+                      ->orWhereIn('orders.escrow_status', ['held', 'disbursed'])
+                      ->orWhereNotNull('orders.escrow_held_at')
+                      ->orWhereIn('orders.status', ['delivered', 'completed']);
+                })
                 ->groupBy('categories.id', 'categories.name')
                 ->selectRaw('categories.name as category, COUNT(DISTINCT order_items.id) as purchase_count, SUM(order_items.quantity) as total_quantity, SUM(order_items.subtotal) as total_spent')
                 ->get()
@@ -184,7 +227,7 @@ class DashboardController extends Controller
                 'in_progress_claims' => $inProgressClaims,
                 'total_refunded_amount' => $totalRefundedAmount,
                 'total_spent' => $totalSpent,
-                'average_order_value' => ($completedOrders > 0) ? ($totalSpent / $completedOrders) : 0,
+                'average_order_value' => (max($completedOrders, $activePaidOrdersCount) > 0) ? ($totalSpent / max($completedOrders, $activePaidOrdersCount)) : 0,
                 'cart_items_count' => $cartCount,
                 'wishlist_items_count' => $wishlistCount,
                 'active_deliveries' => $activeDeliveries,

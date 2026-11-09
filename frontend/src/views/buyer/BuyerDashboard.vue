@@ -442,9 +442,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useBuyerStore } from '@/stores/buyerStore'
 import { useRouter } from 'vue-router'
 import { buyerAPI } from '@/api/buyer'
 import BuyerSidebar from '@/components/Sidebar/BuyerSidebar.vue'
@@ -452,6 +453,7 @@ import BuyerHeaderNav from '@/components/layout/BuyerHeaderNav.vue'
 
 const auth = useAuthStore()
 const themeStore = useThemeStore()
+const buyerStore = useBuyerStore()
 const router = useRouter()
 
 const activeTab = ref('orders')
@@ -627,10 +629,35 @@ watch(darkMode, async () => {
   initializeCharts()
 })
 
+const handleRealtimeSync = async () => {
+  await fetchDashboardData()
+  initializeCharts()
+}
+
+// Automatically sync dashboard in real time whenever buyerStore orders change (paid, cancelled, refunded)
+watch(() => buyerStore.orders, () => {
+  handleRealtimeSync()
+}, { deep: true })
+
 onMounted(async () => {
   themeStore.initializeTheme()
   await fetchDashboardData()
   initializeCharts()
+
+  // Real-time synchronization event listeners across portal transitions
+  window.addEventListener('order-updated', handleRealtimeSync)
+  window.addEventListener('order-cancelled', handleRealtimeSync)
+  window.addEventListener('payment-completed', handleRealtimeSync)
+  window.addEventListener('refund-updated', handleRealtimeSync)
+  window.addEventListener('focus', handleRealtimeSync)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('order-updated', handleRealtimeSync)
+  window.removeEventListener('order-cancelled', handleRealtimeSync)
+  window.removeEventListener('payment-completed', handleRealtimeSync)
+  window.removeEventListener('refund-updated', handleRealtimeSync)
+  window.removeEventListener('focus', handleRealtimeSync)
 })
 
 const hasActiveRefundClaim = (order) => {
@@ -676,11 +703,13 @@ const filteredOrders = computed(() => {
 const summaryCards = computed(() => {
   const s = dashboard.value?.summary
   const refAmt = Number(s?.total_refunded_amount || 0)
+  const totalSpent = Number(s?.total_spent || 0)
+  const aov = Number(s?.average_order_value || 0)
   return [
     { key: 'total', label: 'Total Orders', value: s?.total_orders || 0, sub: 'All purchases', icon: 'fas fa-shopping-cart' },
     { key: 'pending', label: 'Pending Orders', value: s?.pending_orders || 0, sub: 'Awaiting shipment', icon: 'fas fa-clock' },
     { key: 'completed', label: 'Completed Orders', value: s?.completed_orders || 0, sub: 'Delivered', icon: 'fas fa-check-circle' },
-    { key: 'spent', label: 'Total Spent', value: `ETB ${formatNumber(s?.total_spent)}`, sub: refAmt > 0 ? `Refunds: -ETB ${formatNumber(refAmt)}` : `Avg: ETB ${formatNumber(s?.average_order_value)}`, icon: 'fas fa-wallet' },
+    { key: 'spent', label: 'Total Spent', value: `ETB ${formatNumber(totalSpent)}`, sub: refAmt > 0 ? `Refunds: -ETB ${formatNumber(refAmt)}` : (aov > 0 ? `Avg: ETB ${formatNumber(aov)}` : 'Completed & Escrow'), icon: 'fas fa-wallet' },
     { key: 'cart', label: 'Cart Items', value: s?.cart_items_count || 0, sub: 'Ready to checkout', icon: 'fas fa-shopping-bag' },
     { key: 'wishlist', label: 'Wishlist Items', value: s?.wishlist_items_count || 0, sub: 'Saved items', icon: 'fas fa-heart' }
   ]

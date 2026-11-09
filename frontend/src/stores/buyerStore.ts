@@ -79,6 +79,10 @@ export const useBuyerStore = defineStore('buyer', () => {
       } else if (resData && typeof resData === 'object' && resData.id) {
         orders.value = [resData, ...orders.value]
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('payment-completed', { detail: resData }))
+        window.dispatchEvent(new CustomEvent('order-updated', { detail: resData }))
+      }
       return response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to checkout'
@@ -112,6 +116,10 @@ export const useBuyerStore = defineStore('buyer', () => {
       if (index > -1) {
         orders.value[index] = { ...orders.value[index], ...(updated || {}), status: 'cancelled' }
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('order-cancelled', { detail: { id, updated } }))
+        window.dispatchEvent(new CustomEvent('order-updated', { detail: { id, updated } }))
+      }
       return updated
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to cancel order'
@@ -144,6 +152,10 @@ export const useBuyerStore = defineStore('buyer', () => {
         returns.value = []
       }
       returns.value.unshift(newRet)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('refund-updated', { detail: newRet }))
+        window.dispatchEvent(new CustomEvent('order-updated', { detail: newRet }))
+      }
       return newRet
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to submit return request'
@@ -160,6 +172,10 @@ export const useBuyerStore = defineStore('buyer', () => {
         if (index > -1) {
           returns.value[index] = updated
         }
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('refund-updated', { detail: { id, updated } }))
+        window.dispatchEvent(new CustomEvent('order-updated', { detail: { id, updated } }))
       }
       return updated
     } catch (err: any) {
