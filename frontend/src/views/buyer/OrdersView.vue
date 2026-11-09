@@ -459,7 +459,6 @@
           v-for="order in filteredAndSortedOrders"
           :key="order.id"
           :class="['rounded-2xl border overflow-hidden transition-all hover:shadow-lg', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
-          :style="`border-left-width: 4px; border-left-color: ${getOrderBorderColor(order.status)};`"
         >
           <!-- Order Header -->
           <div :class="['flex justify-between items-center px-5 py-4 border-b', darkMode ? 'bg-[#0f1729] border-slate-800' : 'bg-slate-50 border-slate-200']">

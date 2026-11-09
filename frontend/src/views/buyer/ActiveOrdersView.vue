@@ -217,7 +217,6 @@
             'rounded-2xl border overflow-hidden shadow-2xs hover:shadow-md transition-all',
             darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200'
           ]"
-          :style="{ 'border-left': `5px solid ${getOrderAccentColor(order.status)}` }"
         >
           <!-- Card Header Bar -->
           <div :class="['flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b', darkMode ? 'bg-[#0f1729] border-slate-800/80' : 'bg-slate-50 border-slate-200/80']">
