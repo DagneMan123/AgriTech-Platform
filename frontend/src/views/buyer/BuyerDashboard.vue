@@ -95,6 +95,23 @@
             </select>
           </div>
 
+          <!-- In-Progress Refund / Dispute Claim Banner -->
+          <div
+            v-if="inProgressClaimsCount > 0"
+            :class="['p-3.5 rounded-xl border flex items-center justify-between gap-3 mb-4', darkMode ? 'bg-amber-950/25 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800']"
+          >
+            <div class="flex items-center gap-2.5 text-xs font-semibold">
+              <i class="fas fa-history text-amber-500 text-sm"></i>
+              <span><strong>{{ inProgressClaimsCount }} In-Progress Refund {{ inProgressClaimsCount === 1 ? 'Claim' : 'Claims' }} Under Review:</strong> Active claims are segregated from live fulfillment and tracked in Returns &amp; Refunds.</span>
+            </div>
+            <router-link
+              to="/buyer/returns"
+              class="text-xs font-bold underline shrink-0 hover:opacity-80"
+            >
+              Track in Returns Portal &rarr;
+            </router-link>
+          </div>
+
           <div :class="['overflow-x-auto rounded-lg border', darkMode ? 'border-slate-800' : 'border-slate-100']">
             <table class="w-full text-left border-collapse min-w-[650px]" v-if="filteredOrders.length">
               <thead>
@@ -635,6 +652,7 @@ onMounted(async () => {
 
 const hasActiveRefundClaim = (order) => {
   if (!order) return false
+  if (isOrderRefundSettled(order)) return false
   const refundStatus = String(order.refund?.status || '').toLowerCase()
   return ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes(refundStatus)
 }
@@ -648,7 +666,7 @@ const isOrderRefundSettled = (order) => {
   const escrowStatus = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
   if (escrowStatus === 'refunded') return true
   const refundStatus = String(order.refund?.status || '').toLowerCase()
-  if (['approved', 'completed', 'refunded'].includes(refundStatus)) return true
+  if (['approved', 'completed', 'refunded', 'disbursed'].includes(refundStatus)) return true
   return false
 }
 
@@ -656,16 +674,20 @@ const isOrderRefunded = (order) => {
   return isOrderRefundSettled(order) || hasActiveRefundClaim(order)
 }
 
+const inProgressClaimsCount = computed(() => {
+  return (dashboard.value?.recent_orders || []).filter(hasActiveRefundClaim).length
+})
+
 const filteredOrders = computed(() => {
   const orders = dashboard.value?.recent_orders || []
   if (!orderFilter.value) return orders
   if (orderFilter.value === 'refunded') {
-    return orders.filter(o => isOrderRefunded(o))
+    return orders.filter(o => isOrderRefundSettled(o))
   }
   if (orderFilter.value === 'pending') {
-    return orders.filter(o => (o.status === 'pending' || o.status === 'placed') && !isOrderRefunded(o))
+    return orders.filter(o => (o.status === 'pending' || o.status === 'placed') && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
   }
-  return orders.filter(o => o.status === orderFilter.value && !isOrderRefunded(o))
+  return orders.filter(o => o.status === orderFilter.value && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
 })
 
 const summaryCards = computed(() => {

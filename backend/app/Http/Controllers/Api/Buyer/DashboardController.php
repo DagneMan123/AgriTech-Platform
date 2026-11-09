@@ -62,13 +62,19 @@ class DashboardController extends Controller
             ->where('status', 'cancelled')
             ->count();
 
+        // Completed/disbursed refunds (strictly completed, not in-progress claims)
         $refundedOrders = Order::where('buyer_id', $buyer->id)
             ->where(function ($q) {
                 $q->where('status', 'refunded')
                   ->orWhere('payment_status', 'refunded')
                   ->orWhere('escrow_status', 'refunded')
-                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']));
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
             })
+            ->count();
+
+        // In-progress claims (Under Review / Refund Requested, managed strictly in Returns & Refunds portal)
+        $inProgressClaims = Order::where('buyer_id', $buyer->id)
+            ->whereHas('refund', fn($rq) => $rq->whereIn('status', ['requested', 'pending', 'under_review', 'dispute', 'in_review']))
             ->count();
 
         // Shopping statistics - dynamically adjust total spent to exclude refunded amounts
@@ -175,6 +181,7 @@ class DashboardController extends Controller
                 'completed_orders' => $completedOrders,
                 'cancelled_orders' => $cancelledOrders,
                 'refunded_orders' => $refundedOrders,
+                'in_progress_claims' => $inProgressClaims,
                 'total_refunded_amount' => $totalRefundedAmount,
                 'total_spent' => $totalSpent,
                 'average_order_value' => ($completedOrders > 0) ? ($totalSpent / $completedOrders) : 0,
@@ -209,7 +216,7 @@ class DashboardController extends Controller
                 $q->where('status', 'refunded')
                   ->orWhere('payment_status', 'refunded')
                   ->orWhere('escrow_status', 'refunded')
-                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded', 'requested', 'pending', 'under_review', 'dispute', 'in_review']));
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
             });
         } elseif ($status === 'pending') {
             $query->whereIn('status', ['pending', 'placed'])

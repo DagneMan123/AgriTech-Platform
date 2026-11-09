@@ -773,10 +773,10 @@ const eligibleOrders = computed(() => {
 const stats = computed(() => {
   const list = rawReturns.value
   const total = list.length
-  const underReview = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'requested').length
+  const underReview = list.filter((r: ReturnClaim) => ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes((r.status || '').toLowerCase())).length
   const approved = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'approved').length
   const refundedAmount = list
-    .filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'completed')
+    .filter((r: ReturnClaim) => ['completed', 'refunded', 'disbursed'].includes((r.status || '').toLowerCase()))
     .reduce((sum: number, r: ReturnClaim) => sum + Number(r.amount || 0), 0)
 
   return { total, underReview, approved, refundedAmount }
@@ -788,7 +788,7 @@ const statusFilters = computed(() => [
   {
     label: 'Under Review',
     value: 'requested',
-    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'requested').length
+    count: rawReturns.value.filter((r: ReturnClaim) => ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes((r.status || '').toLowerCase())).length
   },
   {
     label: 'Approved',
@@ -798,7 +798,7 @@ const statusFilters = computed(() => [
   {
     label: 'Completed',
     value: 'completed',
-    count: rawReturns.value.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === 'completed').length
+    count: rawReturns.value.filter((r: ReturnClaim) => ['completed', 'refunded', 'disbursed'].includes((r.status || '').toLowerCase())).length
   },
   {
     label: 'Rejected',
@@ -812,7 +812,13 @@ const filteredReturns = computed<ReturnClaim[]>(() => {
   let list = [...rawReturns.value]
 
   if (activeStatusFilter.value) {
-    list = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === activeStatusFilter.value)
+    if (activeStatusFilter.value === 'requested') {
+      list = list.filter((r: ReturnClaim) => ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed'].includes((r.status || '').toLowerCase()))
+    } else if (activeStatusFilter.value === 'completed') {
+      list = list.filter((r: ReturnClaim) => ['completed', 'refunded', 'disbursed'].includes((r.status || '').toLowerCase()))
+    } else {
+      list = list.filter((r: ReturnClaim) => (r.status || '').toLowerCase() === activeStatusFilter.value)
+    }
   }
 
   if (searchQuery.value.trim()) {

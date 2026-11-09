@@ -112,6 +112,44 @@
         </button>
       </div>
 
+      <!-- ── In-Progress Refund / Dispute Claims Alert Banner ── -->
+      <div
+        v-if="inProgressClaimsCount > 0"
+        :class="[
+          'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 mb-6 rounded-2xl border transition-all shadow-2xs',
+          darkMode ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-amber-50/90 border-amber-300 text-amber-900'
+        ]"
+      >
+        <div class="flex items-center gap-3">
+          <div :class="['p-2.5 rounded-xl shrink-0', darkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700']">
+            <RotateCcw class="w-5 h-5" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="text-xs sm:text-sm font-bold m-0">
+                {{ inProgressClaimsCount }} In-Progress Refund / Dispute {{ inProgressClaimsCount === 1 ? 'Claim' : 'Claims' }} Under Review
+              </h4>
+              <span :class="['px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider', darkMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-200 text-amber-800 border border-amber-300']">
+                Isolated From Active Orders
+              </span>
+            </div>
+            <p :class="['text-xs mt-1 m-0 leading-relaxed', darkMode ? 'text-amber-300/80' : 'text-amber-700']">
+              Orders with active refund requests or dispute claims are segregated from live fulfillment and tracked in the Returns &amp; Refunds portal.
+            </p>
+          </div>
+        </div>
+        <router-link
+          to="/buyer/returns"
+          :class="[
+            'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs',
+            darkMode ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-amber-600 text-white hover:bg-amber-700'
+          ]"
+        >
+          <span>Track in Returns Portal</span>
+          <ExternalLink class="w-4 h-4" />
+        </router-link>
+      </div>
+
       <!-- ── Unified Main Content Navigation Tabs ── -->
       <nav
         aria-label="Order Lifecycle Categories"
@@ -1413,6 +1451,7 @@ const pastStatuses = ['delivered', 'completed', 'cancelled', 'rejected', 'failed
 // Active refund or dispute claim detection (e.g. requested, under_review, pending, dispute, in_review)
 const hasActiveRefundClaim = (order: any): boolean => {
   if (!order) return false
+  if (isOrderRefundSettled(order)) return false
   const r = order.refund
   if (!r) return false
   const status = String(r.status || '').toLowerCase()
@@ -1483,21 +1522,19 @@ const activeLifecycleStatuses = [
 const activePaymentStates = ['pending', 'awaiting_payment', 'unpaid', 'processing']
 
 /**
- * Categorization Rule 1: Active Orders Criteria
- * An order is classified under 'Active' if:
- * 1. It is NOT a settled/historical refunded or terminal state.
- * 2. Active refund claims stay visible in Active Orders for live dispute tracking.
- * 3. OR it matches an active fulfillment stage or pending payment verification.
+ * Categorization Rule 1: Active Orders Isolation
+ * Automatically filters out any order with an active refund claim, dispute, or cancellation
+ * from the Active Orders tab and active fulfillment metrics.
  */
 const isOrderActive = (order: any): boolean => {
   if (!order) return false
-  // Settled historical refunds belong exclusively in History / Past Orders
+  // 1. Any active refund claim or dispute is strictly isolated from Active Orders
+  if (hasActiveRefundClaim(order)) return false
+  // 2. Completed / settled refunds belong exclusively to Past Orders / History
   if (isOrderRefundSettled(order)) return false
-  // Active refund claims remain visible in Active Orders for live dispute tracking
-  if (hasActiveRefundClaim(order)) return true
+  // 3. Cancellations and terminal states belong strictly in Past Orders / History
   const status = (order.status || '').toLowerCase()
-  // Terminal states strictly belong in History / Past
-  if (pastStatuses.includes(status)) return false
+  if (status === 'cancelled' || pastStatuses.includes(status)) return false
 
   // Explicit active stages
   if (activeLifecycleStatuses.includes(status)) return true
@@ -1506,17 +1543,25 @@ const isOrderActive = (order: any): boolean => {
   const payStatus = (order.payment_status || order.payment?.status || '').toLowerCase()
   if (activePaymentStates.includes(payStatus)) return true
 
-  // Fallback: any non-terminal order is active
-  return true
+  return false
 }
 
 /**
  * Categorization Rule 2: History & Completion Separation
- * Completed (Delivered), Cancelled, or settled Refunded orders are strictly grouped into Past Orders / History.
+ * 1. While a refund claim is Under Review or Refund Requested, keep it strictly within
+ *    the Returns & Refunds tracking portal and do NOT prematurely dump it into Past Orders / History.
+ * 2. Only move an order into the Past Orders / History view after the refund process is fully approved and disbursed.
+ * 3. Delivered, completed, or cancelled orders belong in Past Orders / History.
  */
 const isOrderPast = (order: any): boolean => {
   if (!order) return false
+  // In-Progress Claim Handling: While a refund claim is Under Review or Refund Requested,
+  // do NOT prematurely dump it into Past Orders / History
+  if (hasActiveRefundClaim(order)) return false
+
+  // Completed Refund Routing: Only move an order into Past Orders / History after the refund process is fully approved and disbursed.
   if (isOrderRefundSettled(order)) return true
+
   const status = (order.status || '').toLowerCase()
   return pastStatuses.includes(status)
 }
@@ -1813,19 +1858,19 @@ const filteredOrdersList = computed<any[]>(() => {
   if (selectedStatus.value) {
     const s = selectedStatus.value.toLowerCase()
     if (s === 'refunded') {
-      list = list.filter(isOrderRefunded)
+      list = list.filter(isOrderRefundSettled)
     } else if (s === 'pending') {
-      list = list.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
+      list = list.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled')
     } else if (s === 'confirmed') {
-      list = list.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
+      list = list.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled')
     } else if (s === 'shipped') {
-      list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
+      list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled')
     } else if (s === 'delivered') {
-      list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
+      list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
     } else if (s === 'cancelled') {
-      list = list.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !isOrderRefunded(o))
+      list = list.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !hasActiveRefundClaim(o))
     } else {
-      list = list.filter(o => (o.status || '').toLowerCase() === s && !isOrderRefunded(o))
+      list = list.filter(o => (o.status || '').toLowerCase() === s && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
     }
   }
 
@@ -1898,12 +1943,13 @@ watch([searchQuery, selectedStatus, selectedDateRange, sortBy], () => {
 const totalOrders = computed(() => ordersArray.value.length)
 const activeOrdersCount = computed(() => ordersArray.value.filter(isOrderActive).length)
 const pastOrdersCount = computed(() => ordersArray.value.filter(isOrderPast).length)
-const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
-const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
-const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
-const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
-const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !isOrderRefunded(o)).length)
-const refundedOrdersCount = computed(() => ordersArray.value.filter(isOrderRefunded).length)
+const inProgressClaimsCount = computed(() => ordersArray.value.filter(hasActiveRefundClaim).length)
+const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)
+const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)
+const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o) && (o.status || '').toLowerCase() !== 'cancelled').length)
+const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o)).length)
+const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !hasActiveRefundClaim(o)).length)
+const settledRefundsCount = computed(() => ordersArray.value.filter(isOrderRefundSettled).length)
 
 // Field normalization helpers
 const getOrderNumber = (order: any): string => {
