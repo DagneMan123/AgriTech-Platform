@@ -91,6 +91,7 @@
               <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="refunded">Refunded</option>
             </select>
           </div>
 
@@ -114,16 +115,16 @@
                   <td class="p-3">{{ getOrderFarmer(order) }}</td>
                   <td class="p-3">{{ order.items?.length || 0 }}</td>
                   <td class="p-3">
-                    <span :class="['inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
-                      {{ order.status }}
+                    <span :class="['inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status, order)]">
+                      {{ getStatusDisplay(order) }}
                     </span>
                   </td>
                   <td class="p-3">
                     <span
                       class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                      :class="order.payment_status === 'paid' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'"
+                      :class="getOrderPaymentBadge(order).class"
                     >
-                      {{ order.payment_status === 'paid' ? 'Paid (Escrow)' : 'Pending' }}
+                      {{ getOrderPaymentBadge(order).label }}
                     </span>
                   </td>
                   <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(order.total_amount || order.grand_total) }}</td>
@@ -265,8 +266,8 @@
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="text-base font-bold m-0 font-mono">{{ getOrderNumber(selectedOrder) }}</h3>
-                  <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getStatusClass(selectedOrder.status)]">
-                    {{ selectedOrder.status }}
+                  <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', getStatusClass(selectedOrder.status, selectedOrder)]">
+                    {{ getStatusDisplay(selectedOrder) }}
                   </span>
                   <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider', getOrderPaymentBadge(selectedOrder).class]">
                     {{ getOrderPaymentBadge(selectedOrder).label }}
@@ -289,6 +290,24 @@
 
           <!-- Modal Body -->
           <div class="p-6 space-y-6">
+            <!-- Refund Notice Banner (if refunded) -->
+            <div
+              v-if="isOrderRefunded(selectedOrder)"
+              :class="['p-3.5 rounded-xl border flex items-center justify-between gap-3', darkMode ? 'bg-rose-950/25 border-rose-900/50 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800']"
+            >
+              <div class="flex items-center gap-2.5 text-xs font-semibold">
+                <i class="fas fa-undo-alt text-rose-500 text-sm"></i>
+                <span><strong>Escrow Refund Settled:</strong> Funds have been refunded to the buyer's account.</span>
+              </div>
+              <router-link
+                to="/buyer/returns"
+                class="text-xs font-bold underline shrink-0 hover:opacity-80"
+                @click="closeOrderModal"
+              >
+                Returns &amp; Refunds
+              </router-link>
+            </div>
+
             <!-- Logistics & Farmer Info Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Farmer / Supplier Info -->
@@ -596,32 +615,60 @@ onMounted(async () => {
   initializeCharts()
 })
 
+const isOrderRefunded = (order) => {
+  if (!order) return false
+  const status = String(order.status || '').toLowerCase()
+  if (status === 'refunded') return true
+  const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
+  if (payStatus === 'refunded') return true
+  const escrowStatus = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
+  if (escrowStatus === 'refunded') return true
+  const refundStatus = String(order.refund?.status || '').toLowerCase()
+  if (['approved', 'completed', 'refunded'].includes(refundStatus)) return true
+  return false
+}
+
 const filteredOrders = computed(() => {
   const orders = dashboard.value?.recent_orders || []
   if (!orderFilter.value) return orders
-  return orders.filter(o => o.status === orderFilter.value)
+  if (orderFilter.value === 'refunded') {
+    return orders.filter(o => isOrderRefunded(o))
+  }
+  if (orderFilter.value === 'pending') {
+    return orders.filter(o => (o.status === 'pending' || o.status === 'placed') && !isOrderRefunded(o))
+  }
+  return orders.filter(o => o.status === orderFilter.value && !isOrderRefunded(o))
 })
 
 const summaryCards = computed(() => {
   const s = dashboard.value?.summary
+  const refAmt = Number(s?.total_refunded_amount || 0)
   return [
     { key: 'total', label: 'Total Orders', value: s?.total_orders || 0, sub: 'All purchases', icon: 'fas fa-shopping-cart' },
     { key: 'pending', label: 'Pending Orders', value: s?.pending_orders || 0, sub: 'Awaiting shipment', icon: 'fas fa-clock' },
     { key: 'completed', label: 'Completed Orders', value: s?.completed_orders || 0, sub: 'Delivered', icon: 'fas fa-check-circle' },
-    { key: 'spent', label: 'Total Spent', value: `ETB ${formatNumber(s?.total_spent)}`, sub: `Avg: ETB ${formatNumber(s?.average_order_value)}`, icon: 'fas fa-wallet' },
+    { key: 'spent', label: 'Total Spent', value: `ETB ${formatNumber(s?.total_spent)}`, sub: refAmt > 0 ? `Refunds: -ETB ${formatNumber(refAmt)}` : `Avg: ETB ${formatNumber(s?.average_order_value)}`, icon: 'fas fa-wallet' },
     { key: 'cart', label: 'Cart Items', value: s?.cart_items_count || 0, sub: 'Ready to checkout', icon: 'fas fa-shopping-bag' },
     { key: 'wishlist', label: 'Wishlist Items', value: s?.wishlist_items_count || 0, sub: 'Saved items', icon: 'fas fa-heart' }
   ]
 })
 
-const getStatusClass = (status) => {
+const getStatusClass = (status, order) => {
+  if (order && isOrderRefunded(order)) return 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
   switch (status) {
     case 'completed':
     case 'delivered': return 'bg-emerald-50 text-emerald-600'
     case 'pending': return 'bg-amber-50 text-amber-600'
     case 'cancelled': return 'bg-red-50 text-red-600'
+    case 'refunded': return 'bg-rose-50 text-rose-600'
     default: return 'bg-slate-100 text-slate-600'
   }
+}
+
+const getStatusDisplay = (order) => {
+  if (!order) return ''
+  if (isOrderRefunded(order)) return 'Refunded'
+  return order.status || ''
 }
 
 async function fetchDashboardData() {
@@ -706,6 +753,9 @@ const getOrderDeliveryAddress = (order) => {
 
 const getOrderPaymentBadge = (order) => {
   if (!order) return { label: 'PENDING', class: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }
+  if (isOrderRefunded(order)) {
+    return { label: 'REFUNDED', class: 'bg-rose-500/15 text-rose-500 dark:text-rose-400 border border-rose-500/30 font-bold' }
+  }
   const isPaid = order.payment_status === 'paid' || order.payment?.status === 'completed' || order.payment?.status === 'paid'
   if (isPaid) {
     const escrow = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()

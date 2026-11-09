@@ -23,7 +23,8 @@ class OrderController extends Controller
                 'delivery.transporter.user',
                 'delivery.vehicle',
                 'payment',
-                'farmer.user'
+                'farmer.user',
+                'refund'
             ])
             ->latest();
 
@@ -42,7 +43,18 @@ class OrderController extends Controller
                     $order->setRelation('farmer', $itemFarmer);
                 }
             }
-            if ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+            $isRefunded = in_array(strtolower($order->payment_status ?? ''), ['refunded'])
+                || in_array(strtolower($order->escrow_status ?? ''), ['refunded'])
+                || in_array(strtolower($order->status ?? ''), ['refunded'])
+                || in_array(strtolower($order->payment?->status ?? ''), ['refunded'])
+                || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+
+            if ($isRefunded) {
+                if ($order->payment_status !== 'refunded') {
+                    $order->payment_status = 'refunded';
+                    $order->saveQuietly();
+                }
+            } elseif ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
                 $order->payment_status = 'paid';
                 $order->saveQuietly();
             }
@@ -208,16 +220,44 @@ class OrderController extends Controller
 
         $reason = $request->input('reason', 'Cancelled by buyer');
 
-        $order->update([
+        $wasPaid = in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed']) 
+            || ($order->payment && in_array(strtolower($order->payment->status ?? ''), ['paid', 'completed']))
+            || $order->escrow_held_at !== null;
+
+        $updateData = [
             'status' => 'cancelled',
             'notes' => ($order->notes ? $order->notes . ' | ' : '') . 'Cancellation: ' . $reason,
             'cancelled_at' => now(),
-        ]);
+        ];
+
+        if ($wasPaid) {
+            $updateData['payment_status'] = 'refunded';
+            $updateData['escrow_status'] = 'refunded';
+            if ($order->payment) {
+                $order->payment->update([
+                    'status' => 'refunded',
+                    'escrow_status' => 'refunded',
+                ]);
+            }
+            \App\Models\Refund::firstOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'payment_id' => $order->payment?->id,
+                    'requested_by_user_id' => $userId,
+                    'amount' => $order->grand_total ?: ($order->subtotal ?: 0),
+                    'status' => 'completed',
+                    'reason' => 'Cancellation refund: ' . $reason,
+                    'completed_at' => now(),
+                ]
+            );
+        }
+
+        $order->update($updateData);
 
         return response()->json([
             'success' => true,
-            'message' => 'Order cancelled successfully',
-            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user']),
+            'message' => $wasPaid ? 'Order cancelled and escrow payment refunded successfully' : 'Order cancelled successfully',
+            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user', 'refund']),
         ]);
     }
 

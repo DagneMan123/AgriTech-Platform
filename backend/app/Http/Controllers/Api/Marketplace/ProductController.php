@@ -22,7 +22,7 @@ class ProductController extends Controller
         ]);
 
         $query = Product::whereIn('status', ['active', 'available', 'approved'])
-            ->with(['farmer']);
+            ->with(['farmer.user', 'category', 'supplier.user']);
 
         $catParam = $request->input('category_id') ?? $request->input('category');
         if (!empty($catParam)) {
@@ -87,7 +87,7 @@ class ProductController extends Controller
             ], 404);
         }
 
-        $product->load('category', 'supplier', 'reviews');
+        $product->load('category', 'farmer.user', 'supplier.user', 'reviews');
         $product->increment('views');
 
         return response()->json([
@@ -103,7 +103,7 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 'active')
             ->where('is_featured', true)
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('featured_at', 'desc')
             ->limit(10)
             ->get();
@@ -127,7 +127,7 @@ class ProductController extends Controller
 
         $products = Product::where('status', 'active')
             ->where('discount_percentage', '>', 0)
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('discount_percentage', 'desc')
             ->limit($limit)
             ->get();
@@ -153,7 +153,7 @@ class ProductController extends Controller
 
         $products = Product::where('status', 'active')
             ->where('created_at', '>=', now()->subDays($days))
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
@@ -187,7 +187,7 @@ class ProductController extends Controller
         $products = Product::where('status', 'active')
             ->where('created_at', '>=', $startDate)
             ->withCount('orders')
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('orders_count', 'desc')
             ->limit($limit)
             ->get();
@@ -212,7 +212,7 @@ class ProductController extends Controller
         // Get products with high ratings and recent sales
         $products = Product::where('status', 'active')
             ->where('average_rating', '>=', 4)
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('average_rating', 'desc')
             ->orderBy('views', 'desc')
             ->limit($limit)
@@ -238,7 +238,7 @@ class ProductController extends Controller
 
         $products = Product::where('status', 'active')
             ->where('category_id', $validated['category_id'])
-            ->with('supplier')
+            ->with(['farmer.user', 'supplier.user'])
             ->paginate($limit);
 
         return response()->json([
@@ -324,7 +324,7 @@ class ProductController extends Controller
 
         $products = Product::whereIn('id', $validated['product_ids'])
             ->where('status', 'active')
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->get();
 
         return response()->json([
@@ -340,7 +340,7 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 'active')
             ->orderBy('views', 'desc')
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->limit(10)
             ->get();
 
@@ -357,7 +357,7 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 'active')
             ->where('is_seasonal', true)
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('created_at', 'desc')
             ->limit(20)
             ->get();
@@ -375,7 +375,7 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 'active')
             ->where('is_organic', true)
-            ->with('category', 'supplier')
+            ->with(['category', 'farmer.user', 'supplier.user'])
             ->orderBy('average_rating', 'desc')
             ->limit(20)
             ->get();

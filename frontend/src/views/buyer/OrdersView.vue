@@ -185,6 +185,29 @@
             {{ totalOrders }}
           </span>
         </button>
+
+        <!-- Returns & Refunds Section Navigation -->
+        <router-link
+          to="/buyer/returns"
+          :class="[
+            'flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap border',
+            darkMode
+              ? 'border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          ]"
+        >
+          <RotateCcw class="w-4 h-4 text-rose-500" />
+          <span>Returns &amp; Refunds</span>
+          <span
+            v-if="refundedOrdersCount > 0"
+            :class="[
+              'px-2 py-0.5 rounded-full text-[11px] font-black transition-colors',
+              darkMode ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-rose-100 text-rose-700'
+            ]"
+          >
+            {{ refundedOrdersCount }}
+          </span>
+        </router-link>
       </nav>
 
       <!-- ── Database Stats Summary Cards (Interactive Filters) ── -->
@@ -313,6 +336,7 @@
               <template v-else-if="activeTab === 'past'">
                 <option value="delivered">Delivered ({{ deliveredOrders }})</option>
                 <option value="cancelled">Cancelled Orders ({{ cancelledOrders }})</option>
+                <option value="refunded">Refunded Orders ({{ refundedOrdersCount }})</option>
               </template>
               <template v-else>
                 <option value="pending">Pending Confirmation ({{ pendingOrders }})</option>
@@ -320,6 +344,7 @@
                 <option value="shipped">In Transit / Shipped ({{ shippedOrders }})</option>
                 <option value="delivered">Delivered ({{ deliveredOrders }})</option>
                 <option value="cancelled">Cancelled Orders ({{ cancelledOrders }})</option>
+                <option value="refunded">Refunded Orders ({{ refundedOrdersCount }})</option>
               </template>
             </select>
           </div>
@@ -458,9 +483,9 @@
               </span>
 
               <!-- Fulfillment Status Badge -->
-              <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide', statusBadgeClass(order.status)]">
+              <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide', isOrderRefunded(order) ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : statusBadgeClass(order.status)]">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                <span>{{ formatStatus(order.status) }}</span>
+                <span>{{ isOrderRefunded(order) ? 'Refunded' : formatStatus(order.status) }}</span>
               </span>
             </div>
           </div>
@@ -639,7 +664,7 @@
 
               <!-- State-Aware Stage Badge: Before transport dispatch -->
               <span
-                v-else-if="['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
+                v-else-if="!isOrderRefunded(order) && ['confirmed', 'processing', 'preparing'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-blue-950/30 border-blue-900/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700']"
                 title="Farmer actively weighing, packaging, and staging produce for logistics pickup"
               >
@@ -648,13 +673,24 @@
               </span>
 
               <span
-                v-else-if="['pending', 'placed'].includes((order.status || '').toLowerCase())"
+                v-else-if="!isOrderRefunded(order) && ['pending', 'placed'].includes((order.status || '').toLowerCase())"
                 :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold border', darkMode ? 'bg-amber-950/30 border-amber-900/50 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-700']"
                 title="Order placed and awaiting logistics/transport assignment"
               >
                 <Clock class="w-3.5 h-3.5 text-amber-500" />
                 <span>Awaiting Transport Assignment</span>
               </span>
+
+              <!-- Refunded Action Badge & Navigation to Claims -->
+              <router-link
+                v-else-if="isOrderRefunded(order)"
+                to="/buyer/returns"
+                :class="['inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer', darkMode ? 'bg-rose-950/25 border-rose-900/50 text-rose-300 hover:bg-rose-900/40' : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100']"
+                title="Refund settled in Chapa escrow. View claim in Returns & Refunds."
+              >
+                <RotateCcw class="w-3.5 h-3.5 text-rose-500" />
+                <span>Refunded • View in Returns</span>
+              </router-link>
 
               <!-- Chat with Farmer / Direct Support -->
               <button
@@ -668,7 +704,7 @@
 
               <!-- Leave Review (Delivered only) -->
               <router-link
-                v-if="order.status === 'delivered'"
+                v-if="order.status === 'delivered' && !isOrderRefunded(order)"
                 :to="`/buyer/reviews?order_id=${order.id}`"
                 :class="['flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-amber-500', darkMode ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20' : 'bg-amber-50 border-amber-200 hover:bg-amber-100']"
               >
@@ -676,9 +712,9 @@
                 <span>Leave Review</span>
               </router-link>
 
-              <!-- Cancel Order (Pending or Confirmed only) -->
+              <!-- Cancel Order (Pending or Confirmed only, excluded if refunded) -->
               <button
-                v-if="canCancelOrder(order.status)"
+                v-if="canCancelOrder(order)"
                 @click="openCancelModal(order)"
                 class="flex items-center gap-1.5 px-3 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
@@ -854,11 +890,30 @@
                 ETB {{ formatNumber(getOrderAmount(activeOrderForDetails)) }}
               </span>
             </div>
+            <!-- Refund Settlement Notice in Modal -->
+            <div
+              v-if="isOrderRefunded(activeOrderForDetails)"
+              class="p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs"
+            >
+              <div class="flex items-center gap-2">
+                <RotateCcw class="w-4 h-4 text-rose-400 shrink-0" />
+                <span>
+                  <strong>Escrow Refund Settled:</strong> Funds for this order have been returned via Chapa Escrow.
+                </span>
+              </div>
+              <router-link
+                to="/buyer/returns"
+                class="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg font-bold whitespace-nowrap transition-colors"
+              >
+                View Returns
+              </router-link>
+            </div>
+
             <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
               <span>Payment Status:</span>
               <span
                 class="uppercase font-bold tracking-wide px-2 py-0.5 rounded-md text-[10px]"
-                :class="isOrderPaid(activeOrderForDetails) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'"
+                :class="isOrderRefunded(activeOrderForDetails) ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : (isOrderPaid(activeOrderForDetails) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20')"
               >
                 {{ getPaymentStatusLabel(activeOrderForDetails) }}
               </span>
@@ -1299,7 +1354,7 @@ import {
   Menu, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Search,
   RefreshCw, Eye, Star, AlertCircle, FileText, Phone, MapPin,
   Printer, ChevronLeft, ChevronRight, Package, Check, X, User, History,
-  MessageSquare, ShieldCheck, CreditCard, Banknote, PhoneCall, Navigation, ExternalLink
+  MessageSquare, ShieldCheck, CreditCard, Banknote, PhoneCall, Navigation, ExternalLink, RotateCcw
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1323,6 +1378,20 @@ const activeTab = ref<'active' | 'past' | 'all'>('active')
 // Terminal / Completed historical states (strictly excluded from Active)
 const pastStatuses = ['delivered', 'completed', 'cancelled', 'rejected', 'failed', 'refunded', 'closed', 'voided']
 
+// Refund detection helper (checks order status, payment status, escrow status, and refund relation)
+const isOrderRefunded = (order: any): boolean => {
+  if (!order) return false
+  const status = String(order.status || '').toLowerCase()
+  if (status === 'refunded') return true
+  const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
+  if (payStatus === 'refunded') return true
+  const escrowStatus = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
+  if (escrowStatus === 'refunded') return true
+  const refundStatus = String(order.refund?.status || '').toLowerCase()
+  if (['approved', 'completed', 'refunded'].includes(refundStatus)) return true
+  return false
+}
+
 // Explicit in-progress and active lifecycle stages
 const activeLifecycleStatuses = [
   'pending', 'placed', 'confirmed', 'approved', 'processing',
@@ -1335,12 +1404,13 @@ const activePaymentStates = ['pending', 'awaiting_payment', 'unpaid', 'processin
 /**
  * Categorization Rule 1: Active Orders Criteria
  * An order is classified under 'Active' if:
- * 1. It is NOT in a terminal/historical state (delivered, completed, cancelled, refunded, rejected, failed).
+ * 1. It is NOT refunded or in a terminal/historical state (delivered, completed, cancelled, refunded, rejected, failed).
  * 2. AND it matches an active fulfillment stage (e.g., Placed, Confirmed, Packing, In Transit),
  *    OR has pending payment verification (e.g., Telebirr Pending, Chapa Pending, COD verification).
  */
 const isOrderActive = (order: any): boolean => {
   if (!order) return false
+  if (isOrderRefunded(order)) return false
   const status = (order.status || '').toLowerCase()
   // Terminal states strictly belong in History / Past
   if (pastStatuses.includes(status)) return false
@@ -1358,10 +1428,11 @@ const isOrderActive = (order: any): boolean => {
 
 /**
  * Categorization Rule 2: History & Completion Separation
- * Completed (Delivered) or Cancelled orders are strictly separated from Active and grouped into Past Orders / History.
+ * Completed (Delivered) or Cancelled or Refunded orders are strictly separated from Active and grouped into Past Orders / History.
  */
 const isOrderPast = (order: any): boolean => {
   if (!order) return false
+  if (isOrderRefunded(order)) return true
   const status = (order.status || '').toLowerCase()
   return pastStatuses.includes(status)
 }
@@ -1657,18 +1728,20 @@ const filteredOrdersList = computed<any[]>(() => {
   // 2. Specific Status Sub-Filter
   if (selectedStatus.value) {
     const s = selectedStatus.value.toLowerCase()
-    if (s === 'pending') {
-      list = list.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()))
+    if (s === 'refunded') {
+      list = list.filter(isOrderRefunded)
+    } else if (s === 'pending') {
+      list = list.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
     } else if (s === 'confirmed') {
-      list = list.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()))
+      list = list.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
     } else if (s === 'shipped') {
-      list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()))
+      list = list.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
     } else if (s === 'delivered') {
-      list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()))
+      list = list.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o))
     } else if (s === 'cancelled') {
-      list = list.filter(o => (o.status || '').toLowerCase() === 'cancelled')
+      list = list.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !isOrderRefunded(o))
     } else {
-      list = list.filter(o => (o.status || '').toLowerCase() === s)
+      list = list.filter(o => (o.status || '').toLowerCase() === s && !isOrderRefunded(o))
     }
   }
 
@@ -1741,11 +1814,12 @@ watch([searchQuery, selectedStatus, selectedDateRange, sortBy], () => {
 const totalOrders = computed(() => ordersArray.value.length)
 const activeOrdersCount = computed(() => ordersArray.value.filter(isOrderActive).length)
 const pastOrdersCount = computed(() => ordersArray.value.filter(isOrderPast).length)
-const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase())).length)
-const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase())).length)
-const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase())).length)
-const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase())).length)
-const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled').length)
+const pendingOrders = computed(() => ordersArray.value.filter(o => ['pending', 'placed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
+const confirmedOrders = computed(() => ordersArray.value.filter(o => ['confirmed', 'processing', 'preparing'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
+const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', 'in_transit', 'out_for_delivery'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
+const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !isOrderRefunded(o)).length)
+const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !isOrderRefunded(o)).length)
+const refundedOrdersCount = computed(() => ordersArray.value.filter(isOrderRefunded).length)
 
 // Field normalization helpers
 const getOrderNumber = (order: any): string => {
@@ -1830,7 +1904,8 @@ const formatStatus = (status?: string): string => {
     in_transit: 'In Transit / Shipped',
     out_for_delivery: 'In Transit / Out for Delivery',
     delivered: 'Delivered',
-    cancelled: 'Cancelled'
+    cancelled: 'Cancelled',
+    refunded: 'Refunded'
   }
   return map[s] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending Confirmation / Placed')
 }
@@ -1851,6 +1926,7 @@ const hasAssignedTransport = (order: any): boolean => {
 
 const statusBadgeClass = (status?: string): string => {
   const s = (status || '').toLowerCase()
+  if (['refunded'].includes(s)) return 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
   if (['delivered'].includes(s)) return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
   if (['shipped', 'in_transit', 'out_for_delivery'].includes(s)) return 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
   if (['confirmed', 'processing', 'preparing'].includes(s)) return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
@@ -1911,8 +1987,13 @@ const isStatusReached = (checkStatus: string, orderOrStatus?: any): boolean => {
   return currentRank >= (checkRank[checkStatus] || 0)
 }
 
-const canCancelOrder = (status?: string): boolean => {
-  const s = (status || '').toLowerCase()
+const canCancelOrder = (orderOrStatus?: any): boolean => {
+  if (orderOrStatus && typeof orderOrStatus === 'object') {
+    if (isOrderRefunded(orderOrStatus)) return false
+    const s = String(orderOrStatus.status || '').toLowerCase()
+    return ['pending', 'confirmed'].includes(s)
+  }
+  const s = (orderOrStatus || '').toLowerCase()
   return ['pending', 'confirmed'].includes(s)
 }
 
@@ -1973,7 +2054,7 @@ const printReceipt = () => {
 const payingOrderId = ref<number | null>(null)
 
 const isOrderPaid = (order: any): boolean => {
-  if (!order) return false
+  if (!order || isOrderRefunded(order)) return false
   const pStatus = String(order.payment_status || '').toLowerCase()
   const paymentObjStatus = String(order.payment?.status || '').toLowerCase()
   const escrow = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
@@ -1988,7 +2069,7 @@ const isOrderPaid = (order: any): boolean => {
 }
 
 const isOrderUnpaid = (order: any): boolean => {
-  if (!order) return false
+  if (!order || isOrderRefunded(order)) return false
   const status = String(order.status || '').toLowerCase()
   if (['cancelled', 'delivered', 'completed', 'refunded'].includes(status)) return false
   return !isOrderPaid(order)
@@ -2054,6 +2135,10 @@ const confirmWarehouseInspection = async (order: any) => {
 
 // Payment Status Helpers (Strictly database driven)
 const getPaymentStatusLabel = (order: any): string => {
+  if (!order) return ''
+  if (isOrderRefunded(order)) {
+    return 'REFUNDED'
+  }
   if (isOrderPaid(order)) {
     const escrow = String(order?.escrow_status || order?.payment?.escrow_status || '').toLowerCase()
     if (escrow === 'disbursed') {
@@ -2077,6 +2162,11 @@ const getPaymentStatusLabel = (order: any): string => {
 }
 
 const getPaymentBadgeClass = (order: any): string => {
+  if (isOrderRefunded(order)) {
+    return darkMode.value
+      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+      : 'bg-rose-50 text-rose-700 border border-rose-200 shadow-xs'
+  }
   if (isOrderPaid(order)) {
     return darkMode.value
       ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
@@ -2099,6 +2189,7 @@ const getPaymentBadgeClass = (order: any): string => {
 }
 
 const getPaymentIcon = (order: any) => {
+  if (isOrderRefunded(order)) return RotateCcw
   if (isOrderPaid(order)) return ShieldCheck
   const label = getPaymentStatusLabel(order)
   if (label.includes('COD')) return Banknote

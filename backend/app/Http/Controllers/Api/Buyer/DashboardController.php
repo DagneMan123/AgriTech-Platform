@@ -10,6 +10,7 @@ use App\Models\Delivery;
 use App\Models\Review;
 use App\Models\Wishlist;
 use App\Models\Product;
+use App\Models\Refund;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,22 +23,69 @@ class DashboardController extends Controller
     {
         $buyer = $request->user();
 
+        // Total completed refunds
+        $totalRefundedAmount = (float) Refund::where('requested_by_user_id', $buyer->id)
+            ->whereIn('status', ['approved', 'completed', 'refunded'])
+            ->sum('amount');
+
         // Order statistics
         $totalOrders = Order::where('buyer_id', $buyer->id)->count();
+
+        // Pending Orders: strictly active, non-refunded, non-cancelled orders
         $pendingOrders = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'placed'])
+            ->where(function ($q) {
+                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'refunded');
+            })
+            ->where(function ($q) {
+                $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
+            })
+            ->whereDoesntHave('refund', function ($q) {
+                $q->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->count();
+
         $completedOrders = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'delivered')
+            ->whereIn('status', ['delivered', 'completed'])
+            ->where(function ($q) {
+                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'refunded');
+            })
+            ->where(function ($q) {
+                $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
+            })
+            ->whereDoesntHave('refund', function ($q) {
+                $q->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->count();
+
         $cancelledOrders = Order::where('buyer_id', $buyer->id)
             ->where('status', 'cancelled')
             ->count();
 
-        // Shopping statistics
-        $totalSpent = Order::where('buyer_id', $buyer->id)
-            ->where('status', 'delivered')
+        $refundedOrders = Order::where('buyer_id', $buyer->id)
+            ->where(function ($q) {
+                $q->where('status', 'refunded')
+                  ->orWhere('payment_status', 'refunded')
+                  ->orWhere('escrow_status', 'refunded')
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
+            })
+            ->count();
+
+        // Shopping statistics - dynamically adjust total spent to exclude refunded amounts
+        $rawSpent = (float) Order::where('buyer_id', $buyer->id)
+            ->whereIn('status', ['delivered', 'completed'])
+            ->where(function ($q) {
+                $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'refunded');
+            })
+            ->where(function ($q) {
+                $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
+            })
+            ->whereDoesntHave('refund', function ($q) {
+                $q->whereIn('status', ['approved', 'completed', 'refunded']);
+            })
             ->sum('grand_total');
+
+        $totalSpent = max(0, $rawSpent - $totalRefundedAmount);
 
         $cartCount = Cart::where('user_id', $buyer->id)->count();
         $wishlistCount = Wishlist::where('user_id', $buyer->id)->count();
@@ -54,9 +102,9 @@ class DashboardController extends Controller
 
         // Recent orders
         $recentOrders = Order::where('buyer_id', $buyer->id)
-            ->with(['items.product.farmer.user', 'farmer.user', 'supplier.user', 'delivery', 'payment'])
+            ->with(['items.product.farmer.user', 'farmer.user', 'supplier.user', 'delivery', 'payment', 'refund'])
             ->latest()
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         // Recent reviews written
@@ -126,8 +174,10 @@ class DashboardController extends Controller
                 'pending_orders' => $pendingOrders,
                 'completed_orders' => $completedOrders,
                 'cancelled_orders' => $cancelledOrders,
+                'refunded_orders' => $refundedOrders,
+                'total_refunded_amount' => $totalRefundedAmount,
                 'total_spent' => $totalSpent,
-                'average_order_value' => $totalOrders > 0 ? $totalSpent / $totalOrders : 0,
+                'average_order_value' => ($completedOrders > 0) ? ($totalSpent / $completedOrders) : 0,
                 'cart_items_count' => $cartCount,
                 'wishlist_items_count' => $wishlistCount,
                 'active_deliveries' => $activeDeliveries,
@@ -154,11 +204,27 @@ class DashboardController extends Controller
         $query = Order::where('buyer_id', $buyer->id)
             ->whereDate('created_at', '>=', now()->subDays($period));
 
-        if ($status) {
+        if ($status === 'refunded') {
+            $query->where(function ($q) {
+                $q->where('status', 'refunded')
+                  ->orWhere('payment_status', 'refunded')
+                  ->orWhere('escrow_status', 'refunded')
+                  ->orWhereHas('refund', fn($rq) => $rq->whereIn('status', ['approved', 'completed', 'refunded']));
+            });
+        } elseif ($status === 'pending') {
+            $query->whereIn('status', ['pending', 'placed'])
+                  ->where(function ($q) {
+                      $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'refunded');
+                  })
+                  ->where(function ($q) {
+                      $q->whereNull('escrow_status')->orWhere('escrow_status', '!=', 'refunded');
+                  })
+                  ->whereDoesntHave('refund', fn($q) => $q->whereIn('status', ['approved', 'completed', 'refunded']));
+        } elseif ($status) {
             $query->where('status', $status);
         }
 
-        $orders = $query->with(['items.product.farmer.user', 'farmer.user', 'supplier.user', 'delivery', 'payment'])
+        $orders = $query->with(['items.product.farmer.user', 'farmer.user', 'supplier.user', 'delivery', 'payment', 'refund'])
             ->latest()
             ->paginate(20);
 
