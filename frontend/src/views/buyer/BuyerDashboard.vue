@@ -99,7 +99,7 @@
               <thead>
                 <tr :class="['text-[11px] font-bold uppercase tracking-wider border-b', darkMode ? 'bg-[#0b0f19]/80 text-slate-400 border-slate-800' : 'bg-slate-50 text-slate-400 border-slate-100']">
                   <th class="p-3">Order ID</th>
-                  <th class="p-3">Supplier</th>
+                  <th class="p-3">Farmers</th>
                   <th class="p-3">Items</th>
                   <th class="p-3">Status</th>
                   <th class="p-3">Payment</th>
@@ -111,7 +111,7 @@
               <tbody :class="['divide-y text-xs font-semibold', darkMode ? 'divide-slate-800/80 text-slate-300' : 'divide-slate-100 text-slate-600']">
                 <tr v-for="order in filteredOrders" :key="order.id" :class="[darkMode ? 'hover:bg-[#0b0f19]/50' : 'hover:bg-slate-50/50']">
                   <td :class="['p-3 font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">#{{ order.id }}</td>
-                  <td class="p-3">{{ order.supplier?.name || 'N/A' }}</td>
+                  <td class="p-3">{{ getOrderFarmer(order) }}</td>
                   <td class="p-3">{{ order.items?.length || 0 }}</td>
                   <td class="p-3">
                     <span :class="['inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize', getStatusClass(order.status)]">
@@ -486,6 +486,24 @@ async function fetchDashboardData() {
 const formatNumber = (num) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0)
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'
 const formatTabName = (tab) => ({ orders: 'My Orders', deliveries: 'Deliveries', cart: 'Shopping Cart', reviews: 'Reviews', wishlist: 'Wishlist', analytics: 'Analytics' }[tab] || tab)
+
+const getOrderFarmer = (order) => {
+  if (!order) return 'N/A'
+  if (order.farmer?.user?.name) return order.farmer.user.name
+  if (order.farmer?.name) return order.farmer.name
+  if (order.farmer?.farm_name) return order.farmer.farm_name
+  if (order.supplier?.user?.name) return order.supplier.user.name
+  if (order.supplier?.name) return order.supplier.name
+  if (order.items && order.items.length > 0) {
+    const names = order.items
+      .map((it) => it.product?.farmer?.user?.name || it.product?.farmer?.name || it.product?.farmer_name)
+      .filter(Boolean)
+    if (names.length > 0) {
+      return Array.from(new Set(names)).join(', ')
+    }
+  }
+  return 'N/A'
+}
 
 const handleLogout = async () => { await auth.logout(); router.push('/login'); }
 const viewOrder = (order) => router.push(`/buyer/orders/${order.id}`)
