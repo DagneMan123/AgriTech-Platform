@@ -957,18 +957,17 @@ const calculateActiveStepIndex = (statusOrItem: any, item?: any): number => {
   }
 
   // Step 2: UNDER_REVIEW (where UNDER_REVIEW equals step 2)
+  // All active submitted claims in the database ('requested', 'under_review', 'refund_requested', 'dispute')
+  // are actively Under Review by administration and dispute auditors.
   if (
-    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED', 'AUDITING'].includes(s) ||
-    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED'].includes(orderStatus)
+    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED', 'AUDITING', 'REQUESTED', 'REFUND_REQUESTED', 'CLAIM_SUBMITTED'].includes(s) ||
+    ['UNDER_REVIEW', 'IN_REVIEW', 'UNDER REVIEW', 'REVIEW', 'DISPUTE', 'DISPUTED', 'REFUND_REQUESTED'].includes(orderStatus)
   ) {
     return 2
   }
 
-  // Step 1: CLAIM_SUBMITTED / REQUESTED / PENDING
-  if (
-    ['CLAIM_SUBMITTED', 'REQUESTED', 'PENDING', 'SUBMITTED', 'REFUND_REQUESTED'].includes(s) ||
-    ['REFUND_REQUESTED', 'PENDING'].includes(orderStatus)
-  ) {
+  // Step 1: Draft or newly initiated pending submission
+  if (['SUBMITTED', 'PENDING', 'DRAFT'].includes(s)) {
     return 1
   }
 
