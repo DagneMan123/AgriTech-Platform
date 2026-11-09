@@ -23,33 +23,72 @@
 
       <!-- 2. Summary Stats Cards -->
       <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-red-500' : 'bg-white border-blue-200 text-slate-900 !border-l-red-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="selectCard('saved')"
+          @keydown.enter="selectCard('saved')"
+          @keydown.space.prevent="selectCard('saved')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none',
+            darkMode ? 'bg-[#131b2e] text-slate-100' : 'bg-white text-slate-900',
+            selectedCard === 'saved'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Saved Items</h3>
             <p class="text-xl font-black">{{ wishlistItems.length }}</p>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-colors', selectedCard === 'saved' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600')]">
             <i class="fas fa-heart"></i>
           </div>
         </article>
 
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-emerald-500' : 'bg-white border-blue-200 text-slate-900 !border-l-emerald-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="selectCard('value')"
+          @keydown.enter="selectCard('value')"
+          @keydown.space.prevent="selectCard('value')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none',
+            darkMode ? 'bg-[#131b2e] text-slate-100' : 'bg-white text-slate-900',
+            selectedCard === 'value'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Estimated Value</h3>
             <p class="text-xl font-black">ETB {{ formatNumber(totalWishlistValue) }}</p>
             <p :class="['text-[10px] mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Sum of 1 unit per item</p>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-colors', selectedCard === 'value' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600')]">
             <i class="fas fa-wallet"></i>
           </div>
         </article>
 
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100 !border-l-blue-500' : 'bg-white border-blue-200 text-slate-900 !border-l-blue-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="selectCard('instock')"
+          @keydown.enter="selectCard('instock')"
+          @keydown.space.prevent="selectCard('instock')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none',
+            darkMode ? 'bg-[#131b2e] text-slate-100' : 'bg-white text-slate-900',
+            selectedCard === 'instock'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">In Stock Products</h3>
             <p class="text-xl font-black">{{ inStockCount }}</p>
           </div>
-          <div :class="['text-xl p-2.5 rounded-xl', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
+          <div :class="['text-xl p-2.5 rounded-xl transition-colors', selectedCard === 'instock' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' : (darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600')]">
             <i class="fas fa-check-circle"></i>
           </div>
         </article>
@@ -58,7 +97,7 @@
       <!-- 3. Wishlist Items Grid -->
       <section>
         <!-- Loading State -->
-        <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
+        <div v-if="loading" :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80']">
           <div class="w-10 h-10 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
           <p :class="['text-xs font-medium', darkMode ? 'text-slate-400' : 'text-slate-500']">Loading wishlist...</p>
         </div>
@@ -70,7 +109,7 @@
             :key="item.id"
             :class="[
               'rounded-2xl border overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group',
-              darkMode ? 'bg-[#131b2e] border-blue-500/40 text-slate-100' : 'bg-white border-blue-200 text-slate-900'
+              darkMode ? 'bg-[#131b2e] border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200/80 hover:border-slate-300 text-slate-900'
             ]"
           >
             <!-- Product Image Section -->
@@ -123,10 +162,10 @@
               </div>
 
               <!-- Actions -->
-              <div class="flex gap-2 pt-3 border-t border-slate-700/30">
+              <div :class="['flex gap-2 pt-3 border-t', darkMode ? 'border-slate-800' : 'border-slate-100']">
                 <button 
                   @click="viewProduct(item.product_id)"
-                  :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-blue-500/40 text-slate-300 hover:bg-slate-800' : 'bg-white border-blue-200 text-slate-700 hover:bg-slate-50']"
+                  :class="['flex-1 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer', darkMode ? 'bg-[#0b0f19] border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50']"
                 >
                   View
                 </button>
@@ -148,8 +187,8 @@
         </div>
 
         <!-- Empty Wishlist State -->
-        <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-blue-500/40' : 'bg-white border-blue-200']">
-          <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-blue-500/40 text-red-400' : 'bg-red-50 border-red-100 text-red-500']">
+        <div v-else :class="['rounded-2xl border p-12 text-center flex flex-col items-center justify-center', darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200/80']">
+          <div :class="['h-16 w-16 rounded-2xl flex items-center justify-center text-2xl mb-4 border shadow-inner', darkMode ? 'bg-slate-800/50 border-slate-700 text-red-400' : 'bg-red-50 border-red-100 text-red-500']">
             <i class="fas fa-heart-broken"></i>
           </div>
           <h3 :class="['text-base font-bold mb-1', darkMode ? 'text-slate-200' : 'text-slate-800']">Your Wishlist is Empty</h3>
@@ -184,6 +223,15 @@ const sidebarOpen = ref(false)
 const searchQuery = ref('')
 const wishlistItems = ref([])
 const addingToCartId = ref(null)
+const selectedCard = ref(null)
+
+const selectCard = (key) => {
+  if (selectedCard.value === key) {
+    selectedCard.value = null
+  } else {
+    selectedCard.value = key
+  }
+}
 
 const darkMode = computed(() => themeStore.isDark)
 const toggleDarkMode = () => themeStore.toggleTheme()
@@ -212,7 +260,11 @@ const inStockCount = computed(() => {
 })
 
 const filteredWishlist = computed(() => {
-  if (!searchQuery.value) return wishlistItems.value
+  let list = wishlistItems.value
+  if (selectedCard.value === 'instock') {
+    list = list.filter(item => item.in_stock)
+  }
+  if (!searchQuery.value) return list
   const q = searchQuery.value.toLowerCase().trim()
   return wishlistItems.value.filter(item => 
     (item.name && item.name.toLowerCase().includes(q)) ||
