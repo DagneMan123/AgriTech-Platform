@@ -117,21 +117,21 @@
                     <i class="fas fa-eye"></i> View
                   </button>
                   <button 
-                    v-if="order.status === 'pending' && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
+                    v-if="order.status === 'pending' && !isFulfillmentDisabled(order)"
                     class="btn-small btn-accept"
                     @click="acceptOrder(order.id)"
                   >
                     <i class="fas fa-check"></i> Accept
                   </button>
                   <button 
-                    v-if="order.status === 'pending' && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
+                    v-if="order.status === 'pending' && !isFulfillmentDisabled(order)"
                     class="btn-small btn-reject"
                     @click="rejectOrder(order.id)"
                   >
                     <i class="fas fa-times"></i> Reject
                   </button>
-                  <span v-else-if="hasActiveRefundClaim(order)" class="badge-locked" title="Fulfillment locked: Order is under refund/dispute review">
-                    <i class="fas fa-shield-alt"></i> Under Review
+                  <span v-else-if="isFulfillmentDisabled(order) && (hasActiveRefundClaim(order) || ['refund_requested', 'under_review', 'disputed'].includes(order.status))" class="badge-locked" title="Fulfillment locked: Order is under refund/dispute review">
+                    <i class="fas fa-shield-alt"></i> {{ formatStatus(order.status, order) }}
                   </span>
                 </td>
               </tr>
@@ -290,7 +290,28 @@ const fetchOrders = async () => {
     }
 
     const data = await res.json()
-    orders.value = data.data || data || []
+    const rawList = data.data || data || []
+    orders.value = (Array.isArray(rawList) ? rawList : []).map(raw => {
+      const refundObj = raw.refund || null
+      const refundStatus = String(refundObj?.status || '').toLowerCase()
+      let mappedStatus = String(raw.status || 'pending').toLowerCase()
+
+      if (['requested', 'pending'].includes(refundStatus)) {
+        mappedStatus = 'refund_requested'
+      } else if (['under_review', 'in_review'].includes(refundStatus)) {
+        mappedStatus = 'under_review'
+      } else if (['dispute', 'disputed'].includes(refundStatus)) {
+        mappedStatus = 'disputed'
+      } else if (['approved', 'completed', 'refunded'].includes(refundStatus) || mappedStatus === 'refunded') {
+        mappedStatus = 'refunded'
+      }
+
+      return {
+        ...raw,
+        status: mappedStatus,
+        refund: refundObj
+      }
+    })
   } catch (error) {
     console.error('Error fetching orders:', error)
     orders.value = []
@@ -378,6 +399,19 @@ const formatDate = (date) => {
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num || 0)
+}
+
+// Fulfillment Safety Guard
+const isFulfillmentDisabled = (order) => {
+  if (!order) return true
+  const s = String(order.status || '').toLowerCase()
+  if (['refund_requested', 'under_review', 'dispute', 'disputed', 'refunded', 'cancelled'].includes(s)) {
+    return true
+  }
+  if (hasActiveRefundClaim(order) || isOrderRefundSettled(order)) {
+    return true
+  }
+  return false
 }
 
 // Active refund or dispute claim detection

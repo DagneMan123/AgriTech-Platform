@@ -53,6 +53,30 @@ class Order extends Model
         'cancelled_at' => 'datetime'
     ];
 
+    public function getStatusAttribute($value)
+    {
+        $val = strtolower($value ?? 'pending');
+        if (in_array($val, ['refunded', 'cancelled', 'rejected'])) {
+            return $val;
+        }
+        if ($this->relationLoaded('refund') && $this->refund) {
+            $refundStatus = strtolower($this->refund->status ?? '');
+            if (in_array($refundStatus, ['approved', 'completed', 'refunded'])) {
+                return 'refunded';
+            }
+            if (in_array($refundStatus, ['dispute', 'disputed'])) {
+                return 'disputed';
+            }
+            if (in_array($refundStatus, ['under_review', 'in_review'])) {
+                return 'under_review';
+            }
+            if (in_array($refundStatus, ['requested', 'pending'])) {
+                return 'refund_requested';
+            }
+        }
+        return $val;
+    }
+
     public function getPaymentStatusAttribute($value)
     {
         if (strtolower($value ?? '') === 'refunded' || strtolower($this->status ?? '') === 'refunded') {

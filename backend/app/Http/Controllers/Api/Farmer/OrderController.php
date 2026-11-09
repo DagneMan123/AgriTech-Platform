@@ -44,8 +44,34 @@ class OrderController extends Controller
             $limit = (int) $request->get('limit', 50);
             $orders = $query->paginate($limit);
 
-            // Auto-heal / synchronize payment_status from Payment record if escrow is held or completed
+            // Auto-heal / synchronize status & payment_status from Refund and Payment records
             $orderItems = collect($orders->items())->map(function ($order) {
+                if ($order->refund) {
+                    $rStatus = strtolower($order->refund->status ?? '');
+                    if (in_array($rStatus, ['approved', 'completed', 'refunded'])) {
+                        if ($order->getRawOriginal('status') !== 'refunded') {
+                            $order->status = 'refunded';
+                            $order->payment_status = 'refunded';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['dispute', 'disputed'])) {
+                        if ($order->getRawOriginal('status') !== 'disputed') {
+                            $order->status = 'disputed';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['under_review', 'in_review'])) {
+                        if ($order->getRawOriginal('status') !== 'under_review') {
+                            $order->status = 'under_review';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['requested', 'pending'])) {
+                        if ($order->getRawOriginal('status') !== 'refund_requested') {
+                            $order->status = 'refund_requested';
+                            $order->saveQuietly();
+                        }
+                    }
+                }
+
                 $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
                     || strtolower($order->payment_status ?? '') === 'refunded'
                     || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
@@ -101,7 +127,33 @@ class OrderController extends Controller
             ->with(['items.product', 'buyer', 'payment', 'delivery', 'refund'])
             ->findOrFail($id);
 
-            // Auto-heal payment_status
+            // Auto-heal / synchronize status & payment_status
+            if ($order->refund) {
+                $rStatus = strtolower($order->refund->status ?? '');
+                if (in_array($rStatus, ['approved', 'completed', 'refunded'])) {
+                    if ($order->getRawOriginal('status') !== 'refunded') {
+                        $order->status = 'refunded';
+                        $order->payment_status = 'refunded';
+                        $order->saveQuietly();
+                    }
+                } elseif (in_array($rStatus, ['dispute', 'disputed'])) {
+                    if ($order->getRawOriginal('status') !== 'disputed') {
+                        $order->status = 'disputed';
+                        $order->saveQuietly();
+                    }
+                } elseif (in_array($rStatus, ['under_review', 'in_review'])) {
+                    if ($order->getRawOriginal('status') !== 'under_review') {
+                        $order->status = 'under_review';
+                        $order->saveQuietly();
+                    }
+                } elseif (in_array($rStatus, ['requested', 'pending'])) {
+                    if ($order->getRawOriginal('status') !== 'refund_requested') {
+                        $order->status = 'refund_requested';
+                        $order->saveQuietly();
+                    }
+                }
+            }
+
             $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
                 || strtolower($order->payment_status ?? '') === 'refunded'
                 || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));

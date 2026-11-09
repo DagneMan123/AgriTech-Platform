@@ -74,8 +74,9 @@ class ReturnController extends Controller
             'status' => 'requested',
         ]);
 
-        // Protect escrow funds from premature release during active dispute
+        // Protect escrow funds from premature release during active dispute and synchronize order status
         $order->update([
+            'status' => 'refund_requested',
             'escrow_status' => 'held'
         ]);
 

@@ -193,7 +193,7 @@
                       <Eye size="16" />
                     </button>
                     <button
-                      v-if="['pending', 'confirmed', 'processing'].includes(order.status) && !hasActiveRefundClaim(order) && !isOrderRefundSettled(order)"
+                      v-if="['pending', 'confirmed', 'processing'].includes(order.status) && !isFulfillmentDisabled(order)"
                       @click="router.push('/farmer/transport-requests')"
                       class="action-btn ship-btn text-blue-600 border-blue-200"
                       title="Request Transport Dispatch"
@@ -201,7 +201,7 @@
                       <Truck size="16" />
                     </button>
                     <button
-                      v-else-if="hasActiveRefundClaim(order)"
+                      v-else-if="isFulfillmentDisabled(order) && (hasActiveRefundClaim(order) || ['refund_requested', 'under_review', 'disputed', 'dispute'].includes(order.status))"
                       class="action-btn locked-btn text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 cursor-not-allowed"
                       disabled
                       title="Fulfillment locked: Order has an active refund claim or dispute under review"
@@ -209,7 +209,7 @@
                       <ShieldAlert size="16" />
                     </button>
                     <button
-                      v-if="['shipped', 'in_transit'].includes(order.status) && !hasActiveRefundClaim(order)"
+                      v-if="['shipped', 'in_transit'].includes(order.status) && !isFulfillmentDisabled(order)"
                       @click="router.push('/farmer/active-deliveries')"
                       class="action-btn deliver-btn text-purple-600 border-purple-200"
                       title="View Live Delivery Tracking"
@@ -411,7 +411,7 @@
               <button @click="selectedOrder = null" class="btn-secondary">Close</button>
               <div class="action-buttons">
                 <button
-                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && !hasActiveRefundClaim(selectedOrder) && !isOrderRefundSettled(selectedOrder)"
+                  v-if="['pending', 'confirmed', 'processing'].includes(selectedOrder.status) && !isFulfillmentDisabled(selectedOrder)"
                   @click="router.push('/farmer/transport-requests')"
                   class="btn-primary ship"
                   style="background: #3b82f6;"
@@ -419,12 +419,12 @@
                   <Truck size="14" />
                   <span>Request Transport Dispatch</span>
                 </button>
-                <div v-else-if="hasActiveRefundClaim(selectedOrder)" class="locked-action-badge">
+                <div v-else-if="isFulfillmentDisabled(selectedOrder) && (hasActiveRefundClaim(selectedOrder) || ['refund_requested', 'under_review', 'disputed', 'dispute'].includes(selectedOrder.status))" class="locked-action-badge">
                   <ShieldAlert size="15" />
-                  <span>Fulfillment Locked: Claim Under Review</span>
+                  <span>Fulfillment Locked: {{ getOrderStatusBadge(selectedOrder).label }}</span>
                 </div>
                 <button
-                  v-if="['shipped', 'in_transit'].includes(selectedOrder.status) && !hasActiveRefundClaim(selectedOrder)"
+                  v-if="['shipped', 'in_transit'].includes(selectedOrder.status) && !isFulfillmentDisabled(selectedOrder)"
                   @click="router.push('/farmer/active-deliveries')"
                   class="btn-primary"
                   style="background: #8b5cf6;"
@@ -589,6 +589,21 @@ const fetchOrders = async () => {
       const tax = Number(raw.tax || 0)
       const totalAmount = Number(raw.grand_total || (subtotal + shippingCost + tax))
 
+      // Dynamic Status Mapping: synchronize from centralized database & refund relation
+      const refundObj = raw.refund || raw.order_refund || null
+      const refundStatus = String(refundObj?.status || '').toLowerCase()
+      let mappedStatus = String(raw.status || 'pending').toLowerCase()
+
+      if (['requested', 'pending'].includes(refundStatus)) {
+        mappedStatus = 'refund_requested'
+      } else if (['under_review', 'in_review'].includes(refundStatus)) {
+        mappedStatus = 'under_review'
+      } else if (['dispute', 'disputed'].includes(refundStatus)) {
+        mappedStatus = 'disputed'
+      } else if (['approved', 'completed', 'refunded'].includes(refundStatus) || mappedStatus === 'refunded') {
+        mappedStatus = 'refunded'
+      }
+
       return {
         id: raw.order_number || ('ORD-' + String(raw.id).padStart(4, '0')),
         rawId: raw.id,
@@ -601,12 +616,12 @@ const fetchOrders = async () => {
         shippingCost,
         tax,
         orderDate: raw.created_at,
-        status: raw.status || 'pending',
+        status: mappedStatus,
         paymentStatus: String(raw.payment_status || (raw.payment?.status === 'completed' ? 'paid' : 'pending')).toLowerCase(),
-        deliveryStatus: capitalize(raw.status || 'pending'),
+        deliveryStatus: capitalize(mappedStatus),
         trackingNumber: raw.payment_reference || null,
         expectedDelivery: raw.delivered_at || null,
-        refund: raw.refund || null,
+        refund: refundObj,
         rawOrder: raw,
         items: items.length > 0 ? items : [
           {
@@ -661,6 +676,19 @@ const formatDate = (date) => {
 
 const capitalize = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+// Fulfillment Safety Guard: strictly disable or hide shipping/delivery actions for active claims or settled refunds
+const isFulfillmentDisabled = (order) => {
+  if (!order) return true
+  const s = String(order.status || '').toLowerCase()
+  if (['refund_requested', 'under_review', 'dispute', 'disputed', 'refunded', 'cancelled'].includes(s)) {
+    return true
+  }
+  if (hasActiveRefundClaim(order) || isOrderRefundSettled(order)) {
+    return true
+  }
+  return false
 }
 
 // Active refund or dispute claim detection (e.g. requested, under_review, pending, dispute, in_review)
