@@ -263,16 +263,16 @@
                 </div>
               </div>
 
-              <!-- Delivery Destination -->
+              <!-- Origin -->
               <div :class="['p-4 rounded-xl border', darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-200/80']">
                 <div class="flex items-center gap-2 mb-2">
-                  <i class="fas fa-map-marker-alt text-blue-500 text-xs"></i>
-                  <span :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Delivery Destination</span>
+                  <i class="fas fa-map-marker-alt text-emerald-500 text-xs"></i>
+                  <span :class="['text-[11px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Origin</span>
                 </div>
-                <p class="font-semibold text-xs leading-relaxed m-0 break-words whitespace-normal">{{ getOrderDeliveryAddress(selectedOrder) }}</p>
-                <div v-if="selectedOrder.delivery_phone || selectedOrder.phone" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+                <p class="font-bold text-sm leading-relaxed m-0 text-emerald-500 break-words whitespace-normal">{{ getOrderOriginLocation(selectedOrder) }}</p>
+                <div v-if="selectedOrder.delivery_phone || selectedOrder.phone || selectedOrder.farmer?.phone_number" class="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
                   <i class="fas fa-phone text-[10px]"></i>
-                  <span>Recipient: {{ selectedOrder.delivery_phone || selectedOrder.phone }}</span>
+                  <span>Contact: {{ selectedOrder.farmer?.phone_number || selectedOrder.delivery_phone || selectedOrder.phone }}</span>
                 </div>
               </div>
             </div>
@@ -294,8 +294,11 @@
                     </div>
                     <div class="min-w-0">
                       <p class="font-bold text-xs m-0 capitalize truncate">{{ item.product?.name || item.name || 'Agricultural Item' }}</p>
-                      <p :class="['text-[11px] m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                        {{ item.quantity || 1 }} {{ item.product?.quantity_unit || item.product?.unit || 'kg' }} @ ETB {{ formatNumber(item.price || item.unit_price) }}
+                      <p :class="['text-[11px] m-0 mt-0.5 flex items-center gap-2 flex-wrap', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                        <span>{{ item.quantity || 1 }} {{ item.product?.quantity_unit || item.product?.unit || 'kg' }} @ ETB {{ formatNumber(item.price || item.unit_price) }}</span>
+                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold border border-emerald-500/20">
+                          📍 Origin: {{ getItemOrigin(item, selectedOrder) }}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -802,6 +805,87 @@ const getOrderItems = (order) => {
 const getOrderDeliveryAddress = (order) => {
   if (!order) return 'N/A'
   return order.delivery_address || order.destination || order.delivery?.to_location || 'N/A'
+}
+
+const getOrderOriginLocation = (order) => {
+  if (!order) return 'Adama'
+
+  const origins = []
+
+  // 1. Extract and deduplicate origin values from all order items
+  const items = getOrderItems(order)
+  if (Array.isArray(items) && items.length > 0) {
+    for (const item of items) {
+      const rawOrigin = item.origin_location || item.product?.origin_location
+      if (rawOrigin && typeof rawOrigin === 'string') {
+        const val = rawOrigin.trim()
+        if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 2. If no item origins found, check stored order-level origin_location or pickup_location
+  if (origins.length === 0) {
+    for (const candidate of [order.origin_location, order.pickup_location]) {
+      if (candidate && typeof candidate === 'string') {
+        const val = candidate.trim()
+        if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Delivery assigned origin if still empty
+  if (origins.length === 0) {
+    for (const candidate of [order.delivery?.origin_location, order.delivery?.pickup_location]) {
+      if (candidate && typeof candidate === 'string') {
+        const val = candidate.trim()
+        if (val && !val.toLowerCase().includes('sample')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Farmer woreda or region if still empty
+  if (origins.length === 0) {
+    const farmer = order.farmer || items[0]?.product?.farmer
+    if (farmer?.woreda && typeof farmer.woreda === 'string') {
+      origins.push(farmer.woreda.trim())
+    } else if (farmer?.region && typeof farmer.region === 'string') {
+      origins.push(farmer.region.trim())
+    }
+  }
+
+  if (origins.length > 0) {
+    return origins.join(', ')
+  }
+
+  return 'Adama'
+}
+
+const getItemOrigin = (item, order) => {
+  const o = item?.origin_location || item?.product?.origin_location || order?.origin_location || 'Adama'
+  const val = String(o).trim()
+  return val.includes(',') ? val.split(',')[0].trim() : val
 }
 
 const getOrderPaymentBadge = (order) => {
