@@ -44,7 +44,7 @@
       <!-- ── Summary Stats Cards (Live Database Metrics) ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Tracked Milestones -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Milestones</h3>
             <p class="text-2xl font-black">{{ stats.total }}</p>
@@ -56,7 +56,7 @@
         </article>
 
         <!-- Completed Milestones -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Completed</h3>
             <p class="text-2xl font-black">{{ stats.completed }}</p>
@@ -68,7 +68,7 @@
         </article>
 
         <!-- In-Progress / Pending Verification -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Active In Field</h3>
             <p class="text-2xl font-black">{{ stats.activeInField }}</p>
@@ -80,7 +80,7 @@
         </article>
 
         <!-- Escrow Funds In Milestones -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 hover:border-slate-700' : 'bg-white border-slate-200/80 text-slate-900 hover:border-slate-300']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Escrow In Milestones</h3>
             <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(stats.escrowAmount) }}</p>

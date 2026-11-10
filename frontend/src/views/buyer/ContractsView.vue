@@ -51,49 +51,101 @@
       <!-- ── Summary Stats Cards (Live Database Metrics) ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Contracts -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="handleCardClick('total')"
+          @keydown.enter="handleCardClick('total')"
+          @keydown.space.prevent="handleCardClick('total')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            selectedCard === 'total'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <p :class="['text-xs font-medium uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Contracts</p>
             <h3 class="text-2xl font-black mt-1 mb-0">{{ stats.total }}</h3>
             <p class="text-[11px] text-blue-500 font-semibold mt-0.5 mb-0">Agreements created</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+          <div :class="['w-10 h-10 rounded-xl flex items-center justify-center transition-all group-hover:scale-105', selectedCard === 'total' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-blue-500/10 text-blue-500']">
             <FileText class="w-5 h-5" />
           </div>
         </article>
 
         <!-- Active Production -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="handleCardClick('active')"
+          @keydown.enter="handleCardClick('active')"
+          @keydown.space.prevent="handleCardClick('active')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            selectedCard === 'active'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <p :class="['text-xs font-medium uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Active Production</p>
             <h3 class="text-2xl font-black mt-1 mb-0">{{ stats.active }}</h3>
             <p class="text-[11px] text-blue-500 font-semibold mt-0.5 mb-0">Growing &amp; in-progress</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+          <div :class="['w-10 h-10 rounded-xl flex items-center justify-center transition-all group-hover:scale-105', selectedCard === 'active' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-blue-500/10 text-blue-500']">
             <Sprout class="w-5 h-5" />
           </div>
         </article>
 
         <!-- Pending Signature -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="handleCardClick('pending')"
+          @keydown.enter="handleCardClick('pending')"
+          @keydown.space.prevent="handleCardClick('pending')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            selectedCard === 'pending'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <p :class="['text-xs font-medium uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Pending Signature</p>
             <h3 class="text-2xl font-black mt-1 mb-0">{{ stats.pending }}</h3>
             <p class="text-[11px] text-amber-500 font-semibold mt-0.5 mb-0">Awaiting farmer sign</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+          <div :class="['w-10 h-10 rounded-xl flex items-center justify-center transition-all group-hover:scale-105', selectedCard === 'pending' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-amber-500/10 text-amber-500']">
             <Clock class="w-5 h-5" />
           </div>
         </article>
 
         <!-- Total Contracted Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600']">
+        <article
+          role="button"
+          tabindex="0"
+          @click="handleCardClick('value')"
+          @keydown.enter="handleCardClick('value')"
+          @keydown.space.prevent="handleCardClick('value')"
+          :class="[
+            'rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center cursor-pointer select-none outline-none group',
+            darkMode ? 'bg-[#131b2e] text-slate-100 hover:bg-slate-800/60' : 'bg-white text-slate-900 hover:bg-slate-50',
+            selectedCard === 'value'
+              ? 'border-blue-500 dark:border-blue-400'
+              : (darkMode ? 'border-slate-800 hover:border-slate-700 active:border-blue-400' : 'border-slate-200/80 hover:border-slate-300 active:border-blue-500')
+          ]"
+        >
           <div>
             <p :class="['text-xs font-medium uppercase tracking-wider m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Committed Value</p>
             <h3 class="text-xl font-black mt-1 mb-0 tracking-tight">ETB {{ formatNumber(stats.totalValue) }}</h3>
             <p class="text-[11px] text-purple-500 font-semibold mt-0.5 mb-0">Forward supply volume</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+          <div :class="['w-10 h-10 rounded-xl flex items-center justify-center transition-all group-hover:scale-105', selectedCard === 'value' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-purple-500/10 text-purple-500']">
             <BadgeDollarSign class="w-5 h-5" />
           </div>
         </article>
@@ -837,6 +889,23 @@ const submitting = ref(false)
 
 const searchQuery = ref('')
 const activeStatusFilter = ref('')
+const selectedCard = ref<string | null>(null)
+
+const handleCardClick = (key: string) => {
+  if (selectedCard.value === key) {
+    selectedCard.value = null
+    activeStatusFilter.value = ''
+  } else {
+    selectedCard.value = key
+    if (key === 'total') {
+      activeStatusFilter.value = ''
+    } else if (key === 'active') {
+      activeStatusFilter.value = 'active'
+    } else if (key === 'pending') {
+      activeStatusFilter.value = 'proposed'
+    }
+  }
+}
 const sortBy = ref('newest')
 
 const createModalOpen = ref(false)
