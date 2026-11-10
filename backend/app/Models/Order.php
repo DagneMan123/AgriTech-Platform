@@ -42,7 +42,8 @@ class Order extends Model
 
     protected $appends = [
         'has_active_refund_claim',
-        'is_refund_settled'
+        'is_refund_settled',
+        'pickup_location'
     ];
 
     protected $casts = [
@@ -139,6 +140,65 @@ class Order extends Model
     public function getIsRefundSettledAttribute(): bool
     {
         return $this->isRefundSettled();
+    }
+
+    public function getPickupLocationAttribute(): string
+    {
+        if ($this->relationLoaded('delivery') && $this->delivery) {
+            $loc = trim($this->delivery->pickup_location ?? $this->delivery->pickup_address ?? '');
+            if (!empty($loc)) {
+                return $loc;
+            }
+        }
+
+        $farmer = $this->relationLoaded('farmer') ? $this->farmer : null;
+        if (!$farmer && $this->relationLoaded('items') && $this->items && $this->items->isNotEmpty()) {
+            $farmer = $this->items->first()?->product?->farmer;
+        }
+
+        $productOrigin = null;
+        if ($this->relationLoaded('items') && $this->items && $this->items->isNotEmpty()) {
+            $firstProduct = $this->items->first()?->product;
+            if ($firstProduct && !empty($firstProduct->origin_location)) {
+                $productOrigin = trim($firstProduct->origin_location);
+            }
+        }
+
+        if ($farmer) {
+            $parts = [];
+            if (!empty($farmer->farm_name)) {
+                $parts[] = trim($farmer->farm_name);
+            } elseif (!empty($farmer->cooperative_name)) {
+                $parts[] = trim($farmer->cooperative_name) . ' Hub';
+            }
+
+            if (!empty($farmer->kebele)) {
+                $parts[] = 'Kebele ' . trim($farmer->kebele);
+            }
+            if (!empty($farmer->woreda)) {
+                $parts[] = trim($farmer->woreda);
+            } elseif ($productOrigin) {
+                $parts[] = $productOrigin;
+            }
+            if (!empty($farmer->zone)) {
+                $parts[] = trim($farmer->zone) . (str_contains(strtolower($farmer->zone), 'zone') ? '' : ' Zone');
+            }
+            if (!empty($farmer->region)) {
+                $parts[] = trim($farmer->region);
+            }
+            $parts[] = 'Ethiopia';
+
+            $locationString = implode(', ', array_unique(array_filter($parts)));
+            if (!empty($locationString)) {
+                return $locationString;
+            }
+        }
+
+        if ($productOrigin) {
+            return $productOrigin . ' Agricultural Hub, Ethiopia';
+        }
+
+        return 'Farm Pickup Point, Ethiopia';
     }
 
     protected static function boot()

@@ -433,11 +433,11 @@
               </span>
             </div>
 
-            <!-- Destination Address -->
+            <!-- Pickup Location -->
             <div class="flex flex-col gap-1 min-w-0">
-              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Destination</span>
-              <span :class="['text-sm font-semibold break-words whitespace-normal leading-snug', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderAddress(order)">
-                {{ getOrderAddress(order) }}
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Pickup Location</span>
+              <span :class="['text-sm font-semibold break-words whitespace-normal leading-snug', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderPickupLocation(order)">
+                {{ getOrderPickupLocation(order) }}
               </span>
             </div>
 
@@ -774,11 +774,11 @@
             <div :class="['p-4 rounded-xl border', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                 <User class="w-3.5 h-3.5 text-blue-500" />
-                <span>Producer / Cooperative</span>
+                <span>Producer &amp; Pickup Location</span>
               </h4>
               <p class="font-bold text-sm mb-1 text-blue-400">{{ getOrderSupplier(activeOrderForDetails) }}</p>
-              <p :class="['m-0 text-[11px]', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                Verified Agricultural Producer via AgriConnect Network
+              <p :class="['m-0 text-[11px] leading-relaxed break-words whitespace-normal', darkMode ? 'text-slate-300' : 'text-slate-600']">
+                {{ getOrderPickupLocation(activeOrderForDetails) }}
               </p>
             </div>
 
@@ -1080,9 +1080,9 @@
                   <Check class="w-3 h-3" />
                 </div>
                 <div class="text-xs">
-                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Origin Farm Dispatched</p>
-                  <p :class="['text-[11px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    {{ getOrderSupplier(activeOrderForTracking) }}
+                  <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Origin Farm / Pickup Location</p>
+                  <p :class="['text-[11px] m-0 break-words whitespace-normal', darkMode ? 'text-slate-400' : 'text-slate-500']">
+                    {{ getOrderPickupLocation(activeOrderForTracking) }}
                   </p>
                 </div>
               </div>
@@ -1760,8 +1760,9 @@ const filteredOrdersList = computed<any[]>(() => {
       const num = (getOrderNumber(o) || '').toLowerCase()
       const supplier = (getOrderSupplier(o) || '').toLowerCase()
       const address = (getOrderAddress(o) || '').toLowerCase()
+      const pickup = (getOrderPickupLocation(o) || '').toLowerCase()
       const items = (getOrderItems(o) || []).map((i: any) => (i.product_name || i.product?.name || i.product?.title || '').toLowerCase()).join(' ')
-      return num.includes(q) || supplier.includes(q) || address.includes(q) || items.includes(q)
+      return num.includes(q) || supplier.includes(q) || address.includes(q) || pickup.includes(q) || items.includes(q)
     })
   }
 
@@ -1898,6 +1899,67 @@ const getOrderAddress = (order: any): string => {
     return parts.join(', ')
   }
   return 'Address on file'
+}
+
+const getOrderPickupLocation = (order: any): string => {
+  if (!order) return 'Farm Pickup Point, Ethiopia'
+
+  // 1. Direct pickup_location from order (computed by backend or on model)
+  if (order.pickup_location && typeof order.pickup_location === 'string' && order.pickup_location.trim()) {
+    return order.pickup_location.trim()
+  }
+
+  // 2. Delivery relationship pickup fields
+  if (order.delivery?.pickup_location && typeof order.delivery.pickup_location === 'string' && order.delivery.pickup_location.trim()) {
+    return order.delivery.pickup_location.trim()
+  }
+  if (order.delivery?.pickup_address && typeof order.delivery.pickup_address === 'string' && order.delivery.pickup_address.trim()) {
+    return order.delivery.pickup_address.trim()
+  }
+
+  // 3. Farmer details
+  const farmer = order.farmer || order.items?.[0]?.product?.farmer || order.items?.[0]?.farmer
+
+  // 4. Product origin location
+  const firstItem = (order.items || [])[0]
+  const productOrigin = firstItem?.product?.origin_location || firstItem?.origin_location
+
+  if (farmer) {
+    const parts: string[] = []
+    if (farmer.farm_name && typeof farmer.farm_name === 'string' && farmer.farm_name.trim()) {
+      parts.push(farmer.farm_name.trim())
+    } else if (farmer.cooperative_name && typeof farmer.cooperative_name === 'string' && farmer.cooperative_name.trim()) {
+      parts.push(`${farmer.cooperative_name.trim()} Hub`)
+    }
+
+    if (farmer.kebele) {
+      parts.push(`Kebele ${farmer.kebele}`.trim())
+    }
+    if (farmer.woreda) {
+      parts.push(String(farmer.woreda).trim())
+    } else if (productOrigin && typeof productOrigin === 'string' && productOrigin.trim()) {
+      parts.push(String(productOrigin).trim())
+    }
+    if (farmer.zone) {
+      const z = String(farmer.zone).trim()
+      parts.push(z.toLowerCase().includes('zone') ? z : `${z} Zone`)
+    }
+    if (farmer.region) {
+      parts.push(String(farmer.region).trim())
+    }
+    parts.push('Ethiopia')
+
+    const uniqueParts = parts.filter((val, idx, arr) => val && arr.indexOf(val) === idx)
+    if (uniqueParts.length > 0) {
+      return uniqueParts.join(', ')
+    }
+  }
+
+  if (productOrigin && typeof productOrigin === 'string' && productOrigin.trim()) {
+    return `${String(productOrigin).trim()} Agricultural Hub, Ethiopia`
+  }
+
+  return 'Farm Pickup Point, Ethiopia'
 }
 
 const formatStatus = (status?: string): string => {
