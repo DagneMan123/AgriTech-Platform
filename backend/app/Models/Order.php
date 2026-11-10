@@ -147,6 +147,10 @@ class Order extends Model
 
     public function getOriginLocationAttribute(): string
     {
+        if ($this->relationLoaded('items') && $this->items && $this->items->count() > 1) {
+            return $this->getRealDataOrigin();
+        }
+
         $raw = $this->attributes['origin_location'] ?? null;
         if (!empty($raw) && !str_contains(strtolower($raw), 'sample') && !str_contains(strtolower($raw), 'farm pickup point')) {
             return trim($raw);
@@ -165,49 +169,68 @@ class Order extends Model
 
     public function getRealDataOrigin(): string
     {
-        // 1. Direct saved origin on order attributes
-        if (!empty($this->attributes['origin_location']) && !str_contains(strtolower($this->attributes['origin_location']), 'sample')) {
-            return trim($this->attributes['origin_location']);
-        }
-        if (!empty($this->attributes['pickup_location']) && !str_contains(strtolower($this->attributes['pickup_location']), 'sample')) {
-            return trim($this->attributes['pickup_location']);
-        }
+        $origins = [];
 
-        // 2. Product origin from items
+        // 1. Collect distinct origins from all order items
         if ($this->items && $this->items->isNotEmpty()) {
             foreach ($this->items as $it) {
                 $itemOrigin = trim($it->origin_location ?? $it->product?->origin_location ?? '');
-                if (!empty($itemOrigin) && !str_contains(strtolower($itemOrigin), 'sample')) {
-                    return $itemOrigin;
+                if (!empty($itemOrigin) && !str_contains(strtolower($itemOrigin), 'sample') && !str_contains(strtolower($itemOrigin), 'farm pickup point')) {
+                    $cleaned = str_contains($itemOrigin, ',') ? trim(explode(',', $itemOrigin)[0]) : $itemOrigin;
+                    if (!empty($cleaned) && !in_array($cleaned, $origins)) {
+                        $origins[] = $cleaned;
+                    }
+                }
+            }
+        }
+
+        // 2. Direct saved origin on order attributes if items didn't have any
+        if (empty($origins)) {
+            $rawOrderOrigin = trim($this->attributes['origin_location'] ?? $this->attributes['pickup_location'] ?? '');
+            if (!empty($rawOrderOrigin) && !str_contains(strtolower($rawOrderOrigin), 'sample') && !str_contains(strtolower($rawOrderOrigin), 'farm pickup point')) {
+                $parts = array_map('trim', explode(',', $rawOrderOrigin));
+                foreach ($parts as $p) {
+                    if (!empty($p) && !in_array($p, $origins)) {
+                        $origins[] = $p;
+                    }
                 }
             }
         }
 
         // 3. Delivery assigned pickup/origin address if set
-        $delivery = $this->delivery;
-        if ($delivery) {
-            $loc = trim($delivery->pickup_location ?? $delivery->origin_location ?? $delivery->pickup_address ?? '');
-            if (!empty($loc) && !str_contains(strtolower($loc), 'sample') && !str_contains(strtolower($loc), 'farm pickup point')) {
-                return $loc;
+        if (empty($origins)) {
+            $delivery = $this->delivery;
+            if ($delivery) {
+                $loc = trim($delivery->pickup_location ?? $delivery->origin_location ?? $delivery->pickup_address ?? '');
+                if (!empty($loc) && !str_contains(strtolower($loc), 'sample') && !str_contains(strtolower($loc), 'farm pickup point')) {
+                    $parts = array_map('trim', explode(',', $loc));
+                    foreach ($parts as $p) {
+                        if (!empty($p) && !in_array($p, $origins)) {
+                            $origins[] = $p;
+                        }
+                    }
+                }
             }
         }
 
         // 4. Direct farmer or farmer linked through items
-        $farmer = $this->farmer;
-        if (!$farmer && $this->items && $this->items->isNotEmpty()) {
-            $farmer = $this->items->first()?->product?->farmer;
+        if (empty($origins)) {
+            $farmer = $this->farmer;
+            if (!$farmer && $this->items && $this->items->isNotEmpty()) {
+                $farmer = $this->items->first()?->product?->farmer;
+            }
+
+            if ($farmer) {
+                if (!empty($farmer->woreda)) {
+                    $origins[] = trim($farmer->woreda);
+                } elseif (!empty($farmer->region)) {
+                    $origins[] = trim($farmer->region);
+                }
+            }
         }
 
-        if ($farmer) {
-            if (!empty($farmer->woreda)) {
-                return trim($farmer->woreda);
-            }
-            if (!empty($farmer->farm_name) && !str_contains(strtolower($farmer->farm_name), 'sample')) {
-                return trim($farmer->farm_name);
-            }
-            if (!empty($farmer->region)) {
-                return trim($farmer->region);
-            }
+        if (!empty($origins)) {
+            return implode(', ', array_unique($origins));
         }
 
         return 'Adama';

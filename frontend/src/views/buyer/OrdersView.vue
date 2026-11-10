@@ -436,7 +436,7 @@
             <!-- Origin -->
             <div class="flex flex-col gap-1 min-w-0">
               <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Origin</span>
-              <span class="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate" :title="'Origin: ' + getOrderOriginLocation(order)">
+              <span class="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400 break-words whitespace-normal leading-snug" :title="'Origin: ' + getOrderOriginLocation(order)">
                 <MapPin class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 {{ getOrderOriginLocation(order) }}
               </span>
@@ -1915,45 +1915,73 @@ const getOrderAddress = (order: any): string => {
 const getOrderOriginLocation = (order: any): string => {
   if (!order) return 'Adama'
 
-  // 1. Exact stored origin_location on order (e.g. 'Adama')
-  for (const candidate of [order.origin_location, order.pickup_location]) {
-    if (candidate && typeof candidate === 'string') {
-      const val = candidate.trim()
-      if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
-        return val.includes(',') ? val.split(',')[0].trim() : val
-      }
-    }
-  }
+  const origins: string[] = []
 
-  // 2. Exact item-level origin from items
+  // 1. Extract and deduplicate origin values from all order items
   const items = getOrderItems(order)
-  for (const item of items) {
-    const itemOrigin = item.origin_location || item.product?.origin_location
-    if (itemOrigin && typeof itemOrigin === 'string') {
-      const val = itemOrigin.trim()
-      if (val && !val.toLowerCase().includes('sample')) {
-        return val.includes(',') ? val.split(',')[0].trim() : val
+  if (Array.isArray(items) && items.length > 0) {
+    for (const item of items) {
+      const rawOrigin = item.origin_location || item.product?.origin_location
+      if (rawOrigin && typeof rawOrigin === 'string') {
+        const val = rawOrigin.trim()
+        if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
       }
     }
   }
 
-  // 3. Delivery origin
-  for (const candidate of [order.delivery?.origin_location, order.delivery?.pickup_location]) {
-    if (candidate && typeof candidate === 'string') {
-      const val = candidate.trim()
-      if (val && !val.toLowerCase().includes('sample')) {
-        return val.includes(',') ? val.split(',')[0].trim() : val
+  // 2. If no item origins found, check stored order-level origin_location or pickup_location
+  if (origins.length === 0) {
+    for (const candidate of [order.origin_location, order.pickup_location]) {
+      if (candidate && typeof candidate === 'string') {
+        const val = candidate.trim()
+        if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
       }
     }
   }
 
-  // 4. Farmer woreda or region
-  const farmer = order.farmer || items[0]?.product?.farmer
-  if (farmer?.woreda && typeof farmer.woreda === 'string') {
-    return farmer.woreda.trim()
+  // 3. Delivery assigned origin if still empty
+  if (origins.length === 0) {
+    for (const candidate of [order.delivery?.origin_location, order.delivery?.pickup_location]) {
+      if (candidate && typeof candidate === 'string') {
+        const val = candidate.trim()
+        if (val && !val.toLowerCase().includes('sample')) {
+          const parts = val.split(',').map(p => p.trim()).filter(Boolean)
+          for (const p of parts) {
+            if (!origins.includes(p)) {
+              origins.push(p)
+            }
+          }
+        }
+      }
+    }
   }
-  if (farmer?.region && typeof farmer.region === 'string') {
-    return farmer.region.trim()
+
+  // 4. Farmer woreda or region if still empty
+  if (origins.length === 0) {
+    const farmer = order.farmer || items[0]?.product?.farmer
+    if (farmer?.woreda && typeof farmer.woreda === 'string') {
+      origins.push(farmer.woreda.trim())
+    } else if (farmer?.region && typeof farmer.region === 'string') {
+      origins.push(farmer.region.trim())
+    }
+  }
+
+  if (origins.length > 0) {
+    return origins.join(', ')
   }
 
   return 'Adama'

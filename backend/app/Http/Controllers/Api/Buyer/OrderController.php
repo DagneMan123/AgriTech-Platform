@@ -105,9 +105,16 @@ class OrderController extends Controller
                 $tax = $orderAmount * 0.1;
                 $totalWithTax = $orderAmount + $tax;
 
-                $firstProd = $items->first()?->product;
-                $groupOrigin = $request->input('origin_location')
-                    ?: ($firstProd?->origin_location ?: 'Adama');
+                $distinctOrigins = [];
+                foreach ($items as $it) {
+                    $o = trim($it->product?->origin_location ?? $it->origin_location ?? '');
+                    if (!empty($o) && !in_array($o, $distinctOrigins)) {
+                        $distinctOrigins[] = $o;
+                    }
+                }
+                $groupOrigin = !empty($distinctOrigins)
+                    ? implode(', ', $distinctOrigins)
+                    : ($request->input('origin_location') ?: ($items->first()?->product?->origin_location ?: 'Adama'));
 
                 $order = Order::create([
                     'buyer_id' => $buyerId,

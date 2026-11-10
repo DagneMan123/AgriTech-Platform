@@ -311,9 +311,16 @@ class CartController extends Controller
                     $deliveryAddress = !empty($parts) ? implode(', ', array_unique($parts)) : ($user->address ?? 'Address on file');
                 }
 
-                $itemProduct = $items->first()?->product;
-                $groupOrigin = $request->input('origin_location')
-                    ?: ($itemProduct?->origin_location ?: ($items->first()?->origin_location ?: 'Adama'));
+                $distinctOrigins = [];
+                foreach ($items as $it) {
+                    $o = trim($it->product?->origin_location ?? $it->origin_location ?? '');
+                    if (!empty($o) && !in_array($o, $distinctOrigins)) {
+                        $distinctOrigins[] = $o;
+                    }
+                }
+                $groupOrigin = !empty($distinctOrigins)
+                    ? implode(', ', $distinctOrigins)
+                    : ($request->input('origin_location') ?: ($items->first()?->product?->origin_location ?: 'Adama'));
 
                 $order = Order::create([
                     'order_number' => 'ORD-' . strtoupper(Str::random(8)),
