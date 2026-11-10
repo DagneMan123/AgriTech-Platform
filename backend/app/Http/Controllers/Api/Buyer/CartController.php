@@ -311,6 +311,10 @@ class CartController extends Controller
                     $deliveryAddress = !empty($parts) ? implode(', ', array_unique($parts)) : ($user->address ?? 'Address on file');
                 }
 
+                $itemProduct = $items->first()?->product;
+                $groupOrigin = $request->input('origin_location')
+                    ?: ($itemProduct?->origin_location ?: ($items->first()?->origin_location ?: 'Adama'));
+
                 $order = Order::create([
                     'order_number' => 'ORD-' . strtoupper(Str::random(8)),
                     'buyer_id' => $userId,
@@ -321,6 +325,8 @@ class CartController extends Controller
                     'discount' => $discount,
                     'grand_total' => $orderGrandTotal,
                     'status' => 'pending',
+                    'origin_location' => $groupOrigin,
+                    'pickup_location' => $groupOrigin,
                     'delivery_address' => $deliveryAddress,
                     'delivery_region' => $request->input('delivery_region', $user->region ?? ''),
                     'delivery_zone' => $request->input('delivery_zone', $user->zone ?? ''),
@@ -336,12 +342,14 @@ class CartController extends Controller
 
                 foreach ($items as $item) {
                     if ($item->product) {
+                        $itemOrigin = $item->product->origin_location ?: $groupOrigin;
                         OrderItem::create([
                             'order_id' => $order->id,
                             'product_id' => $item->product_id,
                             'quantity' => $item->quantity,
                             'price' => $item->product->price,
                             'subtotal' => $item->product->price * $item->quantity,
+                            'origin_location' => $itemOrigin,
                         ]);
 
                         // Reduce product quantity available if positive

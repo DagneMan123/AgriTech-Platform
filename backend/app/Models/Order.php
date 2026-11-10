@@ -21,6 +21,8 @@ class Order extends Model
         'discount',
         'grand_total',
         'status',
+        'origin_location',
+        'pickup_location',
         'delivery_address',
         'delivery_region',
         'delivery_zone',
@@ -143,19 +145,45 @@ class Order extends Model
         return $this->isRefundSettled();
     }
 
-    public function getPickupLocationAttribute(): string
+    public function getOriginLocationAttribute(): string
     {
+        $raw = $this->attributes['origin_location'] ?? null;
+        if (!empty($raw) && !str_contains(strtolower($raw), 'sample') && !str_contains(strtolower($raw), 'farm pickup point')) {
+            return trim($raw);
+        }
         return $this->getRealDataOrigin();
     }
 
-    public function getOriginLocationAttribute(): string
+    public function getPickupLocationAttribute(): string
     {
-        return $this->getRealDataOrigin();
+        $raw = $this->attributes['pickup_location'] ?? null;
+        if (!empty($raw) && !str_contains(strtolower($raw), 'sample') && !str_contains(strtolower($raw), 'farm pickup point')) {
+            return trim($raw);
+        }
+        return $this->getOriginLocationAttribute();
     }
 
     public function getRealDataOrigin(): string
     {
-        // 1. Delivery assigned pickup/origin address if set
+        // 1. Direct saved origin on order attributes
+        if (!empty($this->attributes['origin_location']) && !str_contains(strtolower($this->attributes['origin_location']), 'sample')) {
+            return trim($this->attributes['origin_location']);
+        }
+        if (!empty($this->attributes['pickup_location']) && !str_contains(strtolower($this->attributes['pickup_location']), 'sample')) {
+            return trim($this->attributes['pickup_location']);
+        }
+
+        // 2. Product origin from items
+        if ($this->items && $this->items->isNotEmpty()) {
+            foreach ($this->items as $it) {
+                $itemOrigin = trim($it->origin_location ?? $it->product?->origin_location ?? '');
+                if (!empty($itemOrigin) && !str_contains(strtolower($itemOrigin), 'sample')) {
+                    return $itemOrigin;
+                }
+            }
+        }
+
+        // 3. Delivery assigned pickup/origin address if set
         $delivery = $this->delivery;
         if ($delivery) {
             $loc = trim($delivery->pickup_location ?? $delivery->origin_location ?? $delivery->pickup_address ?? '');
@@ -164,56 +192,25 @@ class Order extends Model
             }
         }
 
-        // 2. Direct farmer or farmer linked through items
+        // 4. Direct farmer or farmer linked through items
         $farmer = $this->farmer;
         if (!$farmer && $this->items && $this->items->isNotEmpty()) {
             $farmer = $this->items->first()?->product?->farmer;
         }
 
-        // 3. Product origin from order item
-        $productOrigin = null;
-        if ($this->items && $this->items->isNotEmpty()) {
-            $firstProduct = $this->items->first()?->product;
-            if ($firstProduct && !empty($firstProduct->origin_location)) {
-                $productOrigin = trim($firstProduct->origin_location);
-            }
-        }
-
         if ($farmer) {
-            $parts = [];
-            if (!empty($farmer->farm_name) && !str_contains(strtolower($farmer->farm_name), 'sample')) {
-                $parts[] = trim($farmer->farm_name);
-            } elseif (!empty($farmer->cooperative_name) && !str_contains(strtolower($farmer->cooperative_name), 'sample')) {
-                $parts[] = trim($farmer->cooperative_name);
-            }
-
-            if (!empty($farmer->kebele)) {
-                $parts[] = 'Kebele ' . trim($farmer->kebele);
-            }
             if (!empty($farmer->woreda)) {
-                $parts[] = trim($farmer->woreda);
-            } elseif ($productOrigin) {
-                $parts[] = $productOrigin;
+                return trim($farmer->woreda);
             }
-            if (!empty($farmer->zone)) {
-                $parts[] = trim($farmer->zone) . (str_contains(strtolower($farmer->zone), 'zone') ? '' : ' Zone');
+            if (!empty($farmer->farm_name) && !str_contains(strtolower($farmer->farm_name), 'sample')) {
+                return trim($farmer->farm_name);
             }
             if (!empty($farmer->region)) {
-                $parts[] = trim($farmer->region);
-            }
-            $parts[] = 'Ethiopia';
-
-            $locationString = implode(', ', array_unique(array_filter($parts)));
-            if (!empty($locationString)) {
-                return $locationString;
+                return trim($farmer->region);
             }
         }
 
-        if ($productOrigin) {
-            return $productOrigin . ', Ethiopia';
-        }
-
-        return 'Ethiopia';
+        return 'Adama';
     }
 
     protected static function boot()

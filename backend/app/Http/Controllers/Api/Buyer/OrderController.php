@@ -105,14 +105,23 @@ class OrderController extends Controller
                 $tax = $orderAmount * 0.1;
                 $totalWithTax = $orderAmount + $tax;
 
+                $firstProd = $items->first()?->product;
+                $groupOrigin = $request->input('origin_location')
+                    ?: ($firstProd?->origin_location ?: 'Adama');
+
                 $order = Order::create([
                     'buyer_id' => $buyerId,
-                    'seller_id' => $sellerId,
-                    'total_amount' => $totalWithTax,
+                    'farmer_id' => $sellerId,
+                    'subtotal' => $orderAmount,
+                    'tax' => $tax,
+                    'grand_total' => $totalWithTax,
                     'status' => 'pending',
+                    'origin_location' => $groupOrigin,
+                    'pickup_location' => $groupOrigin,
                     'delivery_address' => $validated['delivery_address'],
-                    'delivery_latitude' => $validated['delivery_latitude'] ?? null,
-                    'delivery_longitude' => $validated['delivery_longitude'] ?? null,
+                    'delivery_region' => $request->input('delivery_region', 'Addis Ababa'),
+                    'delivery_zone' => $request->input('delivery_zone', ''),
+                    'delivery_woreda' => $request->input('delivery_woreda', ''),
                     'notes' => $validated['notes'] ?? null,
                 ]);
 
@@ -121,6 +130,8 @@ class OrderController extends Controller
                         'product_id' => $cartItem->product_id,
                         'quantity' => $cartItem->quantity,
                         'price' => $cartItem->price,
+                        'subtotal' => $cartItem->price * $cartItem->quantity,
+                        'origin_location' => $cartItem->product?->origin_location ?: $groupOrigin,
                     ]);
                 }
 

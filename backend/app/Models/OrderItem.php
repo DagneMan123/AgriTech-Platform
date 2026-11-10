@@ -16,6 +16,7 @@ class OrderItem extends Model
         'quantity',
         'price',
         'subtotal',
+        'origin_location',
         'options'
     ];
 
