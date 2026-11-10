@@ -55,7 +55,6 @@
               <ShieldCheck class="w-3.5 h-3.5 shrink-0" />
               <span>Delivered & Paid (Chapa Escrow)</span>
             </div>
-            <div class="absolute inset-x-0 bottom-0 h-1 bg-emerald-500"></div>
           </div>
 
           <!-- TOTAL SALES -->
@@ -76,7 +75,6 @@
               <CheckCircle2 class="w-3.5 h-3.5 shrink-0" />
               <span>Completed & Fulfilled Orders</span>
             </div>
-            <div class="absolute inset-x-0 bottom-0 h-1 bg-blue-500"></div>
           </div>
 
           <!-- AVERAGE ORDER -->
@@ -97,7 +95,6 @@
               <TrendingUp class="w-3.5 h-3.5 text-purple-500 shrink-0" />
               <span>Per delivered transaction</span>
             </div>
-            <div class="absolute inset-x-0 bottom-0 h-1 bg-purple-500"></div>
           </div>
 
           <!-- PENDING ORDERS -->
@@ -120,7 +117,6 @@
                 Manage &rarr;
               </router-link>
             </div>
-            <div class="absolute inset-x-0 bottom-0 h-1 bg-amber-500"></div>
           </div>
         </div>
 
