@@ -973,26 +973,15 @@ onMounted(() => {
   background: white;
   border-radius: 12px;
   padding: 24px;
+  border: 1px solid #e5e7eb;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s;
-  border-left: 5px solid #3b82f6;
 }
 
 .summary-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-}
-
-.summary-card:nth-child(2) {
-  border-left-color: #f59e0b;
-}
-
-.summary-card:nth-child(3) {
-  border-left-color: #8b5cf6;
-}
-
-.summary-card:nth-child(4) {
-  border-left-color: #10b981;
+  border-color: #d1d5db;
 }
 
 .card-header {
@@ -2016,24 +2005,17 @@ onMounted(() => {
 /* Summary Cards */
 .orders-layout.light .summary-card {
   background: white;
+  border-color: #e5e7eb;
 }
 
 .orders-layout.dark .summary-card {
   background: #1a2338;
-  border-left-color: #60a5fa;
+  border-color: #2d3f52;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.orders-layout.dark .summary-card:nth-child(2) {
-  border-left-color: #fbbf24;
-}
-
-.orders-layout.dark .summary-card:nth-child(3) {
-  border-left-color: #a78bfa;
-}
-
-.orders-layout.dark .summary-card:nth-child(4) {
-  border-left-color: #4ade80;
+.orders-layout.dark .summary-card:hover {
+  border-color: #3b5068;
 }
 
 .orders-layout.dark .card-header h3 {
