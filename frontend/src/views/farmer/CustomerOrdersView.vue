@@ -2245,9 +2245,10 @@ onMounted(() => {
   color: #cbd5e1;
 }
 
-/* Modal */
+/* Modal Dark Mode */
 .orders-layout.dark .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
 }
 
 .orders-layout.light .modal-content {
@@ -2256,104 +2257,146 @@ onMounted(() => {
 
 .orders-layout.dark .modal-content {
   background: #1a2338;
+  border: 1px solid #2d3f52;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
 }
 
 .orders-layout.dark .modal-header {
-  border-bottom-color: #2d3f52;
+  background: #1a2338;
+  border-bottom: 1px solid #2d3f52;
 }
 
 .orders-layout.dark .modal-header h2 {
-  color: #f1f5f9;
+  color: #f8fafc;
+}
+
+.orders-layout.dark .modal-header .btn-close {
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.orders-layout.dark .modal-header .btn-close:hover {
+  color: #f8fafc;
 }
 
 .orders-layout.dark .modal-body {
   color: #f1f5f9;
+  background: #1a2338;
 }
 
 .orders-layout.dark .order-summary {
   background: #131b2e;
-  border-color: #2d3f52;
+  border: 1px solid #2d3f52;
+  border-radius: 8px;
 }
 
 .orders-layout.dark .summary-item .label {
-  color: #cbd5e1;
+  color: #94a3b8;
 }
 
 .orders-layout.dark .summary-item .value {
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 .orders-layout.dark .section {
-  border-top-color: #2d3f52;
+  border-top: none;
 }
 
 .orders-layout.dark .section-title {
-  color: #f1f5f9;
+  color: #f8fafc;
+  border-bottom: 1px solid #2d3f52;
 }
 
 .orders-layout.dark .customer-details {
-  background: #131b2e;
+  background: transparent;
 }
 
 .orders-layout.dark .detail-item {
-  border-bottom-color: #2d3f52;
+  border-bottom-color: transparent;
 }
 
 .orders-layout.dark .detail-label {
-  color: #cbd5e1;
+  color: #94a3b8;
 }
 
 .orders-layout.dark .detail-value {
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 .orders-layout.dark .items-list {
-  background: #131b2e;
+  background: transparent;
 }
 
 .orders-layout.dark .item-row {
-  border-bottom-color: #2d3f52;
-  color: #f1f5f9;
+  background: #131b2e;
+  border: 1px solid #2d3f52;
+  border-radius: 6px;
+  color: #f8fafc;
 }
 
 .orders-layout.dark .item-name {
-  color: #f1f5f9;
+  color: #f8fafc;
+  font-weight: 600;
 }
 
 .orders-layout.dark .item-qty,
-.orders-layout.dark .item-price,
+.orders-layout.dark .item-price {
+  color: #94a3b8;
+}
+
 .orders-layout.dark .item-total {
-  color: #cbd5e1;
+  color: #34d399;
+  font-weight: 600;
 }
 
 .orders-layout.dark .totals {
   background: #131b2e;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #2d3f52;
 }
 
 .orders-layout.dark .total-row {
-  border-bottom-color: #2d3f52;
-  color: #cbd5e1;
+  color: #94a3b8;
+  border-bottom-color: transparent;
+}
+
+.orders-layout.dark .total-row span:last-child {
+  color: #f8fafc;
 }
 
 .orders-layout.dark .total-row.total {
-  color: #f1f5f9;
+  border-top: 1px solid #2d3f52;
+  color: #f8fafc;
+}
+
+.orders-layout.dark .total-row.total span:last-child {
+  color: #34d399;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .orders-layout.dark .delivery-info {
+  background: transparent;
+}
+
+.orders-layout.dark .info-item {
   background: #131b2e;
+  border: 1px solid #2d3f52;
+  border-radius: 6px;
 }
 
 .orders-layout.dark .info-label {
-  color: #cbd5e1;
+  color: #94a3b8;
 }
 
 .orders-layout.dark .info-value {
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 .orders-layout.dark .modal-footer {
-  border-top-color: #2d3f52;
+  background: #1a2338;
+  border-top: 1px solid #2d3f52;
 }
 
 .orders-layout.dark .btn-primary {
@@ -2375,10 +2418,12 @@ onMounted(() => {
 .orders-layout.dark .btn-secondary {
   background: #1e293b;
   color: #cbd5e1;
-  border-color: #2d3f52;
+  border: 1px solid #2d3f52;
 }
 
 .orders-layout.dark .btn-secondary:hover {
   background: #2d3f52;
+  color: #f8fafc;
+  border-color: #3d4f63;
 }
 </style>
