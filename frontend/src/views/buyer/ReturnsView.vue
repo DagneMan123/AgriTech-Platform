@@ -74,7 +74,7 @@
       <!-- ── Summary Stats Cards ── -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Total Claims -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Claims</h3>
             <p class="text-2xl font-black">{{ stats.total }}</p>
@@ -86,7 +86,7 @@
         </article>
 
         <!-- Under Review -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-amber-500' : 'bg-white border-slate-200 text-slate-900 !border-l-amber-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Under Review</h3>
             <p class="text-2xl font-black">{{ stats.underReview }}</p>
@@ -98,7 +98,7 @@
         </article>
 
         <!-- Approved -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-purple-500' : 'bg-white border-slate-200 text-slate-900 !border-l-purple-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Approved Claims</h3>
             <p class="text-2xl font-black">{{ stats.approved }}</p>
@@ -110,7 +110,7 @@
         </article>
 
         <!-- Refunded Value -->
-        <article :class="['rounded-xl p-4 border-l-4 border-y border-r shadow-2xs flex justify-between items-center transition-all', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100 !border-l-blue-500' : 'bg-white border-slate-200 text-slate-900 !border-l-blue-600']">
+        <article :class="['rounded-xl p-4 border shadow-2xs hover:shadow-md transition-all flex justify-between items-center', darkMode ? 'bg-[#131b2e] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900']">
           <div>
             <h3 :class="['text-[11px] font-bold uppercase tracking-wider mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Refunded Value</h3>
             <p class="text-xl lg:text-2xl font-black text-blue-500">ETB {{ formatNumber(stats.refundedAmount) }}</p>
@@ -243,7 +243,6 @@
             'rounded-2xl border overflow-hidden shadow-2xs hover:shadow-md transition-all',
             darkMode ? 'bg-[#131b2e] border-slate-800' : 'bg-white border-slate-200'
           ]"
-          :style="{ 'border-left': `5px solid ${getStatusColor(item.status)}` }"
         >
           <!-- Card Header Bar -->
           <div :class="['flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b', darkMode ? 'bg-[#0f1729] border-slate-800/80' : 'bg-slate-50 border-slate-200/80']">
