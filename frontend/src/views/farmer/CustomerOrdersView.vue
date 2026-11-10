@@ -2143,6 +2143,25 @@ onMounted(() => {
   color: #f1f5f9;
 }
 
+.orders-layout.dark .customer-name {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.orders-layout.dark .customer-phone {
+  color: #94a3b8;
+}
+
+.orders-layout.dark .product-count {
+  background: #1e293b;
+  color: #60a5fa;
+  border: 1px solid #2d3f52;
+}
+
+.orders-layout.dark .td-date {
+  color: #cbd5e1;
+}
+
 .orders-layout.dark .order-badge {
   background: #0f4c3a;
   color: #86efac;
