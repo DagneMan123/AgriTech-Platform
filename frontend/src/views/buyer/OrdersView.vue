@@ -433,11 +433,11 @@
               </span>
             </div>
 
-            <!-- Pickup Location -->
+            <!-- Origin / Pickup Location -->
             <div class="flex flex-col gap-1 min-w-0">
-              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Pickup Location</span>
-              <span :class="['text-sm font-semibold break-words whitespace-normal leading-snug', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderPickupLocation(order)">
-                {{ getOrderPickupLocation(order) }}
+              <span :class="['text-[10px] font-bold uppercase tracking-wider', darkMode ? 'text-slate-400' : 'text-slate-500']">Origin / Pickup Location</span>
+              <span :class="['text-sm font-semibold break-words whitespace-normal leading-snug', darkMode ? 'text-slate-200' : 'text-slate-800']" :title="getOrderOriginLocation(order)">
+                {{ getOrderOriginLocation(order) }}
               </span>
             </div>
 
@@ -774,11 +774,11 @@
             <div :class="['p-4 rounded-xl border', darkMode ? 'bg-[#0b0f19] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <h4 class="font-bold text-[11px] uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                 <User class="w-3.5 h-3.5 text-blue-500" />
-                <span>Producer &amp; Pickup Location</span>
+                <span>Producer &amp; Origin Location</span>
               </h4>
               <p class="font-bold text-sm mb-1 text-blue-400">{{ getOrderSupplier(activeOrderForDetails) }}</p>
               <p :class="['m-0 text-[11px] leading-relaxed break-words whitespace-normal', darkMode ? 'text-slate-300' : 'text-slate-600']">
-                {{ getOrderPickupLocation(activeOrderForDetails) }}
+                {{ getOrderOriginLocation(activeOrderForDetails) }}
               </p>
             </div>
 
@@ -1082,7 +1082,7 @@
                 <div class="text-xs">
                   <p :class="['font-bold m-0', darkMode ? 'text-slate-200' : 'text-slate-800']">Origin Farm / Pickup Location</p>
                   <p :class="['text-[11px] m-0 break-words whitespace-normal', darkMode ? 'text-slate-400' : 'text-slate-500']">
-                    {{ getOrderPickupLocation(activeOrderForTracking) }}
+                    {{ getOrderOriginLocation(activeOrderForTracking) }}
                   </p>
                 </div>
               </div>
@@ -1760,9 +1760,9 @@ const filteredOrdersList = computed<any[]>(() => {
       const num = (getOrderNumber(o) || '').toLowerCase()
       const supplier = (getOrderSupplier(o) || '').toLowerCase()
       const address = (getOrderAddress(o) || '').toLowerCase()
-      const pickup = (getOrderPickupLocation(o) || '').toLowerCase()
+      const origin = (getOrderOriginLocation(o) || '').toLowerCase()
       const items = (getOrderItems(o) || []).map((i: any) => (i.product_name || i.product?.name || i.product?.title || '').toLowerCase()).join(' ')
-      return num.includes(q) || supplier.includes(q) || address.includes(q) || pickup.includes(q) || items.includes(q)
+      return num.includes(q) || supplier.includes(q) || address.includes(q) || origin.includes(q) || items.includes(q)
     })
   }
 
@@ -1901,20 +1901,27 @@ const getOrderAddress = (order: any): string => {
   return 'Address on file'
 }
 
-const getOrderPickupLocation = (order: any): string => {
-  if (!order) return 'Farm Pickup Point, Ethiopia'
+const getOrderOriginLocation = (order: any): string => {
+  if (!order) return ''
 
-  // 1. Direct pickup_location from order (computed by backend or on model)
-  if (order.pickup_location && typeof order.pickup_location === 'string' && order.pickup_location.trim()) {
-    return order.pickup_location.trim()
+  // 1. Direct origin_location or pickup_location from order (filter out placeholders/sample text)
+  for (const candidate of [order.origin_location, order.pickup_location]) {
+    if (candidate && typeof candidate === 'string') {
+      const val = candidate.trim()
+      if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+        return val
+      }
+    }
   }
 
-  // 2. Delivery relationship pickup fields
-  if (order.delivery?.pickup_location && typeof order.delivery.pickup_location === 'string' && order.delivery.pickup_location.trim()) {
-    return order.delivery.pickup_location.trim()
-  }
-  if (order.delivery?.pickup_address && typeof order.delivery.pickup_address === 'string' && order.delivery.pickup_address.trim()) {
-    return order.delivery.pickup_address.trim()
+  // 2. Delivery relationship pickup/origin fields
+  for (const candidate of [order.delivery?.origin_location, order.delivery?.pickup_location, order.delivery?.pickup_address]) {
+    if (candidate && typeof candidate === 'string') {
+      const val = candidate.trim()
+      if (val && !val.toLowerCase().includes('sample') && !val.toLowerCase().includes('farm pickup point')) {
+        return val
+      }
+    }
   }
 
   // 3. Farmer details
@@ -1926,10 +1933,16 @@ const getOrderPickupLocation = (order: any): string => {
 
   if (farmer) {
     const parts: string[] = []
-    if (farmer.farm_name && typeof farmer.farm_name === 'string' && farmer.farm_name.trim()) {
-      parts.push(farmer.farm_name.trim())
-    } else if (farmer.cooperative_name && typeof farmer.cooperative_name === 'string' && farmer.cooperative_name.trim()) {
-      parts.push(`${farmer.cooperative_name.trim()} Hub`)
+    if (farmer.farm_name && typeof farmer.farm_name === 'string') {
+      const fn = farmer.farm_name.trim()
+      if (fn && !fn.toLowerCase().includes('sample')) {
+        parts.push(fn)
+      }
+    } else if (farmer.cooperative_name && typeof farmer.cooperative_name === 'string') {
+      const cn = farmer.cooperative_name.trim()
+      if (cn && !cn.toLowerCase().includes('sample')) {
+        parts.push(cn)
+      }
     }
 
     if (farmer.kebele) {
@@ -1956,11 +1969,16 @@ const getOrderPickupLocation = (order: any): string => {
   }
 
   if (productOrigin && typeof productOrigin === 'string' && productOrigin.trim()) {
-    return `${String(productOrigin).trim()} Agricultural Hub, Ethiopia`
+    const po = productOrigin.trim()
+    if (!po.toLowerCase().includes('sample')) {
+      return `${po}, Ethiopia`
+    }
   }
 
-  return 'Farm Pickup Point, Ethiopia'
+  return 'Ethiopia'
 }
+
+const getOrderPickupLocation = getOrderOriginLocation
 
 const formatStatus = (status?: string): string => {
   const s = (status || '').toLowerCase()

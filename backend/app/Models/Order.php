@@ -43,7 +43,8 @@ class Order extends Model
     protected $appends = [
         'has_active_refund_claim',
         'is_refund_settled',
-        'pickup_location'
+        'pickup_location',
+        'origin_location'
     ];
 
     protected $casts = [
@@ -144,20 +145,34 @@ class Order extends Model
 
     public function getPickupLocationAttribute(): string
     {
-        if ($this->relationLoaded('delivery') && $this->delivery) {
-            $loc = trim($this->delivery->pickup_location ?? $this->delivery->pickup_address ?? '');
-            if (!empty($loc)) {
+        return $this->getRealDataOrigin();
+    }
+
+    public function getOriginLocationAttribute(): string
+    {
+        return $this->getRealDataOrigin();
+    }
+
+    public function getRealDataOrigin(): string
+    {
+        // 1. Delivery assigned pickup/origin address if set
+        $delivery = $this->delivery;
+        if ($delivery) {
+            $loc = trim($delivery->pickup_location ?? $delivery->origin_location ?? $delivery->pickup_address ?? '');
+            if (!empty($loc) && !str_contains(strtolower($loc), 'sample') && !str_contains(strtolower($loc), 'farm pickup point')) {
                 return $loc;
             }
         }
 
-        $farmer = $this->relationLoaded('farmer') ? $this->farmer : null;
-        if (!$farmer && $this->relationLoaded('items') && $this->items && $this->items->isNotEmpty()) {
+        // 2. Direct farmer or farmer linked through items
+        $farmer = $this->farmer;
+        if (!$farmer && $this->items && $this->items->isNotEmpty()) {
             $farmer = $this->items->first()?->product?->farmer;
         }
 
+        // 3. Product origin from order item
         $productOrigin = null;
-        if ($this->relationLoaded('items') && $this->items && $this->items->isNotEmpty()) {
+        if ($this->items && $this->items->isNotEmpty()) {
             $firstProduct = $this->items->first()?->product;
             if ($firstProduct && !empty($firstProduct->origin_location)) {
                 $productOrigin = trim($firstProduct->origin_location);
@@ -166,10 +181,10 @@ class Order extends Model
 
         if ($farmer) {
             $parts = [];
-            if (!empty($farmer->farm_name)) {
+            if (!empty($farmer->farm_name) && !str_contains(strtolower($farmer->farm_name), 'sample')) {
                 $parts[] = trim($farmer->farm_name);
-            } elseif (!empty($farmer->cooperative_name)) {
-                $parts[] = trim($farmer->cooperative_name) . ' Hub';
+            } elseif (!empty($farmer->cooperative_name) && !str_contains(strtolower($farmer->cooperative_name), 'sample')) {
+                $parts[] = trim($farmer->cooperative_name);
             }
 
             if (!empty($farmer->kebele)) {
@@ -195,10 +210,10 @@ class Order extends Model
         }
 
         if ($productOrigin) {
-            return $productOrigin . ' Agricultural Hub, Ethiopia';
+            return $productOrigin . ', Ethiopia';
         }
 
-        return 'Farm Pickup Point, Ethiopia';
+        return 'Ethiopia';
     }
 
     protected static function boot()
