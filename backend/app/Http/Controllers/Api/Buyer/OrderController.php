@@ -208,8 +208,12 @@ class OrderController extends Controller
 
     /**
      * Cancel order
+     * Fully automated workflow:
+     * 1. Halts fulfillment immediately (delivery assignment, pickup, packing).
+     * 2. If escrow was held/paid, automatically executes gateway escrow refund back to buyer account/wallet.
+     * 3. Distinct Order Status ('cancelled') and Payment Status ('refunded' if paid, else 'cancelled').
      */
-    public function cancel(Request $request, $id)
+    public function cancel(Request $request, $id, ?\App\Services\EscrowSettlementService $escrowService = null)
     {
         $userId = Auth::id() ?? auth()->id();
         $order = Order::where('buyer_id', $userId)
@@ -237,45 +241,59 @@ class OrderController extends Controller
         }
 
         $reason = $request->input('reason', 'Cancelled by buyer');
+        $escrowService = $escrowService ?: app(\App\Services\EscrowSettlementService::class);
 
         $wasPaid = in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed']) 
             || ($order->payment && in_array(strtolower($order->payment->status ?? ''), ['paid', 'completed']))
             || $order->escrow_held_at !== null;
 
-        $updateData = [
-            'status' => 'cancelled',
-            'notes' => ($order->notes ? $order->notes . ' | ' : '') . 'Cancellation: ' . $reason,
-            'cancelled_at' => now(),
-        ];
-
         if ($wasPaid) {
-            $updateData['payment_status'] = 'refunded';
-            $updateData['escrow_status'] = 'refunded';
-            if ($order->payment) {
-                $order->payment->update([
-                    'status' => 'refunded',
-                    'escrow_status' => 'refunded',
-                ]);
-            }
-            \App\Models\Refund::firstOrCreate(
-                ['order_id' => $order->id],
-                [
-                    'payment_id' => $order->payment?->id,
-                    'requested_by_user_id' => $userId,
-                    'amount' => $order->grand_total ?: ($order->subtotal ?: 0),
-                    'status' => 'completed',
-                    'reason' => 'Cancellation refund: ' . $reason,
-                    'completed_at' => now(),
-                ]
-            );
+            // Automated Escrow Reversal & Fulfillment Halt
+            $refundResult = $escrowService->refundBuyerEscrow($order, $reason);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled and escrow payment automatically refunded to your account.',
+                'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user', 'refund']),
+                'order_status' => 'cancelled',
+                'payment_status' => 'refunded',
+                'refund' => $refundResult,
+            ]);
         }
 
-        $order->update($updateData);
+        // For unpaid / COD pending orders: halt fulfillment and cancel order
+        if ($order->delivery) {
+            $order->delivery->update([
+                'status' => 'cancelled',
+                'notes' => trim(($order->delivery->notes ? $order->delivery->notes . ' | ' : '') . 'Fulfillment halted: Order cancelled by buyer.')
+            ]);
+        } else {
+            \App\Models\Delivery::where('order_id', $order->id)->update([
+                'status' => 'cancelled',
+                'notes' => 'Fulfillment halted: Order cancelled by buyer.'
+            ]);
+        }
+
+        $order->update([
+            'status' => 'cancelled',
+            'payment_status' => 'cancelled',
+            'notes' => trim(($order->notes ? $order->notes . ' | ' : '') . 'Cancellation: ' . $reason),
+            'cancelled_at' => now(),
+        ]);
+
+        \App\Models\OrderStatusLog::create([
+            'order_id' => $order->id,
+            'status' => 'cancelled',
+            'notes' => "Order cancelled by buyer: {$reason}. Fulfillment halted.",
+            'changed_by' => $userId,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => $wasPaid ? 'Order cancelled and escrow payment refunded successfully' : 'Order cancelled successfully',
-            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user', 'refund']),
+            'message' => 'Order cancelled successfully.',
+            'data' => $order->fresh(['items.product', 'delivery', 'payment', 'farmer.user']),
+            'order_status' => 'cancelled',
+            'payment_status' => 'cancelled',
         ]);
     }
 

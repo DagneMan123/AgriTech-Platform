@@ -928,8 +928,18 @@
         </div>
 
         <p :class="['text-xs leading-relaxed', darkMode ? 'text-slate-300' : 'text-slate-600']">
-          Are you sure you want to cancel this order? This action will notify the farmer and release any reserved haulage capacity.
+          Are you sure you want to cancel this order? This action will immediately halt all fulfillment and transport operations.
         </p>
+
+        <div v-if="isOrderPaid(activeOrderForCancel)" :class="['p-3 rounded-xl border text-xs space-y-1', darkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800']">
+          <div class="flex items-center gap-1.5 font-bold">
+            <ShieldCheck class="w-4 h-4 text-emerald-500" />
+            <span>Automated Escrow Refund Guarantee</span>
+          </div>
+          <p class="text-[11px] leading-relaxed opacity-90 m-0">
+            Escrow funds of <strong>ETB {{ formatNumber(getOrderAmount(activeOrderForCancel)) }}</strong> will be automatically refunded back to your account/wallet with zero manual intervention.
+          </p>
+        </div>
 
         <div>
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -1371,10 +1381,14 @@ const getRefundTrackingUrl = (order: any): string => {
 
 const getFulfillmentStatusLabel = (order: any): string => {
   if (!order) return ''
+  const status = String(order.status || '').toLowerCase()
+  if (status === 'cancelled') {
+    return 'Cancelled'
+  }
   if (hasActiveRefundClaim(order)) {
     return 'UNDER REVIEW'
   }
-  if (isOrderRefundSettled(order)) {
+  if (status === 'refunded' || isOrderRefundSettled(order)) {
     return 'Refunded'
   }
   return formatStatus(order.status)
@@ -1382,12 +1396,18 @@ const getFulfillmentStatusLabel = (order: any): string => {
 
 const getFulfillmentBadgeClass = (order: any): string => {
   if (!order) return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+  const status = String(order.status || '').toLowerCase()
+  if (status === 'cancelled') {
+    return darkMode.value
+      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold'
+      : 'bg-rose-50 text-rose-700 border border-rose-300 font-bold'
+  }
   if (hasActiveRefundClaim(order)) {
     return darkMode.value
       ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
       : 'bg-amber-50 text-amber-700 border border-amber-300 font-bold'
   }
-  if (isOrderRefundSettled(order)) {
+  if (status === 'refunded' || isOrderRefundSettled(order)) {
     return darkMode.value
       ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold'
       : 'bg-rose-50 text-rose-700 border border-rose-300 font-bold'
@@ -1840,6 +1860,7 @@ const shippedOrders = computed(() => ordersArray.value.filter(o => ['shipped', '
 const deliveredOrders = computed(() => ordersArray.value.filter(o => ['delivered', 'completed'].includes((o.status || '').toLowerCase()) && !hasActiveRefundClaim(o)).length)
 const cancelledOrders = computed(() => ordersArray.value.filter(o => (o.status || '').toLowerCase() === 'cancelled' && !hasActiveRefundClaim(o)).length)
 const settledRefundsCount = computed(() => ordersArray.value.filter(isOrderRefundSettled).length)
+const refundedOrdersCount = settledRefundsCount
 
 // Field normalization helpers
 const getOrderNumber = (order: any): string => {
@@ -2136,8 +2157,15 @@ const confirmCancellation = async () => {
   if (!activeOrderForCancel.value) return
   cancelling.value = true
   try {
+    const wasPaid = isOrderPaid(activeOrderForCancel.value)
+    const refundAmt = getOrderAmount(activeOrderForCancel.value)
+    const orderNum = getOrderNumber(activeOrderForCancel.value)
     await buyerStore.cancelOrder(activeOrderForCancel.value.id, cancelReason.value)
-    toastMessage.value = `Order ${getOrderNumber(activeOrderForCancel.value)} cancelled successfully.`
+    if (wasPaid) {
+      toastMessage.value = `Order ${orderNum} cancelled. Automated escrow refund of ETB ${formatNumber(refundAmt)} processed to your account.`
+    } else {
+      toastMessage.value = `Order ${orderNum} cancelled successfully.`
+    }
     cancelModalOpen.value = false
     activeOrderForCancel.value = null
     await refreshOrders()
@@ -2239,6 +2267,11 @@ const confirmWarehouseInspection = async (order: any) => {
 // Payment Status Helpers (Strictly database driven)
 const getPaymentStatusLabel = (order: any): string => {
   if (!order) return ''
+  const pStatus = String(order?.payment_status || order?.payment?.status || '').toLowerCase()
+  const eStatus = String(order?.escrow_status || order?.payment?.escrow_status || '').toLowerCase()
+  if (pStatus === 'refunded' || eStatus === 'refunded') {
+    return 'REFUNDED'
+  }
   if (hasActiveRefundClaim(order)) {
     return 'REFUND REQUESTED'
   }
@@ -2264,39 +2297,45 @@ const getPaymentStatusLabel = (order: any): string => {
     return 'Payment Failed'
   }
 
+  if (status === 'cancelled') {
+    return 'Cancelled'
+  }
+
   return 'Payment Pending'
 }
 
 const getPaymentBadgeClass = (order: any): string => {
+  const pStatus = String(order?.payment_status || order?.payment?.status || '').toLowerCase()
+  const eStatus = String(order?.escrow_status || order?.payment?.escrow_status || '').toLowerCase()
+  if (pStatus === 'refunded' || eStatus === 'refunded' || isOrderRefundSettled(order)) {
+    return darkMode.value
+      ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30 font-bold shadow-xs'
+      : 'bg-teal-50 text-teal-700 border border-teal-300 font-bold shadow-xs'
+  }
   if (hasActiveRefundClaim(order)) {
     return darkMode.value
       ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold'
       : 'bg-amber-50 text-amber-700 border border-amber-300 font-bold shadow-xs'
   }
-  if (isOrderRefundSettled(order)) {
-    return darkMode.value
-      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold'
-      : 'bg-rose-50 text-rose-700 border border-rose-200 font-bold shadow-xs'
-  }
   if (isOrderPaid(order)) {
     return darkMode.value
-      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-xs'
+      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+      : 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs'
   }
   const label = getPaymentStatusLabel(order)
   if (label.includes('COD')) {
     return darkMode.value
-      ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
-      : 'bg-cyan-50 text-cyan-700 border-cyan-200'
+      ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+      : 'bg-cyan-50 text-cyan-700 border border-cyan-200'
   }
   if (label.includes('Failed')) {
     return darkMode.value
-      ? 'bg-red-500/15 text-red-300 border-red-500/30'
-      : 'bg-red-50 text-red-700 border-red-200'
+      ? 'bg-red-500/15 text-red-300 border border-red-500/30'
+      : 'bg-red-50 text-red-700 border border-red-200'
   }
   return darkMode.value
-    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-    : 'bg-amber-50 text-amber-700 border-amber-200'
+    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+    : 'bg-amber-50 text-amber-700 border border-amber-200'
 }
 
 const getPaymentIcon = (order: any) => {
