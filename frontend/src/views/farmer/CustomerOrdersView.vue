@@ -276,6 +276,17 @@
                   </div>
                 </div>
               </div>
+              <div v-if="selectedOrder.status === 'cancelled'" class="settled-alert-banner">
+                <div class="banner-icon-box">
+                  <RotateCcw size="22" class="text-rose-600 dark:text-rose-400" />
+                </div>
+                <div class="banner-text">
+                  <h4 class="banner-title">Order Cancelled</h4>
+                  <p class="banner-desc">
+                    This order was cancelled by the customer. Escrow payment has been automatically refunded and fulfillment is terminated.
+                  </p>
+                </div>
+              </div>
               <div v-else-if="isOrderRefundSettled(selectedOrder)" class="settled-alert-banner">
                 <div class="banner-icon-box">
                   <RotateCcw size="22" class="text-rose-600 dark:text-rose-400" />
@@ -433,7 +444,11 @@
                   <ShieldCheck size="14" />
                   Delivered &amp; Paid (Chapa Escrow Disbursed to Wallet)
                 </span>
-                <span v-if="isOrderRefundSettled(selectedOrder)" class="escrow-refunded-badge">
+                <span v-if="selectedOrder.status === 'cancelled'" class="escrow-refunded-badge">
+                  <RotateCcw size="14" />
+                  Order Cancelled &mdash; Escrow Refunded to Buyer
+                </span>
+                <span v-else-if="isOrderRefundSettled(selectedOrder)" class="escrow-refunded-badge">
                   <RotateCcw size="14" />
                   Escrow Refund Settled to Buyer
                 </span>
@@ -497,7 +512,14 @@ const filteredOrders = computed(() => {
     if (filters.value.status === 'refund_requested') {
       result = result.filter(o => hasActiveRefundClaim(o))
     } else if (filters.value.status === 'refunded') {
-      result = result.filter(o => isOrderRefundSettled(o))
+      result = result.filter(o => (o.status === 'refunded' || isOrderRefundSettled(o)) && o.status !== 'cancelled')
+    } else if (filters.value.status === 'cancelled') {
+      result = result.filter(o => {
+        const s = String(o.status || o.rawOrder?.status || '').toLowerCase()
+        const notes = String(o.notes || o.rawOrder?.notes || '').toLowerCase()
+        const refundReason = String(o.refund?.reason || o.rawOrder?.refund?.reason || '').toLowerCase()
+        return s === 'cancelled' || Boolean(o.cancelled_at || o.rawOrder?.cancelled_at) || notes.includes('cancellation') || refundReason.includes('cancellation')
+      })
     } else {
       result = result.filter(o => o.status === filters.value.status && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
     }
@@ -585,9 +607,19 @@ const fetchOrders = async () => {
       // Dynamic Status Mapping: synchronize from centralized database & refund relation
       const refundObj = raw.refund || raw.order_refund || null
       const refundStatus = String(refundObj?.status || '').toLowerCase()
+      const refundReason = String(refundObj?.reason || '').toLowerCase()
+      const notes = String(raw.notes || '').toLowerCase()
       let mappedStatus = String(raw.status || 'pending').toLowerCase()
 
-      if (['requested', 'pending'].includes(refundStatus)) {
+      const isCancelled = mappedStatus === 'cancelled'
+        || Boolean(raw.cancelled_at)
+        || notes.includes('cancellation')
+        || refundReason.includes('cancellation')
+
+      if (isCancelled) {
+        // Keep order lifecycle status strictly as cancelled
+        mappedStatus = 'cancelled'
+      } else if (['requested', 'pending'].includes(refundStatus)) {
         mappedStatus = 'refund_requested'
       } else if (['under_review', 'in_review'].includes(refundStatus)) {
         mappedStatus = 'under_review'
@@ -595,6 +627,13 @@ const fetchOrders = async () => {
         mappedStatus = 'disputed'
       } else if (['approved', 'completed', 'refunded'].includes(refundStatus) || mappedStatus === 'refunded') {
         mappedStatus = 'refunded'
+      }
+
+      let paymentStatus = String(raw.payment_status || (raw.payment?.status === 'completed' ? 'paid' : 'pending')).toLowerCase()
+      if (isCancelled) {
+        if (raw.payment_status === 'refunded' || raw.escrow_status === 'refunded' || refundObj || raw.escrow_held_at || raw.payment?.status === 'refunded' || paymentStatus === 'paid' || paymentStatus === 'refunded') {
+          paymentStatus = 'refunded'
+        }
       }
 
       return {
@@ -610,7 +649,9 @@ const fetchOrders = async () => {
         tax,
         orderDate: raw.created_at,
         status: mappedStatus,
-        paymentStatus: String(raw.payment_status || (raw.payment?.status === 'completed' ? 'paid' : 'pending')).toLowerCase(),
+        paymentStatus,
+        notes: raw.notes || '',
+        cancelled_at: raw.cancelled_at || null,
         deliveryStatus: capitalize(mappedStatus),
         trackingNumber: raw.payment_reference || null,
         expectedDelivery: raw.delivered_at || null,
@@ -687,8 +728,13 @@ const isFulfillmentDisabled = (order) => {
 // Active refund or dispute claim detection (e.g. requested, under_review, pending, dispute, in_review)
 const hasActiveRefundClaim = (order) => {
   if (!order) return false
+  const s = String(order.status || order.rawOrder?.status || '').toLowerCase()
+  const notes = String(order.notes || order.rawOrder?.notes || '').toLowerCase()
+  const refundReason = String(order.refund?.reason || order.rawOrder?.refund?.reason || '').toLowerCase()
+  if (s === 'cancelled' || Boolean(order.cancelled_at || order.rawOrder?.cancelled_at) || notes.includes('cancellation') || refundReason.includes('cancellation')) {
+    return false
+  }
   if (isOrderRefundSettled(order)) return false
-  const s = String(order.status || '').toLowerCase()
   if (['refund_requested', 'under_review', 'dispute', 'disputed'].includes(s)) return true
   const r = order.refund || order.rawOrder?.refund
   if (r) {
@@ -698,10 +744,15 @@ const hasActiveRefundClaim = (order) => {
   return false
 }
 
-// Settled / Completed refund detection
+// Settled / Completed refund detection (for returns/claims, not buyer cancellations)
 const isOrderRefundSettled = (order) => {
   if (!order) return false
-  const s = String(order.status || '').toLowerCase()
+  const s = String(order.status || order.rawOrder?.status || '').toLowerCase()
+  const notes = String(order.notes || order.rawOrder?.notes || '').toLowerCase()
+  const refundReason = String(order.refund?.reason || order.rawOrder?.refund?.reason || '').toLowerCase()
+  if (s === 'cancelled' || Boolean(order.cancelled_at || order.rawOrder?.cancelled_at) || notes.includes('cancellation') || refundReason.includes('cancellation')) {
+    return false
+  }
   if (s === 'refunded') return true
   const payStatus = String(order.paymentStatus || order.payment_status || order.rawOrder?.payment_status || order.rawOrder?.payment?.status || '').toLowerCase()
   if (payStatus === 'refunded') return true
@@ -718,6 +769,14 @@ const isOrderRefundSettled = (order) => {
 // Status badge styling and label resolver
 const getOrderStatusBadge = (order) => {
   if (!order) return { label: 'Pending', class: 'status-pending' }
+  const s = String(order.status || order.rawOrder?.status || '').toLowerCase()
+  const notes = String(order.notes || order.rawOrder?.notes || '').toLowerCase()
+  const refundReason = String(order.refund?.reason || order.rawOrder?.refund?.reason || '').toLowerCase()
+  const isCancelled = s === 'cancelled' || Boolean(order.cancelled_at || order.rawOrder?.cancelled_at) || notes.includes('cancellation') || refundReason.includes('cancellation')
+
+  if (isCancelled) {
+    return { label: 'CANCELLED', class: 'status-cancelled' }
+  }
   if (hasActiveRefundClaim(order)) {
     const r = order.refund || order.rawOrder?.refund
     const rStatus = String(r?.status || order.status || '').toLowerCase()
@@ -729,7 +788,7 @@ const getOrderStatusBadge = (order) => {
     }
     return { label: 'REFUND REQUESTED', class: 'status-refund-requested' }
   }
-  if (isOrderRefundSettled(order)) {
+  if (s === 'refunded' || isOrderRefundSettled(order)) {
     return { label: 'REFUNDED', class: 'status-refunded' }
   }
   return { label: capitalize(order.status), class: `status-${order.status}` }
@@ -738,7 +797,14 @@ const getOrderStatusBadge = (order) => {
 // Payment badge styling and label resolver
 const getOrderPaymentBadge = (order) => {
   if (!order) return { label: 'Pending', class: 'payment-pending' }
-  if (isOrderRefundSettled(order)) {
+  const s = String(order.status || order.rawOrder?.status || '').toLowerCase()
+  const payStatus = String(order.paymentStatus || order.payment_status || order.rawOrder?.payment_status || order.rawOrder?.payment?.status || '').toLowerCase()
+  const escrowStatus = String(order.escrow_status || order.rawOrder?.escrow_status || order.rawOrder?.payment?.escrow_status || '').toLowerCase()
+  const notes = String(order.notes || order.rawOrder?.notes || '').toLowerCase()
+  const refundReason = String(order.refund?.reason || order.rawOrder?.refund?.reason || '').toLowerCase()
+  const isCancelled = s === 'cancelled' || Boolean(order.cancelled_at || order.rawOrder?.cancelled_at) || notes.includes('cancellation') || refundReason.includes('cancellation')
+
+  if (payStatus === 'refunded' || escrowStatus === 'refunded' || (isCancelled && (order.refund || order.rawOrder?.refund || escrowStatus === 'refunded' || payStatus === 'refunded' || payStatus === 'paid')) || isOrderRefundSettled(order)) {
     return { label: 'REFUNDED', class: 'payment-refunded' }
   }
   if (hasActiveRefundClaim(order)) {
@@ -1276,6 +1342,8 @@ onMounted(() => {
 .status-cancelled {
   background: #fee2e2;
   color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-weight: 700;
 }
 
 .status-refund-requested,
@@ -1448,7 +1516,8 @@ onMounted(() => {
 }
 
 .orders-layout.dark .status-dispute,
-.orders-layout.dark .status-refunded {
+.orders-layout.dark .status-refunded,
+.orders-layout.dark .status-cancelled {
   background: #450a0a;
   color: #f87171;
   border: 1px solid #7f1d1d;

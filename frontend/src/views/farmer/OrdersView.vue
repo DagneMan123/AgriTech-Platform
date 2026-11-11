@@ -297,9 +297,18 @@ const fetchOrders = async () => {
     orders.value = (Array.isArray(rawList) ? rawList : []).map(raw => {
       const refundObj = raw.refund || null
       const refundStatus = String(refundObj?.status || '').toLowerCase()
+      const refundReason = String(refundObj?.reason || '').toLowerCase()
+      const notes = String(raw.notes || '').toLowerCase()
       let mappedStatus = String(raw.status || 'pending').toLowerCase()
 
-      if (['requested', 'pending'].includes(refundStatus)) {
+      const isCancelled = mappedStatus === 'cancelled'
+        || Boolean(raw.cancelled_at)
+        || notes.includes('cancellation')
+        || refundReason.includes('cancellation')
+
+      if (isCancelled) {
+        mappedStatus = 'cancelled'
+      } else if (['requested', 'pending'].includes(refundStatus)) {
         mappedStatus = 'refund_requested'
       } else if (['under_review', 'in_review'].includes(refundStatus)) {
         mappedStatus = 'under_review'
@@ -435,6 +444,7 @@ const hasActiveRefundClaim = (order) => {
 const isOrderRefundSettled = (order) => {
   if (!order) return false
   const s = String(order.status || '').toLowerCase()
+  if (s === 'cancelled') return false
   if (s === 'refunded') return true
   const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
   if (payStatus === 'refunded') return true
@@ -448,6 +458,8 @@ const isOrderRefundSettled = (order) => {
 
 const getStatusBadgeClass = (order) => {
   if (!order) return 'status-pending'
+  const s = String(order?.status || '').toLowerCase()
+  if (s === 'cancelled') return 'status-cancelled'
   if (hasActiveRefundClaim(order)) {
     const rStatus = String(order.refund?.status || order.status || '').toLowerCase()
     if (['dispute', 'disputed'].includes(rStatus)) return 'status-dispute'
@@ -459,6 +471,8 @@ const getStatusBadgeClass = (order) => {
 }
 
 const formatStatus = (status, order) => {
+  const s = String(status || order?.status || '').toLowerCase()
+  if (s === 'cancelled') return 'Cancelled'
   if (order && hasActiveRefundClaim(order)) {
     const rStatus = String(order.refund?.status || order.status || '').toLowerCase()
     if (['dispute', 'disputed'].includes(rStatus)) return 'Disputed'

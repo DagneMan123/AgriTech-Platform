@@ -46,6 +46,27 @@ class OrderController extends Controller
 
             // Auto-heal / synchronize status & payment_status from Refund and Payment records
             $orderItems = collect($orders->items())->map(function ($order) {
+                $isCancelled = $order->getRawOriginal('status') === 'cancelled'
+                    || !empty($order->cancelled_at)
+                    || str_contains(strtolower($order->notes ?? ''), 'cancellation')
+                    || ($order->refund && str_contains(strtolower($order->refund->reason ?? ''), 'cancellation'));
+
+                if ($isCancelled) {
+                    $dirty = false;
+                    if ($order->getRawOriginal('status') !== 'cancelled') {
+                        $order->status = 'cancelled';
+                        $dirty = true;
+                    }
+                    if ($order->payment_status !== 'refunded') {
+                        $order->payment_status = 'refunded';
+                        $dirty = true;
+                    }
+                    if ($dirty) {
+                        $order->saveQuietly();
+                    }
+                    return $order;
+                }
+
                 if ($order->refund) {
                     $rStatus = strtolower($order->refund->status ?? '');
                     if (in_array($rStatus, ['approved', 'completed', 'refunded'])) {
@@ -128,44 +149,64 @@ class OrderController extends Controller
             ->findOrFail($id);
 
             // Auto-heal / synchronize status & payment_status
-            if ($order->refund) {
-                $rStatus = strtolower($order->refund->status ?? '');
-                if (in_array($rStatus, ['approved', 'completed', 'refunded'])) {
-                    if ($order->getRawOriginal('status') !== 'refunded') {
-                        $order->status = 'refunded';
+            $isCancelled = $order->getRawOriginal('status') === 'cancelled'
+                || !empty($order->cancelled_at)
+                || str_contains(strtolower($order->notes ?? ''), 'cancellation')
+                || ($order->refund && str_contains(strtolower($order->refund->reason ?? ''), 'cancellation'));
+
+            if ($isCancelled) {
+                $dirty = false;
+                if ($order->getRawOriginal('status') !== 'cancelled') {
+                    $order->status = 'cancelled';
+                    $dirty = true;
+                }
+                if ($order->payment_status !== 'refunded') {
+                    $order->payment_status = 'refunded';
+                    $dirty = true;
+                }
+                if ($dirty) {
+                    $order->saveQuietly();
+                }
+            } else {
+                if ($order->refund) {
+                    $rStatus = strtolower($order->refund->status ?? '');
+                    if (in_array($rStatus, ['approved', 'completed', 'refunded'])) {
+                        if ($order->getRawOriginal('status') !== 'refunded') {
+                            $order->status = 'refunded';
+                            $order->payment_status = 'refunded';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['dispute', 'disputed'])) {
+                        if ($order->getRawOriginal('status') !== 'disputed') {
+                            $order->status = 'disputed';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['under_review', 'in_review'])) {
+                        if ($order->getRawOriginal('status') !== 'under_review') {
+                            $order->status = 'under_review';
+                            $order->saveQuietly();
+                        }
+                    } elseif (in_array($rStatus, ['requested', 'pending'])) {
+                        if ($order->getRawOriginal('status') !== 'refund_requested') {
+                            $order->status = 'refund_requested';
+                            $order->saveQuietly();
+                        }
+                    }
+                }
+
+                $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
+                    || strtolower($order->payment_status ?? '') === 'refunded'
+                    || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+
+                if ($isRefundSettled) {
+                    if ($order->payment_status !== 'refunded') {
                         $order->payment_status = 'refunded';
                         $order->saveQuietly();
                     }
-                } elseif (in_array($rStatus, ['dispute', 'disputed'])) {
-                    if ($order->getRawOriginal('status') !== 'disputed') {
-                        $order->status = 'disputed';
-                        $order->saveQuietly();
-                    }
-                } elseif (in_array($rStatus, ['under_review', 'in_review'])) {
-                    if ($order->getRawOriginal('status') !== 'under_review') {
-                        $order->status = 'under_review';
-                        $order->saveQuietly();
-                    }
-                } elseif (in_array($rStatus, ['requested', 'pending'])) {
-                    if ($order->getRawOriginal('status') !== 'refund_requested') {
-                        $order->status = 'refund_requested';
-                        $order->saveQuietly();
-                    }
-                }
-            }
-
-            $isRefundSettled = strtolower($order->status ?? '') === 'refunded'
-                || strtolower($order->payment_status ?? '') === 'refunded'
-                || ($order->refund && in_array(strtolower($order->refund->status ?? ''), ['approved', 'completed', 'refunded']));
-
-            if ($isRefundSettled) {
-                if ($order->payment_status !== 'refunded') {
-                    $order->payment_status = 'refunded';
+                } elseif ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
+                    $order->payment_status = 'paid';
                     $order->saveQuietly();
                 }
-            } elseif ($order->payment_status !== 'paid' && (($order->payment && in_array(strtolower($order->payment->status), ['completed', 'paid'])) || $order->escrow_held_at !== null)) {
-                $order->payment_status = 'paid';
-                $order->saveQuietly();
             }
 
             return response()->json(['data' => $order]);

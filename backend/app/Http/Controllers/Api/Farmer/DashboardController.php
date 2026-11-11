@@ -452,17 +452,27 @@ class DashboardController extends Controller
                 ->get();
 
             return $orders->map(function ($o) {
+                $isCancelled = $o->getRawOriginal('status') === 'cancelled'
+                    || !empty($o->cancelled_at)
+                    || str_contains(strtolower($o->notes ?? ''), 'cancellation')
+                    || ($o->refund && str_contains(strtolower($o->refund->reason ?? ''), 'cancellation'));
+
                 $isPaid = in_array(strtolower($o->payment_status ?? ''), ['paid', 'completed'])
                     || ($o->payment && in_array(strtolower($o->payment->status ?? ''), ['completed', 'paid']))
                     || $o->escrow_held_at !== null;
 
-                $hasActiveClaim = $o->refund && in_array(strtolower($o->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
-                $isSettledRefund = strtolower($o->status ?? '') === 'refunded'
+                $hasActiveClaim = !$isCancelled && $o->refund && in_array(strtolower($o->refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
+                $isSettledRefund = !$isCancelled && (strtolower($o->status ?? '') === 'refunded'
                     || strtolower($o->payment_status ?? '') === 'refunded'
-                    || ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded']));
+                    || ($o->refund && in_array(strtolower($o->refund->status ?? ''), ['approved', 'completed', 'refunded'])));
 
-                $statusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? ($o->refund->status === 'dispute' ? 'disputed' : 'refund_requested') : ($o->status ?: 'pending'));
-                $paymentStatusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? 'disputed' : ($isPaid ? 'paid' : 'pending'));
+                if ($isCancelled) {
+                    $statusDisplay = 'cancelled';
+                    $paymentStatusDisplay = 'refunded';
+                } else {
+                    $statusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? ($o->refund->status === 'dispute' ? 'disputed' : 'refund_requested') : ($o->status ?: 'pending'));
+                    $paymentStatusDisplay = $isSettledRefund ? 'refunded' : ($hasActiveClaim ? 'disputed' : ($isPaid ? 'paid' : 'pending'));
+                }
 
                 return [
                     'id' => $o->id,
@@ -471,7 +481,7 @@ class DashboardController extends Controller
                     'grand_total' => (float) $o->grand_total,
                     'status' => $statusDisplay,
                     'payment_status' => $paymentStatusDisplay,
-                    'escrow_status' => $hasActiveClaim ? 'held_under_review' : ($o->escrow_status ?: ($isPaid ? 'held' : 'pending')),
+                    'escrow_status' => $isCancelled ? 'refunded' : ($hasActiveClaim ? 'held_under_review' : ($o->escrow_status ?: ($isPaid ? 'held' : 'pending'))),
                     'has_active_refund_claim' => $hasActiveClaim,
                     'is_refund_settled' => $isSettledRefund,
                     'created_at' => $o->created_at ? $o->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d'),

@@ -65,10 +65,17 @@ class Order extends Model
     public function getStatusAttribute($value)
     {
         $val = strtolower($value ?? 'pending');
+        // Cancellation is the definitive termination of order lifecycle: always preserve 'cancelled'
+        if ($val === 'cancelled' || !empty($this->cancelled_at) || str_contains(strtolower($this->notes ?? ''), 'cancellation')) {
+            return 'cancelled';
+        }
+        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
+        if ($refund && str_contains(strtolower($refund->reason ?? ''), 'cancellation')) {
+            return 'cancelled';
+        }
         if (in_array($val, ['refunded', 'cancelled', 'rejected', 'refund_requested', 'under_review', 'dispute', 'disputed'])) {
             return $val === 'dispute' ? 'disputed' : $val;
         }
-        $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
         if ($refund) {
             $refundStatus = strtolower($refund->status ?? '');
             if (in_array($refundStatus, ['approved', 'completed', 'refunded'])) {
@@ -89,32 +96,41 @@ class Order extends Model
 
     public function getPaymentStatusAttribute($value)
     {
-        if (strtolower($value ?? '') === 'refunded' || strtolower($this->status ?? '') === 'refunded') {
+        $val = strtolower($value ?? '');
+        if ($val === 'refunded' || strtolower($this->escrow_status ?? '') === 'refunded') {
+            return 'refunded';
+        }
+        $rawStatus = strtolower($this->getRawOriginal('status') ?? '');
+        if ($rawStatus === 'refunded') {
             return 'refunded';
         }
         $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
         if ($refund && in_array(strtolower($refund->status ?? ''), ['approved', 'completed', 'refunded'])) {
             return 'refunded';
         }
-        if (in_array(strtolower($value ?? ''), ['paid', 'completed'])) {
+        if (in_array($val, ['paid', 'completed'])) {
             return 'paid';
         }
-        if ($this->relationLoaded('payment') && $this->payment && in_array(strtolower($this->payment->status ?? ''), ['completed', 'paid'])) {
-            return 'paid';
+        if ($this->relationLoaded('payment') && $this->payment && in_array(strtolower($this->payment->status ?? ''), ['completed', 'paid', 'refunded'])) {
+            return strtolower($this->payment->status) === 'refunded' ? 'refunded' : 'paid';
         }
         return strtolower($value ?: 'pending');
     }
 
     public function hasActiveRefundClaim(): bool
     {
-        if (in_array(strtolower($this->status ?? ''), ['refunded'])) {
+        $currentStatus = strtolower($this->status ?? '');
+        if (in_array($currentStatus, ['refunded', 'cancelled']) || !empty($this->cancelled_at)) {
             return false;
         }
-        if (in_array(strtolower($this->status ?? ''), ['refund_requested', 'under_review', 'dispute', 'disputed'])) {
+        if (in_array($currentStatus, ['refund_requested', 'under_review', 'dispute', 'disputed'])) {
             return true;
         }
         $refund = $this->relationLoaded('refund') ? $this->refund : ($this->exists ? $this->refund()->first() : null);
         if ($refund) {
+            if (str_contains(strtolower($refund->reason ?? ''), 'cancellation')) {
+                return false;
+            }
             return in_array(strtolower($refund->status ?? ''), ['requested', 'pending', 'under_review', 'in_review', 'dispute', 'disputed']);
         }
         return false;
