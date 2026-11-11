@@ -141,6 +141,8 @@ class EscrowSettlementService
      */
     public function refundBuyerEscrow(Order $order, string $reason = 'Cancelled by buyer'): array
     {
+        $previousStatus = (string) ($order->status ?: 'pending');
+
         if ($order->escrow_status === 'refunded' && $order->status === 'cancelled') {
             return [
                 'success' => true,
