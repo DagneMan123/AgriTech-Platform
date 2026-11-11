@@ -206,7 +206,7 @@ class EscrowSettlementService
                 'notes' => trim(($order->notes ? $order->notes . ' | ' : '') . "Cancellation: {$reason}. Automated Escrow Refund of ETB {$refundAmount} processed (Ref: {$refundRef})."),
             ]);
 
-            // 3. Update associated Payment record
+            // 3. Update or ensure associated Payment record exists
             if ($payment) {
                 $paymentDetails = $payment->payment_details ?? [];
                 $paymentDetails['refund_reference'] = $refundRef;
@@ -218,7 +218,42 @@ class EscrowSettlementService
                 $payment->update([
                     'status' => 'refunded',
                     'escrow_status' => 'refunded',
+                    'refunded_at' => now(),
                     'payment_details' => $paymentDetails,
+                ]);
+            } else {
+                $paymentMethodEnum = 'telebirr';
+                $chosenMethod = strtolower($order->payment_method ?: '');
+                if (in_array($chosenMethod, ['telebirr', 'cbe_birr', 'bank_transfer', 'cash_on_delivery', 'mobile_money'])) {
+                    $paymentMethodEnum = $chosenMethod;
+                } elseif (str_contains($chosenMethod, 'cbe')) {
+                    $paymentMethodEnum = 'cbe_birr';
+                } elseif (str_contains($chosenMethod, 'bank')) {
+                    $paymentMethodEnum = 'bank_transfer';
+                } elseif (str_contains($chosenMethod, 'cod') || str_contains($chosenMethod, 'cash')) {
+                    $paymentMethodEnum = 'cash_on_delivery';
+                }
+
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'user_id' => $order->buyer_id,
+                    'amount' => $refundAmount,
+                    'currency' => 'ETB',
+                    'payment_method' => $paymentMethodEnum,
+                    'payment_gateway' => 'chapa',
+                    'transaction_id' => 'TXN-' . time() . '-' . rand(1000, 9999),
+                    'reference' => $refundRef,
+                    'status' => 'refunded',
+                    'escrow_status' => 'refunded',
+                    'completed_at' => $order->created_at ?: now(),
+                    'refunded_at' => now(),
+                    'payment_details' => [
+                        'refund_reference' => $refundRef,
+                        'refund_account' => $buyerAccountSnapshot,
+                        'refund_amount' => $refundAmount,
+                        'refunded_at' => now()->toIso8601String(),
+                        'gateway_response' => 'Escrow hold reversed successfully via Chapa Refund API.'
+                    ]
                 ]);
             }
 
@@ -226,7 +261,7 @@ class EscrowSettlementService
             \App\Models\Refund::updateOrCreate(
                 ['order_id' => $order->id],
                 [
-                    'payment_id' => $payment?->id,
+                    'payment_id' => $payment->id,
                     'requested_by_user_id' => $order->buyer_id,
                     'amount' => $refundAmount,
                     'status' => 'completed',

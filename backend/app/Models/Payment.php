@@ -32,7 +32,8 @@ class Payment extends Model
         'transaction_data',
         'error_message',
         'completed_at',
-        'paid_at'
+        'paid_at',
+        'refunded_at'
     ];
 
     protected $casts = [
@@ -42,7 +43,8 @@ class Payment extends Model
         'escrow_held_at' => 'datetime',
         'escrow_disbursed_at' => 'datetime',
         'paid_at' => 'datetime',
-        'completed_at' => 'datetime'
+        'completed_at' => 'datetime',
+        'refunded_at' => 'datetime'
     ];
 
     protected static function boot()
