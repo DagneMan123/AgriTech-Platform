@@ -661,6 +661,7 @@ const hasActiveRefundClaim = (order) => {
 const isOrderRefundSettled = (order) => {
   if (!order) return false
   const status = String(order.status || '').toLowerCase()
+  if (status === 'cancelled') return false
   if (status === 'refunded') return true
   const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
   if (payStatus === 'refunded') return true
@@ -679,13 +680,17 @@ const isOrderRefunded = (order) => {
 const filteredOrders = computed(() => {
   const orders = dashboard.value?.recent_orders || []
   if (!orderFilter.value) return orders
-  if (orderFilter.value === 'refunded') {
-    return orders.filter(o => isOrderRefundSettled(o))
+  const f = orderFilter.value.toLowerCase()
+  if (f === 'cancelled') {
+    return orders.filter(o => String(o.status || '').toLowerCase() === 'cancelled')
   }
-  if (orderFilter.value === 'pending') {
-    return orders.filter(o => (o.status === 'pending' || o.status === 'placed') && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
+  if (f === 'refunded') {
+    return orders.filter(o => String(o.status || '').toLowerCase() === 'refunded' || (!['cancelled'].includes(String(o.status || '').toLowerCase()) && isOrderRefundSettled(o)))
   }
-  return orders.filter(o => o.status === orderFilter.value && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
+  if (f === 'pending') {
+    return orders.filter(o => ['pending', 'placed'].includes(String(o.status || '').toLowerCase()) && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
+  }
+  return orders.filter(o => String(o.status || '').toLowerCase() === f && !hasActiveRefundClaim(o) && !isOrderRefundSettled(o))
 })
 
 const summaryCards = computed(() => {
@@ -704,17 +709,21 @@ const summaryCards = computed(() => {
 })
 
 const getStatusClass = (status, order) => {
+  const norm = String(status || order?.status || '').toLowerCase()
+  if (norm === 'cancelled') {
+    return 'bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30 font-bold'
+  }
   if (order && hasActiveRefundClaim(order)) {
-    return 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30'
+    return 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30 font-bold'
   }
-  if (order && isOrderRefundSettled(order)) {
-    return 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
+  if (norm === 'refunded' || (order && isOrderRefundSettled(order))) {
+    return 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 font-bold'
   }
-  switch (status) {
+  switch (norm) {
     case 'completed':
     case 'delivered': return 'bg-emerald-50 text-emerald-600'
     case 'pending': return 'bg-amber-50 text-amber-600'
-    case 'cancelled': return 'bg-red-50 text-red-600'
+    case 'cancelled': return 'bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30 font-bold'
     case 'refunded': return 'bg-rose-50 text-rose-600'
     default: return 'bg-slate-100 text-slate-600'
   }
@@ -722,9 +731,11 @@ const getStatusClass = (status, order) => {
 
 const getStatusDisplay = (order) => {
   if (!order) return ''
+  const status = String(order.status || '').toLowerCase()
+  if (status === 'cancelled') return 'Cancelled'
   if (hasActiveRefundClaim(order)) return 'Under Review'
-  if (isOrderRefundSettled(order)) return 'Refunded'
-  return order.status || ''
+  if (status === 'refunded' || isOrderRefundSettled(order)) return 'Refunded'
+  return order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : ''
 }
 
 async function fetchDashboardData() {
@@ -890,19 +901,28 @@ const getItemOrigin = (item, order) => {
 
 const getOrderPaymentBadge = (order) => {
   if (!order) return { label: 'PENDING', class: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }
+  const payStatus = String(order.payment_status || order.payment?.status || '').toLowerCase()
+  const escrowStatus = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
+  if (payStatus === 'refunded' || escrowStatus === 'refunded' || isOrderRefundSettled(order)) {
+    return { label: 'REFUNDED', class: 'bg-rose-500/15 text-rose-500 dark:text-rose-400 border border-rose-500/30 font-bold' }
+  }
   if (hasActiveRefundClaim(order)) {
     return { label: 'REFUND REQUESTED', class: 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/30 font-bold' }
   }
-  if (isOrderRefundSettled(order)) {
-    return { label: 'REFUNDED', class: 'bg-rose-500/15 text-rose-500 dark:text-rose-400 border border-rose-500/30 font-bold' }
-  }
-  const isPaid = order.payment_status === 'paid' || order.payment?.status === 'completed' || order.payment?.status === 'paid'
+  const isPaid = payStatus === 'paid' || payStatus === 'completed' || order.payment?.status === 'completed' || order.payment?.status === 'paid'
   if (isPaid) {
     const escrow = String(order.escrow_status || order.payment?.escrow_status || '').toLowerCase()
     if (escrow === 'disbursed') {
       return { label: 'PAID (SETTLED)', class: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
     }
     return { label: 'PAID (ESCROW)', class: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
+  }
+  const method = String(order.payment?.payment_method || order.payment_method || '').toLowerCase()
+  if (method === 'cash_on_delivery' || method === 'cod') {
+    return { label: 'COD', class: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' }
+  }
+  if (payStatus === 'cancelled') {
+    return { label: 'CANCELLED', class: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' }
   }
   return { label: 'PENDING', class: 'bg-amber-500/10 text-amber-500 border border-amber-500/20' }
 }
