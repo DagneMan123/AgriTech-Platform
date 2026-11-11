@@ -242,6 +242,7 @@ class OrderController extends Controller
 
         $reason = $request->input('reason', 'Cancelled by buyer');
         $escrowService = $escrowService ?: app(\App\Services\EscrowSettlementService::class);
+        $previousStatus = $order->status ?: 'pending';
 
         $wasPaid = in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed']) 
             || ($order->payment && in_array(strtolower($order->payment->status ?? ''), ['paid', 'completed']))
@@ -283,9 +284,10 @@ class OrderController extends Controller
 
         \App\Models\OrderStatusLog::create([
             'order_id' => $order->id,
-            'status' => 'cancelled',
+            'previous_status' => $previousStatus,
+            'new_status' => 'cancelled',
             'notes' => "Order cancelled by buyer: {$reason}. Fulfillment halted.",
-            'changed_by' => $userId,
+            'changed_by_user_id' => $userId,
         ]);
 
         return response()->json([

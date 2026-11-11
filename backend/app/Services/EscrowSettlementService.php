@@ -73,6 +73,8 @@ class EscrowSettlementService
         $payoutAmount = (float) ($order->subtotal > 0 ? $order->subtotal : $order->grand_total);
         $payoutRef = 'CHAPA-DISB-' . time() . '-' . rand(1000, 9999);
 
+        $previousStatus = $order->status ?: 'pending';
+
         DB::beginTransaction();
         try {
             // Update Order
@@ -237,9 +239,10 @@ class EscrowSettlementService
             // 5. Log Order Status transition
             \App\Models\OrderStatusLog::create([
                 'order_id' => $order->id,
-                'status' => 'cancelled',
+                'previous_status' => $previousStatus,
+                'new_status' => 'cancelled',
                 'notes' => "Order cancelled by buyer. Automated escrow refund of ETB {$refundAmount} reversed to {$channelName} (Ref: {$refundRef}).",
-                'changed_by' => $order->buyer_id,
+                'changed_by_user_id' => $order->buyer_id,
             ]);
 
             DB::commit();

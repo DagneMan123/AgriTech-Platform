@@ -12,18 +12,20 @@ class OrderStatusLog extends Model
 
     protected $fillable = [
         'order_id',
-        'status',
+        'previous_status',
+        'new_status',
         'notes',
-        'changed_by'
+        'changed_by_user_id'
     ];
 
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
+
     public function changedBy()
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(User::class, 'changed_by_user_id');
     }
 
     public function getStatusLabelAttribute()
@@ -34,8 +36,9 @@ class OrderStatusLog extends Model
             'processing' => 'Processing',
             'shipped' => 'Shipped',
             'delivered' => 'Delivered',
-            'cancelled' => 'Cancelled'
+            'cancelled' => 'Cancelled',
+            'refunded' => 'Refunded'
         ];
-        return $statuses[$this->status] ?? 'Unknown';
+        return $statuses[$this->new_status] ?? 'Unknown';
     }
 }
