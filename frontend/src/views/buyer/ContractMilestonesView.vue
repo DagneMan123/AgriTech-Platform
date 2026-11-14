@@ -232,7 +232,7 @@
                 {{ contract.title }}
               </h3>
               <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-600']">
-                Farmer: <span class="font-semibold text-slate-200">{{ contract.farmer?.farm_name || contract.farmer?.user?.name || 'Local Producer' }}</span>
+                Farmer: <span :class="['font-semibold', darkMode ? 'text-slate-200' : 'text-slate-800']">{{ contract.farmer?.farm_name || contract.farmer?.user?.name || 'Local Producer' }}</span>
                 <span class="mx-1.5">•</span>
                 Crop: <span class="font-semibold text-blue-500">{{ contract.crop_type }}</span> ({{ formatNumber(contract.quantity) }} {{ contract.unit }})
               </p>
@@ -240,9 +240,9 @@
 
             <!-- Milestone Completion Tracker Ribbon -->
             <div class="text-left md:text-right shrink-0">
-              <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Production Progress</span>
+              <span :class="['text-[10px] uppercase font-bold block mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Production Progress</span>
               <div class="flex items-center gap-2">
-                <div class="w-32 bg-slate-700 h-2 rounded-full overflow-hidden">
+                <div :class="['w-32 h-2 rounded-full overflow-hidden', darkMode ? 'bg-slate-700' : 'bg-slate-200']">
                   <div
                     class="bg-blue-600 h-full transition-all duration-500"
                     :style="{ width: `${getMilestoneProgressPercent(contract)}%` }"
@@ -250,7 +250,7 @@
                 </div>
                 <span class="text-xs font-black text-blue-500">{{ getMilestoneProgressPercent(contract) }}%</span>
               </div>
-              <span class="text-[10px] text-slate-400 mt-0.5 block">
+              <span :class="['text-[10px] mt-0.5 block', darkMode ? 'text-slate-400' : 'text-slate-500']">
                 {{ getCompletedCount(contract) }} of {{ (contract.milestones || []).length || 4 }} milestones fulfilled
               </span>
             </div>
@@ -289,20 +289,20 @@
                 </div>
 
                 <!-- Milestone Payout Details -->
-                <div class="pt-3 border-t border-slate-700/50 space-y-1.5 text-xs">
+                <div :class="['pt-3 border-t space-y-1.5 text-xs', darkMode ? 'border-slate-700/50' : 'border-slate-200']">
                   <div class="flex items-center justify-between">
-                    <span class="text-[10px] text-slate-400">Target Date:</span>
-                    <span class="font-semibold text-slate-300">{{ formatDate(milestone.due_date || null) }}</span>
+                    <span :class="['text-[10px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Target Date:</span>
+                    <span :class="['font-semibold', darkMode ? 'text-slate-300' : 'text-slate-700']">{{ formatDate(milestone.due_date || null) }}</span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-[10px] text-slate-400">Payout:</span>
-                    <span class="font-black text-blue-500">
+                    <span :class="['text-[10px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Payout:</span>
+                    <span class="font-black text-blue-600 dark:text-blue-400">
                       ETB {{ formatNumber(milestone.payout_amount) }}
-                      <span class="text-[10px] text-slate-400 font-normal">({{ milestone.payout_percentage }}%)</span>
+                      <span :class="['text-[10px] font-normal', darkMode ? 'text-slate-400' : 'text-slate-500']">({{ milestone.payout_percentage }}%)</span>
                     </span>
                   </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-[10px] text-slate-400">Escrow:</span>
+                    <span :class="['text-[10px]', darkMode ? 'text-slate-400' : 'text-slate-500']">Escrow:</span>
                     <span :class="['text-[10px] font-bold uppercase', getPayoutStatusColor(milestone.payout_status)]">
                       {{ milestone.payout_status || 'unpaid' }}
                     </span>
@@ -322,7 +322,7 @@
 
           <!-- Bottom Footer Bar -->
           <div :class="['px-5 py-3 border-t flex items-center justify-between gap-3 text-xs', darkMode ? 'border-slate-800 bg-[#0f1729]' : 'border-slate-200 bg-slate-50']">
-            <div class="flex items-center gap-2 text-slate-400">
+            <div :class="['flex items-center gap-2', darkMode ? 'text-slate-400' : 'text-slate-500']">
               <ShieldCheck class="w-4 h-4 text-blue-500" />
               <span>Milestone funds disbursed only upon confirmed field inspection</span>
             </div>
@@ -351,23 +351,23 @@
         :class="['w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0 bg-[#0f1729]">
+        <div :class="['p-5 border-b flex items-center justify-between shrink-0', darkMode ? 'bg-[#0f1729] border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900']">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
               <CheckSquare class="w-5 h-5" />
             </div>
             <div>
-              <span class="font-mono text-xs font-black text-blue-500">{{ activeModalContract.contract_number }}</span>
-              <h2 class="text-sm lg:text-base font-extrabold m-0 mt-0.5">{{ activeModalMilestone.title }}</h2>
+              <span class="font-mono text-xs font-black text-blue-600 dark:text-blue-400">{{ activeModalContract.contract_number }}</span>
+              <h2 :class="['text-sm lg:text-base font-extrabold m-0 mt-0.5', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeModalMilestone.title }}</h2>
             </div>
           </div>
-          <button @click="detailModalOpen = false" class="text-slate-400 hover:text-slate-200 font-bold text-sm cursor-pointer p-1">✕</button>
+          <button @click="detailModalOpen = false" :class="['font-bold text-sm cursor-pointer p-1 transition-colors', darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700']">✕</button>
         </div>
 
         <!-- Modal Body -->
         <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
           <div>
-            <span class="font-bold text-[10px] uppercase text-slate-400 block mb-1">Milestone Specification</span>
+            <span :class="['font-bold text-[10px] uppercase block mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Milestone Specification</span>
             <p :class="['p-3 rounded-xl border leading-relaxed m-0', darkMode ? 'bg-[#1a233a] border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800']">
               {{ activeModalMilestone.description }}
             </p>
@@ -376,16 +376,16 @@
           <!-- Financial Terms -->
           <div class="grid grid-cols-3 gap-2 text-center">
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Payout Value</span>
-              <span class="font-black text-blue-500 text-sm">ETB {{ formatNumber(activeModalMilestone.payout_amount) }}</span>
+              <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Payout Value</span>
+              <span class="font-black text-blue-600 dark:text-blue-400 text-sm">ETB {{ formatNumber(activeModalMilestone.payout_amount) }}</span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Share of Total</span>
-              <span class="font-black text-slate-200 text-sm">{{ activeModalMilestone.payout_percentage }}%</span>
+              <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Share of Total</span>
+              <span :class="['font-black text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeModalMilestone.payout_percentage }}%</span>
             </div>
             <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-              <span class="text-[10px] text-slate-400 block">Status</span>
-              <span :class="['font-black text-sm uppercase', getPayoutStatusColor(activeModalMilestone.payout_status)]">
+              <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Status</span>
+              <span :class="['font-black text-sm uppercase', getMilestoneStatusColor(activeModalMilestone.status)]">
                 {{ activeModalMilestone.status }}
               </span>
             </div>
@@ -393,15 +393,15 @@
 
           <!-- Farmer & Verification Info -->
           <div :class="['p-3.5 rounded-xl border space-y-1', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-            <span class="font-bold text-[10px] uppercase text-slate-400 block mb-1">Contractor &amp; Field Location</span>
-            <p class="font-bold text-xs m-0">{{ activeModalContract.farmer?.farm_name || activeModalContract.farmer?.user?.name || 'Local Producer' }}</p>
-            <p class="text-slate-400 m-0">Produce: {{ activeModalContract.crop_type }} ({{ formatNumber(activeModalContract.quantity) }} {{ activeModalContract.unit }})</p>
-            <p class="text-slate-400 m-0">Location: {{ activeModalContract.delivery_location || 'Designated buyer warehouse' }}</p>
+            <span :class="['font-bold text-[10px] uppercase block mb-1', darkMode ? 'text-slate-400' : 'text-slate-500']">Contractor &amp; Field Location</span>
+            <p :class="['font-bold text-xs m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeModalContract.farmer?.farm_name || activeModalContract.farmer?.user?.name || 'Local Producer' }}</p>
+            <p :class="['m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Produce: {{ activeModalContract.crop_type }} ({{ formatNumber(activeModalContract.quantity) }} {{ activeModalContract.unit }})</p>
+            <p :class="['m-0', darkMode ? 'text-slate-400' : 'text-slate-600']">Location: {{ activeModalContract.delivery_location || 'Designated buyer warehouse' }}</p>
           </div>
         </div>
 
         <!-- Modal Footer (Blue Action Button) -->
-        <div class="p-4 border-t border-slate-700/40 flex justify-end gap-2 shrink-0 bg-[#0f1729]">
+        <div :class="['p-4 border-t flex justify-end gap-2 shrink-0', darkMode ? 'bg-[#0f1729] border-slate-800' : 'bg-slate-50 border-slate-200']">
           <button
             @click="detailModalOpen = false"
             class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-600/30"
@@ -682,22 +682,29 @@ const getMilestoneBadge = (milestone: ContractMilestoneItem) => {
   if (milestone.status === 'in_progress') {
     return 'bg-amber-500 text-white animate-pulse'
   }
-  return 'bg-slate-700 text-slate-300'
+  return darkMode.value ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'
 }
 
 const getMilestoneStatusStyle = (status: string) => {
   const s = (status || '').toLowerCase()
-  if (s === 'completed') return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-  if (s === 'in_progress') return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-  return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+  if (s === 'completed') return darkMode.value ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' : 'bg-blue-50 text-blue-700 border border-blue-200'
+  if (s === 'in_progress') return darkMode.value ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30' : 'bg-amber-50 text-amber-700 border border-amber-200'
+  return darkMode.value ? 'bg-slate-500/15 text-slate-400 border border-slate-500/30' : 'bg-slate-100 text-slate-600 border border-slate-200'
+}
+
+const getMilestoneStatusColor = (status?: string) => {
+  const s = (status || '').toLowerCase()
+  if (s === 'completed') return darkMode.value ? 'text-blue-400' : 'text-blue-600'
+  if (s === 'in_progress') return darkMode.value ? 'text-amber-400' : 'text-amber-600'
+  return darkMode.value ? 'text-slate-400' : 'text-slate-600'
 }
 
 const getContractStatusBadge = (status: string) => {
   const s = (status || '').toLowerCase()
-  if (['active', 'in_progress'].includes(s)) return 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-  if (['proposed', 'draft'].includes(s)) return 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
-  if (s === 'completed') return 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-  return 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+  if (['active', 'in_progress'].includes(s)) return darkMode.value ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' : 'bg-blue-50 text-blue-700 border border-blue-200'
+  if (['proposed', 'draft'].includes(s)) return darkMode.value ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-amber-50 text-amber-700 border border-amber-200'
+  if (s === 'completed') return darkMode.value ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' : 'bg-blue-50 text-blue-700 border border-blue-200'
+  return darkMode.value ? 'bg-slate-500/15 text-slate-400 border border-slate-500/30' : 'bg-slate-100 text-slate-600 border border-slate-200'
 }
 
 const formatContractStatus = (status: string) => {
@@ -710,9 +717,9 @@ const formatContractStatus = (status: string) => {
 
 const getPayoutStatusColor = (status?: string) => {
   const s = (status || '').toLowerCase()
-  if (s === 'released' || s === 'paid') return 'text-blue-500'
-  if (s === 'in_escrow') return 'text-purple-400'
-  return 'text-slate-400'
+  if (s === 'released' || s === 'paid') return darkMode.value ? 'text-blue-400' : 'text-blue-600 font-bold'
+  if (s === 'in_escrow') return darkMode.value ? 'text-purple-400' : 'text-purple-600 font-bold'
+  return darkMode.value ? 'text-slate-400' : 'text-slate-600'
 }
 
 const openMilestoneDetail = (contract: ContractItem, milestone: ContractMilestoneItem) => {

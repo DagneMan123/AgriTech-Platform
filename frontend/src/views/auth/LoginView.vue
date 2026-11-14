@@ -30,7 +30,7 @@
               <span class="logo-icon">🌾</span> AgriTech
             </div>
             <h2 class="form-title">Sign In</h2>
-            <p class="form-subtitle">Access your AgriConnect dashboard.</p>
+            <p class="form-subtitle">Access your AgriTech dashboard.</p>
           </div>
 
           <!-- Login Form -->
@@ -96,6 +96,14 @@
               <span v-else class="loading-spinner"></span>
             </button>
           </form>
+
+          <!-- Footer Switch to Register -->
+          <div class="form-footer">
+            <p class="footer-text">
+              Don't have an account?
+              <router-link to="/auth/register" class="register-link">Sign Up</router-link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -439,6 +447,31 @@ const handleLogin = async () => {
   to { transform: rotate(360deg); }
 }
 
+/* Footer Link */
+.form-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #1f2937;
+}
+
+.footer-text {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.register-link {
+  color: #10b981;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 0.3rem;
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}
+
 /* =========================================
    DARK MODE STYLES (DEFAULT)
 ========================================= */
@@ -568,6 +601,18 @@ const handleLogin = async () => {
 
 .auth-container.light .form-input:focus {
   border-color: #10b981;
+}
+
+.auth-container.light .form-footer {
+  border-top-color: #e2e8f0;
+}
+
+.auth-container.light .footer-text {
+  color: #64748b;
+}
+
+.auth-container.light .register-link {
+  color: #059669;
 }
 
 /* Autofill Fix for Light Mode */

@@ -435,17 +435,17 @@
         :class="['w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0">
+        <div :class="['p-5 border-b flex items-center justify-between shrink-0', darkMode ? 'border-slate-700/40' : 'border-slate-200']">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
               <Handshake class="w-5 h-5" />
             </div>
             <div>
-              <h2 class="text-base font-extrabold m-0">Initiate Direct Farming Contract</h2>
-              <p class="text-xs text-slate-400 m-0">Forward agreement with guaranteed volume, price, and escrow milestones</p>
+              <h2 :class="['text-base font-extrabold m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">Initiate Direct Farming Contract</h2>
+              <p :class="['text-xs m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Forward agreement with guaranteed volume, price, and escrow milestones</p>
             </div>
           </div>
-          <button @click="createModalOpen = false" class="text-slate-400 hover:text-slate-200 font-bold text-sm cursor-pointer p-1">✕</button>
+          <button @click="createModalOpen = false" :class="['font-bold text-sm cursor-pointer p-1 transition-colors', darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700']">✕</button>
         </div>
 
         <!-- Modal Form (Scrollable) -->
@@ -686,22 +686,22 @@
         :class="['w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Header -->
-        <div class="p-5 border-b border-slate-700/40 flex items-center justify-between shrink-0">
+        <div :class="['p-5 border-b flex items-center justify-between shrink-0', darkMode ? 'border-slate-700/40' : 'border-slate-200']">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+            <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', darkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600']">
               <FileCheck class="w-5 h-5" />
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="font-mono text-xs font-black text-blue-500">{{ activeContract.contract_number }}</span>
+                <span class="font-mono text-xs font-black text-blue-600 dark:text-blue-400">{{ activeContract.contract_number }}</span>
                 <span :class="['text-[10px] px-2 py-0.5 rounded-full font-bold uppercase', getStatusBadgeStyle(activeContract.status)]">
                   {{ formatStatusLabel(activeContract.status) }}
                 </span>
               </div>
-              <h2 class="text-sm lg:text-base font-extrabold m-0 mt-0.5">{{ activeContract.title }}</h2>
+              <h2 :class="['text-sm lg:text-base font-extrabold m-0 mt-0.5', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeContract.title }}</h2>
             </div>
           </div>
-          <button @click="detailsModalOpen = false" class="text-slate-400 hover:text-slate-200 font-bold text-sm cursor-pointer p-1">✕</button>
+          <button @click="detailsModalOpen = false" :class="['font-bold text-sm cursor-pointer p-1 transition-colors', darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700']">✕</button>
         </div>
 
         <!-- Modal Body (Scrollable) -->

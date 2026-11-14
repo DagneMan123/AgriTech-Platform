@@ -348,9 +348,163 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        return response()->json([
-            'message' => 'Registration endpoint coming soon',
-            'status' => 'pending'
-        ], 501);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'nullable|string|max:255',
+                'full_name' => 'nullable|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email',
+                'phone' => 'nullable|string|max:30',
+                'password' => 'required|string|min:6|confirmed',
+                'role' => 'nullable|string|in:farmer,buyer,supplier,transport,cooperative,expert,financial',
+                'region' => 'nullable|string|max:100',
+                'zone' => 'nullable|string|max:100',
+                'woreda' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
+
+            $name = trim($validated['full_name'] ?? ($validated['name'] ?? ''));
+            if (empty($name)) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => ['name' => ['The name or full_name field is required.']]
+                ], 422);
+            }
+
+            $role = strtolower($validated['role'] ?? 'buyer');
+            $allowedRoles = ['farmer', 'buyer', 'supplier', 'transport', 'cooperative', 'expert', 'financial'];
+            if (!in_array($role, $allowedRoles)) {
+                $role = 'buyer';
+            }
+
+            $user = \App\Models\User::create([
+                'name' => $name,
+                'email' => strtolower(trim($validated['email'])),
+                'phone' => $validated['phone'] ?? null,
+                'password' => Hash::make($validated['password']),
+                'role' => $role,
+                'region' => $validated['region'] ?? null,
+                'zone' => $validated['zone'] ?? null,
+                'woreda' => $validated['woreda'] ?? null,
+                'address' => $validated['address'] ?? ($validated['region'] ?? null),
+                'location' => $validated['address'] ?? ($validated['region'] ?? null),
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+
+            // Sync role in role_user pivot if role exists
+            try {
+                $roleRow = DB::table('roles')->where('name', $role)->first();
+                if ($roleRow) {
+                    DB::table('role_user')->insertOrIgnore([
+                        'role_id' => $roleRow->id,
+                        'user_id' => $user->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            } catch (\Throwable $re) {
+                Log::warning('Role user pivot sync skipped: ' . $re->getMessage());
+            }
+
+            // Auto-provision role profile to guarantee immediate dashboard access
+            try {
+                if ($role === 'farmer') {
+                    \App\Models\Farmer::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'farmer_registration_number' => 'FRM-' . strtoupper(Str::random(8)),
+                            'farm_name' => $name . ' Farm',
+                            'region' => $user->region ?: 'Addis Ababa',
+                            'zone' => $user->zone ?: 'Central',
+                            'woreda' => $user->woreda ?: 'Central',
+                            'verification_status' => 'verified',
+                        ]
+                    );
+                } elseif ($role === 'buyer') {
+                    \App\Models\Buyer::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'buyer_type' => 'retailer',
+                            'business_name' => $name . ' Enterprises',
+                            'business_phone' => $user->phone,
+                            'business_address' => $user->address ?: ($user->region ?: 'Addis Ababa, Ethiopia'),
+                            'verification_status' => 'verified',
+                            'bio' => 'Agricultural produce buyer on AgriTech Platform.'
+                        ]
+                    );
+                } elseif ($role === 'supplier' && class_exists(\App\Models\Supplier::class)) {
+                    \App\Models\Supplier::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'company_name' => $name . ' Agricultural Supplies',
+                            'company_phone' => $user->phone,
+                            'company_address' => $user->address ?: ($user->region ?: 'Addis Ababa, Ethiopia'),
+                            'verification_status' => 'verified',
+                        ]
+                    );
+                } elseif ($role === 'transport' && class_exists(\App\Models\Transporter::class)) {
+                    \App\Models\Transporter::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'company_name' => $name . ' Logistics & Transport',
+                            'address' => $user->address ?: ($user->region ?: 'Addis Ababa, Ethiopia'),
+                            'is_verified' => true,
+                        ]
+                    );
+                }
+            } catch (\Throwable $pe) {
+                Log::warning('Profile auto-provision skipped: ' . $pe->getMessage());
+            }
+
+            // Generate authentication token
+            $plainToken = Str::random(120);
+            $hashedToken = hash('sha256', $plainToken);
+
+            DB::table('personal_access_tokens')->insert([
+                'tokenable_type' => 'App\\Models\\User',
+                'tokenable_id' => $user->id,
+                'name' => 'api-token',
+                'token' => $hashedToken,
+                'abilities' => json_encode(['*']),
+                'last_used_at' => null,
+                'expires_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'message' => 'Registration successful',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'full_name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'region' => $user->region,
+                    'address' => $user->address,
+                    'created_at' => $user->created_at,
+                ],
+                'token' => $plainToken,
+                'token_type' => 'Bearer',
+            ], 201);
+        } catch (\Throwable $e) {
+            Log::error('Registration error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Registration failed: ' . $e->getMessage(),
+                'error' => true
+            ], 500);
+        }
     }
 }

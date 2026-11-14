@@ -349,17 +349,17 @@
         :class="['w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden', darkMode ? 'bg-[#131b2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900']"
       >
         <!-- Modal Top Navigation Bar -->
-        <div class="p-4 border-b border-slate-700/50 flex items-center justify-between shrink-0 bg-[#0f1729]">
+        <div :class="['p-4 border-b flex items-center justify-between shrink-0', darkMode ? 'bg-[#0f1729] border-slate-700/50' : 'bg-slate-50 border-slate-200']">
           <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-            <span class="font-mono text-xs font-black text-blue-400">{{ activeAgreement.contract_number }}</span>
-            <span class="text-xs text-slate-400">• Legal Purchase Agreement Document</span>
+            <span class="font-mono text-xs font-black text-blue-600 dark:text-blue-400">{{ activeAgreement.contract_number }}</span>
+            <span :class="['text-xs', darkMode ? 'text-slate-400' : 'text-slate-500']">• Legal Purchase Agreement Document</span>
           </div>
 
           <div class="flex items-center gap-2">
             <button
               @click="printAgreement"
-              class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer"
+              :class="['px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer', darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100']"
               title="Print Document"
             >
               <Printer class="w-3.5 h-3.5" />
@@ -367,7 +367,7 @@
             </button>
             <button
               @click="documentModalOpen = false"
-              class="text-slate-400 hover:text-slate-200 font-bold text-sm cursor-pointer p-1"
+              :class="['font-bold text-sm cursor-pointer p-1 transition-colors', darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700']"
             >
               ✕
             </button>
@@ -378,21 +378,21 @@
         <div id="printable-agreement" class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6 text-xs leading-relaxed">
           
           <!-- Document Header -->
-          <div class="text-center pb-6 border-b border-slate-700/60">
+          <div :class="['text-center pb-6 border-b', darkMode ? 'border-slate-700/60' : 'border-slate-200']">
             <span class="text-[10px] tracking-widest font-black uppercase text-blue-500 block mb-1">
               Federal Democratic Republic of Ethiopia • Agricultural Commodity Exchange Standard
             </span>
-            <h2 class="text-lg lg:text-xl font-black uppercase tracking-tight m-0">
+            <h2 :class="['text-lg lg:text-xl font-black uppercase tracking-tight m-0', darkMode ? 'text-slate-100' : 'text-slate-900']">
               Bilateral Agricultural Forward Production &amp; Off-Take Agreement
             </h2>
-            <p class="text-slate-400 text-[11px] m-0 mt-1">
+            <p :class="['text-[11px] m-0 mt-1', darkMode ? 'text-slate-400' : 'text-slate-500']">
               Binding legal contract registered under AgriConnect Secure Escrow Framework
             </p>
             <div class="mt-3 flex items-center justify-center gap-3 text-[11px] font-mono">
-              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 Document Ref: {{ activeAgreement.contract_number }}
               </span>
-              <span class="text-slate-400">
+              <span :class="[darkMode ? 'text-slate-400' : 'text-slate-500']">
                 Effective Date: {{ formatDate(activeAgreement.start_date) }}
               </span>
             </div>
@@ -400,94 +400,94 @@
 
           <!-- Section 1: Contracting Parties -->
           <div class="space-y-2">
-            <h4 class="font-extrabold text-xs uppercase text-blue-400 tracking-wider">
+            <h4 class="font-extrabold text-xs uppercase text-blue-600 dark:text-blue-400 tracking-wider">
               1. Contracting Parties &amp; Legal Capacity
             </h4>
-            <p class="text-slate-300">
+            <p :class="[darkMode ? 'text-slate-300' : 'text-slate-600']">
               This Agreement is entered into by and between the authorized parties described herein:
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="font-bold text-[10px] text-slate-400 uppercase tracking-wider block">Party A: The Buyer</span>
-                <p class="font-bold text-sm m-0 mt-0.5">Verified AgriConnect Commercial Buyer</p>
-                <p class="text-slate-400 m-0 mt-0.5">Account Status: Good Standing &amp; Escrow Backed</p>
-                <p class="text-slate-400 m-0">Governing Law: Ethiopian Commercial Code</p>
+                <span :class="['font-bold text-[10px] uppercase tracking-wider block', darkMode ? 'text-slate-400' : 'text-slate-500']">Party A: The Buyer</span>
+                <p :class="['font-bold text-sm m-0 mt-0.5', darkMode ? 'text-slate-100' : 'text-slate-900']">Verified AgriConnect Commercial Buyer</p>
+                <p :class="['m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Account Status: Good Standing &amp; Escrow Backed</p>
+                <p :class="['m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Governing Law: Ethiopian Commercial Code</p>
               </div>
 
               <div :class="['p-3 rounded-xl border', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="font-bold text-[10px] text-slate-400 uppercase tracking-wider block">Party B: The Producer</span>
-                <p class="font-bold text-sm m-0 mt-0.5">{{ activeAgreement.farmer?.farm_name || activeAgreement.farmer?.user?.name || 'Local Farm Enterprise' }}</p>
-                <p class="text-slate-400 m-0 mt-0.5">Producer Contact: {{ activeAgreement.farmer?.user?.phone || 'On file with platform' }}</p>
-                <p class="text-slate-400 m-0">Location: {{ [activeAgreement.farmer?.woreda, activeAgreement.farmer?.zone, activeAgreement.farmer?.region].filter(Boolean).join(', ') || 'Certified Agricultural Zone' }}</p>
+                <span :class="['font-bold text-[10px] uppercase tracking-wider block', darkMode ? 'text-slate-400' : 'text-slate-500']">Party B: The Producer</span>
+                <p :class="['font-bold text-sm m-0 mt-0.5', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeAgreement.farmer?.farm_name || activeAgreement.farmer?.user?.name || 'Local Farm Enterprise' }}</p>
+                <p :class="['m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Producer Contact: {{ activeAgreement.farmer?.user?.phone || 'On file with platform' }}</p>
+                <p :class="['m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Location: {{ [activeAgreement.farmer?.woreda, activeAgreement.farmer?.zone, activeAgreement.farmer?.region].filter(Boolean).join(', ') || 'Certified Agricultural Zone' }}</p>
               </div>
             </div>
           </div>
 
           <!-- Section 2: Commodity Specifications -->
           <div class="space-y-2">
-            <h4 class="font-extrabold text-xs uppercase text-blue-400 tracking-wider">
+            <h4 class="font-extrabold text-xs uppercase text-blue-600 dark:text-blue-400 tracking-wider">
               2. Crop Specifications &amp; Agreed Volume
             </h4>
-            <p class="text-slate-300">
+            <p :class="[darkMode ? 'text-slate-300' : 'text-slate-600']">
               Party B covenants and undertakes to cultivate, harvest, and deliver the specified produce strictly in accordance with agreed benchmarks:
             </p>
             <div :class="['p-3.5 rounded-xl border space-y-2', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                 <div>
-                  <span class="text-slate-400 text-[10px] block">Crop Type</span>
-                  <span class="font-bold text-blue-400 text-sm">{{ activeAgreement.crop_type }}</span>
+                  <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Crop Type</span>
+                  <span class="font-bold text-blue-600 dark:text-blue-400 text-sm">{{ activeAgreement.crop_type }}</span>
                 </div>
                 <div>
-                  <span class="text-slate-400 text-[10px] block">Variety</span>
-                  <span class="font-bold text-sm">{{ activeAgreement.variety || 'Standard Certified' }}</span>
+                  <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Variety</span>
+                  <span :class="['font-bold text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ activeAgreement.variety || 'Standard Certified' }}</span>
                 </div>
                 <div>
-                  <span class="text-slate-400 text-[10px] block">Contract Volume</span>
-                  <span class="font-bold text-sm">{{ formatNumber(activeAgreement.quantity) }} {{ activeAgreement.unit }}</span>
+                  <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Contract Volume</span>
+                  <span :class="['font-bold text-sm', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ formatNumber(activeAgreement.quantity) }} {{ activeAgreement.unit }}</span>
                 </div>
                 <div>
-                  <span class="text-slate-400 text-[10px] block">Target Delivery</span>
-                  <span class="font-bold text-blue-400 text-sm">{{ formatDate(activeAgreement.delivery_date) }}</span>
+                  <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Target Delivery</span>
+                  <span class="font-bold text-blue-600 dark:text-blue-400 text-sm">{{ formatDate(activeAgreement.delivery_date) }}</span>
                 </div>
               </div>
 
-              <div v-if="activeAgreement.quality_specifications" class="pt-2 border-t border-slate-700/50">
-                <span class="text-slate-400 text-[10px] font-bold block mb-0.5">Standardized Quality Benchmarks:</span>
-                <p class="text-slate-200 m-0 italic">{{ activeAgreement.quality_specifications }}</p>
+              <div v-if="activeAgreement.quality_specifications" :class="['pt-2 border-t', darkMode ? 'border-slate-700/50' : 'border-slate-200']">
+                <span :class="['text-[10px] font-bold block mb-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Standardized Quality Benchmarks:</span>
+                <p :class="['m-0 italic', darkMode ? 'text-slate-200' : 'text-slate-700']">{{ activeAgreement.quality_specifications }}</p>
               </div>
             </div>
           </div>
 
           <!-- Section 3: Commercial Terms & Pricing -->
           <div class="space-y-2">
-            <h4 class="font-extrabold text-xs uppercase text-blue-400 tracking-wider">
+            <h4 class="font-extrabold text-xs uppercase text-blue-600 dark:text-blue-400 tracking-wider">
               3. Financial Valuation &amp; Escrow Guarantee
             </h4>
             <div class="grid grid-cols-3 gap-3">
               <div :class="['p-3 rounded-xl border text-center', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="text-[10px] text-slate-400 block">Agreed Unit Price</span>
-                <span class="text-base font-extrabold text-slate-100">ETB {{ formatNumber(activeAgreement.unit_price) }}</span>
-                <span class="text-[10px] text-slate-400 block mt-0.5">per {{ activeAgreement.unit }}</span>
+                <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Agreed Unit Price</span>
+                <span :class="['text-base font-extrabold', darkMode ? 'text-slate-100' : 'text-slate-900']">ETB {{ formatNumber(activeAgreement.unit_price) }}</span>
+                <span :class="['text-[10px] block mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">per {{ activeAgreement.unit }}</span>
               </div>
               <div :class="['p-3 rounded-xl border text-center', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="text-[10px] text-slate-400 block">Advance Deposit</span>
-                <span class="text-base font-extrabold text-purple-400">ETB {{ formatNumber(activeAgreement.advance_payment || 0) }}</span>
-                <span class="text-[10px] text-slate-400 block mt-0.5">Escrow locked</span>
+                <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Advance Deposit</span>
+                <span class="text-base font-extrabold text-purple-600 dark:text-purple-400">ETB {{ formatNumber(activeAgreement.advance_payment || 0) }}</span>
+                <span :class="['text-[10px] block mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">Escrow locked</span>
               </div>
               <div :class="['p-3 rounded-xl border text-center', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="text-[10px] text-slate-400 block">Total Agreement Value</span>
-                <span class="text-base font-black text-blue-400">ETB {{ formatNumber(activeAgreement.total_amount) }}</span>
+                <span :class="['text-[10px] block', darkMode ? 'text-slate-400' : 'text-slate-500']">Total Agreement Value</span>
+                <span class="text-base font-black text-blue-600 dark:text-blue-400">ETB {{ formatNumber(activeAgreement.total_amount) }}</span>
                 <span class="text-[10px] text-blue-500 block mt-0.5">Guaranteed off-take</span>
               </div>
             </div>
-            <p v-if="activeAgreement.payment_terms" class="text-slate-300 pt-1">
-              <span class="font-bold text-slate-400">Payment Terms:</span> {{ activeAgreement.payment_terms }}
+            <p v-if="activeAgreement.payment_terms" :class="['pt-1', darkMode ? 'text-slate-300' : 'text-slate-600']">
+              <span :class="['font-bold', darkMode ? 'text-slate-400' : 'text-slate-500']">Payment Terms:</span> {{ activeAgreement.payment_terms }}
             </p>
           </div>
 
           <!-- Section 4: Production Milestones & Escrow Release -->
           <div class="space-y-2">
-            <h4 class="font-extrabold text-xs uppercase text-blue-400 tracking-wider">
+            <h4 class="font-extrabold text-xs uppercase text-blue-600 dark:text-blue-400 tracking-wider">
               4. Milestone Schedule &amp; Conditional Disbursal
             </h4>
             <div class="space-y-1.5">
@@ -497,35 +497,35 @@
                 :class="['p-2.5 rounded-xl border flex items-center justify-between text-[11px]', darkMode ? 'bg-[#1a233a] border-slate-800' : 'bg-slate-50 border-slate-200']"
               >
                 <div class="flex items-center gap-2">
-                  <span class="w-5 h-5 rounded-full bg-blue-600/20 text-blue-400 font-bold flex items-center justify-center text-[10px]">
+                  <span class="w-5 h-5 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center text-[10px]">
                     {{ idx + 1 }}
                   </span>
                   <div>
-                    <span class="font-bold">{{ milestone.title }}</span>
-                    <span class="text-slate-400 ml-2">Due: {{ formatDate(milestone.due_date || null) }}</span>
+                    <span :class="['font-bold', darkMode ? 'text-slate-100' : 'text-slate-900']">{{ milestone.title }}</span>
+                    <span :class="['ml-2', darkMode ? 'text-slate-400' : 'text-slate-500']">Due: {{ formatDate(milestone.due_date || null) }}</span>
                   </div>
                 </div>
                 <div class="text-right">
-                  <span class="font-black text-blue-400">ETB {{ formatNumber(milestone.payout_amount) }}</span>
-                  <span class="text-slate-400 ml-1">({{ milestone.payout_percentage }}%)</span>
+                  <span class="font-black text-blue-600 dark:text-blue-400">ETB {{ formatNumber(milestone.payout_amount) }}</span>
+                  <span :class="['ml-1', darkMode ? 'text-slate-400' : 'text-slate-500']">({{ milestone.payout_percentage }}%)</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Section 5: Legal Attestation & Digital Signatures -->
-          <div class="pt-4 border-t border-slate-700/60 space-y-4">
-            <h4 class="font-extrabold text-xs uppercase text-blue-400 tracking-wider">
+          <div :class="['pt-4 border-t space-y-4', darkMode ? 'border-slate-700/60' : 'border-slate-200']">
+            <h4 class="font-extrabold text-xs uppercase text-blue-600 dark:text-blue-400 tracking-wider">
               5. Electronic Execution &amp; Bilateral Attestation
             </h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <!-- Buyer Signature Block -->
               <div :class="['p-4 rounded-xl border text-center', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-2">Buyer Electronic Signature</span>
-                <div class="h-12 flex items-center justify-center font-serif italic text-base text-blue-400 border-b border-dashed border-slate-700 mb-2">
+                <span :class="['text-[10px] uppercase font-bold block mb-2', darkMode ? 'text-slate-400' : 'text-slate-500']">Buyer Electronic Signature</span>
+                <div :class="['h-12 flex items-center justify-center font-serif italic text-base text-blue-600 dark:text-blue-400 border-b border-dashed mb-2', darkMode ? 'border-slate-700' : 'border-slate-300']">
                   Verified Purchaser
                 </div>
-                <p class="font-mono text-[10px] text-slate-400 m-0">Cryptographic Hash: SHA256-{{ activeAgreement.id }}8f4d92</p>
+                <p :class="['font-mono text-[10px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">Cryptographic Hash: SHA256-{{ activeAgreement.id }}8f4d92</p>
                 <p class="text-[10px] text-blue-500 font-semibold m-0 mt-0.5">
                   Signed at: {{ formatDateTime(activeAgreement.created_at) }}
                 </p>
@@ -533,23 +533,23 @@
 
               <!-- Farmer Signature Block -->
               <div :class="['p-4 rounded-xl border text-center', darkMode ? 'bg-[#0f172a] border-slate-800' : 'bg-slate-50 border-slate-200']">
-                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-2">Farmer Electronic Signature</span>
+                <span :class="['text-[10px] uppercase font-bold block mb-2', darkMode ? 'text-slate-400' : 'text-slate-500']">Farmer Electronic Signature</span>
                 <div
                   v-if="['active', 'in_progress', 'completed'].includes((activeAgreement.status || '').toLowerCase())"
-                  class="h-12 flex items-center justify-center font-serif italic text-base text-blue-400 border-b border-dashed border-slate-700 mb-2"
+                  :class="['h-12 flex items-center justify-center font-serif italic text-base text-blue-600 dark:text-blue-400 border-b border-dashed mb-2', darkMode ? 'border-slate-700' : 'border-slate-300']"
                 >
                   {{ activeAgreement.farmer?.farm_name || 'Verified Producer' }}
                 </div>
                 <div
                   v-else
-                  class="h-12 flex items-center justify-center text-xs text-amber-500 italic border-b border-dashed border-slate-700 mb-2"
+                  :class="['h-12 flex items-center justify-center text-xs text-amber-500 italic border-b border-dashed mb-2', darkMode ? 'border-slate-700' : 'border-slate-300']"
                 >
                   Pending Co-Signature By Producer
                 </div>
-                <p class="font-mono text-[10px] text-slate-400 m-0">
+                <p :class="['font-mono text-[10px] m-0', darkMode ? 'text-slate-400' : 'text-slate-500']">
                   {{ ['active', 'in_progress', 'completed'].includes((activeAgreement.status || '').toLowerCase()) ? 'Status: Fully Counter-Signed' : 'Status: Formal Offer Sent' }}
                 </p>
-                <p class="text-[10px] text-slate-400 m-0 mt-0.5">
+                <p :class="['text-[10px] m-0 mt-0.5', darkMode ? 'text-slate-400' : 'text-slate-500']">
                   Registry: AgriConnect Digital Notary
                 </p>
               </div>
@@ -559,10 +559,10 @@
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="p-4 border-t border-slate-700/50 flex justify-end gap-2 shrink-0 bg-[#0f1729]">
+        <div :class="['p-4 border-t flex justify-end gap-2 shrink-0', darkMode ? 'bg-[#0f1729] border-slate-700/50' : 'bg-slate-50 border-slate-200']">
           <button
             @click="documentModalOpen = false"
-            class="px-5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+            class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-600/30"
           >
             Close Agreement View
           </button>

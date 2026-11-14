@@ -47,11 +47,23 @@
               to="/auth/login" 
               class="px-4 py-2 rounded-lg hover:shadow-lg transition font-semibold"
               :style="{
+                backgroundColor: isDarkMode ? '#1f2937' : '#f1f5f9',
+                color: isDarkMode ? '#e5e7eb' : '#334155',
+                border: isDarkMode ? '1px solid #374151' : '1px solid #cbd5e1'
+              }"
+            >
+              Login
+            </RouterLink>
+
+            <RouterLink 
+              to="/auth/register" 
+              class="px-4 py-2 rounded-lg hover:shadow-lg transition font-semibold"
+              :style="{
                 backgroundColor: isDarkMode ? '#10b981' : '#22c55e',
                 color: 'white'
               }"
             >
-              Login
+              Register
             </RouterLink>
           </div>
         </div>
@@ -83,6 +95,12 @@
             Transforming agriculture through technology, transparency, and collaboration
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <RouterLink 
+              to="/auth/register" 
+              class="inline-block px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold text-lg transition shadow-lg duration-200"
+            >
+              Get Started Free →
+            </RouterLink>
             <button 
               class="inline-block px-8 py-4 bg-white/20 text-white rounded-lg hover:bg-white/30 font-bold text-lg transition backdrop-blur border border-white/40 duration-200"
               @click="scrollToFeatures"
