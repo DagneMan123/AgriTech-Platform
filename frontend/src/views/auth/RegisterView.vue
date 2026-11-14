@@ -7,30 +7,6 @@
         <span class="hero-badge">Smart Farming Platform</span>
         <h2>Join the<br />Ecosystem.</h2>
         <p>Connecting Ethiopian farmers, buyers, suppliers, and transporters in one transparent digital marketplace.</p>
-
-        <div class="hero-highlights">
-          <div class="highlight-item">
-            <span class="highlight-icon">🌾</span>
-            <div>
-              <strong>Direct Farm Trade</strong>
-              <p>Sell harvests without intermediaries at fair market value.</p>
-            </div>
-          </div>
-          <div class="highlight-item">
-            <span class="highlight-icon">🛡️</span>
-            <div>
-              <strong>Chapa Escrow Protection</strong>
-              <p>Automated payment holding until produce inspection & delivery.</p>
-            </div>
-          </div>
-          <div class="highlight-item">
-            <span class="highlight-icon">🚚</span>
-            <div>
-              <strong>End-to-End Logistics</strong>
-              <p>Coordinated regional transport from farmgate to warehouse.</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -455,47 +431,6 @@ const handleRegister = async () => {
   color: #cbd5e1;
   font-size: 1.05rem;
   line-height: 1.5;
-  margin-bottom: 2rem;
-}
-
-.hero-highlights {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 1.75rem;
-}
-
-.highlight-item {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.highlight-icon {
-  font-size: 1.35rem;
-  background: rgba(255, 255, 255, 0.08);
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.highlight-item strong {
-  display: block;
-  color: #fff;
-  font-size: 0.95rem;
-  margin-bottom: 0.2rem;
-}
-
-.highlight-item p {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin: 0;
 }
 
 /* Form Section */
