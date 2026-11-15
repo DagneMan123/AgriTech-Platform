@@ -58,11 +58,18 @@ export const useAuthStore = defineStore('auth', () => {
       const { user: userData, token: newToken } = response.data
       
       user.value = userData
-      token.value = newToken
-      localStorage.setItem('auth_token', newToken)
-      localStorage.setItem('user_role', userData.role)
+      if (newToken) {
+        token.value = newToken
+        localStorage.setItem('auth_token', newToken)
+        localStorage.setItem('user_role', userData.role)
+      }
       
-      return userData
+      return { 
+        ...userData, 
+        status: response.data.status, 
+        workflow: response.data.workflow,
+        message: response.data.message 
+      }
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Registration failed'
       throw err

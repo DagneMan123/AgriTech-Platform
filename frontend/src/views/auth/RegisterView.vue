@@ -1,12 +1,12 @@
 <template>
   <div class="auth-container" :class="{ 'light': isLight, 'dark': !isLight }">
-    <!-- Left Hero Section -->
+    <!-- Left Hero Section (Clear image matching Login page) -->
     <div class="hero-section">
       <div class="hero-image-overlay"></div>
       <div class="hero-content">
         <span class="hero-badge">Smart Farming Platform</span>
-        <h2>Join the<br />AgriTech </h2>
-        <p>Connecting Ethiopian farmers, buyers, suppliers, and transporters in one transparent digital marketplace.</p>
+        <h2>Join the<br />AgriTech</h2>
+        <p>Connecting Ethiopian farmers, buyers, certified suppliers, and transporters in one integrated digital agricultural ecosystem.</p>
       </div>
     </div>
 
@@ -28,23 +28,129 @@
         <!-- Top Green Accent Bar -->
         <div class="form-card-top-bar"></div>
 
-        <div class="form-container">
+        <!-- STATE A: Partner Request Submitted Success Screen -->
+        <div v-if="partnerSubmitted" class="form-container partner-success-container">
+          <div class="partner-success-header">
+            <div class="partner-shield-icon">🛡️</div>
+            <span class="status-pill-pending">Partner Request Submitted</span>
+            <h2 class="form-title">Application Under Review</h2>
+            <p class="form-subtitle">
+              Your business credentials have been securely received. Per platform access control architecture, partner accounts are activated solely upon administrator review.
+            </p>
+          </div>
+
+          <div class="application-summary-card">
+            <div class="summary-row">
+              <span class="summary-label">Organization Name:</span>
+              <strong class="summary-value">{{ form.company_name || form.full_name }}</strong>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Partner Role:</span>
+              <span class="role-tag">{{ formatRoleLabel(form.role) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Trade License No:</span>
+              <strong class="summary-value">{{ form.license_number || 'Under Verification' }}</strong>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">TIN Number:</span>
+              <strong class="summary-value">{{ form.tax_id || 'Submitted' }}</strong>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Account Status:</span>
+              <span class="status-locked-badge">🔒 Locked (Pending Admin Approval)</span>
+            </div>
+          </div>
+
+          <div class="partner-guidance-box">
+            <p>
+              <strong>Next Steps:</strong> An administrator will inspect your legal trade credentials in the Admin Verification portal. You will receive activation notice via <strong>{{ form.phone }}</strong> and <strong>{{ form.email }}</strong>.
+            </p>
+          </div>
+
+          <div class="partner-action-buttons">
+            <router-link to="/auth/login" class="btn-primary-action">
+              Go to Sign In
+            </router-link>
+            <router-link to="/" class="btn-secondary-action">
+              Return to Home
+            </router-link>
+          </div>
+        </div>
+
+        <!-- STATE B: Registration Form (Workflow 1 & Workflow 2) -->
+        <div v-else class="form-container">
           <!-- Header -->
           <div class="form-header">
             <div class="logo-box">
               <span class="logo-icon">🌾</span> AgriTech
             </div>
             <h2 class="form-title">Create an Account</h2>
-            <p class="form-subtitle">Choose your primary role and join the community.</p>
+            <p class="form-subtitle">Choose your registration workflow below.</p>
           </div>
 
-          <!-- Role Selection -->
-          <div class="role-selection-wrapper">
-            <label class="form-label">Select Your Role</label>
-            <div class="role-grid">
+          <!-- Workflow Mode Selector Tabs (Architecture Categories 1 & 2) -->
+          <div class="workflow-tabs">
+            <button 
+              type="button" 
+              class="workflow-tab-btn" 
+              :class="{ 'active': activeWorkflow === 'direct' }"
+              @click="switchWorkflow('direct')"
+            >
+              <span class="tab-icon">⚡</span>
+              <div class="tab-text">
+                <span class="tab-title">Direct Sign-Up</span>
+                <span class="tab-subtitle">Instant Access (Farmer & Buyer)</span>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              class="workflow-tab-btn" 
+              :class="{ 'active': activeWorkflow === 'partner' }"
+              @click="switchWorkflow('partner')"
+            >
+              <span class="tab-icon">🛡️</span>
+              <div class="tab-text">
+                <span class="tab-title">Partner Request</span>
+                <span class="tab-subtitle">Business Approval (Supplier, Transporter)</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Workflow 1: Self Sign-Up Role Picker -->
+          <div v-if="activeWorkflow === 'direct'" class="role-selection-wrapper">
+            <label class="form-label">Select Your Direct Access Role</label>
+            <div class="role-grid direct-role-grid">
               <button
                 type="button"
-                v-for="r in availableRoles"
+                v-for="r in directRoles"
+                :key="r.id"
+                class="role-card"
+                :class="{ 'active': form.role === r.id }"
+                @click="form.role = r.id"
+              >
+                <div class="role-icon">{{ r.icon }}</div>
+                <div class="role-info">
+                  <span class="role-name">{{ r.label }}</span>
+                  <span class="role-desc">{{ r.desc }}</span>
+                </div>
+                <div class="role-check" v-if="form.role === r.id">✓</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Workflow 2: Partner Request Role Picker -->
+          <div v-else class="role-selection-wrapper">
+            <div class="partner-workflow-banner">
+              <span class="shield-badge">🔒 Legal Trade Credentials Required</span>
+              <p>Accounts are verified by administrators prior to activation.</p>
+            </div>
+            <label class="form-label">Select Your Business Partner Role</label>
+            <div class="role-grid partner-role-grid">
+              <button
+                type="button"
+                v-for="r in partnerRoles"
                 :key="r.id"
                 class="role-card"
                 :class="{ 'active': form.role === r.id }"
@@ -61,10 +167,12 @@
           </div>
 
           <!-- Registration Form -->
-          <form @submit.prevent="handleRegister" class="register-form">
-            <!-- Full Name -->
+          <form @submit.prevent="handleSubmit" class="register-form">
+            <!-- Full Name / Contact Person -->
             <div class="form-group">
-              <label for="name" class="form-label">Full Name</label>
+              <label for="name" class="form-label">
+                {{ activeWorkflow === 'partner' ? 'Representative / Contact Full Name' : 'Full Name' }}
+              </label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
                   <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -75,12 +183,91 @@
                   type="text"
                   required
                   class="form-input"
-                  placeholder="e.g. Abebe Bikila"
+                  :placeholder="activeWorkflow === 'partner' ? 'e.g. Almaz Ayana (Managing Director)' : 'e.g. Abebe Bikila'"
                 />
               </div>
             </div>
 
-            <!-- Email & Phone (Grid) -->
+            <!-- Workflow 2 Partner Specific: Organization / Company Name -->
+            <div v-if="activeWorkflow === 'partner'" class="form-group">
+              <label for="company_name" class="form-label">Company / Cooperative Name</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="currentColor" d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2V9zm0 4h-2v2h2v-2z"/>
+                </svg>
+                <input
+                  id="company_name"
+                  v-model="form.company_name"
+                  type="text"
+                  required
+                  class="form-input"
+                  placeholder="e.g. Rift Valley Agro Supplies PLC"
+                />
+              </div>
+            </div>
+
+            <!-- Phone Number & OTP Section -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="phone" class="form-label">Phone Number</label>
+                <span v-if="phoneVerified" class="verified-pill">✓ Phone Verified</span>
+              </div>
+              <div class="phone-input-group">
+                <div class="input-wrapper flex-1">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                  </svg>
+                  <input
+                    id="phone"
+                    v-model="form.phone"
+                    type="tel"
+                    required
+                    class="form-input"
+                    placeholder="0911223344"
+                    :disabled="phoneVerified"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="btn-send-otp"
+                  :disabled="sendingOtp || phoneVerified || !form.phone"
+                  @click="handleSendOtp"
+                >
+                  <span v-if="sendingOtp" class="mini-spinner"></span>
+                  <span v-else-if="phoneVerified">Verified</span>
+                  <span v-else-if="otpSent">Resend OTP</span>
+                  <span v-else>Send OTP</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- OTP Verification Row (Workflow 1 Fast-Track Requirement) -->
+            <div v-if="otpSent && !phoneVerified" class="otp-verification-box">
+              <div class="otp-header">
+                <span class="otp-title">Enter 6-Digit Verification Code</span>
+                <span class="otp-hint">Code sent: Use <strong>{{ devOtp || '123456' }}</strong></span>
+              </div>
+              <div class="otp-input-row">
+                <input
+                  v-model="enteredOtp"
+                  type="text"
+                  maxlength="6"
+                  class="otp-digit-input"
+                  placeholder="123456"
+                />
+                <button
+                  type="button"
+                  class="btn-verify-otp"
+                  :disabled="verifyingOtp || enteredOtp.length !== 6"
+                  @click="handleVerifyOtp"
+                >
+                  <span v-if="verifyingOtp" class="mini-spinner"></span>
+                  <span v-else>Verify OTP</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Email & Region -->
             <div class="form-row-2">
               <div class="form-group">
                 <label for="email" class="form-label">Email Address</label>
@@ -100,40 +287,58 @@
               </div>
 
               <div class="form-group">
-                <label for="phone" class="form-label">Phone Number</label>
+                <label for="region" class="form-label">Region / Territory</label>
                 <div class="input-wrapper">
                   <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
-                    <path fill="currentColor" d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                    <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                   </svg>
-                  <input
-                    id="phone"
-                    v-model="form.phone"
-                    type="tel"
-                    required
-                    class="form-input"
-                    placeholder="0911223344"
-                  />
+                  <select
+                    id="region"
+                    v-model="form.region"
+                    class="form-input form-select"
+                  >
+                    <option v-for="reg in ethiopianRegions" :key="reg" :value="reg">
+                      {{ reg }}
+                    </option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            <!-- Region Selection -->
-            <div class="form-group">
-              <label for="region" class="form-label">Region / Location</label>
-              <div class="input-wrapper">
-                <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
-                  <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>
-                <select
-                  id="region"
-                  v-model="form.region"
-                  class="form-input form-select"
-                >
-                  <option value="" disabled>Select your regional location</option>
-                  <option v-for="reg in ethiopianRegions" :key="reg" :value="reg">
-                    {{ reg }}
-                  </option>
-                </select>
+            <!-- Workflow 2: Trade License & Tax ID (TIN) -->
+            <div v-if="activeWorkflow === 'partner'" class="form-row-2 partner-credentials-row">
+              <div class="form-group">
+                <label for="license_number" class="form-label">Trade License / Reg Number</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                  </svg>
+                  <input
+                    id="license_number"
+                    v-model="form.license_number"
+                    type="text"
+                    required
+                    class="form-input"
+                    placeholder="e.g. TL-2026/AA-8941"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="tax_id" class="form-label">Tax ID (TIN)</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M3 3h18v2H3V3zm0 4h18v2H3V7zm0 4h18v2H3v-2zm0 4h18v2H3v-2zm0 4h18v2H3v-2z"/>
+                  </svg>
+                  <input
+                    id="tax_id"
+                    v-model="form.tax_id"
+                    type="text"
+                    required
+                    class="form-input"
+                    placeholder="e.g. 0049281736"
+                  />
+                </div>
               </div>
             </div>
 
@@ -206,7 +411,7 @@
                   class="terms-checkbox"
                 />
                 <span class="terms-text">
-                  I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
+                  I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Platform Policy</a>
                 </span>
               </label>
             </div>
@@ -221,21 +426,38 @@
               {{ successMsg }}
             </div>
 
-            <!-- Submit Button -->
+            <!-- Submit Button (Workflow Specific) -->
             <button
               type="submit"
               :disabled="loading"
               class="btn-register"
+              :class="{ 'btn-partner': activeWorkflow === 'partner' }"
             >
-              <span v-if="!loading">Create Account ↪</span>
+              <span v-if="!loading && activeWorkflow === 'direct'">
+                Instant Sign-Up & Enter Dashboard ↪
+              </span>
+              <span v-else-if="!loading && activeWorkflow === 'partner'">
+                Submit Partner Request for Approval 📋
+              </span>
               <span v-else class="loading-spinner"></span>
             </button>
           </form>
 
+          <!-- Workflow 3 Architecture Notice: Direct Admin Creation (Internal Staff Access) -->
+          <div class="staff-notice-card">
+            <div class="staff-notice-header">
+              <span class="staff-icon">👔</span>
+              <strong>Direct Admin Creation (Internal Staff Access)</strong>
+            </div>
+            <p>
+              Profiles for <strong>Finance Manager</strong> and <strong>Agricultural Expert</strong> are created exclusively by the platform administrator to manage escrow audits and agronomy consultations. Public self-registration is restricted.
+            </p>
+          </div>
+
           <!-- Footer Switch to Login -->
           <div class="form-footer">
             <p class="footer-text">
-              Already have an account?
+              Already have an active account?
               <router-link to="/auth/login" class="login-link">Sign In</router-link>
             </p>
           </div>
@@ -249,19 +471,28 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { authAPI } from '@/api/auth'
 import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { isLight, toggleTheme } = useTheme()
 
-const availableRoles = [
-  { id: 'farmer', label: 'Farmer', icon: '🌾', desc: 'Sell produce & track farm' },
-  { id: 'buyer', label: 'Buyer', icon: '🛒', desc: 'Source & bulk escrow orders' },
-  { id: 'supplier', label: 'Supplier', icon: '📦', desc: 'Agricultural inputs & tools' },
-  { id: 'transport', label: 'Transporter', icon: '🚚', desc: 'Haulage & delivery fleet' },
-  { id: 'cooperative', label: 'Cooperative', icon: '🏢', desc: 'Union & bulk member sales' },
-  { id: 'expert', label: 'Expert', icon: '🔬', desc: 'Agronomy consultations' },
+// Architecture Workflow Modes
+const activeWorkflow = ref<'direct' | 'partner'>('direct')
+const partnerSubmitted = ref(false)
+
+// Workflow 1: Direct Public Access Roles (Instant Access)
+const directRoles = [
+  { id: 'farmer', label: 'Farmer', icon: '🌾', desc: 'List products, sell produce & track farm' },
+  { id: 'buyer', label: 'Buyer', icon: '🛒', desc: 'Purchase produce & track order escrow' },
+]
+
+// Workflow 2: Partner Request Roles (Verified Business Access)
+const partnerRoles = [
+  { id: 'supplier', label: 'Supplier', icon: '📦', desc: 'Agricultural inputs (seeds, fertilizer, machinery)' },
+  { id: 'transport', label: 'Transporter', icon: '🚚', desc: 'Logistics, cargo & regional haulage' },
+  { id: 'cooperative', label: 'Cooperative', icon: '🏢', desc: 'Union entity managing bulk member sales' },
 ]
 
 const ethiopianRegions = [
@@ -281,14 +512,25 @@ const ethiopianRegions = [
 
 const form = ref({
   full_name: '',
+  company_name: '',
   email: '',
   phone: '',
   role: 'farmer',
   region: 'Addis Ababa',
+  license_number: '',
+  tax_id: '',
   password: '',
   password_confirmation: '',
   agreeTerms: true
 })
+
+// OTP Simulation & Verification
+const sendingOtp = ref(false)
+const otpSent = ref(false)
+const verifyingOtp = ref(false)
+const phoneVerified = ref(false)
+const enteredOtp = ref('')
+const devOtp = ref('')
 
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
@@ -296,15 +538,91 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const successMsg = ref<string | null>(null)
 
-const handleRegister = async () => {
+const switchWorkflow = (mode: 'direct' | 'partner') => {
+  activeWorkflow.value = mode
+  error.value = null
+  successMsg.value = null
+  if (mode === 'direct') {
+    form.value.role = 'farmer'
+  } else {
+    form.value.role = 'supplier'
+  }
+}
+
+const formatRoleLabel = (r: string) => {
+  const map: Record<string, string> = {
+    farmer: 'Farmer (Direct Public Access)',
+    buyer: 'Buyer (Direct Public Access)',
+    supplier: 'Input Supplier (Verified Business)',
+    transport: 'Transporter (Verified Business)',
+    cooperative: 'Cooperative Union (Verified Business)',
+    financial: 'Finance Manager (Internal Staff)',
+    expert: 'Agricultural Expert (Internal Staff)'
+  }
+  return map[r] || r.toUpperCase()
+}
+
+// Send OTP handler
+const handleSendOtp = async () => {
+  if (!form.value.phone.trim()) {
+    error.value = 'Please enter your phone number first.'
+    return
+  }
+  error.value = null
+  sendingOtp.value = true
+  try {
+    const res = await authAPI.sendOtp(form.value.phone.trim())
+    otpSent.value = true
+    devOtp.value = res.data.dev_otp || '123456'
+    enteredOtp.value = devOtp.value // Pre-fill for seamless user testing
+    successMsg.value = res.data.message || 'OTP verification code sent!'
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Failed to send OTP. Please check your phone number.'
+  } finally {
+    sendingOtp.value = false
+  }
+}
+
+// Verify OTP handler
+const handleVerifyOtp = async () => {
+  if (enteredOtp.value.length !== 6) {
+    error.value = 'Please enter a 6-digit OTP code.'
+    return
+  }
+  error.value = null
+  verifyingOtp.value = true
+  try {
+    const res = await authAPI.verifyOtp(form.value.phone.trim(), enteredOtp.value.trim())
+    if (res.data.phone_verified) {
+      phoneVerified.value = true
+      successMsg.value = 'Phone number verified successfully!'
+    }
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Invalid OTP code. Please use 123456.'
+  } finally {
+    verifyingOtp.value = false
+  }
+}
+
+// Submit Registration / Partner Request
+const handleSubmit = async () => {
   if (loading.value) return
 
   error.value = null
   successMsg.value = null
 
-  // Basic client-side validation
   if (!form.value.full_name.trim()) {
     error.value = 'Please enter your full name.'
+    return
+  }
+
+  if (activeWorkflow.value === 'partner' && !form.value.company_name.trim()) {
+    error.value = 'Please provide your Company / Organization name.'
+    return
+  }
+
+  if (activeWorkflow.value === 'partner' && !form.value.license_number.trim()) {
+    error.value = 'Please provide your Trade License or Commercial Registration number.'
     return
   }
 
@@ -314,19 +632,19 @@ const handleRegister = async () => {
   }
 
   if (form.value.password !== form.value.password_confirmation) {
-    error.value = 'Passwords do not match. Please verify both fields.'
+    error.value = 'Passwords do not match. Please verify both password fields.'
     return
   }
 
   if (!form.value.agreeTerms) {
-    error.value = 'You must agree to the Terms of Service to create an account.'
+    error.value = 'You must agree to the Terms of Service to proceed.'
     return
   }
 
   loading.value = true
 
   try {
-    const user = await authStore.register({
+    const result = await authStore.register({
       full_name: form.value.full_name.trim(),
       email: form.value.email.trim(),
       phone: form.value.phone.trim(),
@@ -334,10 +652,20 @@ const handleRegister = async () => {
       password_confirmation: form.value.password_confirmation,
       role: form.value.role,
       region: form.value.region,
-      address: form.value.region
+      address: form.value.region,
+      company_name: form.value.company_name.trim() || undefined,
+      license_number: form.value.license_number.trim() || undefined,
+      tax_id: form.value.tax_id.trim() || undefined,
     })
 
-    successMsg.value = 'Account created successfully! Redirecting to your dashboard...'
+    // Handle Workflow 2: Partner Request (Pending Admin Verification)
+    if (activeWorkflow.value === 'partner' || result.status === 'pending_approval') {
+      partnerSubmitted.value = true
+      return
+    }
+
+    // Handle Workflow 1: Self Sign-Up (Direct Public Access)
+    successMsg.value = 'Registration successful! Launching your AgriTech dashboard...'
 
     const roleRoutes: Record<string, string> = {
       admin: '/admin/dashboard',
@@ -350,7 +678,7 @@ const handleRegister = async () => {
       financial: '/financial/dashboard'
     }
 
-    const redirectUrl = roleRoutes[user?.role || form.value.role] || '/buyer/marketplace'
+    const redirectUrl = roleRoutes[result?.role || form.value.role] || '/buyer/marketplace'
     setTimeout(() => {
       router.push(redirectUrl)
     }, 600)
@@ -360,7 +688,7 @@ const handleRegister = async () => {
       const firstField = Object.keys(errs)[0]
       error.value = errs[firstField][0] || err.response.data.message || 'Registration failed.'
     } else {
-      error.value = err.response?.data?.message || err.message || 'Registration failed. Please check your information.'
+      error.value = err.response?.data?.message || err.message || 'Registration failed. Please review your information.'
     }
   } finally {
     loading.value = false
@@ -371,14 +699,14 @@ const handleRegister = async () => {
 <style scoped>
 .auth-container {
   display: grid;
-  grid-template-columns: 1fr 1.25fr;
+  grid-template-columns: 1fr 1.35fr;
   min-height: 100vh;
   background-color: #0b0f17;
   color: #fff;
   transition: all 0.3s ease;
 }
 
-/* Hero Section */
+/* Hero Section (Clear image & overlay matching LoginView.vue) */
 .hero-section {
   display: flex;
   flex-direction: column;
@@ -428,6 +756,7 @@ const handleRegister = async () => {
 .hero-content p {
   color: #cbd5e1;
   font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* Form Section */
@@ -470,7 +799,7 @@ const handleRegister = async () => {
 
 .form-card {
   width: 100%;
-  max-width: 580px;
+  max-width: 620px;
   background-color: #111827;
   border: 1px solid #1f2937;
   border-radius: 0.85rem;
@@ -492,7 +821,7 @@ const handleRegister = async () => {
 
 .form-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .logo-box {
@@ -506,7 +835,7 @@ const handleRegister = async () => {
   font-weight: bold;
   font-size: 1.05rem;
   border: 1px solid #1f2937;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-title {
@@ -519,7 +848,60 @@ const handleRegister = async () => {
 .form-subtitle {
   font-size: 0.88rem;
   color: #9ca3af;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Workflow Tabs (Architecture 1 vs 2) */
+.workflow-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  background-color: #0b0f17;
+  padding: 0.4rem;
+  border-radius: 0.65rem;
+  border: 1px solid #1f2937;
+  margin-bottom: 1.35rem;
+}
+
+.workflow-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.workflow-tab-btn:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.workflow-tab-btn.active {
+  background-color: #111827;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.tab-icon {
+  font-size: 1.25rem;
+}
+
+.tab-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.tab-subtitle {
+  display: block;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 0.1rem;
 }
 
 /* Role Selector Grid */
@@ -527,11 +909,41 @@ const handleRegister = async () => {
   margin-bottom: 1.25rem;
 }
 
+.partner-workflow-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.shield-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.partner-workflow-banner p {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin: 0;
+}
+
 .role-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 0.6rem;
   margin-top: 0.4rem;
+}
+
+.direct-role-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.partner-role-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .role-card {
@@ -575,7 +987,7 @@ const handleRegister = async () => {
   display: block;
   font-size: 0.68rem;
   color: #94a3b8;
-  line-height: 1.2;
+  line-height: 1.25;
   margin-top: 0.15rem;
 }
 
@@ -657,6 +1069,99 @@ const handleRegister = async () => {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Phone & OTP Controls */
+.phone-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-send-otp {
+  padding: 0.65rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #10b981;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-send-otp:hover:not(:disabled) {
+  background-color: #10b981;
+  color: #052e16;
+}
+
+.btn-send-otp:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verified-pill {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.otp-verification-box {
+  background-color: rgba(16, 185, 129, 0.05);
+  border: 1px dashed rgba(16, 185, 129, 0.4);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.otp-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.otp-title {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.otp-hint {
+  color: #10b981;
+}
+
+.otp-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.otp-digit-input {
+  flex: 1;
+  letter-spacing: 0.35rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid #1f2937;
+  background-color: #0b0f17;
+  color: #fff;
+}
+
+.btn-verify-otp {
+  padding: 0.5rem 1rem;
+  background-color: #10b981;
+  color: #052e16;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.btn-verify-otp:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .password-toggle-btn {
@@ -752,6 +1257,16 @@ const handleRegister = async () => {
   transform: translateY(-1px);
 }
 
+.btn-register.btn-partner {
+  background-color: #f59e0b;
+  color: #451a03;
+}
+
+.btn-register.btn-partner:hover:not(:disabled) {
+  background-color: #d97706;
+  color: #fff;
+}
+
 .btn-register:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -763,12 +1278,167 @@ const handleRegister = async () => {
   height: 1.1rem;
   border: 2px solid rgba(0, 0, 0, 0.3);
   border-radius: 50%;
-  border-top-color: #052e16;
+  border-top-color: currentColor;
+  animation: spin 0.8s linear infinite;
+}
+
+.mini-spinner {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: currentColor;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Workflow 3 Architecture Notice: Direct Admin Creation */
+.staff-notice-card {
+  margin-top: 1.25rem;
+  background-color: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 0.85rem;
+  border-radius: 0.6rem;
+}
+
+.staff-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #a5b4fc;
+  font-size: 0.82rem;
+  margin-bottom: 0.25rem;
+}
+
+.staff-notice-card p {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* Partner Success Screen (State A) */
+.partner-success-container {
+  text-align: center;
+}
+
+.partner-success-header {
+  margin-bottom: 1.5rem;
+}
+
+.partner-shield-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-pill-pending {
+  display: inline-block;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.application-summary-card {
+  background-color: #0b0f17;
+  border: 1px solid #1f2937;
+  border-radius: 0.65rem;
+  padding: 1.1rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.summary-label {
+  color: #94a3b8;
+}
+
+.summary-value {
+  color: #f1f5f9;
+}
+
+.role-tag {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-locked-badge {
+  color: #f59e0b;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.partner-guidance-box {
+  background-color: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 0.85rem;
+  border-radius: 0.6rem;
+  font-size: 0.82rem;
+  color: #93c5fd;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.partner-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-primary-action {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #10b981;
+  color: #052e16;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-action:hover {
+  background-color: #059669;
+  color: #fff;
+}
+
+.btn-secondary-action {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #1f2937;
+  color: #cbd5e1;
+  border: 1px solid #374151;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-action:hover {
+  background-color: #374151;
+  color: #fff;
 }
 
 /* Footer Link */
@@ -852,17 +1522,6 @@ const handleRegister = async () => {
   border-top-color: #1f2937;
 }
 
-/* Autofill Fix for Dark Mode */
-.auth-container.dark .form-input:-webkit-autofill,
-.auth-container.dark .form-input:-webkit-autofill:hover,
-.auth-container.dark .form-input:-webkit-autofill:focus,
-.auth-container.dark .form-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #0b0f17 inset !important;
-  -webkit-text-fill-color: #fff !important;
-  caret-color: #fff !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
 /* =========================================
    LIGHT MODE STYLES
 ========================================= */
@@ -898,6 +1557,20 @@ const handleRegister = async () => {
 
 .auth-container.light .form-subtitle {
   color: #64748b;
+}
+
+.auth-container.light .workflow-tabs {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.auth-container.light .workflow-tab-btn.active {
+  background-color: #ffffff;
+  border-color: #10b981;
+}
+
+.auth-container.light .tab-title {
+  color: #0f172a;
 }
 
 .auth-container.light .role-card {
@@ -937,8 +1610,47 @@ const handleRegister = async () => {
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
+.auth-container.light .btn-send-otp {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.auth-container.light .otp-digit-input {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
 .auth-container.light .terms-text {
   color: #64748b;
+}
+
+.auth-container.light .staff-notice-card {
+  background-color: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.auth-container.light .staff-notice-header {
+  color: #4338ca;
+}
+
+.auth-container.light .staff-notice-card p {
+  color: #475569;
+}
+
+.auth-container.light .application-summary-card {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.auth-container.light .summary-value {
+  color: #0f172a;
+}
+
+.auth-container.light .btn-secondary-action {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
 }
 
 .auth-container.light .form-footer {
@@ -949,16 +1661,6 @@ const handleRegister = async () => {
   color: #64748b;
 }
 
-/* Autofill Fix for Light Mode */
-.auth-container.light .form-input:-webkit-autofill,
-.auth-container.light .form-input:-webkit-autofill:hover,
-.auth-container.light .form-input:-webkit-autofill:focus,
-.auth-container.light .form-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
-  -webkit-text-fill-color: #0f172a !important;
-  caret-color: #0f172a !important;
-}
-
 /* Responsive */
 @media (max-width: 992px) {
   .auth-container {
@@ -967,20 +1669,27 @@ const handleRegister = async () => {
   .hero-section {
     display: none;
   }
-  .role-grid {
+  .partner-role-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 580px) {
+  .workflow-tabs {
+    grid-template-columns: 1fr;
+  }
   .form-row-2 {
     grid-template-columns: 1fr;
   }
-  .role-grid {
+  .direct-role-grid,
+  .partner-role-grid {
     grid-template-columns: 1fr;
   }
   .form-container {
     padding: 1.5rem;
+  }
+  .partner-action-buttons {
+    flex-direction: column;
   }
 }
 </style>

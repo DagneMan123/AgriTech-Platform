@@ -3,14 +3,13 @@ import apiClient from './config'
 export const adminAPI = {
   // Users
   getUsers: (filters?: any) => apiClient.get('/admin/users', { params: filters }),
-  
+  getUserStats: () => apiClient.get('/admin/users/statistics'),
   getUser: (id: number) => apiClient.get(`/admin/users/${id}`),
-  
   createUser: (data: any) => apiClient.post('/admin/users', data),
-  
   updateUser: (id: number, data: any) => apiClient.put(`/admin/users/${id}`, data),
-  
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
+  approveUser: (id: number) => apiClient.post(`/admin/users/${id}/approve`),
+  suspendUser: (id: number) => apiClient.post(`/admin/users/${id}/suspend`),
 
   // Roles
   getRoles: () => apiClient.get('/admin/roles'),

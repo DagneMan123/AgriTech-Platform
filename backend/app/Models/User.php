@@ -106,6 +106,49 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'user_id')->latest();
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'role_user');
+    }
+
+    public function assignRole(string $roleName)
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $this->roles()->syncWithoutDetaching([$role->id]);
+        }
+        $this->update(['role' => $roleName]);
+    }
+
+    public function syncRoles(string $roleName)
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $this->roles()->sync([$role->id]);
+        }
+        $this->update(['role' => $roleName]);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(UserDocument::class);
+    }
+
+    public function supplier()
+    {
+        return $this->hasOne(Supplier::class);
+    }
+
+    public function transporter()
+    {
+        return $this->hasOne(Transporter::class);
+    }
+
+    public function cooperative()
+    {
+        return $this->hasOne(Cooperative::class);
+    }
+
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class, 'user_id')->whereNull('read_at')->latest();

@@ -11,9 +11,12 @@ export interface RegisterRequest {
   phone: string
   password: string
   password_confirmation: string
-  address: string
-  region: string
+  address?: string
+  region?: string
   role: string
+  company_name?: string
+  license_number?: string
+  tax_id?: string
 }
 
 export interface AuthResponse {
@@ -23,10 +26,17 @@ export interface AuthResponse {
     full_name: string
     phone: string
     role: string
-    role_id: number
+    role_id?: number
+    is_active?: boolean
     email_verified_at?: string
+    verification_status?: string
+    company_name?: string
+    license_number?: string
   }
-  token: string
+  token?: string
+  status?: string
+  workflow?: string
+  message?: string
 }
 
 export interface ProfileResponse {
@@ -47,6 +57,12 @@ export const authAPI = {
   
   register: (data: RegisterRequest) => 
     apiClient.post<AuthResponse>('/auth/register', data),
+  
+  sendOtp: (phone: string) =>
+    apiClient.post<{ success: boolean; message: string; dev_otp?: string }>('/auth/send-otp', { phone }),
+
+  verifyOtp: (phone: string, otp: string) =>
+    apiClient.post<{ success: boolean; phone_verified: boolean; message: string }>('/auth/verify-otp', { phone, otp }),
   
   logout: () => 
     apiClient.post('/auth/logout'),

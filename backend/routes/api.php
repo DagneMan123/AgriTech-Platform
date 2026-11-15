@@ -157,6 +157,16 @@ Route::prefix('auth')->group(function () {
         AuthController::class,
         'resetPassword'
     ]);
+
+    Route::post('/send-otp', [
+        AuthController::class,
+        'sendOtp'
+    ]);
+
+    Route::post('/verify-otp', [
+        AuthController::class,
+        'verifyOtp'
+    ]);
 });
 
 Route::get('/test-farmer-dashboard', function () {
@@ -312,7 +322,10 @@ Route::middleware('auth:sanctum')->group(function () {
                 'index'
             ]);
 
+            Route::get('/users/statistics', [AdminUserController::class, 'statistics']);
             Route::apiResource('/users', AdminUserController::class);
+            Route::post('/users/{id}/approve', [AdminUserController::class, 'approve']);
+            Route::post('/users/{id}/suspend', [AdminUserController::class, 'suspend']);
 
             Route::post('/users/{id}/status', [
                 AdminDashboardController::class,
