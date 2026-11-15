@@ -142,10 +142,6 @@
 
           <!-- Workflow 2: Partner Request Role Picker -->
           <div v-else class="role-selection-wrapper">
-            <div class="partner-workflow-banner">
-              <span class="shield-badge">🔒 Legal Trade Credentials Required</span>
-              <p>Accounts are verified by administrators prior to activation.</p>
-            </div>
             <label class="form-label">Select Your Business Partner Role</label>
             <div class="role-grid partner-role-grid">
               <button
@@ -699,7 +695,7 @@ const handleSubmit = async () => {
 <style scoped>
 .auth-container {
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
+  grid-template-columns: 1fr 1fr;
   min-height: 100vh;
   background-color: #0b0f17;
   color: #fff;
@@ -715,7 +711,9 @@ const handleSubmit = async () => {
   background-image: url('https://www.digi.com/getattachment/Blog/post/IoT-in-Agriculture/GettyImages-2167394255-1080x720.jpg?lang=en-US');
   background-size: cover;
   background-position: center;
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -725,7 +723,7 @@ const handleSubmit = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(11, 15, 23, 0.95), rgba(11, 15, 23, 0.4) 60%);
+  background: linear-gradient(to top, rgba(11, 15, 23, 0.92) 0%, rgba(11, 15, 23, 0.35) 50%, rgba(11, 15, 23, 0.1) 100%);
 }
 
 .hero-content {
@@ -907,29 +905,6 @@ const handleSubmit = async () => {
 /* Role Selector Grid */
 .role-selection-wrapper {
   margin-bottom: 1.25rem;
-}
-
-.partner-workflow-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  background-color: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 0.65rem 0.85rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.85rem;
-}
-
-.shield-badge {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #f59e0b;
-}
-
-.partner-workflow-banner p {
-  font-size: 0.75rem;
-  color: #cbd5e1;
-  margin: 0;
 }
 
 .role-grid {
