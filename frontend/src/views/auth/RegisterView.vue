@@ -64,7 +64,7 @@
 
           <div class="partner-guidance-box">
             <p>
-              <strong>Next Steps:</strong> An administrator will inspect your legal trade credentials in the Admin Verification portal. You will receive activation notice via <strong>{{ form.phone }}</strong> and <strong>{{ form.email }}</strong>.
+              <strong>Next Steps:</strong> An administrator will inspect your legal trade credentials in the Admin Verification portal. You will receive activation notice via <strong>{{ form.email }}</strong>.
             </p>
           </div>
 
@@ -199,67 +199,6 @@
                   class="form-input"
                   placeholder="e.g. Rift Valley Agro Supplies PLC"
                 />
-              </div>
-            </div>
-
-            <!-- Phone Number & OTP Section -->
-            <div class="form-group">
-              <div class="label-row">
-                <label for="phone" class="form-label">Phone Number</label>
-                <span v-if="phoneVerified" class="verified-pill">✓ Phone Verified</span>
-              </div>
-              <div class="phone-input-group">
-                <div class="input-wrapper flex-1">
-                  <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18">
-                    <path fill="currentColor" d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                  </svg>
-                  <input
-                    id="phone"
-                    v-model="form.phone"
-                    type="tel"
-                    required
-                    class="form-input"
-                    placeholder="0911223344"
-                    :disabled="phoneVerified"
-                  />
-                </div>
-                <button
-                  type="button"
-                  class="btn-send-otp"
-                  :disabled="sendingOtp || phoneVerified || !form.phone"
-                  @click="handleSendOtp"
-                >
-                  <span v-if="sendingOtp" class="mini-spinner"></span>
-                  <span v-else-if="phoneVerified">Verified</span>
-                  <span v-else-if="otpSent">Resend OTP</span>
-                  <span v-else>Send OTP</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- OTP Verification Row (Workflow 1 Fast-Track Requirement) -->
-            <div v-if="otpSent && !phoneVerified" class="otp-verification-box">
-              <div class="otp-header">
-                <span class="otp-title">Enter 6-Digit Verification Code</span>
-                <span class="otp-hint">Code sent: Use <strong>{{ devOtp || '123456' }}</strong></span>
-              </div>
-              <div class="otp-input-row">
-                <input
-                  v-model="enteredOtp"
-                  type="text"
-                  maxlength="6"
-                  class="otp-digit-input"
-                  placeholder="123456"
-                />
-                <button
-                  type="button"
-                  class="btn-verify-otp"
-                  :disabled="verifyingOtp || enteredOtp.length !== 6"
-                  @click="handleVerifyOtp"
-                >
-                  <span v-if="verifyingOtp" class="mini-spinner"></span>
-                  <span v-else>Verify OTP</span>
-                </button>
               </div>
             </div>
 
@@ -430,7 +369,7 @@
               :class="{ 'btn-partner': activeWorkflow === 'partner' }"
             >
               <span v-if="!loading && activeWorkflow === 'direct'">
-                Instant Sign-Up & Enter Dashboard ↪
+                Sign-Up ↪
               </span>
               <span v-else-if="!loading && activeWorkflow === 'partner'">
                 Submit Partner Request for Approval 📋
@@ -438,17 +377,6 @@
               <span v-else class="loading-spinner"></span>
             </button>
           </form>
-
-          <!-- Workflow 3 Architecture Notice: Direct Admin Creation (Internal Staff Access) -->
-          <div class="staff-notice-card">
-            <div class="staff-notice-header">
-              <span class="staff-icon">👔</span>
-              <strong>Direct Admin Creation (Internal Staff Access)</strong>
-            </div>
-            <p>
-              Profiles for <strong>Finance Manager</strong> and <strong>Agricultural Expert</strong> are created exclusively by the platform administrator to manage escrow audits and agronomy consultations. Public self-registration is restricted.
-            </p>
-          </div>
 
           <!-- Footer Switch to Login -->
           <div class="form-footer">
@@ -643,7 +571,7 @@ const handleSubmit = async () => {
     const result = await authStore.register({
       full_name: form.value.full_name.trim(),
       email: form.value.email.trim(),
-      phone: form.value.phone.trim(),
+      phone: form.value.phone ? form.value.phone.trim() : undefined,
       password: form.value.password,
       password_confirmation: form.value.password_confirmation,
       role: form.value.role,
@@ -1271,31 +1199,6 @@ const handleSubmit = async () => {
   to { transform: rotate(360deg); }
 }
 
-/* Workflow 3 Architecture Notice: Direct Admin Creation */
-.staff-notice-card {
-  margin-top: 1.25rem;
-  background-color: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 0.85rem;
-  border-radius: 0.6rem;
-}
-
-.staff-notice-header {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #a5b4fc;
-  font-size: 0.82rem;
-  margin-bottom: 0.25rem;
-}
-
-.staff-notice-card p {
-  font-size: 0.74rem;
-  color: #94a3b8;
-  margin: 0;
-  line-height: 1.35;
-}
-
 /* Partner Success Screen (State A) */
 .partner-success-container {
   text-align: center;
@@ -1598,19 +1501,6 @@ const handleSubmit = async () => {
 
 .auth-container.light .terms-text {
   color: #64748b;
-}
-
-.auth-container.light .staff-notice-card {
-  background-color: #eef2ff;
-  border-color: #c7d2fe;
-}
-
-.auth-container.light .staff-notice-header {
-  color: #4338ca;
-}
-
-.auth-container.light .staff-notice-card p {
-  color: #475569;
 }
 
 .auth-container.light .application-summary-card {

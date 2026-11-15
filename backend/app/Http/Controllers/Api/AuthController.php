@@ -445,7 +445,7 @@ class AuthController extends Controller
                 'name' => 'nullable|string|max:255',
                 'full_name' => 'nullable|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email',
-                'phone' => 'required|string|max:30',
+                'phone' => 'nullable|string|max:30',
                 'password' => 'required|string|min:6|confirmed',
                 'role' => 'required|string|in:farmer,buyer,supplier,transport,cooperative',
                 'region' => 'nullable|string|max:100',
@@ -485,7 +485,7 @@ class AuthController extends Controller
             $user = \App\Models\User::create([
                 'name' => $name,
                 'email' => strtolower(trim($validated['email'])),
-                'phone' => $validated['phone'],
+                'phone' => !empty($validated['phone']) ? $validated['phone'] : null,
                 'password' => Hash::make($validated['password']),
                 'role' => $role,
                 'region' => $validated['region'] ?? 'Addis Ababa',
