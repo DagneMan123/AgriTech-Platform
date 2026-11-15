@@ -5,7 +5,7 @@
       <div class="hero-image-overlay"></div>
       <div class="hero-content">
         <span class="hero-badge">Smart Farming Platform</span>
-        <h2>Join the<br />Ecosystem.</h2>
+        <h2>Join the<br />AgriTech </h2>
         <p>Connecting Ethiopian farmers, buyers, suppliers, and transporters in one transparent digital marketplace.</p>
       </div>
     </div>
@@ -383,8 +383,8 @@ const handleRegister = async () => {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 4rem 3.5rem;
-  background-image: url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&auto=format&fit=crop&q=80');
+  padding: 4rem;
+  background-image: url('https://www.digi.com/getattachment/Blog/post/IoT-in-Agriculture/GettyImages-2167394255-1080x720.jpg?lang=en-US');
   background-size: cover;
   background-position: center;
   position: relative;
@@ -397,13 +397,12 @@ const handleRegister = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(11, 15, 23, 0.96) 10%, rgba(11, 15, 23, 0.75) 60%, rgba(11, 15, 23, 0.5) 100%);
+  background: linear-gradient(to top, rgba(11, 15, 23, 0.95), rgba(11, 15, 23, 0.4) 60%);
 }
 
 .hero-content {
   position: relative;
   z-index: 10;
-  max-width: 520px;
 }
 
 .hero-badge {
@@ -415,22 +414,20 @@ const handleRegister = async () => {
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .hero-content h2 {
-  font-size: 3.25rem;
+  font-size: 3.5rem;
   font-weight: 800;
   color: white;
   line-height: 1.1;
-  margin-bottom: 0.9rem;
-  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
 }
 
 .hero-content p {
   color: #cbd5e1;
-  font-size: 1.05rem;
-  line-height: 1.5;
+  font-size: 1rem;
 }
 
 /* Form Section */

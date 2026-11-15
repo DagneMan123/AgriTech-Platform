@@ -63,7 +63,7 @@
                 color: 'white'
               }"
             >
-              Register
+              Get Started
             </RouterLink>
           </div>
         </div>
