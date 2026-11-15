@@ -366,7 +366,6 @@
               type="submit"
               :disabled="loading"
               class="btn-register"
-              :class="{ 'btn-partner': activeWorkflow === 'partner' }"
             >
               <span v-if="!loading && activeWorkflow === 'direct'">
                 Sign-Up ↪
@@ -1158,16 +1157,6 @@ const handleSubmit = async () => {
   background-color: #059669;
   color: #fff;
   transform: translateY(-1px);
-}
-
-.btn-register.btn-partner {
-  background-color: #f59e0b;
-  color: #451a03;
-}
-
-.btn-register.btn-partner:hover:not(:disabled) {
-  background-color: #d97706;
-  color: #fff;
 }
 
 .btn-register:disabled {
