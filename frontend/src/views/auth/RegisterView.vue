@@ -179,7 +179,7 @@
                   type="text"
                   required
                   class="form-input"
-                  :placeholder="activeWorkflow === 'partner' ? 'e.g. Almaz Ayana (Managing Director)' : 'e.g. Abebe Bikila'"
+                  :placeholder="activeWorkflow === 'partner' ? 'Representative Full Name' : 'Full Name'"
                 />
               </div>
             </div>
@@ -197,7 +197,7 @@
                   type="text"
                   required
                   class="form-input"
-                  placeholder="e.g. Rift Valley Agro Supplies PLC"
+                  placeholder="Company or Organization Name"
                 />
               </div>
             </div>
@@ -216,7 +216,7 @@
                     type="email"
                     required
                     class="form-input"
-                    placeholder="name@example.com"
+                    placeholder="Email Address"
                   />
                 </div>
               </div>
@@ -254,7 +254,7 @@
                     type="text"
                     required
                     class="form-input"
-                    placeholder="e.g. TL-2026/AA-8941"
+                    placeholder="Trade License Number"
                   />
                 </div>
               </div>
@@ -271,7 +271,7 @@
                     type="text"
                     required
                     class="form-input"
-                    placeholder="e.g. 0049281736"
+                    placeholder="Tax Identification Number (TIN)"
                   />
                 </div>
               </div>
