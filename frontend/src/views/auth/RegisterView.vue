@@ -179,7 +179,6 @@
                   type="text"
                   required
                   class="form-input"
-                  :placeholder="activeWorkflow === 'partner' ? 'Representative Full Name' : 'Full Name'"
                 />
               </div>
             </div>
@@ -197,7 +196,6 @@
                   type="text"
                   required
                   class="form-input"
-                  placeholder="Company or Organization Name"
                 />
               </div>
             </div>
@@ -216,7 +214,6 @@
                     type="email"
                     required
                     class="form-input"
-                    placeholder="Email Address"
                   />
                 </div>
               </div>
@@ -254,7 +251,6 @@
                     type="text"
                     required
                     class="form-input"
-                    placeholder="Trade License Number"
                   />
                 </div>
               </div>
@@ -271,7 +267,6 @@
                     type="text"
                     required
                     class="form-input"
-                    placeholder="Tax Identification Number (TIN)"
                   />
                 </div>
               </div>
@@ -292,7 +287,6 @@
                     required
                     minlength="6"
                     class="form-input password-input"
-                    placeholder="Min 6 characters"
                   />
                   <button
                     type="button"
@@ -320,7 +314,6 @@
                     required
                     minlength="6"
                     class="form-input password-input"
-                    placeholder="Repeat password"
                   />
                   <button
                     type="button"
